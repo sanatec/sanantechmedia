@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Responsive Flashcard Game</title>
+  <link rel="stylesheet" href="data/style.css">
+</head>
+<body>
+  <div class="flashcard" onclick="flipCard()">
+    <div class="flashcard-inner" id="flashcard-inner">
+      <div class="flashcard-front">
+        <h3>Question</h3>
+        <p id="question">اردو زبان کی پیدائش کہاں ہوئی؟</p>
+      </div>
+      <div class="flashcard-back">
+        <h3>Answer</h3>
+        <p id="answer">ہندوستان</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="navigation">
+    <button class="button" id="prevBtn" onclick="prevCard()" disabled="disabled">Back</button>
+    <button class="button" id="nextBtn" onclick="nextCard()">Next</button>
+  </div>
+ <!-- Audio for Flip Sound -->
+  <audio id="flipSound">
+    <source src="data/flip.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+
+
+  <script src="data/script.js"></script>
+
+</body></html>
