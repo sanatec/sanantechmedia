@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<head><script src="data/browsersupport.js"></script>
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+	<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"/>
+	<meta name="format-detection" content="telephone=no"/>
+	<meta name="apple-mobile-web-app-capable" content="yes"/>
+	<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	<meta name="msapplication-tap-highlight" content="no" />
+  <title>Responsive Quiz</title>
+  <!-- Link to external CSS -->
+  <link rel="stylesheet" href="data/style.css">
+</head>
+<body>
+  <div class="quiz-container">
+    <div class="question" id="question">Question will go here</div>
+    <div class="options" id="options"></div>
+    <div class="score">Score: <span id="score">0</span></div>
+  </div>
+
+  <!-- Results Modal -->
+  <div class="modal" id="results-modal">
+    <div class="modal-content">
+      <h2 id="results-message">Congratulations!</h2>
+      <div class="progress-bar">
+        <div id="correct-bar" class="correct-bar"></div>
+        <div id="incorrect-bar" class="incorrect-bar"></div>
+      </div>
+      <p>Total Correct: <span id="correct-count">0</span></p>
+      <p>Total Incorrect: <span id="incorrect-count">0</span></p>
+      <button onclick="restartQuiz()">Restart Quiz</button>
+    </div>
+  </div>
+
+  <!-- Sound Effects -->
+  <audio id="correct-sound" src="data/sound/co.mp3"></audio>
+  <audio id="incorrect-sound" src="data/sound/wr.mp3"></audio>
+
+  <!-- Link to external JavaScript -->
+  <script src="data/script.js"></script>
+
+</body></html>
