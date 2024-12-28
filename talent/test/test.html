@@ -34,27 +34,10 @@
     <source src="data/flip.mp3" type="audio/mpeg">
     Your browser does not support the audio element.
   </audio>
- <script>
-  window.onload = () => {
-    // Clear localStorage
-    localStorage.clear();
 
-    // Clear sessionStorage
-    sessionStorage.clear();
-
-    // Clear cookies
-    document.cookie.split(";").forEach((cookie) => {
-      document.cookie = cookie
-        .replace(/^ +/, "")
-        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-    });
-
-    console.log("Cache cleared!");
-  };
-</script>
-
-
-
-  <script src="data/script.js"></script>
+<script src="data/script.js"></script>
+	
+<script src="https://cdn.jsdelivr.net/npm/@babel/polyfill"></script>
+	
 
 </body></html>
