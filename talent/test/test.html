@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<head><script src="data/browsersupport.js"></script>
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+	<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"/>
+	<meta name="format-detection" content="telephone=no"/>
+	<meta name="apple-mobile-web-app-capable" content="yes"/>
+	<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	<meta name="msapplication-tap-highlight" content="no" />
+  <title>Responsive Flashcard Game</title>
+  <link rel="stylesheet" href="data/style.css">
+</head>
+<body>
+  <div class="flashcard" onclick="flipCard()">
+    <div class="flashcard-inner" id="flashcard-inner">
+      <div class="flashcard-front">
+        <h3>Question</h3>
+        <p id="question">اردو زبان کی پیدائش کہاں ہوئی؟</p>
+      </div>
+      <div class="flashcard-back">
+        <h3>Answer</h3>
+        <p id="answer">ہندوستان</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="navigation">
+    <button class="button" id="prevBtn" onclick="prevCard()" disabled="disabled">Back</button>
+    <button class="button" id="nextBtn" onclick="nextCard()">Next</button>
+  </div>
+ <!-- Audio for Flip Sound -->
+  <audio id="flipSound">
+    <source src="data/flip.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+ <script>
+  window.onload = () => {
+    // Clear localStorage
+    localStorage.clear();
+
+    // Clear sessionStorage
+    sessionStorage.clear();
+
+    // Clear cookies
+    document.cookie.split(";").forEach((cookie) => {
+      document.cookie = cookie
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+
+    console.log("Cache cleared!");
+  };
+</script>
+
+
+
+  <script src="data/script.js"></script>
+
+</body></html>
