@@ -11,6 +11,24 @@
 </head>
 
 <body>
+    <script>
+  window.onload = () => {
+    // Clear localStorage
+    localStorage.clear();
+
+    // Clear sessionStorage
+    sessionStorage.clear();
+
+    // Clear cookies
+    document.cookie.split(";").forEach((cookie) => {
+      document.cookie = cookie
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+
+    console.log("Cache cleared!");
+  };
+</script>
     <nav class="navbar navbar-light navbar-expand-md bg-success">
         <div class="container-fluid"><button data-toggle="collapse" class="navbar-toggler" data-target="#navcol-1"><span class="sr-only">Toggle navigation</span><span class="navbar-toggler-icon"></span></button><a class="navbar-brand text-center text-white shadow-sm" href="#"><strong>Yoonu's Store</strong></a>
             <div
