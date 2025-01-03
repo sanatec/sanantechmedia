@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>اردو کے حروف کا کھیل</title>
+  <style>
+@font-face {
+  font-family: 'Noto Nastaliq Urdu';
+  src: url('NotoNastaliqUrdu-Regular.woff') format('woff');
+}
+    body {
+      font-family: 'Noto Nastaliq Urdu', Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(to bottom, #ffd89b, #19547b);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      direction: rtl;
+    }
+
+    .game-container {
+      width: 90%;
+      max-width: 500px;
+      background: #ffffff;
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .stars {
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .star {
+      width: 30px;
+      height: 30px;
+      background: url('star.png') no-repeat center / cover;
+      display: none;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .card {
+      width: 80px;
+      height: 120px;
+      background: #f5f5f5;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
+    }
+
+    .card:hover {
+      transform: scale(1.1);
+    }
+
+    .card.matched {
+      background: #d4edda;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .next-button {
+      display: none;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .next-button:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+ <script>
+  window.onload = () => {
+    // Clear localStorage
+    localStorage.clear();
+
+    // Clear sessionStorage
+    sessionStorage.clear();
+
+    // Clear cookies
+    document.cookie.split(";").forEach((cookie) => {
+      document.cookie = cookie
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+
+    console.log("Cache cleared!");
+  };
+</script>
+<body>
+  <div class="game-container">
+    <h1>اردو کے حروف کا کھیل</h1>
+    <div class="stars">
+      <!-- 4 Stars -->
+      <div class="star"></div>
+      <div class="star"></div>
+      <div class="star"></div>
+      <div class="star"></div>
+    </div>
+    <div class="grid"></div>
+    <button class="next-button">Next</button>
+  </div>
+
+  <script>
+    const levels = [
+      [
+        { letter: 'ا', word: 'انار' },
+        { letter: 'ب', word: 'بکری' },
+        { letter: 'پ', word: 'پتنگ' },
+        { letter: 'ت', word: 'تارہ' }
+      ],
+      [
+        { letter: 'ث', word: 'ثمر' },
+        { letter: 'ج', word: 'جوتا' },
+        { letter: 'چ', word: 'چمچ' },
+        { letter: 'ح', word: 'حلوہ' }
+      ],
+      [
+        { letter: 'خ', word: 'خرگوش' },
+        { letter: 'د', word: 'دروازہ' },
+        { letter: 'ذ', word: 'ذخیرہ' },
+        { letter: 'ر', word: 'رنگ' }
+      ],
+      [
+        { letter: 'ز', word: 'زرافہ' },
+        { letter: 'س', word: 'ستارہ' },
+        { letter: 'ش', word: 'شیر' },
+        { letter: 'ص', word: 'صابون' }
+      ],
+      [
+        { letter: 'ض', word: 'ضیافت' },
+        { letter: 'ط', word: 'طوطا' },
+        { letter: 'ظ', word: 'ظرف' },
+        { letter: 'ع', word: 'عید' }
+      ],
+      [
+        { letter: 'غ', word: 'غبارہ' },
+        { letter: 'ف', word: 'فانوس' },
+        { letter: 'ق', word: 'قلم' },
+        { letter: 'ک', word: 'کتاب' }
+      ],
+      [
+        { letter: 'گ', word: 'گلاب' },
+        { letter: 'ل', word: 'لوٹا' },
+        { letter: 'م', word: 'مکھی' },
+        { letter: 'ن', word: 'ناخن' }
+      ],
+      [
+        { letter: 'و', word: 'وام' },
+        { letter: 'ہ', word: 'ہوا' },
+        { letter: 'ی', word: 'یقین' },
+        { letter: 'ے', word: 'یہ' }
+      ]
+    ];
+
+    let currentLevelIndex = 0;
+    let starsEarned = 0;
+    let selectedCards = [];
+
+    const grid = document.querySelector('.grid');
+    const stars = document.querySelectorAll('.star');
+    const nextButton = document.querySelector('.next-button');
+
+    const correctSound = new Audio('co.mp3');
+    const incorrectSound = new Audio('wr.mp3');
+
+    function loadLevel(level) {
+      grid.innerHTML = '';
+      const cards = [];
+
+      level.forEach(item => {
+        cards.push({ type: 'letter', value: item.letter });
+        cards.push({ type: 'word', value: item.word });
+      });
+
+      // Shuffle cards
+      cards.sort(() => Math.random() - 0.5);
+
+      cards.forEach(card => {
+        const cardElement = document.createElement('div');
+        cardElement.className = 'card';
+        cardElement.dataset.type = card.type;
+        cardElement.dataset.value = card.value;
+        cardElement.textContent = card.value;
+
+        cardElement.addEventListener('click', () => handleCardClick(cardElement));
+        grid.appendChild(cardElement);
+      });
+    }
+
+    function handleCardClick(card) {
+      if (selectedCards.length < 2 && !card.classList.contains('matched')) {
+        card.classList.add('selected');
+        selectedCards.push(card);
+
+        if (selectedCards.length === 2) {
+          checkMatch();
+        }
+      }
+    }
+
+    function checkMatch() {
+      const [card1, card2] = selectedCards;
+
+      if (
+        (card1.dataset.type === 'letter' && card2.dataset.type === 'word' && 
+         card2.dataset.value.startsWith(card1.dataset.value)) ||
+        (card1.dataset.type === 'word' && card2.dataset.type === 'letter' && 
+         card1.dataset.value.startsWith(card2.dataset.value))
+      ) {
+        card1.classList.add('matched');
+        card2.classList.add('matched');
+        correctSound.play();
+
+        stars[starsEarned].style.display = 'inline-block';
+        starsEarned++;
+
+        if (starsEarned === 4) {
+          nextButton.style.display = 'block';
+        }
+      } else {
+        incorrectSound.play();
+      }
+
+      setTimeout(() => {
+        card1.classList.remove('selected');
+        card2.classList.remove('selected');
+        selectedCards = [];
+      }, 1000);
+    }
+
+    nextButton.addEventListener('click', () => {
+      starsEarned = 0;
+      stars.forEach(star => (star.style.display = 'none'));
+      nextButton.style.display = 'none';
+
+      currentLevelIndex++;
+      if (currentLevelIndex < levels.length) {
+        loadLevel(levels[currentLevelIndex]);
+      } else {
+        alert('مبارک ہو! آپ نے تمام مراحل مکمل کر لئے ہیں!');
+      }
+    });
+
+    loadLevel(levels[currentLevelIndex]);
+  </script>
+</body>
+</html>
+
+
