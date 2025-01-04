@@ -8,6 +8,24 @@
 <link rel="stylesheet" href="data/style.css">
 </head>
 <body>
+     <script>
+  window.onload = () => {
+    // Clear localStorage
+    localStorage.clear();
+
+    // Clear sessionStorage
+    sessionStorage.clear();
+
+    // Clear cookies
+    document.cookie.split(";").forEach((cookie) => {
+      document.cookie = cookie
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+
+    console.log("Cache cleared!");
+  };
+</script>
     <div id="game-container">
         <div id="question">سوال: چیز جو ہم پڑھتے ہیں</div>
         <div id="crossword"><div class="droppable"></div><div class="droppable"></div><div class="droppable"></div><div class="droppable"></div></div>
