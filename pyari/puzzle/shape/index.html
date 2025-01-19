@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Animal Game</title>
+    <link rel="stylesheet" href="data/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div class="header">
+            <h1>Identify the Shape</h1>
+        </div>
+        <div id="score">Score: 0</div>
+        <div id="image-container">
+            <img id="questionImage" alt="Animal" style="display:none;" />
+            <div id="congratulations-message" style="display:none;">🎉 Congratulations! You've completed the game! 🎉</div>
+        </div>
+        <div id="crossword"></div>
+        <div id="letters"></div>
+        <button id="submit">Submit</button>
+        <button id="restart" style="display:none;" onclick="restartGame()">Restart Game</button>
+    </div>
+    <script src="data/script.js"></script>
+</body>
+</html>
+
