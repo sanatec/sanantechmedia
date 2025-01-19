@@ -1,5 +1,5 @@
 const questions = [
-{ imagePath: "data/images/1.jpg", answer: ["ا","ن","ر"] },
+{ imagePath: "data/images/1.jpg", answer: ["ا","ن","ا","ر"] },
 { imagePath: "data/images/2.jpg", answer: ["ب","ط","خ"] },
 { imagePath: "data/images/3.jpg", answer: ["پ","ت","ن","گ"] },
 { imagePath: "data/images/4.jpg", answer: ["ت","ت","ل","ی"] },
