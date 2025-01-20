@@ -2,7 +2,7 @@ const questions = [
   {
     "question": "Who is the current President of the United States?",
     "options": ["Joe Biden", "Donald Trump", "Barack Obama", "George W. Bush"],
-    "correct": 0
+    "correct": 1
   },
   {
     "question": "Who was the first President of the United States?",
