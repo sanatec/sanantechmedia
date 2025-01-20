@@ -5,7 +5,7 @@ const questions = [
 { imagePath: "data/images/4.jpg", answer: ["ا","ی","و","ا","ک","ا","ڈ","و"] },
 { imagePath: "data/images/5.jpg", answer: ["ک","ی","ل","ا"] },
 { imagePath: "data/images/6.jpg", answer: ["ا","ن","گ","و","ر"] },
-{ imagePath: "data/images/7.jpg", answer: ["ج","ا","م","ا","ن"] },
+{ imagePath: "data/images/7.jpg", answer: ["ج","ا","م","ن"] },
 { imagePath: "data/images/8.jpg", answer: ["ک","ا","ج","و"] },
 { imagePath: "data/images/9.jpg", answer: ["چ","ی","ر","ی"] },
 { imagePath: "data/images/10.jpg", answer: ["ن","ا","ر","ی","ل"] },
