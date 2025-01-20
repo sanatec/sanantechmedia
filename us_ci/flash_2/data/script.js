@@ -34,7 +34,7 @@ const flashcards = [
   { question: "Who is the Governor of your state now?", answer: "Answers vary by state." },
   { question: "What is the capital of your state?", answer: "Answers vary by state." },
   { question: "What are the two major political parties in the United States?", answer: "Democratic and Republican." },
-  { question: "What is the political party of the President now?", answer: "Answers vary by year." },
+  { question: "What is the political party of the President now?", answer: "Republican Party" },
   { question: "What is the name of the Speaker of the House of Representatives now?", answer: "Answers vary by year." },
   { question: "There are four amendments to the Constitution about who can vote. Describe one of them.", answer: "Citizens 18 and older can vote." },
   { question: "What is one responsibility that is only for United States citizens?", answer: "Serve on a jury or vote in federal elections." },
