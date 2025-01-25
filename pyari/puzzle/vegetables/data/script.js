@@ -1,123 +1,78 @@
-const questions = [
-{ imagePath: "data/images/1.jpg", answer: ["ٹ","م","ا","ٹ","ر"] },
-{ imagePath: "data/images/2.jpg", answer: ["ب","ی","ن","گ","ن"] },
-{ imagePath: "data/images/3.jpg", answer: ["ش","م","ل","ہ","م","ر","چ"] },
-{ imagePath: "data/images/4.jpg", answer: ["م","ر","چ"] },
-{ imagePath: "data/images/5.jpg", answer: ["ک","ھ","م","ب","ی"] },
-{ imagePath: "data/images/6.jpg", answer: ["ل","ہ","س","ن"] },
-{ imagePath: "data/images/7.jpg", answer: ["پ","ی","ا","ز"] },
-{ imagePath: "data/images/8.jpg", answer: ["آ","ل","و"] },
-{ imagePath: "data/images/9.jpg", answer: ["د","ھ","ن","ی","ا"] },
-{ imagePath: "data/images/10.jpg", answer: ["ب","ن","د","گ","و","ب","ھ","ی"] },
-{ imagePath: "data/images/11.jpg", answer: ["م","و","ل","ی"] },
-{ imagePath: "data/images/12.jpg", answer: ["م","ٹ","ر"] },
-{ imagePath: "data/images/13.jpg", answer: ["ش","ا","خ","گ","و","ب","ھ","ی"] },
-{ imagePath: "data/images/14.jpg", answer: ["پ","ا","ل","ک"] },
-{ imagePath: "data/images/15.jpg", answer: ["ک","ھ","ی","ر","ا"] },
-{ imagePath: "data/images/16.jpg", answer: ["گ","ا","ج","ر"] },
-{ imagePath: "data/images/17.jpg", answer: ["ا","ر","و","ی"] },
-{ imagePath: "data/images/18.jpg", answer: ["ک","ڑ","ی","پ","ت","ہ"] },
-{ imagePath: "data/images/19.jpg", answer: ["پ","ی","ٹ","ھ","ا"] },
-{ imagePath: "data/images/20.jpg", answer: ["چ","ق","ن","د","ر"] },
-{ imagePath: "data/images/21.jpg", answer: ["پ","ھ","و","ل","گ","و","ب","ھ","ی"] },
-{ imagePath: "data/images/22.jpg", answer: ["ا","د","ر","ک"] },
-{ imagePath: "data/images/23.jpg", answer: ["ہ","ل","د","ی"] },
-{ imagePath: "data/images/24.jpg", answer: ["ک","ر","ی","ل","ا"] },
-{ imagePath: "data/images/25.jpg", answer: ["ب","ھ","ن","ڈ","ی"] },
-{ imagePath: "data/images/26.jpg", answer: ["ک","د","و"] },
-{ imagePath: "data/images/27.jpg", answer: ["س","ب","ز","پ","ھ","ل","ی"] },
-{ imagePath: "data/images/28.jpg", answer: ["ز","م","ی","ن","ق","ن","د"] },
-{ imagePath: "data/images/29.jpg", answer: ["ش","ک","ر","ق","ن","د"] },
+const flashcards = [
+{ question: "data/images/1.jpg", answer: "ٹماٹر",sound: "data/audio/1.wav" },
+{ question: "data/images/2.jpg", answer: "بینگن",sound: "data/audio/2.wav" },
+{ question: "data/images/3.jpg", answer: "شملہ مرچ",sound: "data/audio/3.wav" },
+{ question: "data/images/4.jpg", answer: "مرچ",sound: "data/audio/4.wav" },
+{ question: "data/images/5.jpg", answer: "کھمبی",sound: "data/audio/5.wav" },
+{ question: "data/images/6.jpg", answer: "لہسن",sound: "data/audio/6.wav" },
+{ question: "data/images/7.jpg", answer: "پیاز",sound: "data/audio/7.wav" },
+{ question: "data/images/8.jpg", answer: "آلو",sound: "data/audio/8.wav" },
+{ question: "data/images/9.jpg", answer: "دھنیا",sound: "data/audio/9.wav" },
+{ question: "data/images/10.jpg", answer: "بند گوبھی",sound: "data/audio/10.wav" },
+{ question: "data/images/11.jpg", answer: "مولی",sound: "data/audio/11.wav" },
+{ question: "data/images/12.jpg", answer: "مٹر",sound: "data/audio/12.wav" },
+{ question: "data/images/13.jpg", answer: "شاخ گوبھی",sound: "data/audio/13.wav" },
+{ question: "data/images/14.jpg", answer: "پالک",sound: "data/audio/14.wav" },
+{ question: "data/images/15.jpg", answer: "کھیرا",sound: "data/audio/15.wav" },
+{ question: "data/images/16.jpg", answer: "گاجر",sound: "data/audio/16.wav" },
+{ question: "data/images/17.jpg", answer: "اروی",sound: "data/audio/17.wav" },
+{ question: "data/images/18.jpg", answer: "کڑی پتہ",sound: "data/audio/18.wav" },
+{ question: "data/images/19.jpg", answer: "پیٹھا",sound: "data/audio/19.wav" },
+{ question: "data/images/20.jpg", answer: "چقندر",sound: "data/audio/20.wav" },
+{ question: "data/images/21.jpg", answer: "پھول گوبھی",sound: "data/audio/21.wav" },
+{ question: "data/images/22.jpg", answer: "ادرک",sound: "data/audio/22.wav" },
+{ question: "data/images/23.jpg", answer: "ہلدی",sound: "data/audio/23.wav" },
+{ question: "data/images/24.jpg", answer: "کریلا",sound: "data/audio/24.wav" },
+{ question: "data/images/25.jpg", answer: "بھنڈی",sound: "data/audio/25.wav" },
+{ question: "data/images/26.jpg", answer: "کدو",sound: "data/audio/26.wav" },
+{ question: "data/images/27.jpg", answer: "سبز پھلی",sound: "data/audio/27.wav" },
+{ question: "data/images/28.jpg", answer: "زمین قند",sound: "data/audio/28.wav" },
+{ question: "data/images/29.jpg", answer: "شکر قندی",sound: "data/audio/29.wav" },
 ];
 
-let currentQuestionIndex = 0;
-let score = 0;
+let currentCard = 0;
 
-const correctSound = new Audio("data/sound/co.mp3");
-const wrongSound = new Audio("data/sound/wr.mp3");
+function updateCard() {
+  const questionContainer = document.getElementById("question-container");
+  const answer = document.getElementById("answer");
 
-function loadQuestion() {
-    const question = questions[currentQuestionIndex];
-    document.getElementById("questionImage").style.display = "block";
-    document.getElementById("questionImage").src = question.imagePath;
-    document.getElementById("congratulations-message").style.display = "none";
+  if (flashcards[currentCard].question.endsWith(".png") || 
+      flashcards[currentCard].question.endsWith(".jpg") || 
+      flashcards[currentCard].question.endsWith(".jpeg")) {
+    questionContainer.innerHTML = `<img src="${flashcards[currentCard].question}" alt="Question Image" style="max-width: 100%; height: auto;">`;
+  } else {
+    questionContainer.innerHTML = `<p>${flashcards[currentCard].question}</p>`;
+  }
 
-    const crossword = document.getElementById("crossword");
-    const lettersContainer = document.getElementById("letters");
+  answer.textContent = flashcards[currentCard].answer;
 
-    crossword.innerHTML = "";
-    lettersContainer.innerHTML = "";
+  document.getElementById("prevBtn").disabled = currentCard === 0;
+  document.getElementById("nextBtn").disabled = currentCard === flashcards.length - 1;
 
-    question.answer.forEach(() => {
-        const cell = document.createElement("div");
-        cell.classList.add("droppable");
-        crossword.appendChild(cell);
-    });
-
-    const shuffledLetters = [...question.answer].sort(() => Math.random() - 0.5);
-    shuffledLetters.forEach((letter) => {
-        const letterElement = document.createElement("div");
-        letterElement.classList.add("letter");
-        letterElement.innerText = letter;
-
-        letterElement.addEventListener("click", () => {
-            const emptyCell = Array.from(document.querySelectorAll(".droppable")).find(
-                (cell) => !cell.innerText
-            );
-            if (emptyCell) {
-                emptyCell.innerText = letter;
-                letterElement.remove();
-            }
-        });
-
-        lettersContainer.appendChild(letterElement);
-    });
+  document.getElementById("flashcard-inner").style.transform = "";
 }
 
-function checkAnswer() {
-    const cells = document.querySelectorAll(".droppable");
-    const userAnswer = Array.from(cells).map((cell) => cell.innerText).join("");
-    const correctAnswer = questions[currentQuestionIndex].answer.join("");
+function flipCard() {
+  const card = document.getElementById("flashcard-inner");
+  const sound = new Audio(flashcards[currentCard].sound);
 
-    if (userAnswer === correctAnswer) {
-        score++;
-        document.getElementById("score").innerText = `Score: ${score}`;
-        correctSound.play();
-        nextQuestion();
-    } else {
-        wrongSound.play();
-        resetToInitial();
-    }
+  sound.play();
+  card.style.transform = card.style.transform === "rotateY(180deg)" ? "" : "rotateY(180deg)";
 }
 
-function resetToInitial() {
-    loadQuestion();
+function nextCard() {
+  if (currentCard < flashcards.length - 1) {
+    currentCard++;
+    updateCard();
+  }
 }
 
-function nextQuestion() {
-    if (currentQuestionIndex < questions.length - 1) {
-        currentQuestionIndex++;
-        loadQuestion();
-    } else {
-        document.getElementById("questionImage").style.display = "none";
-        const congratsMessage = document.getElementById("congratulations-message");
-        congratsMessage.style.display = "flex";
-        document.getElementById("submit").style.display = "none";
-        document.getElementById("restart").style.display = "block";
-    }
+function prevCard() {
+  if (currentCard > 0) {
+    currentCard--;
+    updateCard();
+  }
 }
 
-function restartGame() {
-    currentQuestionIndex = 0;
-    score = 0;
-    document.getElementById("score").innerText = "Score: 0";
-
-    const submitButton = document.getElementById("submit");
-    submitButton.style.display = "block";
-    document.getElementById("restart").style.display = "none";
-    loadQuestion();
-}
-
-loadQuestion();
-document.getElementById("submit").addEventListener("click", checkAnswer);
+updateCard();
 
