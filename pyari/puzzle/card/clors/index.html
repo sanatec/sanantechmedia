@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Responsive Flashcard Game</title>
+  <link rel="stylesheet" href="data/style.css">
+</head>
+<body>
+  <script>
+    window.onload = () => {
+      localStorage.clear();
+      sessionStorage.clear();
+      document.cookie.split(";").forEach((cookie) => {
+        document.cookie = cookie
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      console.log("Cache cleared!");
+    };
+  </script>
+
+  <div class="flashcard" onclick="flipCard()">
+    <div class="flashcard-inner" id="flashcard-inner">
+      <div class="flashcard-front">
+        <h3>Question</h3>
+        <div id="question-container">
+          <!-- Dynamic content will be inserted here -->
+        </div>
+      </div>
+      <div class="flashcard-back">
+        <h3>Answer</h3>
+        <p id="answer">Answer will appear here</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="navigation">
+    <button class="button" id="prevBtn" onclick="prevCard()" disabled="disabled">Back</button>
+    <button class="button" id="nextBtn" onclick="nextCard()">Next</button>
+  </div>
+
+  <script src="data/script.js"></script>
+</body>
+</html>
+
