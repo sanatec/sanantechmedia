@@ -1,6 +1,4 @@
-@font-face {
-  font-family: 'Noto Nastaliq Urdu';
-  src: url('NotoNastaliqUrdu-Regular.woff') format('woff');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap');
 }
 body {
     margin: 0;
