@@ -1,7 +1,10 @@
 /* Base styles for the body */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap');
+@font-face {
+  font-family: 'Noto Nastaliq Urdu';
+  src: url('NotoNastaliqUrdu-Regular.woff') format('woff');
+}
 body {
-  font-family:'NotoNastaliqUrdu-Regular',Arial, sans-serif;
+  font-family:'NotoNastaliqUrdu-Regular',sans-serif;
   margin: 0;
   padding: 0;
   display: flex;
