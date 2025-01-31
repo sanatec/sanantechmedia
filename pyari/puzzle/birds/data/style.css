@@ -1,3 +1,7 @@
+@font-face {
+  font-family: 'Noto Nastaliq Urdu';
+  src: url('NotoNastaliqUrdu-Regular.woff') format('woff');
+}
 body {
     margin: 0;
     font-family: 'Noto Nastaliq Urdu', Arial, sans-serif;
