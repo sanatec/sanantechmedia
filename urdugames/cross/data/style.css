@@ -1,14 +1,6 @@
-  /* Base styles for the body */
-@font-face
-        {
-        font-family:'NotoNastaliqUrdu-Regular';
-        src:url('NotoNastaliqUrdu-Regular.woff')
-        format('woff');
-        font-weight:normal;
-        font-style:normal;
-        }     
+  /* Base styles for the body */   
  body {
-            font-family:NotoNastaliqUrdu-Regular,san-serif;
+            font-family:'Noto Nastaliq Urdu', serif;
             direction: rtl;
             text-align: center;
             background-color: #f8f9fa;
