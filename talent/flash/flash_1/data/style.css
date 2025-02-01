@@ -3,7 +3,7 @@
     src: url('NotoNastaliqUrdu-Regular.woff') format('woff');font-display: swap;
 }
 body {
-    font-family:NotoNastaliqUrdu-Regular,serif;
+    font-family:'NotoNastaliqUrdu-Regular',serif;
     margin: 0;
     padding: 0;
     display: flex;
