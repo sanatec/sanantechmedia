@@ -1,7 +1,7 @@
 const questions = [
   
   {
-        question: " بچے ّ میدان میں کھیل",
+        question: " بچے میدان میں کھیل",
         options: ["رہاہے", "رہی ہے", "رہے ہیں", "رہے ہو"],
         correct: 2,
       },{
