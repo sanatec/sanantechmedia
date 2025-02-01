@@ -1,7 +1,3 @@
-@font-face {
-    font-family: 'NotoNastaliqUrdu';
-    src: url('NotoNastaliqUrdu-Regular.woff') format('woff')
-}
 body {
     font-family:'NotoNastaliqUrdu',serif;
     margin: 0;
