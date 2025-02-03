@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>اردو سیکھنے کا کھیل</title>
+  <link rel="stylesheet" href="data/styles.css">
+</head>
+<body>
+ <script>
+  window.onload = () => {
+    // Clear localStorage
+    localStorage.clear();
+
+    // Clear sessionStorage
+    sessionStorage.clear();
+
+    // Clear cookies
+    document.cookie.split(";").forEach((cookie) => {
+      document.cookie = cookie
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+
+    console.log("Cache cleared!");
+  };
+</script>
+
+  <div class="game-container">
+    <h1>اردو سیکھنے کا کھیل</h1>
+    <div class="stars">
+      <div class="star"></div>
+      <div class="star"></div>
+      <div class="star"></div>
+      <div class="star"></div>
+    </div>
+    <div class="grid"></div>
+    <button class="next-button">Next</button>
+    <div class="congratulation-message">
+      <h2>مبارک ہو!</h2>
+      <p>آپ نے تمام مراحل کامیابی سے مکمل کر لئے ہیں۔</p>
+      <button class="restart-button">دوبارہ کھیلیں</button>
+    </div>
+  </div>
+  <script src="data/script.js"></script>
+</body>
+</html>
+
