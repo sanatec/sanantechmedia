@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>اردو فلیش کارڈ گیم</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="flashcard" onclick="flipCard()" tabindex="0">
+        <div class="flashcard-inner" id="flashcard-inner">
+            <div class="flashcard-front">
+                <h3>سوال</h3>
+                <p id="question">اردو زبان کی پیدائش کہاں ہوئی؟</p>
+            </div>
+            <div class="flashcard-back">
+                <h3>جواب</h3>
+                <p id="answer">ہندوستان</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation">
+        <button class="button" id="prevBtn" onclick="prevCard()" disabled>Back</button>
+        <button class="button" id="nextBtn" onclick="nextCard()">Next</button>
+    </div>
+
+    <!-- Flip Sound -->
+    <audio id="flipSound">
+        <source src="flip.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Prevent Storage & Cache
+        window.onload = () => {
+            localStorage.clear();
+            sessionStorage.clear();
+            document.cookie.split(";").forEach((cookie) => {
+                document.cookie = cookie.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+        };
+
+        const flashcards = [
+           { question: " اردو زبان کی پیدائش کہاں ہوئی ؟  ", answer: "          ہندوستان" },  
+      { question: " لفظ ہندوستان میں کتنے حروف ہیں ؟ ", answer: "      آٹھ 8" },
+      { question: " ہندوستانی ترنگا جھنڈا کا اوپر کا رنگ کیا ہے؟      ", answer: "زعفرانی" },
+      { question: "کوّا کا رنگ کالا ہے تو توتے کا رنگ کیا ہے ؟", answer: "ہرا" },
+      { question: "اردو زبان کسی طرف سے لکھی جاتی ہے؟", answer: "دائیں طرف سے" },
+      { question: " لفظ   اردو  کا معنى کیا ہے ؟", answer: "لشكر / فوج" },
+      { question: "  لفظ اردو کس زبان کا ہے ؟", answer: "ترکی" },
+      { question: " ترانے ہند کسنے لکھا ہے؟  ", answer: "علامہ محمد اقبال" },
+      { question: " علامہ اقبال کی پیداش کہاں ہوئی ؟ ", answer: "سیال کوٹ ۔ پنجاب" },
+      { question: "   نا مناسب چن کر لکھے ؟ : انگور ، کریلا ، سیب ، انار  ", answer: " کریلا" },
+      { question: " پھلوں راجا کون ہے ؟ ", answer: " آم" },
+      { question: " پھول کا رانی / راجا کون ہے؟", answer: " گلاب" },
+      { question: "میز ...... کتاب ہے؟ :  پر ، سے ،  کو ", answer: " پر" },
+      { question: " ہندوستان کے قومی کھیل کون سا ہے؟", answer: "  ہاکی" },
+      { question: "ہندوستان کے پہلے وزیرتعلیم کون ہے؟ ", answer: " مولانا ابوالکلام آزاد " },
+      { question: "  ہند وستان کے  وزیر اعظم کون ہے؟", answer: "  نریدر مودی" },
+      { question: " بال کا رنگ کالا ہے تو دانت کا رنگ کیا ہے؟", answer: "  سفید" },
+      { question: "  قومی یوم اردو کب منايا جاتا ہے؟", answer: " فروری 15  " },
+      { question: " قومی يوم  اردو کس کے یاد میں منایا جاتا ہے؟  ", answer: "  مرزا اسد الله خان غالب" },
+      { question: " عالمی یوم اردو کب منایا جاتا ہے ؟", answer: "  نومبر ۹" },
+      { question: "عالمی یوم اردو کس کے یاد میں منایا جاتا ہے ؟ ", answer: "  علامہ محمد اقبال" },
+      { question: " بابائے اردو كون ہے؟  ", answer: "  ڈاکٹر مولوی عبد الحق" },
+      { question: " بابائے قوم کون ہے؟", answer: "مہاتما گاندھی" },
+      { question: "لال قلعہ کہاں واقع ہے؟ ", answer: "  دہلی " },
+      { question: "  لال قلعہ کس نے بنایا ؟ ", answer: "  شاہ جہاں" },
+      { question: "  تاج محل کس نے بنایا ؟", answer: "  شاہ جہاں" },
+      { question: "تاج محل کس ندی کے کنارے واقع ہے ؟ ", answer: "  جمنا " },
+      { question: " بالِ جبريل اور بانگ درا کس کا کتاب ہے؟ ", answer: "  علامہ محمد اقبال" },
+      { question: " آج جمعہ ہے تو کل کونسا دن ہے ؟ ", answer: " سنیچر / ہفتہ" },
+      { question: " شاعر مشرق کون ہے ؟ ", answer: "  ڈاکٹر علامہ محمد اقبال" },
+        ];
+
+        let currentCard = 0;
+
+        function updateCard() {
+            document.getElementById("question").textContent = flashcards[currentCard].question;
+            document.getElementById("answer").textContent = flashcards[currentCard].answer;
+
+            document.getElementById("prevBtn").disabled = currentCard === 0;
+            document.getElementById("nextBtn").disabled = currentCard === flashcards.length - 1;
+
+            document.getElementById("flashcard-inner").style.transform = "";
+        }
+
+        function flipCard() {
+            const card = document.getElementById("flashcard-inner");
+            const flipSound = document.getElementById("flipSound");
+
+            flipSound.currentTime = 0;
+            flipSound.play();
+            card.style.transform = card.style.transform === "rotateY(180deg)" ? "" : "rotateY(180deg)";
+        }
+
+        function nextCard() {
+            if (currentCard < flashcards.length - 1) {
+                currentCard++;
+                updateCard();
+            }
+        }
+
+        function prevCard() {
+            if (currentCard > 0) {
+                currentCard--;
+                updateCard();
+            }
+        }
+
+        // Enable Keyboard Controls
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "ArrowRight") nextCard();
+            if (event.key === "ArrowLeft") prevCard();
+            if (event.key === " ") flipCard();
+        });
+
+        // Enable Swipe Gestures
+        let startX;
+        document.addEventListener("touchstart", (e) => {
+            startX = e.touches[0].clientX;
+        });
+
+        document.addEventListener("touchend", (e) => {
+            let endX = e.changedTouches[0].clientX;
+            if (startX - endX > 50) nextCard();
+            if (endX - startX > 50) prevCard();
+        });
+
+        updateCard();
+    </script>
+
+    <style>
+        @font-face {
+            font-family: 'NotoNastaliqUrdu-Regular';
+            src: url('NotoNastaliqUrdu-Regular.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            font-family: 'NotoNastaliqUrdu-Regular', serif;
+            direction: rtl;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f9f9f9;
+        }
+
+        .flashcard {
+            width: 90%;
+            max-width: 600px;
+            height: 60%;
+            max-height: 400px;
+            perspective: 1000px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s ease-in-out;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            font-size: 25px;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            border-radius: 10px;
+        }
+
+        .flashcard-front {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .flashcard-back {
+            background-color: #2196f3;
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .navigation {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .button {
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            flex: 1;
+            margin: 0 5px;
+        }
+
+        .button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</body>
+</html>
+
