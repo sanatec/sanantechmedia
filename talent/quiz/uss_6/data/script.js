@@ -6,7 +6,7 @@ const questions = [
         options: ["دھوبی", "درزی", "سنار", "کسان"],
         correct: 3,
       },{
-        question: "دو،	چار،	چھہ، ",
+        question: "دو،	چار،	چھہ ",
         options: ["پانچ", "سات", "آٹھ", "نو"],
         correct: 2,
       },
