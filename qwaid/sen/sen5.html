@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urdu Sentence Matching Game</title>
+    <style>
+        body { font-family: 'Poppins', sans-serif; text-align: center; background: linear-gradient(135deg, #84fab0, #8fd3f4); margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .game-container { max-width: 700px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); }
+        .sentence-box { font-size: 24px; font-weight: bold; background: #007bff; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .empty-container { min-height: 60px; border: 2px dashed #007bff; padding: 15px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-bottom: 20px; direction: rtl; border-radius: 8px; background: #f8f9fa; }
+        .word-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; direction: rtl; }
+        .word { padding: 12px 24px; background: #6c757d; color: white; border-radius: 5px; cursor: pointer; font-size: 18px; transition: 0.3s; text-align: center; }
+        .word:hover { background: #28a745; color: white; transform: scale(1.1); }
+        .word.selected { background: #28a745; color: white; }
+        .message { font-size: 20px; font-weight: bold; margin-top: 20px; color: #ff5722; }
+        .score { font-size: 22px; font-weight: bold; margin-top: 10px; color: #343a40; }
+        .button-container { margin-top: 20px; display: flex; justify-content: center; gap: 15px; }
+        .btn { background: #007bff; color: white; padding: 12px 25px; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; transition: 0.3s; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); }
+        .btn:hover { background: #0056b3; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="score">Score: <span id="score">20</span></div>
+        <div class="sentence-box" id="englishSentence">She is reading a book</div>
+        <div class="empty-container" id="userSentence"><div class="word">وہ</div><div class="word">ایک</div><div class="word">کتاب</div><div class="word">پڑھ</div><div class="word">رہی</div><div class="word">ہے</div></div>
+        <div class="word-container" id="urduWords"><div class="word selected" style="visibility: hidden;">کتاب</div><div class="word selected" style="visibility: hidden;">ایک</div><div class="word selected" style="visibility: hidden;">پڑھ</div><div class="word selected" style="visibility: hidden;">وہ</div><div class="word selected" style="visibility: hidden;">رہی</div><div class="word selected" style="visibility: hidden;">ہے</div></div>
+        <p class="message" id="result">✔ Correct!</p>
+        <div class="button-container">
+            <button onclick="resetSentence()" class="btn">Reset</button>
+            <button onclick="nextQuestion()" id="nextBtn" class="btn" style="display: block;">Next</button>
+        </div>
+    </div>
+
+    <script>
+        const sentences = [
+        { "english": "I will go to school", "urdu": ["میں", "اسکول", "جاؤں", "گا"] },
+    { "english": "She will read a book", "urdu": ["وہ", "ایک", "کتاب", "پڑھے", "گی"] },
+    { "english": "He will play football", "urdu": ["وہ", "فٹبال", "کھیلے", "گا"] },
+    { "english": "We will eat lunch", "urdu": ["ہم", "دوپہر", "کا", "کھانا", "کھائیں", "گے"] },
+    { "english": "Birds will fly in the sky", "urdu": ["پرندے", "آسمان", "میں", "اڑیں", "گے"] },
+    { "english": "She will cook food", "urdu": ["وہ", "کھانا", "پکائے", "گی"] },
+    { "english": "He will drink water", "urdu": ["وہ", "پانی", "پیے", "گا"] },
+    { "english": "I will write a letter", "urdu": ["میں", "ایک", "خط", "لکھوں", "گا"] },
+    { "english": "Children will play outside", "urdu": ["بچے", "باہر", "کھیلیں", "گے"] },
+    { "english": "The sun will shine brightly", "urdu": ["سورج", "روشن", "چمکے", "گا"] },
+    { "english": "She will wash clothes", "urdu": ["وہ", "کپڑے", "دھوئے", "گی"] },
+    { "english": "He will run fast", "urdu": ["وہ", "تیزی", "سے", "دوڑے", "گا"] },
+    { "english": "We will watch TV", "urdu": ["ہم", "ٹی وی", "دیکھیں", "گے"] },
+    { "english": "They will talk", "urdu": ["وہ", "بات", "کریں", "گے"] },
+    { "english": "I will listen to music", "urdu": ["میں", "موسیقی", "سنوں", "گا"] },
+    { "english": "He will learn English", "urdu": ["وہ", "انگریزی", "سیکھے", "گا"] },
+    { "english": "She will sing a song", "urdu": ["وہ", "گانا", "گائے", "گی"] },
+    { "english": "The baby will cry", "urdu": ["بچہ", "روئے", "گا"] },
+    { "english": "The dog will bark", "urdu": ["کتا", "بھونکے", "گا"] },
+    { "english": "They will go to the market", "urdu": ["وہ", "بازار", "جائیں", "گے"] },
+    { "english": "I will feel happy", "urdu": ["میں", "خوش", "محسوس", "کروں", "گا"] },
+    { "english": "She will make tea", "urdu": ["وہ", "چائے", "بنائے", "گی"] },
+    { "english": "He will repair the car", "urdu": ["وہ", "گاڑی", "ٹھیک", "کرے", "گا"] },
+    { "english": "We will plant trees", "urdu": ["ہم", "درخت", "لگائیں", "گے"] },
+    { "english": "The teacher will teach", "urdu": ["استاد", "پڑھائے", "گا"] },
+    { "english": "The students will study", "urdu": ["طلبہ", "پڑھیں", "گے"] },
+    { "english": "She will open the door", "urdu": ["وہ", "دروازہ", "کھولے", "گی"] },
+    { "english": "He will close the window", "urdu": ["وہ", "کھڑکی", "بند", "کرے", "گا"] },
+    { "english": "I will eat an apple", "urdu": ["میں", "ایک", "سیب", "کھاؤں", "گا"] },
+    { "english": "The clock will tick", "urdu": ["گھڑی", "ٹک", "ٹک", "کرے", "گی"] },
+    { "english": "They will celebrate a birthday", "urdu": ["وہ", "سالگرہ", "منائیں", "گے"] },
+    { "english": "She will comb her hair", "urdu": ["وہ", "اپنے", "بال", "سیدھے", "کرے", "گی"] },
+    { "english": "He will brush his teeth", "urdu": ["وہ", "اپنے", "دانت", "صاف", "کرے", "گا"] },
+    { "english": "The baby will sleep", "urdu": ["بچہ", "سوئے", "گا"] },
+    { "english": "I will wash my hands", "urdu": ["میں", "اپنے", "ہاتھ", "دھوؤں", "گا"] },
+    { "english": "She will buy vegetables", "urdu": ["وہ", "سبزیاں", "خریدے", "گی"] },
+    { "english": "He will sell fruits", "urdu": ["وہ", "پھل", "بیچے", "گا"] },
+    { "english": "We will clean the room", "urdu": ["ہم", "کمرہ", "صاف", "کریں", "گے"] },
+    { "english": "The phone will ring", "urdu": ["فون", "بجے", "گا"] },
+    { "english": "She will feed the cat", "urdu": ["وہ", "بلی", "کو", "کھانا", "کھلائے", "گی"] },
+    { "english": "He will water the plants", "urdu": ["وہ", "پودوں", "کو", "پانی", "دے", "گا"] },
+    { "english": "They will go to work", "urdu": ["وہ", "کام", "پر", "جائیں", "گے"] },
+    { "english": "The wind will blow", "urdu": ["ہوا", "چلے", "گی"] },
+    { "english": "The river will flow", "urdu": ["دریا", "بہے", "گا"] },
+    { "english": "I will draw a picture", "urdu": ["میں", "تصویر", "بناؤں", "گا"] },
+    { "english": "She will wear a dress", "urdu": ["وہ", "لباس", "پہنے", "گی"] },
+    { "english": "He will fix the chair", "urdu": ["وہ", "کرسی", "ٹھیک", "کرے", "گا"] },
+    { "english": "They will dance", "urdu": ["وہ", "ناچیں", "گے"] }
+];
+
+        let currentSentence = 0;
+        let userSelection = [];
+        let score = 0;
+
+        function loadSentence() {
+            document.getElementById("result").textContent = "";
+            document.getElementById("nextBtn").style.display = "none";
+            document.getElementById("englishSentence").textContent = sentences[currentSentence].english;
+            document.getElementById("userSentence").innerHTML = "";
+            const urduContainer = document.getElementById("urduWords");
+            urduContainer.innerHTML = "";
+            userSelection = [];
+
+            let shuffledWords = [...sentences[currentSentence].urdu].sort(() => Math.random() - 0.5);
+            shuffledWords.forEach((word) => {
+                let div = document.createElement("div");
+                div.textContent = word;
+                div.classList.add("word");
+                div.onclick = () => selectWord(div, word);
+                urduContainer.appendChild(div);
+            });
+        }
+
+        function selectWord(element, word) {
+            userSelection.push(word);
+            element.classList.add("selected");
+            element.style.visibility = "hidden";
+            let userSentenceContainer = document.getElementById("userSentence");
+            let newWord = document.createElement("div");
+            newWord.textContent = word;
+            newWord.classList.add("word");
+            userSentenceContainer.appendChild(newWord);
+            checkMatch();
+        }
+
+        function checkMatch() {
+            if (userSelection.length === sentences[currentSentence].urdu.length) {
+                let correctOrder = sentences[currentSentence].urdu.join(" ");
+                let userOrder = userSelection.join(" ");
+                if (userOrder === correctOrder) {
+                    document.getElementById("result").textContent = "✔ Correct!";
+                    document.getElementById("nextBtn").style.display = "block";
+                    score += 10;
+                    document.getElementById("score").textContent = score;
+                } else {
+                    document.getElementById("result").textContent = "✖ Try again!";
+                }
+            }
+        }
+
+        function resetSentence() {
+            loadSentence();
+        }
+
+        function nextQuestion() {
+            currentSentence++;
+            if (currentSentence < sentences.length) {
+                loadSentence();
+            } else {
+                document.getElementById("englishSentence").textContent = "🎉 Game Over! You matched all sentences.";
+                document.getElementById("urduWords").innerHTML = "";
+                document.getElementById("nextBtn").style.display = "none";
+            }
+        }
+
+        loadSentence();
+    </script>
+
+</body></html>

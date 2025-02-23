@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urdu Sentence Matching Game</title>
+    <style>
+        body { font-family: 'Poppins', sans-serif; text-align: center; background: linear-gradient(135deg, #84fab0, #8fd3f4); margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .game-container { max-width: 700px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); }
+        .sentence-box { font-size: 24px; font-weight: bold; background: #007bff; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .empty-container { min-height: 60px; border: 2px dashed #007bff; padding: 15px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-bottom: 20px; direction: rtl; border-radius: 8px; background: #f8f9fa; }
+        .word-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; direction: rtl; }
+        .word { padding: 12px 24px; background: #6c757d; color: white; border-radius: 5px; cursor: pointer; font-size: 18px; transition: 0.3s; text-align: center; }
+        .word:hover { background: #28a745; color: white; transform: scale(1.1); }
+        .word.selected { background: #28a745; color: white; }
+        .message { font-size: 20px; font-weight: bold; margin-top: 20px; color: #ff5722; }
+        .score { font-size: 22px; font-weight: bold; margin-top: 10px; color: #343a40; }
+        .button-container { margin-top: 20px; display: flex; justify-content: center; gap: 15px; }
+        .btn { background: #007bff; color: white; padding: 12px 25px; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; transition: 0.3s; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); }
+        .btn:hover { background: #0056b3; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="score">Score: <span id="score">20</span></div>
+        <div class="sentence-box" id="englishSentence">She is reading a book</div>
+        <div class="empty-container" id="userSentence"><div class="word">وہ</div><div class="word">ایک</div><div class="word">کتاب</div><div class="word">پڑھ</div><div class="word">رہی</div><div class="word">ہے</div></div>
+        <div class="word-container" id="urduWords"><div class="word selected" style="visibility: hidden;">کتاب</div><div class="word selected" style="visibility: hidden;">ایک</div><div class="word selected" style="visibility: hidden;">پڑھ</div><div class="word selected" style="visibility: hidden;">وہ</div><div class="word selected" style="visibility: hidden;">رہی</div><div class="word selected" style="visibility: hidden;">ہے</div></div>
+        <p class="message" id="result">✔ Correct!</p>
+        <div class="button-container">
+            <button onclick="resetSentence()" class="btn">Reset</button>
+            <button onclick="nextQuestion()" id="nextBtn" class="btn" style="display: block;">Next</button>
+        </div>
+    </div>
+
+    <script>
+        const sentences = [
+    { "english": "I am going to school", "urdu": ["میں", "اسکول", "جا", "رہا", "ہوں"] },
+    { "english": "She is reading a book", "urdu": ["وہ", "ایک", "کتاب", "پڑھ", "رہی", "ہے"] },
+    { "english": "He is playing football", "urdu": ["وہ", "فٹبال", "کھیل", "رہا", "ہے"] },
+    { "english": "We are eating lunch", "urdu": ["ہم", "دوپہر", "کا", "کھانا", "کھا", "رہے", "ہیں"] },
+    { "english": "Birds are flying in the sky", "urdu": ["پرندے", "آسمان", "میں", "اڑ", "رہے", "ہیں"] },
+    { "english": "She is cooking food", "urdu": ["وہ", "کھانا", "پکا", "رہی", "ہے"] },
+    { "english": "He is drinking water", "urdu": ["وہ", "پانی", "پی", "رہا", "ہے"] },
+    { "english": "I am writing a letter", "urdu": ["میں", "ایک", "خط", "لکھ", "رہا", "ہوں"] },
+    { "english": "Children are playing outside", "urdu": ["بچے", "باہر", "کھیل", "رہے", "ہیں"] },
+    { "english": "The sun is shining brightly", "urdu": ["سورج", "روشن", "چمک", "رہا", "ہے"] },
+    { "english": "She is washing clothes", "urdu": ["وہ", "کپڑے", "دھو", "رہی", "ہے"] },
+    { "english": "He is running fast", "urdu": ["وہ", "تیزی", "سے", "دوڑ", "رہا", "ہے"] },
+    { "english": "We are watching TV", "urdu": ["ہم", "ٹی وی", "دیکھ", "رہے", "ہیں"] },
+    { "english": "They are talking", "urdu": ["وہ", "بات", "کر", "رہے", "ہیں"] },
+    { "english": "I am listening to music", "urdu": ["میں", "موسیقی", "سن", "رہا", "ہوں"] },
+    { "english": "He is learning English", "urdu": ["وہ", "انگریزی", "سیکھ", "رہا", "ہے"] },
+    { "english": "She is singing a song", "urdu": ["وہ", "گانا", "گا", "رہی", "ہے"] },
+    { "english": "The baby is crying", "urdu": ["بچہ", "رو", "رہا", "ہے"] },
+    { "english": "The dog is barking", "urdu": ["کتا", "بھونک", "رہا", "ہے"] },
+    { "english": "They are going to the market", "urdu": ["وہ", "بازار", "جا", "رہے", "ہیں"] },
+    { "english": "I am feeling happy", "urdu": ["میں", "خوش", "محسوس", "کر", "رہا", "ہوں"] },
+    { "english": "She is making tea", "urdu": ["وہ", "چائے", "بنا", "رہی", "ہے"] },
+    { "english": "He is repairing the car", "urdu": ["وہ", "گاڑی", "ٹھیک", "کر", "رہا", "ہے"] },
+    { "english": "We are planting trees", "urdu": ["ہم", "درخت", "لگا", "رہے", "ہیں"] },
+    { "english": "The teacher is teaching", "urdu": ["استاد", "پڑھا", "رہا", "ہے"] },
+    { "english": "The students are studying", "urdu": ["طلبہ", "پڑھ", "رہے", "ہیں"] },
+    { "english": "She is opening the door", "urdu": ["وہ", "دروازہ", "کھول", "رہی", "ہے"] },
+    { "english": "He is closing the window", "urdu": ["وہ", "کھڑکی", "بند", "کر", "رہا", "ہے"] },
+    { "english": "I am eating an apple", "urdu": ["میں", "ایک", "سیب", "کھا", "رہا", "ہوں"] },
+    { "english": "The clock is ticking", "urdu": ["گھڑی", "ٹک", "ٹک", "کر", "رہی", "ہے"] },
+    { "english": "They are celebrating a birthday", "urdu": ["وہ", "سالگرہ", "منا", "رہے", "ہیں"] },
+    { "english": "She is combing her hair", "urdu": ["وہ", "اپنے", "بال", "سیدھے", "کر", "رہی", "ہے"] },
+    { "english": "He is brushing his teeth", "urdu": ["وہ", "اپنے", "دانت", "صاف", "کر", "رہا", "ہے"] },
+    { "english": "The baby is sleeping", "urdu": ["بچہ", "سو", "رہا", "ہے"] },
+    { "english": "I am washing my hands", "urdu": ["میں", "اپنے", "ہاتھ", "دھو", "رہا", "ہوں"] },
+    { "english": "She is buying vegetables", "urdu": ["وہ", "سبزیاں", "خرید", "رہی", "ہے"] },
+    { "english": "He is selling fruits", "urdu": ["وہ", "پھل", "بیچ", "رہا", "ہے"] },
+    { "english": "We are cleaning the room", "urdu": ["ہم", "کمرہ", "صاف", "کر", "رہے", "ہیں"] },
+    { "english": "The phone is ringing", "urdu": ["فون", "بج", "رہا", "ہے"] },
+    { "english": "She is feeding the cat", "urdu": ["وہ", "بلی", "کو", "کھانا", "کھلا", "رہی", "ہے"] },
+    { "english": "He is watering the plants", "urdu": ["وہ", "پودوں", "کو", "پانی", "دے", "رہا", "ہے"] },
+    { "english": "They are going to work", "urdu": ["وہ", "کام", "پر", "جا", "رہے", "ہیں"] },
+    { "english": "The wind is blowing", "urdu": ["ہوا", "چل", "رہی", "ہے"] },
+    { "english": "The river is flowing", "urdu": ["دریا", "بہ", "رہا", "ہے"] },
+    { "english": "I am drawing a picture", "urdu": ["میں", "تصویر", "بنا", "رہا", "ہوں"] },
+    { "english": "She is wearing a dress", "urdu": ["وہ", "لباس", "پہن", "رہی", "ہے"] },
+    { "english": "He is fixing the chair", "urdu": ["وہ", "کرسی", "ٹھیک", "کر", "رہا", "ہے"] },
+    { "english": "They are dancing", "urdu": ["وہ", "ناچ", "رہے", "ہیں"] }
+];
+
+        let currentSentence = 0;
+        let userSelection = [];
+        let score = 0;
+
+        function loadSentence() {
+            document.getElementById("result").textContent = "";
+            document.getElementById("nextBtn").style.display = "none";
+            document.getElementById("englishSentence").textContent = sentences[currentSentence].english;
+            document.getElementById("userSentence").innerHTML = "";
+            const urduContainer = document.getElementById("urduWords");
+            urduContainer.innerHTML = "";
+            userSelection = [];
+
+            let shuffledWords = [...sentences[currentSentence].urdu].sort(() => Math.random() - 0.5);
+            shuffledWords.forEach((word) => {
+                let div = document.createElement("div");
+                div.textContent = word;
+                div.classList.add("word");
+                div.onclick = () => selectWord(div, word);
+                urduContainer.appendChild(div);
+            });
+        }
+
+        function selectWord(element, word) {
+            userSelection.push(word);
+            element.classList.add("selected");
+            element.style.visibility = "hidden";
+            let userSentenceContainer = document.getElementById("userSentence");
+            let newWord = document.createElement("div");
+            newWord.textContent = word;
+            newWord.classList.add("word");
+            userSentenceContainer.appendChild(newWord);
+            checkMatch();
+        }
+
+        function checkMatch() {
+            if (userSelection.length === sentences[currentSentence].urdu.length) {
+                let correctOrder = sentences[currentSentence].urdu.join(" ");
+                let userOrder = userSelection.join(" ");
+                if (userOrder === correctOrder) {
+                    document.getElementById("result").textContent = "✔ Correct!";
+                    document.getElementById("nextBtn").style.display = "block";
+                    score += 10;
+                    document.getElementById("score").textContent = score;
+                } else {
+                    document.getElementById("result").textContent = "✖ Try again!";
+                }
+            }
+        }
+
+        function resetSentence() {
+            loadSentence();
+        }
+
+        function nextQuestion() {
+            currentSentence++;
+            if (currentSentence < sentences.length) {
+                loadSentence();
+            } else {
+                document.getElementById("englishSentence").textContent = "🎉 Game Over! You matched all sentences.";
+                document.getElementById("urduWords").innerHTML = "";
+                document.getElementById("nextBtn").style.display = "none";
+            }
+        }
+
+        loadSentence();
+    </script>
+
+</body></html>

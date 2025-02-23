@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ur"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muzakkar &amp; Muannas Quiz</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #f8f9fa; margin: 0; padding: 20px; }
+        h2 { color: #333; font-size: 1.5em; }
+        .quiz-container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+        .word { font-size: 1.5em; margin: 20px 0; }
+        .button { background: #007bff; color: white; padding: 10px 15px; border: none; cursor: pointer; font-size: 1em; border-radius: 5px; margin: 5px; }
+        .button:hover { background: #0056b3; }
+        .correct { color: green; font-size: 1.2em; }
+        .wrong { color: red; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <h2>مذکر اور مؤنث کو پہچانیں</h2>
+    <div class="quiz-container">
+        <div class="word" id="word">کتاب</div>
+        <button class="button" onclick="checkAnswer('Muzakkar')">مذکر</button>
+        <button class="button" onclick="checkAnswer('Muannas')">مؤنث</button>
+        <p id="feedback" class="correct">صحیح!</p>
+        <p>اسکور: <span id="score">1</span></p>
+        <button class="button" onclick="nextQuestion()">Next</button>
+    </div>
+    <audio id="correct-sound" src="co.mp3"></audio>
+    <audio id="wrong-sound" src="wr.mp3"></audio>
+    <script>
+        const words = [
+{ text: "لڑکا", type: "Muzakkar" }, { text: "کتاب", type: "Muannas" },
+{ text: "دروازہ", type: "Muzakkar" }, { text: "کرسی", type: "Muannas" },
+{ text: "قلم", type: "Muzakkar" }, { text: "چائے", type: "Muannas" },
+{ text: "پھول", type: "Muzakkar" }, { text: "زمین", type: "Muannas" },
+{ text: "یتیم خانہ", type: "Muzakkar" }, { text: "ٹوپی", type: "Muannas" },
+{ text: "دواخانہ", type: "Muzakkar" }, { text: "روٹی", type: "Muannas" },
+{ text: "کتب خانہ", type: "Muzakkar" }, { text: "لڑی", type: "Muannas" },
+{ text: "اتوار", type: "Muzakkar" }, { text: "دعا", type: "Muannas" },
+{ text: "پیر", type: "Muzakkar" }, { text: "سزا", type: "Muannas" },
+{ text: "منگل", type: "Muzakkar" }, { text: "گھٹا", type: "Muannas" },
+{ text: "سونا", type: "Muzakkar" }, { text: "محبت", type: "Muannas" },
+{ text: "لوہا", type: "Muzakkar" }, { text: "عبادت", type: "Muannas" },
+{ text: "ہیرا", type: "Muzakkar" }, { text: "عظمت", type: "Muannas" },
+{ text: "موتی", type: "Muzakkar" }, { text: "بارش", type: "Muannas" },
+{ text: "ہمالہ", type: "Muzakkar" }, { text: "آتش", type: "Muannas" },
+{ text: "جنوری", type: "Muzakkar" }, { text: "خواہش", type: "Muannas" },
+{ text: "دسمبر", type: "Muzakkar" }, { text: "چمک", type: "Muannas" },
+{ text: "اگست", type: "Muzakkar" }, { text: "مہک", type: "Muannas" },
+{ text: "بچپن", type: "Muzakkar" }, { text: "بھوک", type: "Muannas" },
+{ text: "لڑکپن", type: "Muzakkar" }, { text: "دنیا", type: "Muannas" },
+{ text: "پاگلپن", type: "Muzakkar" }, { text: "کیمیا", type: "Muannas" },
+{ text: "گلستان", type: "Muzakkar" }, { text: "چھالیا", type: "Muannas" },
+{ text: "قبرستان", type: "Muzakkar" }, { text: "بندگی", type: "Muannas" },
+{ text: "ہندوستان", type: "Muzakkar" }, { text: "زندگی", type: "Muannas" },
+{ text: "قلم دان", type: "Muzakkar" }, { text: "آمادگی", type: "Muannas" },
+{ text: "کنواں", type: "Muzakkar" }, { text: "بناوٹ", type: "Muannas" },
+{ text: "دھواں", type: "Muzakkar" }, { text: "ملاوٹ", type: "Muannas" },
+{ text: "کمربند", type: "Muzakkar" }, { text: "مسکراہٹ", type: "Muannas" },
+{ text: "دستار بند", type: "Muzakkar" }, { text: "گھبراہٹ", type: "Muannas" },
+{ text: "مشتری", type: "Muzakkar" }, { text: "زمین", type: "Muannas" },
+{ text: "زہرہ", type: "Muzakkar" }, { text: "بندرگاہ", type: "Muannas" },
+{ text: "تقاتل", type: "Muzakkar" }, { text: "درس گاہ", type: "Muannas" },
+{ text: "تقارب", type: "Muzakkar" }, { text: "عبادت گاہ", type: "Muannas" },
+{ text: "تقاصر", type: "Muzakkar" }, { text: "بات", type: "Muannas" },
+{ text: "مشاعرہ", type: "Muzakkar" }, { text: "رات", type: "Muannas" },
+{ text: "معائنہ", type: "Muzakkar" }, { text: "کتاب", type: "Muannas" },
+{ text: "ملاحظہ", type: "Muzakkar" }, { text: "اردو", type: "Muannas" },
+{ text: "اسلام", type: "Muzakkar" }, { text: "عربی", type: "Muannas" },
+{ text: "احسان", type: "Muzakkar" }, { text: "فارسی", type: "Muannas" },
+{ text: "انسان", type: "Muzakkar" }, { text: "انگریزی", type: "Muannas" },
+{ text: "انقلاب", type: "Muzakkar" }, { text: "عصر", type: "Muannas" },
+{ text: "امتحان", type: "Muzakkar" }, { text: "مغرب", type: "Muannas" },
+{ text: "انتخاب", type: "Muzakkar" }, { text: "ظہر", type: "Muannas" },
+{ text: "استعمال", type: "Muzakkar" }, { text: "تعلیم", type: "Muannas" },
+{ text: "استفہام", type: "Muzakkar" }, { text: "آب و ہوا", type: "Muannas" },
+{ text: "استقبال", type: "Muzakkar" }, { text: "چاندی", type: "Muannas" },
+{ text: "پانی", type: "Muzakkar" }, { text: "جمعرات", type: "Muannas" },
+
+];
+        let currentWord = {};
+        let score = 0;
+
+        function nextQuestion() {
+            let randomIndex = Math.floor(Math.random() * words.length);
+            currentWord = words[randomIndex];
+            document.getElementById("word").innerText = currentWord.text;
+            document.getElementById("feedback").innerText = "";
+        }
+
+        function checkAnswer(selectedType) {
+            if (selectedType === currentWord.type) {
+                document.getElementById("feedback").innerText = "صحیح!";
+                document.getElementById("feedback").className = "correct";
+                document.getElementById("correct-sound").play();
+                score++;
+            } else {
+                document.getElementById("feedback").innerText = "غلط!";
+                document.getElementById("feedback").className = "wrong";
+                document.getElementById("wrong-sound").play();
+            }
+            document.getElementById("score").innerText = score;
+        }
+
+        window.onload = nextQuestion;
+    </script>
+
+</body></html>

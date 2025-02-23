@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urdu Opposite Words Matching Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            color: #343a40;
+        }
+        #game-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            justify-content: center;
+            max-width: 350px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card {
+            width: 150px;
+            height: 60px;
+            background-color: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .card:hover {
+            background-color: #0056b3;
+        }
+        .matched {
+            background-color: #28a745 !important;
+        }
+        #score {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Urdu Opposite Words Matching Game</h2>
+    <div id="game-container"></div>
+    <p id="score">Score: 0</p>
+    <audio id="match-sound" src="co.mp3"></audio>
+    <script>
+const words = [
+{ word: "سچ", opposite: "جھوٹ" },
+{ word: "اندھیرا", opposite: "روشنی" },
+{ word: "خوبصورت", opposite: "بدصورت" },
+{ word: "چھوٹا", opposite: "بڑا" },
+{ word: "گرم", opposite: "سرد" },
+{ word: "موٹا", opposite: "پتلا" },
+{ word: "تیز", opposite: "آہستہ" },
+{ word: "زندہ", opposite: "مردہ" },
+{ word: "کم", opposite: "زیادہ" },
+{ word: "نرم", opposite: "سخت" },
+{ word: "خوشی", opposite: "غم" },
+{ word: "نیا", opposite: "پرانا" },
+{ word: "امیر", opposite: "غریب" },
+{ word: "بہادر", opposite: "بزدل" },
+{ word: "قوی", opposite: "کمزور" },
+{ word: "آسان", opposite: "مشکل" },
+{ word: "سیدھا", opposite: "ٹیڑھا" },
+{ word: "شروع", opposite: "ختم" },
+{ word: "مکمل", opposite: "نامکمل" },
+{ word: "محبت", opposite: "نفرت" },
+{ word: "قریب", opposite: "دور" },
+{ word: "اونچا", opposite: "نیچا" },
+{ word: "ہلکا", opposite: "بھاری" },
+{ word: "دھوپ", opposite: "سایہ" },
+{ word: "آگے", opposite: "پیچھے" },
+{ word: "چمکدار", opposite: "مدھم" },
+{ word: "جیت", opposite: "ہار" },
+{ word: "زیادہ", opposite: "تھوڑا" },
+{ word: "خوشبو", opposite: "بدبو" },
+{ word: "پکا", opposite: "کچا" },
+{ word: "سچا", opposite: "جھوٹا" },
+{ word: "دوست", opposite: "دشمن" },
+{ word: "خشک", opposite: "تر" },
+{ word: "روشن", opposite: "مدھم" },
+{ word: "گہرا", opposite: "ہلکا" },
+{ word: "عقل مند", opposite: "بے وقوف" },
+{ word: "محبت", opposite: "بغض" },
+{ word: "مضبوط", opposite: "کمزور" },
+{ word: "حلال", opposite: "حرام" },
+{ word: "میٹھا", opposite: "کڑوا" },
+{ word: "محتاج", opposite: "خودکفیل" },
+{ word: "انوکھا", opposite: "عام" },
+{ word: "حاضر", opposite: "غائب" },
+{ word: "نیک", opposite: "بد" },
+{ word: "بہادر", opposite: "ڈرپوک" },
+{ word: "سکون", opposite: "بےچینی" },
+{ word: "سیدھا", opposite: "الٹا" },
+{ word: "اجازت", opposite: "پابندی" },
+{ word: "کھلا", opposite: "بند" },
+{ word: "لمبا", opposite: "چھوٹا" },
+{ word: "باریک", opposite: "موٹا" },
+{ word: "صاف", opposite: "گندا" },
+{ word: "چست", opposite: "سست" },
+{ word: "قلیل", opposite: "وافر" },
+{ word: "جائز", opposite: "ناجائز" },
+{ word: "حیات", opposite: "وفات" },
+{ word: "خوش", opposite: "اداس" },
+{ word: "انصاف", opposite: "ظلم" },
+{ word: "دھوپ", opposite: "چھاؤں" },
+{ word: "تندرست", opposite: "بیمار" },
+{ word: "جلدی", opposite: "دیر" },
+{ word: "اونچا", opposite: "نیچا" },
+{ word: "ہلکا", opposite: "بھاری" },
+{ word: "دائیں", opposite: "بائیں" },
+{ word: "چوڑا", opposite: "تنگ" },
+{ word: "محفوظ", opposite: "غیر محفوظ" },
+{ word: "قبول", opposite: "مسترد" },
+{ word: "خشک", opposite: "گیلا" },
+{ word: "اکیلا", opposite: "مجمع" },
+{ word: "بڑا", opposite: "چھوٹا" },
+{ word: "جادو", opposite: "حقیقت" },
+{ word: "خاموش", opposite: "بولتا" },
+{ word: "قابل", opposite: "نااہل" },
+{ word: "ترقی", opposite: "تنزلی" },
+{ word: "توجہ", opposite: "لاپرواہی" },
+{ word: "روایتی", opposite: "جدید" },
+{ word: "پرامن", opposite: "پریشان" },
+{ word: "مہنگا", opposite: "سستا" },
+{ word: "سچائی", opposite: "جھوٹ" },
+{ word: "امید", opposite: "مایوسی" },
+{ word: "جوان", opposite: "بوڑھا" },
+{ word: "صاف", opposite: "گندا" },
+{ word: "بہترین", opposite: "بدترین" },
+{ word: "شرمیلا", opposite: "بے شرم" },
+{ word: "مسکراہٹ", opposite: "اداسی" },
+{ word: "اچھا", opposite: "برا" },
+{ word: "عقل مند", opposite: "نادان" },
+{ word: "پیدائش", opposite: "موت" },
+{ word: "غلط", opposite: "صحیح" },
+{ word: "رحم", opposite: "ظلم" },
+{ word: "انتظار", opposite: "جلدی" },
+{ word: "ہنسی", opposite: "رونا" },
+{ word: "پتھر", opposite: "مٹی" },
+{ word: "باہر", opposite: "اندر" },
+{ word: "اونچائی", opposite: "گہرائی" },
+{ word: "جلانا", opposite: "بجھانا" },
+{ word: "خاموشی", opposite: "شور" },
+{ word: "چمک", opposite: "مدھم" },
+{ word: "ہنر", opposite: "جہالت" },
+{ word: "سکون", opposite: "بےچینی" },
+{ word: "محبت", opposite: "نفرت" },
+{ word: "حرکت", opposite: "سکون" },
+{ word: "سیدھا", opposite: "ٹیڑھا" },
+{ word: "خوف", opposite: "ہمت" },
+{ word: "معمولی", opposite: "خاص" },
+{ word: "ہنر مند", opposite: "نالائق" },
+{ word: "ادب", opposite: "بدتمیزی" },
+{ word: "آزادی", opposite: "قید" },
+{ word: "گناہ", opposite: "ثواب" },
+{ word: "روشن", opposite: "اندھیرا" },
+{ word: "بند", opposite: "کھلا" },
+{ word: "آگ", opposite: "پانی" },
+{ word: "عظیم", opposite: "حقیر" },
+{ word: "بیمار", opposite: "صحت مند" },
+{ word: "تنہائی", opposite: "میل جول" },
+{ word: "ملنا", opposite: "بچھڑنا" },
+{ word: "سچ", opposite: "جھوٹ" },
+{ word: "وفادار", opposite: "بے وفا" },
+{ word: "خوفناک", opposite: "پیارا" },
+{ word: "بہاؤ", opposite: "ٹھہراؤ" },
+{ word: "چالاک", opposite: "سادہ لوح" },
+{ word: "ظاہر", opposite: "پوشیدہ" },
+{ word: "صاف گو", opposite: "چالاک" },
+{ word: "سورج", opposite: "چاند" },
+{ word: "نیکی", opposite: "بدی" },
+{ word: "ملائم", opposite: "کھردرا" },
+{ word: "ذہین", opposite: "بیوقوف" },
+{ word: "محفوظ", opposite: "خطرناک" },
+{ word: "پیار", opposite: "ناراضگی" },
+{ word: "امیدوار", opposite: "مایوس" },
+{ word: "جیت", opposite: "ہار" },
+{ word: "پیدا", opposite: "ختم" },
+{ word: "مجبور", opposite: "آزاد" },
+{ word: "کھٹا", opposite: "میٹھا" },
+{ word: "نرم", opposite: "سخت" },
+{ word: "مضبوط", opposite: "کمزور" },
+{ word: "تیزی", opposite: "سستی" },
+{ word: "ہوشیار", opposite: "غافل" },
+{ word: "بیچ", opposite: "کنارہ" },
+{ word: "ماننا", opposite: "انکار کرنا" },
+{ word: "خالص", opposite: "ملاوٹ شدہ" },
+{ word: "وسیع", opposite: "تنگ" },
+{ word: "زندگی", opposite: "موت" },
+{ word: "پرسکون", opposite: "پریشان" },
+{ word: "کھردرا", opposite: "چکنا" },
+{ word: "دھوکہ", opposite: "ایمانداری" },
+{ word: "محنتی", opposite: "سست" },
+{ word: "عالی شان", opposite: "گھٹیا" },
+{ word: "فائدہ", opposite: "نقصان" },
+{ word: "ذلت", opposite: "عزت" },
+{ word: "لچکدار", opposite: "سخت" },
+{ word: "کامیاب", opposite: "ناکام" },
+{ word: "وسیع", opposite: "چھوٹا" }
+];
+        let selectedCards = [];
+        let score = 0;
+        
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function createGameBoard() {
+            const gameContainer = document.getElementById("game-container");
+            gameContainer.innerHTML = "";
+            let selectedWords = shuffle(words).slice(0, 4);
+            let shuffledWords = shuffle([...selectedWords.flatMap(w => [w.word, w.opposite])]);
+            shuffledWords.forEach(word => {
+                const card = document.createElement("div");
+                card.classList.add("card");
+                card.textContent = word;
+                card.dataset.word = word;
+                card.addEventListener("click", () => selectCard(card));
+                gameContainer.appendChild(card);
+            });
+        }
+
+        function selectCard(card) {
+            if (selectedCards.length < 2 && !card.classList.contains("matched")) {
+                selectedCards.push(card);
+                card.style.backgroundColor = "#ffc107";
+                if (selectedCards.length === 2) {
+                    checkMatch();
+                }
+            }
+        }
+
+        function checkMatch() {
+            let word1 = selectedCards[0].dataset.word;
+            let word2 = selectedCards[1].dataset.word;
+            let match = words.some(w => (w.word === word1 && w.opposite === word2) || (w.opposite === word1 && w.word === word2));
+            if (match) {
+                document.getElementById("match-sound").play();
+                setTimeout(() => {
+                    selectedCards.forEach(card => card.classList.add("matched"));
+                    selectedCards = [];
+                    checkGameEnd();
+                }, 500);
+                score += 1;
+            } else {
+                setTimeout(() => {
+                    selectedCards.forEach(card => card.style.backgroundColor = "#007bff");
+                    selectedCards = [];
+                }, 500);
+            }
+            document.getElementById("score").textContent = "Score: " + score;
+        }
+
+        function checkGameEnd() {
+            if (document.querySelectorAll(".card:not(.matched)").length === 0) {
+                setTimeout(createGameBoard, 1000);
+            }
+        }
+
+        createGameBoard();
+    </script>
+</body>
+</html>
+
