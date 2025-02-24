@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urdu Word Matching Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #121212;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            color: #ffffff;
+        }
+        #game-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            justify-content: center;
+            max-width: 350px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1e1e1e;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(255, 255, 255, 0.1);
+        }
+        .card {
+            width: 150px;
+            height: 60px;
+            background-color: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.3s, opacity 0.3s;
+        }
+        .card:hover {
+            background-color: #0056b3;
+        }
+        .matched {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #score {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>اردو الفاظ میچنگ گیم</h2>
+    <div id="game-container"></div>
+    <p id="score">Score: 0</p>
+    <audio id="match-sound" src="co.mp3"></audio>
+    <script>
+        const words = [
+            { singular: "میں+کا", plural: "میرا" },
+            { singular: "میں+کی", plural: "میری" },
+            { singular: "تم+کا", plural: "تمہارا" },
+            { singular: "تم+کی", plural: "تمہاری" },
+            { singular: "وہ+کا", plural: "اس کا" },
+            { singular: "وہ+کی", plural: "اس کی" },
+            { singular: "ہم+کا", plural: "ہمارا" },
+            { singular: "ہم+کی", plural: "ہماری" },
+            { singular: "آپ+کا", plural: "آپ کا" },
+            { singular: "آپ+کی", plural: "آپ کی" }
+        ];
+        
+        let selectedCards = [];
+        let score = 0;
+        let availableWords = [...words];
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function createGameBoard() {
+            const gameContainer = document.getElementById("game-container");
+            gameContainer.innerHTML = "";
+            if (availableWords.length === 0) {
+                gameContainer.innerHTML = "<h3>بہت خوب! آپ نے تمام جوڑے ملا دیے 🎉</h3>";
+                return;
+            }
+            let selectedWords = shuffle(availableWords).slice(0, 4);
+            let shuffledWords = shuffle([...selectedWords.flatMap(w => [w.singular, w.plural])]);
+            shuffledWords.forEach(word => {
+                const card = document.createElement("div");
+                card.classList.add("card");
+                card.textContent = word;
+                card.dataset.word = word;
+                card.addEventListener("click", () => selectCard(card));
+                gameContainer.appendChild(card);
+            });
+        }
+
+        function selectCard(card) {
+            if (selectedCards.length < 2 && !card.classList.contains("matched")) {
+                selectedCards.push(card);
+                card.style.backgroundColor = "#ffc107";
+                if (selectedCards.length === 2) {
+                    checkMatch();
+                }
+            }
+        }
+
+        function checkMatch() {
+            let word1 = selectedCards[0].dataset.word;
+            let word2 = selectedCards[1].dataset.word;
+            let matchIndex = availableWords.findIndex(w => (w.singular === word1 && w.plural === word2) || (w.plural === word1 && w.singular === word2));
+            if (matchIndex !== -1) {
+                document.getElementById("match-sound").play();
+                setTimeout(() => {
+                    selectedCards.forEach(card => card.classList.add("matched"));
+                    availableWords.splice(matchIndex, 1);
+                    selectedCards = [];
+                    checkGameEnd();
+                }, 500);
+                score += 1;
+            } else {
+                setTimeout(() => {
+                    selectedCards.forEach(card => card.style.backgroundColor = "#007bff");
+                    selectedCards = [];
+                }, 500);
+            }
+            document.getElementById("score").textContent = "Score: " + score;
+        }
+
+        function checkGameEnd() {
+            if (document.querySelectorAll(".card:not(.matched)").length === 0) {
+                setTimeout(createGameBoard, 1000);
+            }
+        }
+
+        createGameBoard();
+    </script>
+</body>
+</html>
+
