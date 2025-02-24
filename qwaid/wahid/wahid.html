@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urdu Singular-Plural Matching Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #121212;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            color: #ffffff;
+        }
+        #game-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            justify-content: center;
+            max-width: 350px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1e1e1e;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(255, 255, 255, 0.1);
+        }
+        .card {
+            width: 150px;
+            height: 60px;
+            background-color: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.3s, opacity 0.3s;
+        }
+        .card:hover {
+            background-color: #0056b3;
+        }
+        .matched {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #score {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>اردو واحد جمع میچنگ گیم</h2>
+    <div id="game-container"></div>
+    <p id="score">Score: 0</p>
+    <audio id="match-sound" src="co.mp3"></audio>
+    <script>
+        const words = [
+            { singular: "کتاب", plural: "کتابیں" },
+{ singular: "دروازہ", plural: "دروازے" },
+{ singular: "بچہ", plural: "بچے" },
+{ singular: "پرندہ", plural: "پرندے" },
+{ singular: "بچہ", plural: "بچے" },
+{ singular: "سیب", plural: "سیب" },
+{ singular: "لڑکا", plural: "لڑکے" },
+{ singular: "لڑکی", plural: "لڑکیاں" },
+{ singular: "پھول", plural: "پھول" },
+{ singular: "درخت", plural: "درخت" },
+{ singular: "پرندہ", plural: "پرندے" },
+{ singular: "چڑیا", plural: "چڑیاں" },
+{ singular: "گھر", plural: "گھر" },
+{ singular: "کرسی", plural: "کرسیوں" },
+{ singular: "میز", plural: "میزیں" },
+{ singular: "چمچ", plural: "چمچ" },
+{ singular: "چاقو", plural: "چاقو" },
+{ singular: "کپ", plural: "کپ" },
+{ singular: "گلاس", plural: "گلاس" },
+{ singular: "گاڑی", plural: "گاڑیاں" },
+{ singular: "موٹر", plural: "موٹریں" },
+{ singular: "سائیکل", plural: "سائیکلیں" },
+{ singular: "ہوائی جہاز", plural: "ہوائی جہاز" },
+{ singular: "ریل گاڑی", plural: "ریل گاڑیاں" },
+{ singular: "کمپیوٹر", plural: "کمپیوٹر" },
+{ singular: "موبائل", plural: "موبائل" },
+{ singular: "کتابچہ", plural: "کتابچے" },
+{ singular: "کاغذ", plural: "کاغذات" },
+{ singular: "قلم", plural: "قلم" },
+{ singular: "دوا", plural: "دوائیں" },
+{ singular: "بستر", plural: "بستر" },
+{ singular: "تکیہ", plural: "تکیے" },
+{ singular: "چادر", plural: "چادریں" },
+{ singular: "کپڑا", plural: "کپڑے" },
+{ singular: "جوتا", plural: "جوتے" },
+{ singular: "جراب", plural: "جرابیں" },
+{ singular: "ٹوپی", plural: "ٹوپیاں" },
+{ singular: "بٹن", plural: "بٹن" },
+{ singular: "رومال", plural: "رومال" },
+{ singular: "چہرہ", plural: "چہرے" },
+{ singular: "آنکھ", plural: "آنکھیں" },
+{ singular: "کان", plural: "کان" },
+{ singular: "ناک", plural: "ناکیں" },
+{ singular: "ہاتھ", plural: "ہاتھ" },
+{ singular: "پاؤں", plural: "پاؤں" },
+{ singular: "بال", plural: "بال" },
+{ singular: "دل", plural: "دل" },
+{ singular: "پیٹ", plural: "پیٹ" },
+{ singular: "ہڈی", plural: "ہڈیاں" },
+{ singular: "ہونٹ", plural: "ہونٹ" },
+{ singular: "زبان", plural: "زبانیں" },
+{ singular: "دانت", plural: "دانت" },
+{ singular: "گھڑی", plural: "گھڑیاں" },
+{ singular: "دیوار", plural: "دیواریں" },
+{ singular: "کھڑکی", plural: "کھڑکیاں" },
+{ singular: "چھت", plural: "چھتیں" },
+{ singular: "روشنی", plural: "روشنیوں" },
+{ singular: "پنکھا", plural: "پنکھے" },
+{ singular: "لالٹین", plural: "لالٹینیں" },
+{ singular: "چابی", plural: "چابیاں" },
+{ singular: "تالا", plural: "تالے" },
+{ singular: "پانی", plural: "پانی" },
+{ singular: "دودھ", plural: "دودھ" },
+{ singular: "چائے", plural: "چائے" },
+{ singular: "روٹی", plural: "روٹیاں" },
+{ singular: "چاول", plural: "چاول" },
+{ singular: "دال", plural: "دالیں" },
+{ singular: "گوشت", plural: "گوشت" },
+{ singular: "مچھلی", plural: "مچھلیاں" },
+{ singular: "انڈا", plural: "انڈے" },
+{ singular: "پھل", plural: "پھل" },
+{ singular: "سبزی", plural: "سبزیاں" },
+{ singular: "چینی", plural: "چینی" },
+{ singular: "نمک", plural: "نمک" },
+{ singular: "مصالحہ", plural: "مصالحے" },
+{ singular: "مرچ", plural: "مرچیں" },
+{ singular: "پانی کی بوتل", plural: "پانی کی بوتلیں" },
+{ singular: "صابن", plural: "صابن" },
+{ singular: "شیمپو", plural: "شیمپو" },
+{ singular: "تولیہ", plural: "تولیے" },
+{ singular: "کنگھی", plural: "کنگھیاں" },
+{ singular: "برش", plural: "برش" },
+{ singular: "آئینہ", plural: "آئینے" },
+{ singular: "بیگ", plural: "بیگ" },
+{ singular: "سوال", plural: "سوالات" },
+{ singular: "جواب", plural: "جوابات" }
+        ];
+        
+        let selectedCards = [];
+        let score = 0;
+        let availableWords = [...words];
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function createGameBoard() {
+            const gameContainer = document.getElementById("game-container");
+            gameContainer.innerHTML = "";
+            if (availableWords.length === 0) {
+                gameContainer.innerHTML = "<h3>بہت خوب! آپ نے تمام جوڑے ملادیے 🎉</h3>";
+                return;
+            }
+            let selectedWords = shuffle(availableWords).slice(0, 4);
+            let shuffledWords = shuffle([...selectedWords.flatMap(w => [w.singular, w.plural])]);
+            shuffledWords.forEach(word => {
+                const card = document.createElement("div");
+                card.classList.add("card");
+                card.textContent = word;
+                card.dataset.word = word;
+                card.addEventListener("click", () => selectCard(card));
+                gameContainer.appendChild(card);
+            });
+        }
+
+        function selectCard(card) {
+            if (selectedCards.length < 2 && !card.classList.contains("matched")) {
+                selectedCards.push(card);
+                card.style.backgroundColor = "#ffc107";
+                if (selectedCards.length === 2) {
+                    checkMatch();
+                }
+            }
+        }
+
+        function checkMatch() {
+            let word1 = selectedCards[0].dataset.word;
+            let word2 = selectedCards[1].dataset.word;
+            let matchIndex = availableWords.findIndex(w => (w.singular === word1 && w.plural === word2) || (w.plural === word1 && w.singular === word2));
+            if (matchIndex !== -1) {
+                document.getElementById("match-sound").play();
+                setTimeout(() => {
+                    selectedCards.forEach(card => card.classList.add("matched"));
+                    availableWords.splice(matchIndex, 1);
+                    selectedCards = [];
+                    checkGameEnd();
+                }, 500);
+                score += 1;
+            } else {
+                setTimeout(() => {
+                    selectedCards.forEach(card => card.style.backgroundColor = "#007bff");
+                    selectedCards = [];
+                }, 500);
+            }
+            document.getElementById("score").textContent = "Score: " + score;
+        }
+
+        function checkGameEnd() {
+            if (document.querySelectorAll(".card:not(.matched)").length === 0) {
+                setTimeout(createGameBoard, 1000);
+            }
+        }
+
+        createGameBoard();
+    </script>
+</body>
+</html>
+
