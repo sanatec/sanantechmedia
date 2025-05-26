@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>اردو پہیلی اور لفظی کھیل</title>
+    <style>
+        body {
+            font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Urdu Typesetting', sans-serif;
+            text-align: center;
+            background-color: #f9f7f0;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            -webkit-text-size-adjust: 100%;
+            touch-action: manipulation;
+        }
+        
+        h1 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            font-size: 1.5rem;
+        }
+        
+        .game-container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 95%;
+            max-width: 500px;
+            margin-bottom: 15px;
+        }
+        
+        .paheli-container {
+            background-color: #f0f8ff;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .paheli-text {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .word-display {
+            font-size: 1.8rem;
+            margin: 12px 0;
+            color: #333;
+            min-height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            word-break: break-word;
+        }
+        
+        .scrambled-letters {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+            margin: 12px 0;
+        }
+        
+        .letter {
+            background-color: #3498db;
+            color: white;
+            font-size: 1.5rem;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        
+        .letter:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .letter.selected {
+            background-color: #2ecc71;
+            transform: scale(1.1);
+        }
+        
+        .controls {
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+            -webkit-tap-highlight-color: transparent;
+            min-width: 100px;
+            touch-action: manipulation;
+        }
+        
+        button:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+        }
+        
+        #hint-btn {
+            background-color: #f39c12;
+        }
+        
+        #hint-btn:hover {
+            background-color: #d35400;
+        }
+        
+        #reset-btn {
+            background-color: #95a5a6;
+        }
+        
+        #reset-btn:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .score {
+            font-size: 1.1rem;
+            color: #9b59b6;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+        
+        .feedback {
+            font-size: 1.2rem;
+            height: 30px;
+            margin: 8px 0;
+            padding: 5px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .correct {
+            color: #27ae60;
+            background-color: #e8f8f5;
+        }
+        
+        .incorrect {
+            color: #e74c3c;
+            background-color: #fdedec;
+        }
+        
+        .hint {
+            color: #f39c12;
+            background-color: #fef9e7;
+        }
+        
+        @media (max-width: 400px) {
+            .letter {
+                font-size: 1.3rem;
+                padding: 5px 10px;
+                min-width: 30px;
+                text-align: center;
+            }
+            
+            .word-display {
+                font-size: 1.5rem;
+            }
+            
+            .paheli-text {
+                font-size: 1rem;
+            }
+            
+            button {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+                min-width: 80px;
+            }
+            
+            h1 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Urdu Riddles</h1>
+    <div class="game-container">
+        <div class="score">Score: <span id="score">0</span></div>
+        
+        <div class="paheli-container">
+            <div class="paheli-text" id="paheli"></div>
+        </div>
+        
+        <div>جواب کے حروف:</div>
+        <div class="word-display" id="current-word"></div>
+        
+        <div>منتخب کریں اور ترتیب دیں:</div>
+        <div class="scrambled-letters" id="scrambled-letters"></div>
+        
+        <div class="feedback" id="feedback"></div>
+        
+        <div class="controls">
+            <button id="check-btn">Check Answer</button>
+            <button id="reset-btn">Restart</button>
+            <button id="hint-btn">Hints(-2 Score)</button>
+        </div>
+    </div>
+
+    <audio id="correct-sound" preload="auto">
+        <source src="audio/correct.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="wrong-sound" preload="auto">
+        <source src="audio/wrong.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Urdu paheliyan (riddles) with answers
+        const paheliyan = [
+            { paheli: "بغیر ہاتھ پاؤں کے چلتی ہوں، بغیر منہ کے بولتی ہوں، میں کیا ہوں؟", answer: "گھڑی" },
+            { paheli: "ایسا کیا ہے جو سردیوں میں جم جاتا ہے اور گرمیوں میں بہہ جاتا ہے؟", answer: "پانی" },
+            { paheli: "ایسی کون سی چیز ہے جو دن میں ایک بار آتی ہے لیکن رات میں نہیں؟", answer: "دن" },
+            { paheli: "کالی کالی چھتری ہوں، پانی برساؤں نہ چھاؤں دوں، میں کیا ہوں؟", answer: "بادل" },
+            { paheli: "میرے سر پر بال نہیں، لیکن میں لوگوں کے سروں پر رہتا ہوں، میں کیا ہوں؟", answer: "ٹوپی" },
+            { paheli: "ایسی کون سی چیز ہے جو کھانے کے بعد پی جاتی ہے؟", answer: "چائے" },
+            { paheli: "پاؤں ہیں پر چل نہیں سکتی، پر اڑتی ضرور ہوں، میں کیا ہوں؟", answer: "پتنگ" },
+            { paheli: "ایسا کیا ہے جو کٹتا ہے مگر پھل نہیں؟", answer: "وقت" },
+            { paheli: "نہ میں انسان، نہ جانور، پر میں آواز نکالتا ہوں، میں کیا ہوں؟", answer: "گھنٹی" },
+            { paheli: "میں اتنی نرم ہوں کہ سب مجھے کاٹتے ہیں، پھر بھی میں زندہ ہوں، میں کیا ہوں؟", answer: "ہوا" },
+            { paheli: "ایسی چیز جو جتنی نکالو بڑھتی جائے؟", answer: "گڑھا" },
+            { paheli: "نہ میں جیتا ہوں نہ مردہ، مگر باتیں کرتا ہوں، میں کیا ہوں؟", answer: "ریڈیو" },
+            { paheli: "چلتا ہوں پر پاؤں نہیں، بولتا ہوں پر زبان نہیں، میں کیا ہوں؟", answer: "گھڑی" },
+            { paheli: "ایسا پرندہ جو اُڑ نہیں سکتا؟", answer: "شترمرغ" },
+            { paheli: "ایسی چیز جو انسان کے ساتھ پیدا ہوتی ہے اور مرنے کے بعد بھی رہتی ہے؟", answer: "نام" },
+            { paheli: "ایک ایسی چیز جسے کاٹنے پر بھی کوئی خون نہیں نکلتا؟", answer: "کیک" },
+            { paheli: "پانی میں جاتی ہوں، بھیگتی نہیں، میں کیا ہوں؟", answer: "روشنی" },
+            { paheli: "نہ میں جانور، نہ انسان، میرے پر بھی ہیں اور آواز بھی، میں کیا ہوں؟", answer: "ریڈیو" },
+            { paheli: "ایسا کون سا پرندہ ہے جو رات کو جاگتا ہے؟", answer: "الو" },
+            { paheli: "مجھے ہر کوئی دیکھتا ہے، مگر چھو نہیں سکتا، میں کیا ہوں؟", answer: "خواب" },
+            { paheli: "وہ کیا چیز ہے جو اڑ سکتی ہے مگر پر نہیں رکھتی؟", answer: "خیال" },
+            { paheli: "مجھے زور سے مارو تو میں گونجتا ہوں، میں کیا ہوں؟", answer: "ڈھول" },
+            { paheli: "ایسا کیا ہے جو اگر ٹوٹ جائے تو آواز نہیں آتی؟", answer: "خاموشی" },
+            { paheli: "ایسا کون سا دریا ہے جو کاغذ پر بہتا ہے؟", answer: "قلم" },
+            { paheli: "نہ میں جاندار ہوں، نہ بےجان، پھر بھی زندہ ہوں، میں کیا ہوں؟", answer: "خیال" },
+            { paheli: "بچوں کو ہنساتا ہوں، قلابازیاں کھاتا ہوں، میں کیا ہوں؟", answer: "جوکر" },
+            { paheli: "بغیر پنکھے کے ٹھنڈی ہواؤں کا جھونکا ہوں، میں کیا ہوں؟", answer: "باغیچہ" },
+            { paheli: "دیکھنے میں ہوں چھوٹا، پر معلومات کا خزانہ ہوں، میں کیا ہوں؟", answer: "کتاب" },
+            { paheli: "دو ہاتھ، دو پیر، پر انسان نہیں، میں کیا ہوں؟", answer: "کپڑے" },
+            { paheli: "دن میں پیدا ہوتا ہوں، رات کو مر جاتا ہوں، میں کیا ہوں؟", answer: "سورج" },
+            { paheli: "دیکھنے میں ہوں سفید، مگر اندر سے زرد ہوں، میں کیا ہوں؟", answer: "انڈا" },
+            { paheli: "میری گردن ہے، پر سر نہیں، میں کیا ہوں؟", answer: "بوتل" },
+            { paheli: "دانت ہیں مگر کھاتی نہیں، میں کیا ہوں؟", answer: "کنگھی" },
+            { paheli: "ایسا کیا ہے جو بڑھتا ہے مگر وزن نہیں رکھتا؟", answer: "عمر" },
+            { paheli: "نہ بولتی ہوں، نہ سنتی، مگر ہر بات بتاتی ہوں، میں کیا ہوں؟", answer: "کتاب" },
+            { paheli: "آسمان پر چمکتا ہوں، رات کا ساتھی ہوں، میں کیا ہوں؟", answer: "چاند" },
+            { paheli: "آگ کے پاس آؤ تو جلا دوں، پھر بھی سب مجھ سے محبت کرتے ہیں، میں کیا ہوں؟", answer: "سورج" },
+            { paheli: "میں گھر میں ہوتی ہوں، دروازے کے پاس، میں کیا ہوں؟", answer: "چٹخی" },
+            { paheli: "نہ میں لڑکی، نہ میں لڑکا، مگر سب کو خوش رکھتی ہوں، میں کیا ہوں؟", answer: "مسکراہٹ" },
+            { paheli: "نہ میں کھاتی، نہ میں پیتی، مگر ہمیشہ بھاگتی رہتی ہوں، میں کیا ہوں؟", answer: "نہرب" },
+            { paheli: "وہ کیا چیز ہے جو ہر انسان کے پاس ہے، مگر نظر نہیں آتی؟", answer: "سایہ" },
+            { paheli: "کالی ہوں، مٹاتی ہوں، پھر بھی پسند کی جاتی ہوں، میں کیا ہوں؟", answer: "ربڑ" },
+            { paheli: "جو جتنا نکالے، میں اتنی بڑی ہوتی جاتی ہوں؟", answer: "گڑھا" },
+            { paheli: "ہر وقت چلتی ہوں، رکتی نہیں، میں کیا ہوں؟", answer: "وقت" },
+            { paheli: "گھومتی ہوں، گاتی ہوں، ٹی وی پر آتی ہوں، میں کیا ہوں؟", answer: "سی ڈی" },
+            { paheli: "صبح کو ہوتی ہوں، شام کو ختم، دن میں سب مجھ سے خوش، میں کیا ہوں؟", answer: "روشنی" },
+            { paheli: "برتن نہیں ہوں، پھر بھی سب مجھے دھوتے ہیں، میں کیا ہوں؟", answer: "ہاتھ" },
+            { paheli: "سفید لباس میں آتی ہوں، زمین پر گرتی ہوں، میں کیا ہوں؟", answer: "برف" }
+        ];
+        
+        let currentPaheli = {};
+        let scrambledLetters = [];
+        let selectedLetters = [];
+        let score = 0;
+        let lastTouchTime = 0;
+        const TOUCH_DELAY = 300; // 300ms delay between touches
+        
+        // DOM elements
+        const paheliEl = document.getElementById("paheli");
+        const currentWordEl = document.getElementById("current-word");
+        const scrambledLettersEl = document.getElementById("scrambled-letters");
+        const scoreEl = document.getElementById("score");
+        const feedbackEl = document.getElementById("feedback");
+        const checkBtn = document.getElementById("check-btn");
+        const resetBtn = document.getElementById("reset-btn");
+        const hintBtn = document.getElementById("hint-btn");
+        const correctSound = document.getElementById("correct-sound");
+        const wrongSound = document.getElementById("wrong-sound");
+        
+        // Initialize the game
+        function initGame() {
+            // Select a random paheli
+            currentPaheli = paheliyan[Math.floor(Math.random() * paheliyan.length)];
+            
+            // Display the paheli
+            paheliEl.textContent = currentPaheli.paheli;
+            
+            // Scramble the answer letters
+            scrambledLetters = scrambleWord(currentPaheli.answer);
+            
+            // Clear selected letters
+            selectedLetters = [];
+            currentWordEl.textContent = "";
+            
+            // Display scrambled letters
+            displayScrambledLetters();
+            
+            // Clear feedback
+            feedbackEl.textContent = "";
+            feedbackEl.className = "feedback";
+        }
+        
+        // Scramble a word
+        function scrambleWord(word) {
+            let letters = word.split("");
+            for (let i = letters.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [letters[i], letters[j]] = [letters[j], letters[i]];
+            }
+            return letters;
+        }
+        
+        // Display scrambled letters
+        function displayScrambledLetters() {
+            scrambledLettersEl.innerHTML = "";
+            
+            scrambledLetters.forEach((letter, index) => {
+                const letterEl = document.createElement("div");
+                letterEl.className = "letter";
+                letterEl.textContent = letter;
+                letterEl.dataset.index = index;
+                
+                // Add both click and touch events
+                letterEl.addEventListener("click", handleLetterSelection);
+                letterEl.addEventListener("touchstart", handleLetterSelection, { passive: false });
+                
+                scrambledLettersEl.appendChild(letterEl);
+            });
+        }
+        
+        // Handle letter selection with touch delay
+        function handleLetterSelection(e) {
+            // Prevent default for touch events to avoid scrolling
+            if (e.type === 'touchstart') {
+                e.preventDefault();
+                
+                // Check if we should ignore this touch (too soon after last one)
+                const now = Date.now();
+                if (now - lastTouchTime < TOUCH_DELAY) {
+                    return;
+                }
+                lastTouchTime = now;
+            }
+            
+            const index = e.target.dataset.index;
+            
+            // Add to selected letters
+            selectedLetters.push(scrambledLetters[index]);
+            currentWordEl.textContent = selectedLetters.join("");
+            
+            // Remove from scrambled letters
+            scrambledLetters.splice(index, 1);
+            
+            // Redisplay scrambled letters
+            displayScrambledLetters();
+            
+            // Clear any previous feedback
+            feedbackEl.textContent = "";
+            feedbackEl.className = "feedback";
+        }
+        
+        // Check the answer
+        function checkAnswer() {
+            const userAnswer = selectedLetters.join("");
+            
+            if (userAnswer === currentPaheli.answer) {
+                // Correct answer
+                feedbackEl.textContent = "مبارک ہو! صحیح جواب: " + currentPaheli.answer;
+                feedbackEl.className = "feedback correct";
+                score += 10;
+                scoreEl.textContent = score;
+                
+                // Play correct sound
+                correctSound.currentTime = 0;
+                correctSound.play().catch(e => console.log("Audio play failed:", e));
+                
+                // Next paheli after delay
+                setTimeout(initGame, 2000);
+            } else {
+                // Incorrect answer
+                feedbackEl.textContent = "غلط جواب! دوبارہ کوشش کریں";
+                feedbackEl.className = "feedback incorrect";
+                
+                // Play wrong sound
+                wrongSound.currentTime = 0;
+                wrongSound.play().catch(e => console.log("Audio play failed:", e));
+            }
+        }
+        
+        // Reset current word
+        function resetCurrentWord() {
+            scrambledLetters = [...scrambledLetters, ...selectedLetters];
+            selectedLetters = [];
+            currentWordEl.textContent = "";
+            displayScrambledLetters();
+            feedbackEl.textContent = "";
+            feedbackEl.className = "feedback";
+        }
+        
+        // Show hint
+        function showHint() {
+            if (score >= 2) {
+                feedbackEl.textContent = "جواب کا پہلا حرف: " + currentPaheli.answer[0];
+                feedbackEl.className = "feedback hint";
+                score -= 2;
+                scoreEl.textContent = score;
+            } else {
+                feedbackEl.textContent = "معذرت، آپ کے پاس کافی پوائنٹس نہیں ہیں!";
+                feedbackEl.className = "feedback incorrect";
+            }
+        }
+        
+        // Event listeners for buttons with touch support
+        function addButtonListeners(button, handler) {
+            button.addEventListener("click", handler);
+            button.addEventListener("touchstart", function(e) {
+                e.preventDefault();
+                handler();
+            }, { passive: false });
+        }
+        
+        addButtonListeners(checkBtn, checkAnswer);
+        addButtonListeners(resetBtn, resetCurrentWord);
+        addButtonListeners(hintBtn, showHint);
+        
+        // Start the game
+        initGame();
+    </script>
+</body>
+</html>
