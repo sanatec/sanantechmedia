@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Increasing Numbers</title>
+    <style>
+        /* --- General Styling & Fonts --- */
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap');
+        
+        :root {
+            --primary-color: #4CAF50; /* Champion Green */
+            --secondary-color: #FFEB3B; /* Bright Yellow */
+            --background-color: #E8F5E9; /* Light Green */
+            --text-color: #333;
+            --correct-color: #4CAF50;
+            --wrong-color: #F44336;
+            --white: #FFFFFF;
+            --font-main: 'Baloo 2', cursive;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Main App Container --- */
+        #app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 900px;
+            background: var(--white);
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 5px solid var(--white);
+        }
+
+        /* --- Header --- */
+        header {
+            background: linear-gradient(45deg, var(--primary-color), #388E3C);
+            color: var(--white);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        #lang-selector {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--white);
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            font-family: var(--font-main);
+            font-weight: 700;
+        }
+        #lang-selector option { color: black; }
+
+        /* --- Main Content Area --- */
+        main {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            text-align: center;
+            background: var(--background-color);
+        }
+        
+        .module { display: none; }
+        .module.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h2 {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            font-size: 1.2em;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            color: #555;
+        }
+
+        /* --- Buttons & Inputs --- */
+        .btn, button {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--secondary-color), #FBC02D);
+            color: #333;
+            font-family: var(--font-main);
+            padding: 14px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.3em;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 8px 5px;
+        }
+
+        .btn:hover, button:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(255,235,59,0.5);
+        }
+        
+        .main-menu-btn {
+            display: block;
+            width: 90%;
+            margin: 12px auto;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        .main-menu-btn:hover { background: var(--primary-color); color: var(--white); }
+        
+        .back-btn { background: #f1f1f1; color: #555; font-size: 1.1em; padding: 10px 25px; }
+        .back-btn:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+        input[type="number"] {
+            width: 80%;
+            padding: 12px;
+            font-size: 1.8em;
+            font-weight: 700;
+            text-align: center;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            margin-top: 15px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .feedback { font-size: 1.3em; font-weight: 700; margin-top: 20px; height: 35px; transition: all 0.3s; }
+
+        /* --- Game-Specific Styles --- */
+        .game-emoji { font-size: 100px; margin-bottom: 15px; }
+        .calculation-display { font-size: 1.8em; font-weight: 700; color: var(--primary-color); margin: 20px 0; }
+        .item-container { display: flex; justify-content: center; align-items: center; gap: 20px; margin: 20px 0; }
+        .item { text-align: center; }
+        .item-emoji { font-size: 60px; }
+        .item-price { font-weight: 700; font-size: 1.2em; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1 data-lang-key="app_title">Increasing Numbers</h1>
+            <select id="lang-selector">
+                <option value="en">English</option>
+                <option value="ml">മലയാളം</option>
+            </select>
+        </header>
+
+        <main>
+            <!-- Welcome Screen Module -->
+            <div id="welcome-screen" class="module active">
+                <h2 data-lang-key="welcome_title">Increasing Numbers!</h2>
+                <div class="game-emoji">🏆</div>
+                <p class="instruction" data-lang-key="welcome_subtitle">Choose a game and become a champion!</p>
+                <button class="main-menu-btn" onclick="showModule('make-1000-game')" data-lang-key="activity1_btn">Make 1000</button>
+                <button class="main-menu-btn" onclick="showModule('shooting-gallery-game')" data-lang-key="activity2_btn">Shooting Gallery</button>
+                <button class="main-menu-btn" onclick="showModule('price-tag-game')" data-lang-key="activity3_btn">Price Tag Total</button>
+                <button class="main-menu-btn" onclick="showModule('reverse-number-game')" data-lang-key="activity4_btn">Reverse-a-Number</button>
+                <button class="main-menu-btn" onclick="showModule('magic-box-game')" data-lang-key="activity5_btn">The Magic Box</button>
+            </div>
+
+            <!-- Module 1: Make 1000 -->
+            <div id="make-1000-game" class="module">
+                <h2 data-lang-key="make_1000_title">Make 1000</h2>
+                <div class="game-emoji">🤝</div>
+                <p class="instruction" data-lang-key="make_1000_instruction">What number should be added to make 1000?</p>
+                <div id="make-1000-display" class="calculation-display"></div>
+                <input type="number" id="make-1000-answer" placeholder="?">
+                <div id="make-1000-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkMake1000Answer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+            
+            <!-- Module 2: Shooting Gallery -->
+            <div id="shooting-gallery-game" class="module">
+                <h2 data-lang-key="shooting_gallery_title">Shooting Gallery</h2>
+                <div class="game-emoji">🎯</div>
+                <p class="instruction" data-lang-key="shooting_gallery_instruction">What is the total score for these three shots?</p>
+                <div id="shooting-gallery-display" class="calculation-display"></div>
+                <input type="number" id="shooting-gallery-answer" placeholder="?">
+                <div id="shooting-gallery-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkShootingGalleryAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 3: Price Tag Total -->
+            <div id="price-tag-game" class="module">
+                <h2 data-lang-key="price_tag_title">Price Tag Total</h2>
+                <div class="game-emoji">🛒</div>
+                <p class="instruction" data-lang-key="price_tag_instruction">What is the total cost of these items?</p>
+                <div id="price-tag-display" class="item-container"></div>
+                <input type="number" id="price-tag-answer" placeholder="₹?">
+                <div id="price-tag-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkPriceTagAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 4: Reverse-a-Number -->
+            <div id="reverse-number-game" class="module">
+                <h2 data-lang-key="reverse_number_title">Reverse-a-Number</h2>
+                <div class="game-emoji">🔄</div>
+                <p class="instruction" data-lang-key="reverse_number_instruction">Add the number to its reverse. What is the sum?</p>
+                <div id="reverse-number-display" class="calculation-display"></div>
+                <input type="number" id="reverse-number-answer" placeholder="?">
+                <div id="reverse-number-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkReverseNumberAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 5: The Magic Box -->
+            <div id="magic-box-game" class="module">
+                <h2 data-lang-key="magic_box_title">The Magic Box</h2>
+                <div class="game-emoji">🎩</div>
+                <p class="instruction" data-lang-key="magic_box_instruction">The magician adds a secret number to make 9999. What is it?</p>
+                <div id="magic-box-display" class="calculation-display"></div>
+                <input type="number" id="magic-box-answer" placeholder="?">
+                <div id="magic-box-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkMagicBoxAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 1. LANGUAGE & TEXT DATA ---
+        const lang = {
+            'app_title': { en: 'Increasing Numbers', ml: 'കൂടുന്ന കൂട്ടം' },
+            'back_to_menu': { en: 'Menu', ml: 'മെനു' },
+            'check_btn': { en: 'Check', ml: 'പരിശോധിക്കുക' },
+            'welcome_title': { en: 'Increasing Numbers!', ml: 'കൂടുന്ന കൂട്ടം!' },
+            'welcome_subtitle': { en: 'Choose a game and become a champion!', ml: 'ഒരു ഗെയിം തിരഞ്ഞെടുത്ത് ചാമ്പ്യനാകൂ!' },
+            'correct_feedback': { en: 'Correct! 🎉', ml: 'ശരിയാണ്! 🎉' },
+            'wrong_feedback': { en: 'Try again! 🤔', ml: 'വീണ്ടും ശ്രമിക്കൂ! 🤔' },
+            
+            'activity1_btn': { en: 'Make 1000', ml: '1000 ആക്കാം' },
+            'activity2_btn': { en: 'Shooting Gallery', ml: 'ഷൂട്ടിംഗ് ഗാലറി' },
+            'activity3_btn': { en: 'Price Tag Total', ml: 'വിലകൾ കൂട്ടാം' },
+            'activity4_btn': { en: 'Reverse-a-Number', ml: 'സംഖ്യ തിരിച്ചിടാം' },
+            'activity5_btn': { en: 'The Magic Box', ml: 'മാന്ത്രികപ്പെട്ടി' },
+
+            'make_1000_title': { en: 'Make 1000', ml: '1000 ആക്കാം' },
+            'make_1000_instruction': { en: 'What number should be added to make 1000?', ml: '1000 ആകാൻ ഏത് സംഖ്യയാണ് കൂട്ടേണ്ടത്?' },
+            
+            'shooting_gallery_title': { en: 'Shooting Gallery', ml: 'ഷൂട്ടിംഗ് ഗാലറി' },
+            'shooting_gallery_instruction': { en: 'What is the total score for these three shots?', ml: 'ഈ മൂന്ന് ഷോട്ടുകളുടെ ആകെ സ്കോർ എത്രയാണ്?' },
+            
+            'price_tag_title': { en: 'Price Tag Total', ml: 'വിലകൾ കൂട്ടാം' },
+            'price_tag_instruction': { en: 'What is the total cost of these items?', ml: 'ഈ സാധനങ്ങളുടെ ആകെ വില എത്രയാണ്?' },
+            
+            'reverse_number_title': { en: 'Reverse-a-Number', ml: 'സംഖ്യ തിരിച്ചിടാം' },
+            'reverse_number_instruction': { en: 'Add the number to its reverse. What is the sum?', ml: 'സംഖ്യയെ അതിൻ്റെ തിരിച്ചിട്ട രൂപവുമായി കൂട്ടുക. തുക എത്രയാണ്?' },
+            
+            'magic_box_title': { en: 'The Magic Box', ml: 'മാന്ത്രികപ്പെട്ടി' },
+            'magic_box_instruction': { en: 'The magician adds a secret number to make 9999. What is it?', ml: '9999 ആക്കാൻ മാന്ത്രികൻ ഒരു രഹസ്യ സംഖ്യ ചേർക്കുന്നു. അതെന്താണ്?' },
+        };
+
+        let currentLang = 'en';
+
+        function setLanguage(langCode) {
+            currentLang = langCode;
+            document.querySelectorAll('[data-lang-key]').forEach(elem => {
+                const key = elem.getAttribute('data-lang-key');
+                if (lang[key] && lang[key][currentLang]) {
+                    elem.innerHTML = lang[key][currentLang];
+                }
+            });
+            const activeModuleId = document.querySelector('.module.active').id;
+            switch(activeModuleId) {
+                case 'make-1000-game': initMake1000Game(); break;
+                case 'shooting-gallery-game': initShootingGalleryGame(); break;
+                case 'price-tag-game': initPriceTagGame(); break;
+                case 'reverse-number-game': initReverseNumberGame(); break;
+                case 'magic-box-game': initMagicBoxGame(); break;
+            }
+        }
+
+        document.getElementById('lang-selector').addEventListener('change', (e) => setLanguage(e.target.value));
+
+        // --- 2. NAVIGATION & MODULE HANDLING ---
+        function showModule(moduleId) {
+            document.querySelectorAll('.module').forEach(module => module.classList.remove('active'));
+            document.getElementById(moduleId).classList.add('active');
+            
+            switch(moduleId) {
+                case 'make-1000-game': initMake1000Game(); break;
+                case 'shooting-gallery-game': initShootingGalleryGame(); break;
+                case 'price-tag-game': initPriceTagGame(); break;
+                case 'reverse-number-game': initReverseNumberGame(); break;
+                case 'magic-box-game': initMagicBoxGame(); break;
+            }
+        }
+
+        // --- 3. GAME LOGIC ---
+
+        // --- MODULE 1: Make 1000 ---
+        const make1000Numbers = [490, 100, 793, 551, 800, 600, 700, 400, 500, 250];
+        let currentMake1000Number = 0;
+
+        function initMake1000Game() {
+            currentMake1000Number = make1000Numbers[Math.floor(Math.random() * make1000Numbers.length)];
+            document.getElementById('make-1000-display').textContent = `${currentMake1000Number} + ? = 1000`;
+            document.getElementById('make-1000-answer').value = '';
+            document.getElementById('make-1000-feedback').textContent = '';
+        }
+
+        function checkMake1000Answer() {
+            const userAnswer = parseInt(document.getElementById('make-1000-answer').value);
+            const correctAnswer = 1000 - currentMake1000Number;
+            const feedbackElem = document.getElementById('make-1000-feedback');
+            if (userAnswer === correctAnswer) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(initMake1000Game, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+
+        // --- MODULE 2: Shooting Gallery ---
+        const shootingScores = [100, 363, 475, 900, 250, 750, 525];
+        let currentShootingTotal = 0;
+
+        function initShootingGalleryGame() {
+            const display = document.getElementById('shooting-gallery-display');
+            let shots = [];
+            currentShootingTotal = 0;
+            for(let i=0; i<3; i++) {
+                const score = shootingScores[Math.floor(Math.random() * shootingScores.length)];
+                shots.push(score);
+                currentShootingTotal += score;
+            }
+            display.textContent = `${shots[0]} + ${shots[1]} + ${shots[2]} = ?`;
+            document.getElementById('shooting-gallery-answer').value = '';
+            document.getElementById('shooting-gallery-feedback').textContent = '';
+        }
+
+        function checkShootingGalleryAnswer() {
+            const userAnswer = parseInt(document.getElementById('shooting-gallery-answer').value);
+            const feedbackElem = document.getElementById('shooting-gallery-feedback');
+            if (userAnswer === currentShootingTotal) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(initShootingGalleryGame, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+        
+        // --- MODULE 3: Price Tag Total ---
+        const items = [
+            { emoji: '🚲', price: 2990 }, { emoji: '🚲', price: 3500 }, { emoji: '🏸', price: 325 },
+            { emoji: '🏏', price: 1190 }, { emoji: '🏏', price: 920 }, { emoji: '👕', price: 1125 },
+            { emoji: '💻', price: 9999 }, { emoji: '🛏️', price: 5999 }, { emoji: '🌀', price: 5500 }
+        ];
+        let currentPriceTotal = 0;
+
+        function initPriceTagGame() {
+            const display = document.getElementById('price-tag-display');
+            display.innerHTML = '';
+            const item1 = items[Math.floor(Math.random() * items.length)];
+            const item2 = items[Math.floor(Math.random() * items.length)];
+            currentPriceTotal = item1.price + item2.price;
+            
+            display.innerHTML = `
+                <div class="item"><div class="item-emoji">${item1.emoji}</div><div class="item-price">₹${item1.price}</div></div>
+                <div class="item"><div class="item-emoji" style="font-size: 30px;">➕</div></div>
+                <div class="item"><div class="item-emoji">${item2.emoji}</div><div class="item-price">₹${item2.price}</div></div>
+            `;
+            document.getElementById('price-tag-answer').value = '';
+            document.getElementById('price-tag-feedback').textContent = '';
+        }
+
+        function checkPriceTagAnswer() {
+            const userAnswer = parseInt(document.getElementById('price-tag-answer').value);
+            const feedbackElem = document.getElementById('price-tag-feedback');
+            if (userAnswer === currentPriceTotal) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(initPriceTagGame, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+        
+        // --- MODULE 4: Reverse-a-Number ---
+        let currentReverseSum = 0;
+        let originalNumber = 0;
+        let reversedNumber = 0;
+
+        function initReverseNumberGame() {
+            originalNumber = Math.floor(1000 + Math.random() * 9000);
+            reversedNumber = parseInt(String(originalNumber).split('').reverse().join(''));
+            currentReverseSum = originalNumber + reversedNumber;
+
+            const display = document.getElementById('reverse-number-display');
+            display.textContent = `${originalNumber} + ${reversedNumber} = ?`;
+            document.getElementById('reverse-number-answer').value = '';
+            document.getElementById('reverse-number-feedback').textContent = '';
+        }
+
+        function checkReverseNumberAnswer() {
+            const userAnswer = parseInt(document.getElementById('reverse-number-answer').value);
+            const feedbackElem = document.getElementById('reverse-number-feedback');
+            if (userAnswer === currentReverseSum) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(initReverseNumberGame, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+
+        // --- MODULE 5: The Magic Box ---
+        let magicNumber = 0;
+        let magicAnswer = 0;
+
+        function initMagicBoxGame() {
+            magicNumber = Math.floor(1000 + Math.random() * 9000);
+            magicAnswer = 9999 - magicNumber;
+            
+            const display = document.getElementById('magic-box-display');
+            display.textContent = `${magicNumber} + ? = 9999`;
+            document.getElementById('magic-box-answer').value = '';
+            document.getElementById('magic-box-feedback').textContent = '';
+        }
+
+        function checkMagicBoxAnswer() {
+            const userAnswer = parseInt(document.getElementById('magic-box-answer').value);
+            const feedbackElem = document.getElementById('magic-box-feedback');
+            if (userAnswer === magicAnswer) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(initMagicBoxGame, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+
+        // --- INITIALIZE APP ---
+        setLanguage(currentLang);
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beyond Thousand</title>
+    <style>
+        /* --- General Styling & Fonts --- */
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap');
+        
+        :root {
+            --primary-color: #007BFF;
+            --secondary-color: #FFC107;
+            --background-color: #E3F2FD; /* Light Blue Sky */
+            --text-color: #333;
+            --correct-color: #4CAF50; /* Green */
+            --wrong-color: #F44336; /* Red */
+            --white: #FFFFFF;
+            --font-main: 'Baloo 2', cursive;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Main App Container --- */
+        #app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 900px;
+            background: var(--white);
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 5px solid var(--white);
+        }
+
+        /* --- Header --- */
+        header {
+            background: linear-gradient(45deg, #007BFF, #0056B3);
+            color: var(--white);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        #lang-selector {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--white);
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            font-family: var(--font-main);
+            font-weight: 700;
+        }
+        #lang-selector option { color: black; }
+
+        /* --- Main Content Area --- */
+        main {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            text-align: center;
+            background: var(--background-color);
+        }
+        
+        .module { display: none; }
+        
+        .module.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h2 {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            font-size: 1.2em;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            color: #555;
+        }
+
+        /* --- Buttons & Inputs --- */
+        .btn, button {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--secondary-color), #FFAB00);
+            color: #333;
+            font-family: var(--font-main);
+            padding: 14px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.3em;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 8px 5px;
+        }
+
+        .btn:hover, button:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(255,193,7,0.4);
+        }
+        
+        .main-menu-btn {
+            display: block;
+            width: 90%;
+            margin: 12px auto;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        .main-menu-btn:hover {
+             background: var(--primary-color);
+             color: var(--white);
+        }
+        
+        .back-btn {
+            background: #f1f1f1;
+            color: #555;
+            font-size: 1.1em;
+            padding: 10px 25px;
+        }
+        .back-btn:hover {
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        }
+
+        input[type="number"] {
+            width: 80%;
+            padding: 12px;
+            font-size: 1.8em;
+            font-weight: 700;
+            text-align: center;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            margin-top: 15px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .feedback {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-top: 20px;
+            height: 35px;
+            transition: all 0.3s;
+        }
+
+        /* --- Game-Specific Styles --- */
+        .game-emoji {
+            font-size: 100px;
+            margin-bottom: 15px;
+            animation: bounce 1s infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0px); }
+            to { transform: translateY(-10px); }
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .option-btn {
+            width: 100%;
+            padding: 15px 10px;
+            font-size: 1.2em;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid #ddd;
+        }
+        .option-btn.selected {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: var(--white);
+        }
+        .option-btn.correct {
+            background: var(--correct-color);
+            color: var(--white);
+            border-color: var(--correct-color);
+            animation: pulse 0.5s;
+        }
+        .option-btn.wrong {
+            background: var(--wrong-color);
+            color: var(--white);
+            border-color: var(--wrong-color);
+            animation: shake 0.5s;
+        }
+        
+        #pattern-sequence { 
+            font-size: 1.8em; 
+            font-weight: 800; 
+            color: var(--primary-color); 
+            letter-spacing: 4px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px dashed #ddd;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1 data-lang-key="app_title">Beyond Thousand</h1>
+            <select id="lang-selector">
+                <option value="en">English</option>
+                <option value="ml">മലയാളം</option>
+            </select>
+        </header>
+
+        <main>
+            <!-- Welcome Screen Module -->
+            <div id="welcome-screen" class="module active">
+                <h2 data-lang-key="welcome_title">Let's Race!</h2>
+                <div class="game-emoji">🚗</div>
+                <p class="instruction" data-lang-key="welcome_subtitle">Choose a game to start your adventure!</p>
+                <button class="main-menu-btn" onclick="showModule('mcq-game')" data-lang-key="activity5_btn">MCQ Challenge</button>
+                <button class="main-menu-btn" onclick="showModule('riddle-game')" data-lang-key="activity2_btn">Number Riddles</button>
+                <button class="main-menu-btn" onclick="showModule('addition-game')" data-lang-key="activity3_btn">Addition Challenge</button>
+                <button class="main-menu-btn" onclick="showModule('race-game')" data-lang-key="activity4_btn">Race Points</button>
+                <button class="main-menu-btn" onclick="showModule('pattern-game')" data-lang-key="activity1_btn">Number Patterns</button>
+            </div>
+
+            <!-- Module 1: MCQ Challenge -->
+            <div id="mcq-game" class="module">
+                <h2 data-lang-key="mcq_game_title">MCQ Challenge</h2>
+                <div class="game-emoji">🤔</div>
+                <p id="mcq-question" class="instruction"></p>
+                <div id="mcq-options" class="options-grid">
+                    <!-- Options will be generated by JS -->
+                </div>
+                <div id="mcq-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 2: Number Riddles -->
+            <div id="riddle-game" class="module">
+                <h2 data-lang-key="riddle_game_title">Number Riddles</h2>
+                <div class="game-emoji">🚕</div>
+                <p id="riddle-question" class="instruction"></p>
+                <input type="number" id="riddle-answer" placeholder="???">
+                <div id="riddle-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkRiddleAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+            
+            <!-- Module 3: Addition Challenge -->
+            <div id="addition-game" class="module">
+                <h2 data-lang-key="addition_game_title">Addition Challenge</h2>
+                <div class="game-emoji">➕</div>
+                <p class="instruction" data-lang-key="addition_game_instruction">Select two numbers that add up to 1000!</p>
+                <div id="addition-options" class="options-grid">
+                    <!-- Option buttons will be generated by JS -->
+                </div>
+                <div id="addition-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 4: Race Points -->
+            <div id="race-game" class="module">
+                <h2 data-lang-key="race_game_title">Race Points</h2>
+                <div class="game-emoji">🏎️</div>
+                <p id="race-question" class="instruction"></p>
+                <input type="number" id="race-answer" placeholder="Points">
+                <div id="race-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkRaceAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+            
+            <!-- Module 5: Number Patterns -->
+            <div id="pattern-game" class="module">
+                <h2 data-lang-key="pattern_game_title">Number Patterns</h2>
+                <div class="game-emoji">📈</div>
+                <p class="instruction" data-lang-key="pattern_game_instruction">What number comes next?</p>
+                <div id="pattern-sequence"></div>
+                <input type="number" id="pattern-answer" placeholder="?">
+                <div id="pattern-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkPatternAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 1. LANGUAGE & TEXT DATA ---
+        const lang = {
+            'app_title': { en: 'Beyond Thousand', ml: 'ആയിരവും കടന്ന്' },
+            'back_to_menu': { en: 'Menu', ml: 'മെനു' },
+            'check_btn': { en: 'Check', ml: 'പരിശോധിക്കുക' },
+            'next_btn': { en: 'Next', ml: 'അടുത്തത്' },
+            'welcome_title': { en: 'Beyond Thousand', ml: 'ആയിരവും കടന്ന്!' },
+            'welcome_subtitle': { en: 'Choose a game to start your adventure!', ml: 'ഒരു ഗെയിം തിരഞ്ഞെടുത്ത് തുടങ്ങാം!' },
+            'correct_feedback': { en: 'Correct! 🎉', ml: 'ശരിയാണ്! 🎉' },
+            'wrong_feedback': { en: 'Try again! 🤔', ml: 'വീണ്ടും ശ്രമിക്കൂ! 🤔' },
+            'select_two': { en: 'Select TWO numbers.', ml: 'രണ്ട് സംഖ്യകൾ തിരഞ്ഞെടുക്കുക.' },
+            
+            'activity1_btn': { en: 'Number Patterns', ml: 'സംഖ്യാ പാറ്റേണുകൾ' },
+            'activity2_btn': { en: 'Number Riddles', ml: 'നമ്പർ കടങ്കഥകൾ' },
+            'activity3_btn': { en: 'Addition Challenge', ml: 'സങ്കലന മത്സരം' },
+            'activity4_btn': { en: 'Race Points', ml: 'റേസ് പോയിന്റുകൾ' },
+            'activity5_btn': { en: 'MCQ Challenge', ml: 'MCQ മത്സരം' },
+
+            'mcq_game_title': { en: 'MCQ Challenge', ml: 'MCQ മത്സരം' },
+            'mcq1_q': { en: 'What is 1000 + 100?', ml: '1000 + 100 എത്രയാണ്?' },
+            'mcq2_q': { en: 'What is the largest 3-digit number?', ml: 'ഏറ്റവും വലിയ 3-അക്ക സംഖ്യ ഏതാണ്?' },
+            'mcq3_q': { en: 'How many 100 rupee notes make 1000 rupees?', ml: 'എത്ര 100 രൂപ നോട്ടുകൾ ചേർന്നാൽ 1000 രൂപയാകും?' },
+            'mcq4_q': { en: 'What is 5000 + 30 + 3?', ml: '5000 + 30 + 3 എത്രയാണ്?' },
+            'mcq5_q': { en: 'Which number is "one thousand one"?', ml: 'ഏതാണ് "ആയിരത്തി ഒന്ന്" എന്ന സംഖ്യ?' },
+            'mcq6_q': { en: 'What is 2000 + 200?', ml: '2000 + 200 എത്രയാണ്?' },
+            'mcq7_q': { en: 'What is 1000 - 1?', ml: '1000 - 1 എത്രയാണ്?' },
+            'mcq8_q': { en: 'What is the smallest 4-digit number?', ml: 'ഏറ്റവും ചെറിയ 4-അക്ക സംഖ്യ ഏതാണ്?' },
+            'mcq9_q': { en: 'How many tens are in 100?', ml: '100-ൽ എത്ര പത്തുകൾ ഉണ്ട്?' },
+            'mcq10_q': { en: 'What is 999 + 1?', ml: '999 + 1 എത്രയാണ്?' },
+            
+            'riddle_game_title': { en: 'Number Riddles', ml: 'നമ്പർ കടങ്കഥകൾ' },
+            'riddle1': { en: '8 hundreds, 4 tens, and 2 ones.', ml: '8 നൂറ്, 4 പത്ത്, 2 ഒന്ന്.' },
+            'riddle2': { en: '1 less than 910.', ml: '910-ൽ നിന്നും ഒന്ന് കുറവ്.' },
+            'riddle3': { en: 'The largest three-digit number.', ml: 'ഏറ്റവും വലിയ മൂന്നക്ക സംഖ്യ.' },
+            'riddle4': { en: '1 more than the largest two-digit number.', ml: 'ഏറ്റവും വലിയ രണ്ടക്ക സംഖ്യയോട് ഒന്ന് കൂട്ടിയത്.' },
+            'riddle5': { en: 'I am 1000 + 300 + 30.', ml: 'ഞാൻ 1000 + 300 + 30 ആണ്.' },
+            'riddle6': { en: 'The number of points for one race round.', ml: 'ഒരു റേസ് റൗണ്ടിനുള്ള പോയിന്റുകളുടെ എണ്ണം.' },
+            'riddle7': { en: 'I have 5 in the thousands place and 5 in the ones place.', ml: 'എനിക്ക് ആയിരത്തിന്റെ സ്ഥാനത്ത് 5, ഒന്നിന്റെ സ്ഥാനത്ത് 5 ഉണ്ട്.' },
+            'riddle8': { en: 'I am 10 less than 1010.', ml: 'ഞാൻ 1010-നേക്കാൾ 10 കുറവാണ്.' },
+            'riddle9': { en: 'I am two thousand and fifty.', ml: 'ഞാൻ രണ്ടായിരത്തി അമ്പതാണ്.' },
+            'riddle10': { en: 'I am 4000 + 600 + 70 + 8.', ml: 'ഞാൻ 4000 + 600 + 70 + 8 ആണ്.' },
+
+            'addition_game_title': { en: 'Addition Challenge', ml: 'സങ്കലന മത്സരം' },
+            'addition_game_instruction': { en: 'Select two numbers that add up to 1000!', ml: 'കൂട്ടുമ്പോൾ 1000 കിട്ടുന്ന രണ്ട് സംഖ്യകൾ തിരഞ്ഞെടുക്കുക!' },
+            
+            'race_game_title': { en: 'Race Points', ml: 'റേസ് പോയിന്റുകൾ' },
+            'race_game_instruction': { en: 'This car completed {laps} laps. How many points did it get? (1 lap = 1000 points)', ml: 'ഈ കാർ {laps} റൗണ്ടുകൾ പൂർത്തിയാക്കി. എത്ര പോയിന്റുകൾ കിട്ടി? (1 റൗണ്ട് = 1000 പോയിന്റ്)' },
+
+            'pattern_game_title': { en: 'Number Patterns', ml: 'സംഖ്യാ പാറ്റേണുകൾ' },
+            'pattern_game_instruction': { en: 'What number comes next?', ml: 'അടുത്ത സംഖ്യ ഏതാണ്?' },
+        };
+
+        let currentLang = 'en';
+
+        function setLanguage(langCode) {
+            currentLang = langCode;
+            document.querySelectorAll('[data-lang-key]').forEach(elem => {
+                const key = elem.getAttribute('data-lang-key');
+                if (lang[key] && lang[key][currentLang]) {
+                    elem.innerHTML = lang[key][currentLang];
+                }
+            });
+            // Re-initialize the current game to update its text
+            const activeModuleId = document.querySelector('.module.active').id;
+            switch(activeModuleId) {
+                case 'mcq-game': initMcqGame(); break;
+                case 'riddle-game': initRiddleGame(); break;
+                case 'addition-game': initAdditionGame(); break;
+                case 'race-game': initRaceGame(); break;
+                case 'pattern-game': initPatternGame(); break;
+            }
+        }
+
+        document.getElementById('lang-selector').addEventListener('change', (e) => setLanguage(e.target.value));
+
+        // --- 2. NAVIGATION & MODULE HANDLING ---
+        function showModule(moduleId) {
+            document.querySelectorAll('.module').forEach(module => module.classList.remove('active'));
+            const activeModule = document.getElementById(moduleId);
+            activeModule.classList.add('active');
+            
+            switch(moduleId) {
+                case 'mcq-game': initMcqGame(); break;
+                case 'riddle-game': initRiddleGame(); break;
+                case 'addition-game': initAdditionGame(); break;
+                case 'race-game': initRaceGame(); break;
+                case 'pattern-game': initPatternGame(); break;
+            }
+        }
+
+        // --- 3. GAME LOGIC ---
+
+        // --- MODULE 1: MCQ Challenge ---
+        const mcqQuestions = [
+            { qKey: 'mcq1_q', options: [1010, 1100, 1001, 10001], answer: 1100 },
+            { qKey: 'mcq2_q', options: [999, 100, 990, 1000], answer: 999 },
+            { qKey: 'mcq3_q', options: [1, 100, 10, 1000], answer: 10 },
+            { qKey: 'mcq4_q', options: [533, 5033, 5330, 5303], answer: 5033 },
+            { qKey: 'mcq5_q', options: [101, 1001, 10001, 11], answer: 1001 },
+            { qKey: 'mcq6_q', options: [220, 2002, 2200, 2020], answer: 2200 },
+            { qKey: 'mcq7_q', options: [999, 990, 900, 1001], answer: 999 },
+            { qKey: 'mcq8_q', options: [100, 999, 1000, 1001], answer: 1000 },
+            { qKey: 'mcq9_q', options: [1, 10, 100, 1000], answer: 10 },
+            { qKey: 'mcq10_q', options: [998, 100, 1000, 1001], answer: 1000 }
+        ];
+        let currentMcqIndex = 0;
+
+        function initMcqGame() {
+            currentMcqIndex = Math.floor(Math.random() * mcqQuestions.length);
+            loadMcqQuestion();
+        }
+
+        function loadMcqQuestion() {
+            const q = mcqQuestions[currentMcqIndex];
+            document.getElementById('mcq-question').textContent = lang[q.qKey][currentLang];
+            const optionsContainer = document.getElementById('mcq-options');
+            optionsContainer.innerHTML = '';
+            
+            const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.onclick = () => checkMcqAnswer(option, q.answer, button);
+                optionsContainer.appendChild(button);
+            });
+            document.getElementById('mcq-feedback').textContent = '';
+        }
+
+        function checkMcqAnswer(selected, correct, btn) {
+            const feedbackElem = document.getElementById('mcq-feedback');
+            const allButtons = document.querySelectorAll('#mcq-options .option-btn');
+            allButtons.forEach(b => b.disabled = true);
+
+            if (selected === correct) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                btn.classList.add('correct');
+                setTimeout(() => {
+                    currentMcqIndex = (currentMcqIndex + 1) % mcqQuestions.length;
+                    loadMcqQuestion();
+                    allButtons.forEach(b => b.disabled = false);
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+                btn.classList.add('wrong');
+                allButtons.forEach(b => {
+                    if (parseInt(b.textContent) === correct) b.classList.add('correct');
+                });
+                setTimeout(() => {
+                    loadMcqQuestion();
+                    allButtons.forEach(b => b.disabled = false);
+                }, 2000);
+            }
+        }
+
+        // --- MODULE 2: Number Riddles ---
+        const riddles = [
+            { key: 'riddle1', answer: 842 }, { key: 'riddle2', answer: 909 },
+            { key: 'riddle3', answer: 999 }, { key: 'riddle4', answer: 100 },
+            { key: 'riddle5', answer: 1330 }, { key: 'riddle6', answer: 1000 },
+            { key: 'riddle7', answer: 5005 }, { key: 'riddle8', answer: 1000 },
+            { key: 'riddle9', answer: 2050 }, { key: 'riddle10', answer: 4678 }
+        ];
+        let currentRiddleIndex = 0;
+
+        function initRiddleGame() {
+            currentRiddleIndex = Math.floor(Math.random() * riddles.length);
+            loadRiddle();
+        }
+        
+        function loadRiddle() {
+            document.getElementById('riddle-question').textContent = lang[riddles[currentRiddleIndex].key][currentLang];
+            document.getElementById('riddle-answer').value = '';
+            document.getElementById('riddle-feedback').textContent = '';
+        }
+
+        function checkRiddleAnswer() {
+            const userAnswer = document.getElementById('riddle-answer').value;
+            const correctAnswer = riddles[currentRiddleIndex].answer;
+            const feedbackElem = document.getElementById('riddle-feedback');
+
+            if (parseInt(userAnswer) === correctAnswer) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(() => {
+                    currentRiddleIndex = (currentRiddleIndex + 1) % riddles.length;
+                    loadRiddle();
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+
+        // --- MODULE 3: Addition Challenge ---
+        const additionPairs = [
+            [505, 495], [250, 750], [999, 1], [100, 900], [990, 10],
+            [300, 700], [450, 550], [850, 150], [620, 380], [50, 950]
+        ];
+        let selectedNumbers = [];
+
+        function initAdditionGame() {
+            const currentPair = additionPairs[Math.floor(Math.random() * additionPairs.length)];
+            const distractors = [20, 30, 40, 200, 300, 400, 500, 600, 700, 800].filter(n => !currentPair.includes(n));
+            const options = [...currentPair, distractors[Math.floor(Math.random()*distractors.length)], distractors[Math.floor(Math.random()*distractors.length)]];
+            
+            const shuffledOptions = options.sort(() => Math.random() - 0.5);
+            
+            const optionsContainer = document.getElementById('addition-options');
+            optionsContainer.innerHTML = '';
+            selectedNumbers = [];
+
+            shuffledOptions.forEach(num => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = num;
+                button.onclick = () => selectAdditionNumber(button);
+                optionsContainer.appendChild(button);
+            });
+            document.getElementById('addition-feedback').textContent = '';
+        }
+
+        function selectAdditionNumber(btn) {
+            const num = parseInt(btn.textContent);
+            if (btn.classList.contains('selected')) {
+                btn.classList.remove('selected');
+                selectedNumbers = selectedNumbers.filter(n => n !== num);
+            } else {
+                if (selectedNumbers.length < 2) {
+                    btn.classList.add('selected');
+                    selectedNumbers.push(num);
+                }
+            }
+
+            if (selectedNumbers.length === 2) {
+                checkAdditionAnswer();
+            }
+        }
+
+        function checkAdditionAnswer() {
+            const feedbackElem = document.getElementById('addition-feedback');
+            const sum = selectedNumbers[0] + selectedNumbers[1];
+            const allButtons = document.querySelectorAll('#addition-options .option-btn');
+
+            if (sum === 1000) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                allButtons.forEach(b => {
+                    if (b.classList.contains('selected')) b.classList.add('correct');
+                });
+                setTimeout(initAdditionGame, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+                allButtons.forEach(b => {
+                    if (b.classList.contains('selected')) b.classList.add('wrong');
+                });
+                setTimeout(() => {
+                    allButtons.forEach(b => b.classList.remove('selected', 'wrong'));
+                    selectedNumbers = [];
+                    feedbackElem.textContent = '';
+                }, 1500);
+            }
+        }
+        
+        // --- MODULE 4: Race Points ---
+        const raceCars = [
+            { laps: 1 }, { laps: 5 }, { laps: 3 }, { laps: 6 }, { laps: 4 },
+            { laps: 9 }, { laps: 8 }, { laps: 7 }, { laps: 2 }, { laps: 10 }
+        ];
+        let currentRaceCarIndex = 0;
+
+        function initRaceGame() {
+            currentRaceCarIndex = Math.floor(Math.random() * raceCars.length);
+            loadRaceQuestion();
+        }
+
+        function loadRaceQuestion() {
+            const car = raceCars[currentRaceCarIndex];
+            const questionText = lang.race_game_instruction[currentLang].replace('{laps}', car.laps);
+            document.getElementById('race-question').textContent = questionText;
+            document.getElementById('race-answer').value = '';
+            document.getElementById('race-feedback').textContent = '';
+        }
+
+        function checkRaceAnswer() {
+            const userAnswer = document.getElementById('race-answer').value;
+            const correctAnswer = raceCars[currentRaceCarIndex].laps * 1000;
+            const feedbackElem = document.getElementById('race-feedback');
+
+            if (parseInt(userAnswer) === correctAnswer) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(() => {
+                    currentRaceCarIndex = (currentRaceCarIndex + 1) % raceCars.length;
+                    loadRaceQuestion();
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+
+        // --- MODULE 5: Number Patterns ---
+        const patterns = [
+            { sequence: [1000, 2000, 3000], answer: 4000 },
+            { sequence: [500, 1000, 1500], answer: 2000 },
+            { sequence: [9400, 9300, 9200], answer: 9100 },
+            { sequence: [7628, 7728, 7828], answer: 7928 },
+            { sequence: [2222, 3333, 4444], answer: 5555 },
+            { sequence: [10150, 10200, 10250], answer: 10300 },
+            { sequence: [1500, 2600, 3700], answer: 4800 },
+            { sequence: [9999, 8999, 7999], answer: 6999 },
+            { sequence: [3021, 4132, 5243], answer: 6354 },
+            { sequence: [4000, 6000, 8000], answer: 10000 }
+        ];
+        let currentPatternIndex = 0;
+
+        function initPatternGame() {
+            currentPatternIndex = Math.floor(Math.random() * patterns.length);
+            loadPattern();
+        }
+
+        function loadPattern() {
+            const pattern = patterns[currentPatternIndex];
+            document.getElementById('pattern-sequence').textContent = pattern.sequence.join(', ') + ', ...';
+            document.getElementById('pattern-answer').value = '';
+            document.getElementById('pattern-feedback').textContent = '';
+        }
+
+        function checkPatternAnswer() {
+            const userAnswer = document.getElementById('pattern-answer').value;
+            const correctAnswer = patterns[currentPatternIndex].answer;
+            const feedbackElem = document.getElementById('pattern-feedback');
+
+            if (parseInt(userAnswer) === correctAnswer) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(() => {
+                    currentPatternIndex = (currentPatternIndex + 1) % patterns.length;
+                    loadPattern();
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+        
+        // --- INITIALIZE APP ---
+        setLanguage(currentLang);
+    </script>
+</body>
+</html>
+

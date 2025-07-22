@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decreasing Numbers</title>
+    <style>
+        /* --- General Styling & Fonts --- */
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap');
+        
+        :root {
+            --primary-color: #F44336; /* Action Red */
+            --secondary-color: #2196F3; /* Cool Blue */
+            --background-color: #FFEBEE; /* Light Red */
+            --text-color: #333;
+            --correct-color: #4CAF50;
+            --wrong-color: #F44336;
+            --white: #FFFFFF;
+            --font-main: 'Baloo 2', cursive;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Main App Container --- */
+        #app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 900px;
+            background: var(--white);
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 5px solid var(--white);
+        }
+
+        /* --- Header --- */
+        header {
+            background: linear-gradient(45deg, var(--primary-color), #D32F2F);
+            color: var(--white);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        #lang-selector {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--white);
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            font-family: var(--font-main);
+            font-weight: 700;
+        }
+        #lang-selector option { color: black; }
+
+        /* --- Main Content Area --- */
+        main {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            text-align: center;
+            background: var(--background-color);
+        }
+        
+        .module { display: none; }
+        .module.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h2 {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            font-size: 1.2em;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            color: #555;
+        }
+
+        /* --- Buttons & Inputs --- */
+        .btn, button {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--secondary-color), #1976D2);
+            color: var(--white);
+            font-family: var(--font-main);
+            padding: 14px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.3em;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 8px 5px;
+        }
+
+        .btn:hover, button:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(33,150,243,0.4);
+        }
+        
+        .main-menu-btn {
+            display: block;
+            width: 90%;
+            margin: 12px auto;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        .main-menu-btn:hover { background: var(--primary-color); color: var(--white); }
+        
+        .back-btn { background: #f1f1f1; color: #555; font-size: 1.1em; padding: 10px 25px; }
+        .back-btn:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+        input[type="number"] {
+            width: 80%;
+            padding: 12px;
+            font-size: 1.8em;
+            font-weight: 700;
+            text-align: center;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            margin-top: 15px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .feedback { font-size: 1.3em; font-weight: 700; margin-top: 20px; height: 35px; transition: all 0.3s; }
+
+        /* --- Game-Specific Styles --- */
+        .game-emoji { font-size: 100px; margin-bottom: 15px; }
+        .calculation-display { font-size: 1.8em; font-weight: 700; color: var(--primary-color); margin: 20px 0; }
+        .abacus { display: flex; justify-content: center; gap: 15px; margin: 20px 0; }
+        .abacus-rod { display: flex; flex-direction: column-reverse; background: #FFCCBC; width: 20px; height: 150px; border-radius: 10px; padding: 5px 0; }
+        .abacus-bead { width: 30px; height: 15px; background: var(--primary-color); border-radius: 50%; margin: 2px auto; }
+        .abacus-label { font-weight: 700; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1 data-lang-key="app_title">Decreasing Numbers</h1>
+            <select id="lang-selector">
+                <option value="en">English</option>
+                <option value="ml">മലയാളം</option>
+            </select>
+        </header>
+
+        <main>
+            <!-- Welcome Screen Module -->
+            <div id="welcome-screen" class="module active">
+                <h2 data-lang-key="welcome_title">Decreasing Numbers!</h2>
+                <div class="game-emoji">🛡️</div>
+                <p class="instruction" data-lang-key="welcome_subtitle">Choose a mission to start your adventure!</p>
+                <button class="main-menu-btn" onclick="showModule('abacus-game')" data-lang-key="activity1_btn">Abacus Challenge</button>
+                <button class="main-menu-btn" onclick="showModule('treasure-hunt-game')" data-lang-key="activity2_btn">Treasure Hunt</button>
+                <button class="main-menu-btn" onclick="showModule('electricity-bill-game')" data-lang-key="activity3_btn">Electricity Bill</button>
+                <button class="main-menu-btn" onclick="showModule('circus-ticket-game')" data-lang-key="activity4_btn">Circus Tickets</button>
+                <button class="main-menu-btn" onclick="showModule('bank-balance-game')" data-lang-key="activity5_btn">Bank Balance</button>
+            </div>
+
+            <!-- Module 1: Abacus Challenge -->
+            <div id="abacus-game" class="module">
+                <h2 data-lang-key="abacus_title">Abacus Challenge</h2>
+                <div class="game-emoji">🧮</div>
+                <p id="abacus-instruction" class="instruction"></p>
+                <div id="abacus-display" class="abacus"></div>
+                <input type="number" id="abacus-answer" placeholder="?">
+                <div id="abacus-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkAbacusAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+            
+            <!-- Module 2: Treasure Hunt -->
+            <div id="treasure-hunt-game" class="module">
+                <h2 data-lang-key="treasure_hunt_title">Treasure Hunt</h2>
+                <div class="game-emoji">🗺️</div>
+                <p id="treasure-instruction" class="instruction"></p>
+                <div id="treasure-display" class="calculation-display"></div>
+                <input type="number" id="treasure-answer" placeholder="?">
+                <div id="treasure-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkTreasureAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 3: Electricity Bill -->
+            <div id="electricity-bill-game" class="module">
+                <h2 data-lang-key="electricity_bill_title">Electricity Bill</h2>
+                <div class="game-emoji">💡</div>
+                <p id="electricity-instruction" class="instruction"></p>
+                <div id="electricity-display" class="calculation-display"></div>
+                <input type="number" id="electricity-answer" placeholder="?">
+                <div id="electricity-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkElectricityAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 4: Circus Tickets -->
+            <div id="circus-ticket-game" class="module">
+                <h2 data-lang-key="circus_ticket_title">Circus Tickets</h2>
+                <div class="game-emoji">🎪</div>
+                <p id="circus-instruction" class="instruction"></p>
+                <input type="number" id="circus-answer" placeholder="₹?">
+                <div id="circus-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkCircusAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 5: Bank Balance -->
+            <div id="bank-balance-game" class="module">
+                <h2 data-lang-key="bank_balance_title">Bank Balance</h2>
+                <div class="game-emoji">🏦</div>
+                <p id="bank-balance-instruction" class="instruction"></p>
+                <input type="number" id="bank-balance-answer" placeholder="₹?">
+                <div id="bank-balance-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkBankBalanceAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 1. LANGUAGE & TEXT DATA ---
+        const lang = {
+            'app_title': { en: 'Decreasing Numbers', ml: 'കുറയുന്ന കൂട്ടം' },
+            'back_to_menu': { en: 'Menu', ml: 'മെനു' },
+            'check_btn': { en: 'Check', ml: 'പരിശോധിക്കുക' },
+            'welcome_title': { en: 'Decreasing Numbers!', ml: 'കുറയുന്ന കൂട്ടം!' },
+            'welcome_subtitle': { en: 'Choose a mission to start your adventure!', ml: 'ഒരു ദൗത്യം തിരഞ്ഞെടുത്ത് തുടങ്ങാം!' },
+            'correct_feedback': { en: 'Correct! 🎉', ml: 'ശരിയാണ്! 🎉' },
+            'wrong_feedback': { en: 'Try again! 🤔', ml: 'വീണ്ടും ശ്രമിക്കൂ! 🤔' },
+            
+            'activity1_btn': { en: 'Abacus Challenge', ml: 'അബാക്കസ് ചലഞ്ച്' },
+            'activity2_btn': { en: 'Treasure Hunt', ml: 'നിധി വേട്ട' },
+            'activity3_btn': { en: 'Electricity Bill', ml: 'വൈദ്യുതി ബിൽ' },
+            'activity4_btn': { en: 'Circus Tickets', ml: 'സർക്കസ് ടിക്കറ്റുകൾ' },
+            'activity5_btn': { en: 'Bank Balance', ml: 'ബാങ്ക് ബാലൻസ്' },
+
+            'abacus_title': { en: 'Abacus Challenge', ml: 'അബാക്കസ് ചലഞ്ച്' },
+            'abacus_instruction': { en: 'What is the difference between the two numbers shown on the abacus?', ml: 'അബാക്കസിൽ കാണിച്ചിരിക്കുന്ന രണ്ട് സംഖ്യകൾ തമ്മിലുള്ള വ്യത്യാസം എത്രയാണ്?' },
+            
+            'treasure_hunt_title': { en: 'Treasure Hunt', ml: 'നിധി വേട്ട' },
+            'treasure_instruction': { en: 'To find the treasure, find the difference between these two numbers!', ml: 'നിധി കണ്ടെത്താൻ, ഈ രണ്ട് സംഖ്യകൾ തമ്മിലുള്ള വ്യത്യാസം കണ്ടെത്തുക!' },
+            
+            'electricity_bill_title': { en: 'Electricity Bill', ml: 'വൈദ്യുതി ബിൽ' },
+            'electricity_instruction': { en: 'The previous reading was {prev}. The current reading is {curr}. How many units were used?', ml: 'മുമ്പത്തെ റീഡിംഗ് {prev} ആയിരുന്നു. ഇപ്പോഴത്തെ റീഡിംഗ് {curr} ആണ്. എത്ര യൂണിറ്റ് ഉപയോഗിച്ചു?' },
+            
+            'circus_ticket_title': { en: 'Circus Tickets', ml: 'സർക്കസ് ടിക്കറ്റുകൾ' },
+            'circus_instruction': { en: '2 adults (₹180 each) and 2 children (₹90 each) go to the circus. If they pay with a ₹1000 note, how much change do they get back?', ml: '2 മുതിർന്നവരും (ഒരാൾക്ക് ₹180) 2 കുട്ടികളും (ഒരാൾക്ക് ₹90) സർക്കസിന് പോകുന്നു. ₹1000 നോട്ട് കൊടുത്താൽ എത്ര രൂപ ബാക്കി കിട്ടും?' },
+            
+            'bank_balance_title': { en: 'Bank Balance', ml: 'ബാങ്ക് ബാലൻസ്' },
+            'bank_balance_instruction': { en: 'Your account has ₹{balance}. You withdraw ₹{withdraw}. What is the new balance?', ml: 'നിങ്ങളുടെ അക്കൗണ്ടിൽ ₹{balance} ഉണ്ട്. നിങ്ങൾ ₹{withdraw} പിൻവലിച്ചു. പുതിയ ബാലൻസ് എത്രയാണ്?' },
+        };
+
+        let currentLang = 'en';
+
+        function setLanguage(langCode) {
+            currentLang = langCode;
+            document.querySelectorAll('[data-lang-key]').forEach(elem => {
+                const key = elem.getAttribute('data-lang-key');
+                if (lang[key] && lang[key][currentLang]) {
+                    elem.innerHTML = lang[key][currentLang];
+                }
+            });
+            const activeModuleId = document.querySelector('.module.active').id;
+            switch(activeModuleId) {
+                case 'abacus-game': initAbacusGame(); break;
+                case 'treasure-hunt-game': initTreasureHuntGame(); break;
+                case 'electricity-bill-game': initElectricityBillGame(); break;
+                case 'circus-ticket-game': initCircusTicketGame(); break;
+                case 'bank-balance-game': initBankBalanceGame(); break;
+            }
+        }
+
+        document.getElementById('lang-selector').addEventListener('change', (e) => setLanguage(e.target.value));
+
+        // --- 2. NAVIGATION & MODULE HANDLING ---
+        function showModule(moduleId) {
+            document.querySelectorAll('.module').forEach(module => module.classList.remove('active'));
+            document.getElementById(moduleId).classList.add('active');
+            
+            switch(moduleId) {
+                case 'abacus-game': initAbacusGame(); break;
+                case 'treasure-hunt-game': initTreasureHuntGame(); break;
+                case 'electricity-bill-game': initElectricityBillGame(); break;
+                case 'circus-ticket-game': initCircusTicketGame(); break;
+                case 'bank-balance-game': initBankBalanceGame(); break;
+            }
+        }
+
+        // --- 3. GAME LOGIC ---
+
+        // --- MODULE 1: Abacus Challenge ---
+        let abacusAnswer = 0;
+
+        function createAbacus(number, container) {
+            container.innerHTML = '';
+            const digits = String(number).padStart(3, '0').split('');
+            const labels = currentLang === 'ml' ? ['നൂറ്', 'പത്ത്', 'ഒന്ന്'] : ['H', 'T', 'O'];
+            
+            digits.forEach((digit, index) => {
+                const rodContainer = document.createElement('div');
+                const rod = document.createElement('div');
+                rod.className = 'abacus-rod';
+                for(let i = 0; i < parseInt(digit); i++) {
+                    const bead = document.createElement('div');
+                    bead.className = 'abacus-bead';
+                    rod.appendChild(bead);
+                }
+                const label = document.createElement('div');
+                label.className = 'abacus-label';
+                label.textContent = labels[index];
+                rodContainer.appendChild(rod);
+                rodContainer.appendChild(label);
+                container.appendChild(rodContainer);
+            });
+        }
+
+        function initAbacusGame() {
+            const num1 = Math.floor(200 + Math.random() * 799); // Increased range
+            const num2 = Math.floor(100 + Math.random() * (num1 - 101));
+            abacusAnswer = num1 - num2;
+
+            const display = document.getElementById('abacus-display');
+            display.innerHTML = ''; // Clear previous
+            const abacus1 = document.createElement('div');
+            abacus1.className = 'abacus';
+            const abacus2 = document.createElement('div');
+            abacus2.className = 'abacus';
+            
+            createAbacus(num1, abacus1);
+            createAbacus(num2, abacus2);
+            
+            display.appendChild(abacus1);
+            const minusSign = document.createElement('div');
+            minusSign.textContent = '➖';
+            minusSign.style.fontSize = '40px';
+            minusSign.style.alignSelf = 'center';
+            display.appendChild(minusSign);
+            display.appendChild(abacus2);
+
+            document.getElementById('abacus-instruction').textContent = lang.abacus_instruction[currentLang];
+            document.getElementById('abacus-answer').value = '';
+            document.getElementById('abacus-feedback').textContent = '';
+        }
+
+        function checkAbacusAnswer() {
+            const userAnswer = parseInt(document.getElementById('abacus-answer').value);
+            const feedback = document.getElementById('abacus-feedback');
+            if (userAnswer === abacusAnswer) {
+                feedback.textContent = lang.correct_feedback[currentLang];
+                feedback.style.color = 'var(--correct-color)';
+                setTimeout(initAbacusGame, 1500);
+            } else {
+                feedback.textContent = lang.wrong_feedback[currentLang];
+                feedback.style.color = 'var(--wrong-color)';
+            }
+        }
+
+        // --- MODULE 2: Treasure Hunt ---
+        let treasureAnswer = 0;
+        function initTreasureHuntGame() {
+            const num1 = Math.floor(2000 + Math.random() * 7999); // Increased range
+            const num2 = Math.floor(1000 + Math.random() * (num1 - 2000)); // Ensure larger difference
+            treasureAnswer = num1 - num2;
+            
+            document.getElementById('treasure-display').textContent = `${num1} - ${num2} = ?`;
+            document.getElementById('treasure-answer').value = '';
+            document.getElementById('treasure-feedback').textContent = '';
+        }
+
+        function checkTreasureAnswer() {
+            const userAnswer = parseInt(document.getElementById('treasure-answer').value);
+            const feedback = document.getElementById('treasure-feedback');
+            if (userAnswer === treasureAnswer) {
+                feedback.textContent = lang.correct_feedback[currentLang];
+                feedback.style.color = 'var(--correct-color)';
+                setTimeout(initTreasureHuntGame, 1500);
+            } else {
+                feedback.textContent = lang.wrong_feedback[currentLang];
+                feedback.style.color = 'var(--wrong-color)';
+            }
+        }
+        
+        // --- MODULE 3: Electricity Bill ---
+        let electricityAnswer = 0;
+        function initElectricityBillGame() {
+            const prevReading = Math.floor(1000 + Math.random() * 8000); // Increased range
+            const usage = Math.floor(50 + Math.random() * 950); // Increased range
+            const currentReading = prevReading + usage;
+            electricityAnswer = usage;
+
+            const instruction = lang.electricity_instruction[currentLang]
+                .replace('{prev}', `<b>${prevReading}</b>`)
+                .replace('{curr}', `<b>${currentReading}</b>`);
+            document.getElementById('electricity-instruction').innerHTML = instruction;
+            document.getElementById('electricity-display').textContent = `${currentReading} - ${prevReading} = ?`;
+            document.getElementById('electricity-answer').value = '';
+            document.getElementById('electricity-feedback').textContent = '';
+        }
+
+        function checkElectricityAnswer() {
+            const userAnswer = parseInt(document.getElementById('electricity-answer').value);
+            const feedback = document.getElementById('electricity-feedback');
+            if (userAnswer === electricityAnswer) {
+                feedback.textContent = lang.correct_feedback[currentLang];
+                feedback.style.color = 'var(--correct-color)';
+                setTimeout(initElectricityBillGame, 1500);
+            } else {
+                feedback.textContent = lang.wrong_feedback[currentLang];
+                feedback.style.color = 'var(--wrong-color)';
+            }
+        }
+        
+        // --- MODULE 4: Circus Tickets ---
+        let circusAnswer = 0;
+        function initCircusTicketGame() {
+            const adultCost = 180;
+            const childCost = 90;
+            const numAdults = Math.floor(Math.random() * 4) + 1; // 1 to 4 adults
+            const numChildren = Math.floor(Math.random() * 5); // 0 to 4 children
+            const totalCost = (numAdults * adultCost) + (numChildren * childCost);
+            const paidAmount = (Math.floor(totalCost / 500) + 1) * 500; // Pay with next multiple of 500
+            circusAnswer = paidAmount - totalCost;
+
+            const adultText = `${numAdults} adult${numAdults > 1 ? 's' : ''}`;
+            const childText = `${numChildren} child${numChildren !== 1 ? 'ren' : ''}`;
+            const adultTextMl = `${numAdults} മുതിർന്നവർ`;
+            const childTextMl = `${numChildren} കുട്ടികൾ`;
+
+            const instructionText = currentLang === 'en'
+                ? `${adultText} (${adultCost} each) and ${childText} (${childCost} each) go to the circus. If they pay with a ₹${paidAmount} note, how much change do they get back?`
+                : `${adultTextMl} (ഒരാൾക്ക് ₹${adultCost}) ${numChildren > 0 ? `ഉം ${childTextMl} (ഒരാൾക്ക് ₹${childCost}) ഉം` : ''} സർക്കസിന് പോകുന്നു. ₹${paidAmount} നോട്ട് കൊടുത്താൽ എത്ര രൂപ ബാക്കി കിട്ടും?`;
+            
+            document.getElementById('circus-instruction').textContent = instructionText;
+            document.getElementById('circus-answer').value = '';
+            document.getElementById('circus-feedback').textContent = '';
+        }
+
+        function checkCircusAnswer() {
+            const userAnswer = parseInt(document.getElementById('circus-answer').value);
+            const feedback = document.getElementById('circus-feedback');
+            if (userAnswer === circusAnswer) {
+                feedback.textContent = lang.correct_feedback[currentLang];
+                feedback.style.color = 'var(--correct-color)';
+                setTimeout(initCircusTicketGame, 1500);
+            } else {
+                feedback.textContent = lang.wrong_feedback[currentLang];
+                feedback.style.color = 'var(--wrong-color)';
+            }
+        }
+
+        // --- MODULE 5: Bank Balance ---
+        let bankBalanceAnswer = 0;
+        function initBankBalanceGame() {
+            const balance = Math.floor(2000 + Math.random() * 7999); // Increased range
+            const withdraw = Math.floor(500 + Math.random() * (balance - 1000)); // Increased range
+            bankBalanceAnswer = balance - withdraw;
+
+            const instruction = lang.bank_balance_instruction[currentLang]
+                .replace('{balance}', `<b>${balance}</b>`)
+                .replace('{withdraw}', `<b>${withdraw}</b>`);
+            document.getElementById('bank-balance-instruction').innerHTML = instruction;
+            document.getElementById('bank-balance-answer').value = '';
+            document.getElementById('bank-balance-feedback').textContent = '';
+        }
+
+        function checkBankBalanceAnswer() {
+            const userAnswer = parseInt(document.getElementById('bank-balance-answer').value);
+            const feedback = document.getElementById('bank-balance-feedback');
+            if (userAnswer === bankBalanceAnswer) {
+                feedback.textContent = lang.correct_feedback[currentLang];
+                feedback.style.color = 'var(--correct-color)';
+                setTimeout(initBankBalanceGame, 1500);
+            } else {
+                feedback.textContent = lang.wrong_feedback[currentLang];
+                feedback.style.color = 'var(--wrong-color)';
+            }
+        }
+        
+        // --- INITIALIZE APP ---
+        setLanguage(currentLang);
+    </script>
+</body>
+</html>
+

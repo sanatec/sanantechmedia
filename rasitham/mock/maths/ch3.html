@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Many Numbers</title>
+    <style>
+        /* --- General Styling & Fonts --- */
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap');
+        
+        :root {
+            --primary-color: #2196F3; /* Travel Blue */
+            --secondary-color: #FF9800; /* Sunset Orange */
+            --background-color: #F0F4F8; /* Light Sky */
+            --text-color: #333;
+            --correct-color: #4CAF50; /* Green */
+            --wrong-color: #F44336; /* Red */
+            --white: #FFFFFF;
+            --font-main: 'Baloo 2', cursive;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Main App Container --- */
+        #app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 900px;
+            background: var(--white);
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 5px solid var(--white);
+        }
+
+        /* --- Header --- */
+        header {
+            background: linear-gradient(45deg, var(--primary-color), #1976D2);
+            color: var(--white);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        #lang-selector {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--white);
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            font-family: var(--font-main);
+            font-weight: 700;
+        }
+        #lang-selector option { color: black; }
+
+        /* --- Main Content Area --- */
+        main {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            text-align: center;
+            background: var(--background-color);
+        }
+        
+        .module { display: none; }
+        .module.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h2 {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            font-size: 1.2em;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            color: #555;
+        }
+
+        /* --- Buttons & Inputs --- */
+        .btn, button {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--secondary-color), #F57C00);
+            color: var(--white);
+            font-family: var(--font-main);
+            padding: 14px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.3em;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 8px 5px;
+        }
+
+        .btn:hover, button:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(255,152,0,0.4);
+        }
+        
+        .main-menu-btn {
+            display: block;
+            width: 90%;
+            margin: 12px auto;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        .main-menu-btn:hover { background: var(--primary-color); color: var(--white); }
+        
+        .back-btn { background: #f1f1f1; color: #555; font-size: 1.1em; padding: 10px 25px; }
+        .back-btn:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+        input[type="number"] {
+            width: 80%;
+            padding: 12px;
+            font-size: 1.8em;
+            font-weight: 700;
+            text-align: center;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            margin-top: 15px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .feedback { font-size: 1.3em; font-weight: 700; margin-top: 20px; height: 35px; transition: all 0.3s; }
+
+        /* --- Game-Specific Styles --- */
+        .game-emoji { font-size: 100px; margin-bottom: 15px; }
+        
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        
+        .option-btn {
+            width: 100%;
+            padding: 15px 10px;
+            font-size: 1.2em;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid #ddd;
+        }
+        .option-btn.correct { background: var(--correct-color); color: var(--white); border-color: var(--correct-color); animation: pulse 0.5s; }
+        .option-btn.wrong { background: var(--wrong-color); color: var(--white); border-color: var(--wrong-color); animation: shake 0.5s; }
+        
+        #pyramid-container { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .pyramid-row { display: flex; justify-content: center; gap: 5px; }
+        .pyramid-block { width: 70px; height: 50px; background: #B3E5FC; border: 2px solid var(--primary-color); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.5em; font-weight: 700; }
+        .pyramid-block input { width: 100%; height: 100%; border: none; background: var(--white); border-radius: 6px; font-size: 1em; text-align: center; color: var(--primary-color); }
+
+        #notes-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin: 20px 0; }
+        .note { background: #81C784; color: white; padding: 5px 15px; border-radius: 8px; font-size: 1.4em; font-weight: 700; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1 data-lang-key="app_title">How Many Numbers</h1>
+            <select id="lang-selector">
+                <option value="en">English</option>
+                <option value="ml">മലയാളം</option>
+            </select>
+        </header>
+
+        <main>
+            <!-- Welcome Screen Module -->
+            <div id="welcome-screen" class="module active">
+                <h2 data-lang-key="welcome_title">How Many Numbers!</h2>
+                <div class="game-emoji">🚂</div>
+                <p class="instruction" data-lang-key="welcome_subtitle">Choose a puzzle to begin your journey!</p>
+                <button class="main-menu-btn" onclick="showModule('ticket-counter-game')" data-lang-key="activity1_btn">Ticket Counter</button>
+                <button class="main-menu-btn" onclick="showModule('destination-sort-game')" data-lang-key="activity2_btn">Destination Sort</button>
+                <button class="main-menu-btn" onclick="showModule('flight-riddle-game')" data-lang-key="activity3_btn">Flight Number Riddle</button>
+                <button class="main-menu-btn" onclick="showModule('pyramid-game')" data-lang-key="activity4_btn">Number Pyramid</button>
+                <button class="main-menu-btn" onclick="showModule('roman-numeral-game')" data-lang-key="activity5_btn">Roman Numeral Clock</button>
+            </div>
+
+            <!-- Module 1: Ticket Counter -->
+            <div id="ticket-counter-game" class="module">
+                <h2 data-lang-key="ticket_counter_title">Ticket Counter</h2>
+                <div class="game-emoji">🎫</div>
+                <p class="instruction" data-lang-key="ticket_counter_instruction">What is the total value of these notes?</p>
+                <div id="notes-container"></div>
+                <input type="number" id="ticket-answer" placeholder="₹?">
+                <div id="ticket-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkTicketAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+            
+            <!-- Module 2: Destination Sort -->
+            <div id="destination-sort-game" class="module">
+                <h2 data-lang-key="destination_sort_title">Destination Sort</h2>
+                <div class="game-emoji">🗺️</div>
+                <p class="instruction" data-lang-key="destination_sort_instruction">Click the destinations from nearest to farthest.</p>
+                <div id="destination-options" class="options-grid"></div>
+                <div id="destination-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 3: Flight Number Riddle -->
+            <div id="flight-riddle-game" class="module">
+                <h2 data-lang-key="flight_riddle_title">Flight Riddle</h2>
+                <div class="game-emoji">✈️</div>
+                <p class="instruction" data-lang-key="flight_riddle_instruction">The number formed by the thousands and hundreds digits is half the number formed by the hundreds and tens digits. This, in turn, is half the number formed by the tens and ones digits. What is the flight number?</p>
+                <input type="number" id="flight-riddle-answer" placeholder="????">
+                <div id="flight-riddle-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkFlightRiddleAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 4: Number Pyramid -->
+            <div id="pyramid-game" class="module">
+                <h2 data-lang-key="pyramid_title">Number Pyramid</h2>
+                <div class="game-emoji">🔺</div>
+                <p class="instruction" data-lang-key="pyramid_instruction">Fill in the missing blocks. A block's value is the sum of the two blocks below it.</p>
+                <div id="pyramid-container"></div>
+                <div id="pyramid-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkPyramid()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 5: Roman Numeral Clock -->
+            <div id="roman-numeral-game" class="module">
+                <h2 data-lang-key="roman_numeral_title">Roman Clock</h2>
+                <div class="game-emoji">🏛️</div>
+                <p id="roman-question" class="instruction"></p>
+                <div id="roman-options" class="options-grid"></div>
+                <div id="roman-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 1. LANGUAGE & TEXT DATA ---
+        const lang = {
+            'app_title': { en: 'How Many Numbers', ml: 'എത്രയെത്ര സംഖ്യകൾ' },
+            'back_to_menu': { en: 'Menu', ml: 'മെനു' },
+            'check_btn': { en: 'Check', ml: 'പരിശോധിക്കുക' },
+            'welcome_title': { en: 'How Many Numbers', ml: 'എത്രയെത്ര സംഖ്യകൾ!' },
+            'welcome_subtitle': { en: 'Choose a puzzle to begin your journey!', ml: 'ഒരു കടങ്കഥ തിരഞ്ഞെടുത്ത് യാത്ര തുടങ്ങാം!' },
+            'correct_feedback': { en: 'Correct! 🎉', ml: 'ശരിയാണ്! 🎉' },
+            'wrong_feedback': { en: 'Try again! 🤔', ml: 'വീണ്ടും ശ്രമിക്കൂ! 🤔' },
+            'complete_feedback': { en: 'Great job! You sorted them all!', ml: 'കൊള്ളാം! നിങ്ങൾ എല്ലാം ശരിയാക്കി!' },
+            
+            'activity1_btn': { en: 'Ticket Counter', ml: 'ടിക്കറ്റ് കൗണ്ടർ' },
+            'activity2_btn': { en: 'Destination Sort', ml: 'സ്ഥലങ്ങൾ ക്രമീകരിക്കുക' },
+            'activity3_btn': { en: 'Flight Number Riddle', ml: 'വിമാന നമ്പർ കടങ്കഥ' },
+            'activity4_btn': { en: 'Number Pyramid', ml: 'സംഖ്യാ പിരമിഡ്' },
+            'activity5_btn': { en: 'Roman Numeral Clock', ml: 'റോമൻ ക്ലോക്ക്' },
+
+            'ticket_counter_title': { en: 'Ticket Counter', ml: 'ടിക്കറ്റ് കൗണ്ടർ' },
+            'ticket_counter_instruction': { en: 'What is the total value of these notes?', ml: 'ഈ നോട്ടുകളുടെ ആകെ തുക എത്രയാണ്?' },
+            
+            'destination_sort_title': { en: 'Destination Sort', ml: 'സ്ഥലങ്ങൾ ക്രമീകരിക്കുക' },
+            'destination_sort_instruction': { en: 'Click the destinations from nearest to farthest.', ml: 'ഏറ്റവും അടുത്തുള്ള സ്ഥലം മുതൽ ദൂരെയുള്ളത് വരെ ക്രമത്തിൽ ക്ലിക്ക് ചെയ്യുക.' },
+            
+            'flight_riddle_title': { en: 'Flight Riddle', ml: 'വിമാന നമ്പർ കടങ്കഥ' },
+            'flight_riddle_instruction': { en: 'The number from thousands and hundreds digits is half the number from hundreds and tens digits. This is half the number from tens and ones digits. What is the flight number?', ml: 'ആയിരത്തിന്റെയും നൂറിന്റെയും സ്ഥാനത്തെ അക്കങ്ങൾ ചേർന്ന സംഖ്യ, നൂറിന്റെയും പത്തിന്റെയും സ്ഥാനത്തെ അക്കങ്ങൾ ചേർന്ന സംഖ്യയുടെ പകുതിയാണ്. ഇത്, പത്തിന്റെയും ഒന്നിന്റെയും സ്ഥാനത്തെ അക്കങ്ങൾ ചേർന്ന സംഖ്യയുടെ പകുതിയാണ്. വിമാന നമ്പർ എത്രയാണ്?' },
+            
+            'pyramid_title': { en: 'Number Pyramid', ml: 'സംഖ്യാ പിരമിഡ്' },
+            'pyramid_instruction': { en: 'Fill in the missing blocks. A block\'s value is the sum of the two blocks below it.', ml: 'ഒഴിഞ്ഞ കളങ്ങൾ പൂരിപ്പിക്കുക. ഒരു കളത്തിലെ സംഖ്യ അതിന് താഴെയുള്ള രണ്ട് കളങ്ങളിലെ സംഖ്യകളുടെ തുകയാണ്.' },
+            
+            'roman_numeral_title': { en: 'Roman Clock', ml: 'റോമൻ ക്ലോക്ക്' },
+            'roman_question': { en: 'What number is {roman}?', ml: '{roman} ഏത് സംഖ്യയാണ്?' },
+        };
+
+        let currentLang = 'en';
+
+        function setLanguage(langCode) {
+            currentLang = langCode;
+            document.querySelectorAll('[data-lang-key]').forEach(elem => {
+                const key = elem.getAttribute('data-lang-key');
+                if (lang[key] && lang[key][currentLang]) {
+                    elem.innerHTML = lang[key][currentLang];
+                }
+            });
+            const activeModuleId = document.querySelector('.module.active').id;
+            switch(activeModuleId) {
+                case 'ticket-counter-game': initTicketCounterGame(); break;
+                case 'destination-sort-game': initDestinationSortGame(); break;
+                case 'flight-riddle-game': /* No text to update */ break;
+                case 'pyramid-game': initPyramidGame(); break;
+                case 'roman-numeral-game': initRomanNumeralGame(); break;
+            }
+        }
+
+        document.getElementById('lang-selector').addEventListener('change', (e) => setLanguage(e.target.value));
+
+        // --- 2. NAVIGATION & MODULE HANDLING ---
+        function showModule(moduleId) {
+            document.querySelectorAll('.module').forEach(module => module.classList.remove('active'));
+            document.getElementById(moduleId).classList.add('active');
+            
+            switch(moduleId) {
+                case 'ticket-counter-game': initTicketCounterGame(); break;
+                case 'destination-sort-game': initDestinationSortGame(); break;
+                case 'flight-riddle-game': /* No init needed */ break;
+                case 'pyramid-game': initPyramidGame(); break;
+                case 'roman-numeral-game': initRomanNumeralGame(); break;
+            }
+        }
+
+        // --- 3. GAME LOGIC ---
+
+        // --- MODULE 1: Ticket Counter ---
+        let ticketTotal = 0;
+        function initTicketCounterGame() {
+            const notesContainer = document.getElementById('notes-container');
+            notesContainer.innerHTML = '';
+            ticketTotal = 0;
+            const noteTypes = [500, 100, 50, 10];
+            let notes = [];
+            // Create a random set of notes
+            for(let i = 0; i < 2 + Math.floor(Math.random() * 3); i++) notes.push(500);
+            for(let i = 0; i < 2 + Math.floor(Math.random() * 4); i++) notes.push(100);
+            for(let i = 0; i < 2 + Math.floor(Math.random() * 5); i++) notes.push(10);
+            
+            notes.forEach(noteValue => {
+                const noteElem = document.createElement('div');
+                noteElem.className = 'note';
+                noteElem.textContent = `₹${noteValue}`;
+                notesContainer.appendChild(noteElem);
+                ticketTotal += noteValue;
+            });
+            document.getElementById('ticket-answer').value = '';
+            document.getElementById('ticket-feedback').textContent = '';
+        }
+
+        function checkTicketAnswer() {
+            const userAnswer = parseInt(document.getElementById('ticket-answer').value);
+            const feedbackElem = document.getElementById('ticket-feedback');
+            if (userAnswer === ticketTotal) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(initTicketCounterGame, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+
+        // --- MODULE 2: Destination Sort ---
+        const destinations = [
+            { en: 'Hill Palace', ml: 'ഹിൽപാലസ്', dist: 11 },
+            { en: 'Kanyakumari', ml: 'കന്യാകുമാരി', dist: 307 },
+            { en: 'Mysore', ml: 'മൈസൂർ', dist: 385 },
+            { en: 'Goa', ml: 'ഗോവ', dist: 744 },
+            { en: 'Hyderabad', ml: 'ഹൈദ്രാബാദ്', dist: 1112 },
+            { en: 'Taj Mahal', ml: 'താജ്‌മഹൽ', dist: 2424 },
+            { en: 'Red Fort', ml: 'റെഡ്‌ഫോർട്ട്', dist: 2592 },
+            { en: 'Kozhikode', ml: 'കോഴിക്കോട്', dist: 193 },
+            { en: 'Mangaluru', ml: 'മംഗളൂരു', dist: 415 },
+            { en: 'New Delhi', ml: 'ന്യൂഡൽഹി', dist: 2643 }
+        ];
+        let sortedDestinations = [];
+        let userSortOrder = [];
+
+        function initDestinationSortGame() {
+            const optionsContainer = document.getElementById('destination-options');
+            optionsContainer.innerHTML = '';
+            userSortOrder = [];
+            document.getElementById('destination-feedback').textContent = '';
+            
+            // Get 4 random destinations
+            let currentDestinations = [...destinations].sort(() => 0.5 - Math.random()).slice(0, 4);
+            sortedDestinations = [...currentDestinations].sort((a, b) => a.dist - b.dist);
+            
+            // Display them shuffled
+            currentDestinations.sort(() => 0.5 - Math.random()).forEach(dest => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = `${dest[currentLang]} (${dest.dist} km)`;
+                button.onclick = () => selectDestination(dest, button);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function selectDestination(dest, btn) {
+            if (btn.disabled) return;
+            
+            const correctDest = sortedDestinations[userSortOrder.length];
+            const feedbackElem = document.getElementById('destination-feedback');
+
+            if (dest.dist === correctDest.dist) {
+                userSortOrder.push(dest);
+                btn.classList.add('correct');
+                btn.disabled = true;
+                if (userSortOrder.length === sortedDestinations.length) {
+                    feedbackElem.textContent = lang.complete_feedback[currentLang];
+                    feedbackElem.style.color = 'var(--correct-color)';
+                    setTimeout(initDestinationSortGame, 2000);
+                }
+            } else {
+                btn.classList.add('wrong');
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+                setTimeout(() => {
+                    btn.classList.remove('wrong');
+                    feedbackElem.textContent = '';
+                }, 1000);
+            }
+        }
+
+        // --- MODULE 3: Flight Number Riddle ---
+        function checkFlightRiddleAnswer() {
+            const userAnswer = document.getElementById('flight-riddle-answer').value;
+            const feedbackElem = document.getElementById('flight-riddle-feedback');
+            if (userAnswer === '1248') {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+
+        // --- MODULE 4: Number Pyramid ---
+        const pyramids = [
+            [[301, 185, 829], [486, 1014], [1500]],
+            [[555, 445, 556], [1000, 1001], [2001]],
+            [[100, 200, 300], [300, 500], [800]],
+            [[410, 220, 110], [630, 330], [960]]
+        ];
+        let currentPyramidSolution = [];
+
+        function initPyramidGame() {
+            const container = document.getElementById('pyramid-container');
+            container.innerHTML = '';
+            document.getElementById('pyramid-feedback').textContent = '';
+            
+            const puzzle = pyramids[Math.floor(Math.random() * pyramids.length)];
+            currentPyramidSolution = puzzle.flat();
+            
+            // Create a copy to modify
+            let displayPuzzle = JSON.parse(JSON.stringify(puzzle));
+            
+            // Remove 3 random blocks to create the puzzle
+            let removedCount = 0;
+            while(removedCount < 3) {
+                let r_row = Math.floor(Math.random() * displayPuzzle.length);
+                let r_col = Math.floor(Math.random() * displayPuzzle[r_row].length);
+                if (displayPuzzle[r_row][r_col] !== null) {
+                    displayPuzzle[r_row][r_col] = null;
+                    removedCount++;
+                }
+            }
+
+            displayPuzzle.forEach((row, rowIndex) => {
+                const rowElem = document.createElement('div');
+                rowElem.className = 'pyramid-row';
+                row.forEach((block, colIndex) => {
+                    const blockElem = document.createElement('div');
+                    blockElem.className = 'pyramid-block';
+                    if (block === null) {
+                        blockElem.innerHTML = `<input type="number" data-row="${rowIndex}" data-col="${colIndex}">`;
+                    } else {
+                        blockElem.textContent = block;
+                    }
+                    rowElem.appendChild(blockElem);
+                });
+                container.prepend(rowElem);
+            });
+        }
+
+        function checkPyramid() {
+            let isCorrect = true;
+            const inputs = document.querySelectorAll('#pyramid-container input');
+            inputs.forEach(input => {
+                const row = parseInt(input.dataset.row);
+                const col = parseInt(input.dataset.col);
+                const val = parseInt(input.value);
+                if (val !== currentPyramidSolution[row * (row+1)/2 + col + (row > 1 ? row-1 : 0) ]) {
+                     // A bit complex to find flat index, but this logic needs to be robust
+                     // For this simplified version, let's check against the original puzzle data
+                     if(val !== pyramids.find(p => p.flat().includes(currentPyramidSolution[0]))[row][col]){
+                        isCorrect = false;
+                     }
+                }
+            });
+            // Simplified check for now
+            let allCorrect = true;
+            const puzzle = currentPyramidSolution;
+             for (let i = puzzle.length - 2; i >= 0; i--) {
+                for (let j = 0; j < puzzle[i].length; j++) {
+                    const blockAbove = document.querySelector(`.pyramid-row:nth-child(${puzzle.length - 1 - i}) .pyramid-block:nth-child(${j+1})`);
+                    const blockBelow1 = document.querySelector(`.pyramid-row:nth-child(${puzzle.length - i}) .pyramid-block:nth-child(${j+1})`);
+                    const blockBelow2 = document.querySelector(`.pyramid-row:nth-child(${puzzle.length - i}) .pyramid-block:nth-child(${j+2})`);
+                    
+                    const valAbove = blockAbove.querySelector('input') ? parseInt(blockAbove.querySelector('input').value) : parseInt(blockAbove.textContent);
+                    const valBelow1 = blockBelow1.querySelector('input') ? parseInt(blockBelow1.querySelector('input').value) : parseInt(blockBelow1.textContent);
+                    const valBelow2 = blockBelow2.querySelector('input') ? parseInt(blockBelow2.querySelector('input').value) : parseInt(blockBelow2.textContent);
+
+                    if (valBelow1 + valBelow2 !== valAbove) {
+                        allCorrect = false;
+                        break;
+                    }
+                }
+                if(!allCorrect) break;
+            }
+
+
+            const feedbackElem = document.getElementById('pyramid-feedback');
+            if (allCorrect) {
+                 feedbackElem.textContent = lang.correct_feedback[currentLang];
+                 feedbackElem.style.color = 'var(--correct-color)';
+                 setTimeout(initPyramidGame, 1500);
+            } else {
+                 feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                 feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+
+        // --- MODULE 5: Roman Numerals ---
+        const romanNumerals = [
+            { roman: 'I', answer: 1 }, { roman: 'V', answer: 5 }, { roman: 'X', answer: 10 },
+            { roman: 'IV', answer: 4 }, { roman: 'IX', answer: 9 }, { roman: 'VI', answer: 6 },
+            { roman: 'XII', answer: 12 },
+            // New numbers added below
+            { roman: 'XXV', answer: 25 },
+            { roman: 'L', answer: 50 },
+            { roman: 'LXXV', answer: 75 },
+            { roman: 'C', answer: 100 },
+            { roman: 'D', answer: 500 },
+            { roman: 'M', answer: 1000 }
+        ];
+        let currentRomanIndex = 0;
+
+        function initRomanNumeralGame() {
+            currentRomanIndex = Math.floor(Math.random() * romanNumerals.length);
+            loadRomanQuestion();
+        }
+
+        function loadRomanQuestion() {
+            const q = romanNumerals[currentRomanIndex];
+            document.getElementById('roman-question').textContent = lang.roman_question[currentLang].replace('{roman}', q.roman);
+            const optionsContainer = document.getElementById('roman-options');
+            optionsContainer.innerHTML = '';
+            
+            let options = [q.answer];
+            // Pool of potential wrong answers
+            const distractorPool = [1, 5, 10, 15, 20, 25, 40, 50, 60, 75, 90, 100, 200, 500, 750, 1000];
+            
+            while(options.length < 4) {
+                const randomNum = distractorPool[Math.floor(Math.random() * distractorPool.length)];
+                if (!options.includes(randomNum)) {
+                    options.push(randomNum);
+                }
+            }
+            
+            options.sort(() => Math.random() - 0.5).forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.onclick = () => checkRomanAnswer(option, q.answer, button);
+                optionsContainer.appendChild(button);
+            });
+            document.getElementById('roman-feedback').textContent = '';
+        }
+
+        function checkRomanAnswer(selected, correct, btn) {
+            const feedbackElem = document.getElementById('roman-feedback');
+            const allButtons = document.querySelectorAll('#roman-options .option-btn');
+            allButtons.forEach(b => b.disabled = true);
+
+            if (selected === correct) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                btn.classList.add('correct');
+                setTimeout(() => {
+                    currentRomanIndex = (currentRomanIndex + 1) % romanNumerals.length;
+                    loadRomanQuestion();
+                    allButtons.forEach(b => b.disabled = false);
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+                btn.classList.add('wrong');
+                allButtons.forEach(b => {
+                    if (parseInt(b.textContent) === correct) b.classList.add('correct');
+                });
+                setTimeout(() => {
+                    loadRomanQuestion();
+                    allButtons.forEach(b => b.disabled = false);
+                }, 2000);
+            }
+        }
+        
+        // --- INITIALIZE APP ---
+        setLanguage(currentLang);
+    </script>
+</body>
+</html>
+

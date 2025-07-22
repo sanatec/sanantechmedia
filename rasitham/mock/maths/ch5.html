@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>It's Time</title>
+    <style>
+        /* --- General Styling & Fonts --- */
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap');
+        
+        :root {
+            --primary-color: #FF5722; /* Bright Orange */
+            --secondary-color: #03A9F4; /* Sky Blue */
+            --background-color: #FFF3E0; /* Light Orange */
+            --text-color: #333;
+            --correct-color: #4CAF50;
+            --wrong-color: #F44336;
+            --white: #FFFFFF;
+            --font-main: 'Baloo 2', cursive;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Main App Container --- */
+        #app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 900px;
+            background: var(--white);
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 5px solid var(--white);
+        }
+
+        /* --- Header --- */
+        header {
+            background: linear-gradient(45deg, var(--primary-color), #E64A19);
+            color: var(--white);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        #lang-selector {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--white);
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            font-family: var(--font-main);
+            font-weight: 700;
+        }
+        #lang-selector option { color: black; }
+
+        /* --- Main Content Area --- */
+        main {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            text-align: center;
+            background: var(--background-color);
+        }
+        
+        .module { display: none; }
+        .module.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h2 {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            font-size: 1.2em;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            color: #555;
+            min-height: 50px;
+        }
+
+        /* --- Buttons & Inputs --- */
+        .btn, button {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--secondary-color), #0288D1);
+            color: var(--white);
+            font-family: var(--font-main);
+            padding: 14px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.3em;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 8px 5px;
+        }
+
+        .btn:hover, button:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(3,169,244,0.4);
+        }
+        
+        .main-menu-btn {
+            display: block;
+            width: 90%;
+            margin: 12px auto;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        .main-menu-btn:hover { background: var(--primary-color); color: var(--white); }
+        
+        .back-btn { background: #f1f1f1; color: #555; font-size: 1.1em; padding: 10px 25px; }
+        .back-btn:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+        input[type="number"] {
+            width: 60px;
+            padding: 10px;
+            font-size: 1.5em;
+            font-weight: 700;
+            text-align: center;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            margin: 0 5px;
+        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .feedback { font-size: 1.3em; font-weight: 700; margin-top: 20px; height: 35px; transition: all 0.3s; }
+
+        /* --- Game-Specific Styles --- */
+        .game-emoji { font-size: 100px; margin-bottom: 15px; }
+        .digital-time { font-size: 2.5em; font-weight: 800; color: var(--primary-color); background: var(--white); padding: 10px 20px; border-radius: 15px; display: inline-block; margin-bottom: 10px; }
+        
+        /* Set the Clock */
+        #clock-container { position: relative; width: 250px; height: 250px; margin: 10px auto; }
+        #clock-face { width: 100%; height: 100%; border-radius: 50%; background: var(--white); border: 5px solid var(--primary-color); position: relative; }
+        .clock-number { position: absolute; width: 100%; height: 100%; text-align: center; font-size: 1.5em; font-weight: 700; color: var(--primary-color); }
+        .clock-number span { display: inline-block; }
+        .clock-hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom; background-color: var(--text-color); border-radius: 5px; cursor: grab; }
+        .clock-hand.dragging { cursor: grabbing; }
+        #hour-hand { width: 6px; height: 60px; z-index: 3; }
+        #minute-hand { width: 4px; height: 90px; z-index: 4; }
+        #clock-center { position: absolute; top: 50%; left: 50%; width: 15px; height: 15px; background: var(--text-color); border-radius: 50%; transform: translate(-50%, -50%); z-index: 5; }
+
+        /* Calendar */
+        #calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; background: var(--white); padding: 10px; border-radius: 10px; }
+        .calendar-header { font-weight: 700; color: var(--primary-color); }
+        .calendar-day { padding: 8px 0; border-radius: 5px; }
+        .calendar-day.other-month { color: #ccc; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1 data-lang-key="app_title">It's Time</h1>
+            <select id="lang-selector">
+                <option value="en">English</option>
+                <option value="ml">മലയാളം</option>
+            </select>
+        </header>
+
+        <main>
+            <!-- Welcome Screen Module -->
+            <div id="welcome-screen" class="module active">
+                <h2 data-lang-key="welcome_title">It's Time!</h2>
+                <div class="game-emoji">⏰</div>
+                <p class="instruction" data-lang-key="welcome_subtitle">Choose a game to master time!</p>
+                <button class="main-menu-btn" onclick="showModule('set-clock-game')" data-lang-key="activity1_btn">Set the Clock</button>
+                <button class="main-menu-btn" onclick="showModule('race-finish-game')" data-lang-key="activity2_btn">Race to the Finish</button>
+                <button class="main-menu-btn" onclick="showModule('calendar-puzzle-game')" data-lang-key="activity3_btn">Calendar Puzzle</button>
+                <button class="main-menu-btn" onclick="showModule('time-conversion-game')" data-lang-key="activity4_btn">Time Conversion</button>
+                <button class="main-menu-btn" onclick="showModule('end-time-game')" data-lang-key="activity5_btn">What's the End Time?</button>
+            </div>
+
+            <!-- Module 1: Set the Clock -->
+            <div id="set-clock-game" class="module">
+                <h2 data-lang-key="set_clock_title">Set the Clock</h2>
+                <div id="digital-time-display" class="digital-time"></div>
+                <p id="set-clock-instruction" class="instruction"></p>
+                <div id="clock-container">
+                    <div id="clock-face"></div>
+                    <div id="hour-hand" class="clock-hand"></div>
+                    <div id="minute-hand" class="clock-hand"></div>
+                    <div id="clock-center"></div>
+                </div>
+                <div id="set-clock-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkClockAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+            
+            <!-- Module 2: Race to the Finish -->
+            <div id="race-finish-game" class="module">
+                <h2 data-lang-key="race_finish_title">Race to the Finish</h2>
+                <div class="game-emoji">🏁</div>
+                <p id="race-finish-instruction" class="instruction"></p>
+                <div>
+                    <input type="number" id="race-minutes-answer" placeholder="min">
+                    <input type="number" id="race-seconds-answer" placeholder="sec">
+                </div>
+                <div id="race-finish-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkRaceFinishAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 3: Calendar Puzzle -->
+            <div id="calendar-puzzle-game" class="module">
+                <h2 data-lang-key="calendar_puzzle_title">Calendar Puzzle</h2>
+                <div class="game-emoji">📅</div>
+                <p id="calendar-question" class="instruction"></p>
+                <div id="calendar-grid"></div>
+                <input type="text" id="calendar-answer" placeholder="Answer" style="width: 80%; font-size: 1.2em; padding: 10px; border-radius: 10px; border: 2px solid #ddd; margin-top: 15px;">
+                <div id="calendar-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkCalendarAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 4: Time Conversion -->
+            <div id="time-conversion-game" class="module">
+                <h2 data-lang-key="time_conversion_title">Time Conversion</h2>
+                <div class="game-emoji">⏱️</div>
+                <p id="conversion-question" class="instruction"></p>
+                <input type="number" id="conversion-answer" placeholder="?">
+                <div id="conversion-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkConversionAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 5: What's the End Time? -->
+            <div id="end-time-game" class="module">
+                <h2 data-lang-key="end_time_title">What's the End Time?</h2>
+                <div class="game-emoji">⏳</div>
+                <p id="end-time-instruction" class="instruction"></p>
+                 <div>
+                    <input type="number" id="end-hour-answer" placeholder="hr"> :
+                    <input type="number" id="end-minute-answer" placeholder="min">
+                </div>
+                <div id="end-time-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkEndTimeAnswer()" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 1. LANGUAGE & TEXT DATA ---
+        const lang = {
+            'app_title': { en: 'Its Time', ml: 'നേരമായി' },
+            'back_to_menu': { en: 'Menu', ml: 'മെനു' },
+            'check_btn': { en: 'Check', ml: 'പരിശോധിക്കുക' },
+            'welcome_title': { en: 'Its Time!', ml: 'നേരമായി!' },
+            'welcome_subtitle': { en: 'Choose a game to master time!', ml: 'സമയം പഠിക്കാൻ ഒരു ഗെയിം തിരഞ്ഞെടുക്കുക!' },
+            'correct_feedback': { en: 'Correct! 🎉', ml: 'ശരിയാണ്! 🎉' },
+            'wrong_feedback': { en: 'Try again! 🤔', ml: 'വീണ്ടും ശ്രമിക്കൂ! 🤔' },
+            
+            'activity1_btn': { en: 'Set the Clock', ml: 'ക്ലോക്ക് ക്രമീകരിക്കുക' },
+            'activity2_btn': { en: 'Race to the Finish', ml: 'ഓട്ടമത്സരം' },
+            'activity3_btn': { en: 'Calendar Puzzle', ml: 'കലണ്ടർ പസിൽ' },
+            'activity4_btn': { en: 'Time Conversion', ml: 'സമയം മാറ്റാം' },
+            'activity5_btn': { en: 'What\'s the End Time?', ml: 'അവസാനിക്കുന്ന സമയം?' },
+
+            'set_clock_title': { en: 'Set the Clock', ml: 'ക്ലോക്ക് ക്രമീകരിക്കുക' },
+            'set_clock_instruction': { en: 'Drag the hands to set the time.', ml: 'സമയം ക്രമീകരിക്കാൻ സൂചികൾ വലിക്കുക.' },
+            
+            'race_finish_title': { en: 'Race to the Finish', ml: 'ഓട്ടമത്സരം' },
+            'race_finish_instruction': { en: 'The race started at {start} and finished at {end}. How long did it take?', ml: 'ഓട്ടം {start}-ന് തുടങ്ങി {end}-ന് അവസാനിച്ചു. എത്ര സമയമെടുത്തു?' },
+            
+            'calendar_puzzle_title': { en: 'Calendar Puzzle', ml: 'കലണ്ടർ പസിൽ' },
+            'calendar_question_day': { en: 'What day of the week is the {date}?', ml: '{date}-ാം തീയതി ഏത് ദിവസമാണ്?' },
+            'calendar_question_date': { en: 'What is the date of the {ordinal} {day}?', ml: '{ordinal} {day} ഏത് തീയതിയാണ്?' },
+            'first': {en: 'first', ml: 'ഒന്നാമത്തെ'}, 'second': {en: 'second', ml: 'രണ്ടാമത്തെ'}, 'third': {en: 'third', ml: 'മൂന്നാമത്തെ'}, 'fourth': {en: 'fourth', ml: 'നാലാമത്തെ'},
+            'Sunday': {en: 'Sunday', ml: 'ഞായർ'}, 'Monday': {en: 'Monday', ml: 'തിങ്കൾ'}, 'Tuesday': {en: 'Tuesday', ml: 'ചൊവ്വ'}, 'Wednesday': {en: 'Wednesday', ml: 'ബുധൻ'}, 'Thursday': {en: 'Thursday', ml: 'വ്യാഴം'}, 'Friday': {en: 'Friday', ml: 'വെള്ളി'}, 'Saturday': {en: 'Saturday', ml: 'ശനി'},
+
+            'time_conversion_title': { en: 'Time Conversion', ml: 'സമയം മാറ്റാം' },
+            'conversion_question': { en: 'How many {to_unit} are in {value} {from_unit}?', ml: '{value} {from_unit}-ൽ എത്ര {to_unit} ഉണ്ട്?' },
+            'minutes': {en: 'minutes', ml: 'മിനിറ്റ്'}, 'seconds': {en: 'സെക്കൻഡ്'}, 'hours': {en: 'hours', ml: 'മണിക്കൂർ'}, 'hour': {en: 'hour', ml: 'മണിക്കൂർ'}, 'minute': {en: 'minute', ml: 'മിനിറ്റ്'},
+
+            'end_time_title': { en: 'What\'s the End Time?', ml: 'അവസാനിക്കുന്ന സമയം?' },
+            'end_time_instruction': { en: 'An activity starts at {start} and takes {duration}. What time does it end?', ml: 'ഒരു പ്രവർത്തനം {start}-ന് തുടങ്ങി {duration} എടുക്കുന്നു. എപ്പോൾ അവസാനിക്കും?' },
+        };
+
+        let currentLang = 'en';
+
+        function setLanguage(langCode) {
+            currentLang = langCode;
+            document.querySelectorAll('[data-lang-key]').forEach(elem => {
+                const key = elem.getAttribute('data-lang-key');
+                if (lang[key] && lang[key][currentLang]) {
+                    elem.innerHTML = lang[key][currentLang];
+                }
+            });
+            const activeModuleId = document.querySelector('.module.active').id;
+            switch(activeModuleId) {
+                case 'set-clock-game': initSetTheClockGame(); break;
+                case 'race-finish-game': initRaceFinishGame(); break;
+                case 'calendar-puzzle-game': initCalendarPuzzleGame(); break;
+                case 'time-conversion-game': initTimeConversionGame(); break;
+                case 'end-time-game': initEndTimeGame(); break;
+            }
+        }
+
+        document.getElementById('lang-selector').addEventListener('change', (e) => setLanguage(e.target.value));
+
+        // --- 2. NAVIGATION & MODULE HANDLING ---
+        function showModule(moduleId) {
+            document.querySelectorAll('.module').forEach(module => module.classList.remove('active'));
+            document.getElementById(moduleId).classList.add('active');
+            
+            switch(moduleId) {
+                case 'set-clock-game': initSetTheClockGame(); break;
+                case 'race-finish-game': initRaceFinishGame(); break;
+                case 'calendar-puzzle-game': initCalendarPuzzleGame(); break;
+                case 'time-conversion-game': initTimeConversionGame(); break;
+                case 'end-time-game': initEndTimeGame(); break;
+            }
+        }
+
+        // --- 3. GAME LOGIC ---
+
+        // --- MODULE 1: Set the Clock ---
+        let targetHour, targetMinute;
+        const hourHand = document.getElementById('hour-hand');
+        const minuteHand = document.getElementById('minute-hand');
+        const clockContainer = document.getElementById('clock-container');
+        const clockFace = document.getElementById('clock-face');
+        const instructionElem = document.getElementById('set-clock-instruction');
+
+        function initSetTheClockGame() {
+            targetHour = Math.floor(Math.random() * 12) + 1;
+            targetMinute = Math.floor(Math.random() * 12) * 5;
+            document.getElementById('digital-time-display').textContent = `${String(targetHour).padStart(2, '0')}:${String(targetMinute).padStart(2, '0')}`;
+            document.getElementById('set-clock-feedback').textContent = '';
+            
+            clockFace.innerHTML = ''; 
+            for (let i = 1; i <= 12; i++) {
+                const num = document.createElement('div');
+                num.className = 'clock-number';
+                num.innerHTML = `<span>${i}</span>`;
+                const angle = i * 30;
+                num.style.transform = `rotate(${angle}deg)`;
+                num.querySelector('span').style.transform = `rotate(-${angle}deg)`;
+                clockFace.appendChild(num);
+            }
+            
+            instructionElem.textContent = lang.set_clock_instruction[currentLang];
+            setHand(hourHand, 0);
+            setHand(minuteHand, 0);
+
+            makeHandDraggable(hourHand);
+            makeHandDraggable(minuteHand);
+        }
+
+        function setHand(hand, angle) {
+            hand.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+        }
+
+        function makeHandDraggable(handElement) {
+            handElement.onmousedown = dragMouseDown;
+            handElement.ontouchstart = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e.preventDefault();
+                handElement.classList.add('dragging');
+                document.onmousemove = elementDrag;
+                document.onmouseup = closeDragElement;
+                document.ontouchmove = elementDrag;
+                document.ontouchend = closeDragElement;
+            }
+
+            function elementDrag(e) {
+                e.preventDefault();
+                const rect = clockContainer.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
+                const angle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI) + 90;
+                
+                if (handElement.id === 'hour-hand') {
+                    const hourValue = Math.round(angle / 30);
+                    const hourAngle = hourValue * 30;
+                    setHand(handElement, hourAngle);
+                } else {
+                    const minuteAngle = Math.round(angle / 6) * 6;
+                    setHand(handElement, minuteAngle);
+                }
+            }
+
+            function closeDragElement() {
+                handElement.classList.remove('dragging');
+                document.onmouseup = null;
+                document.onmousemove = null;
+                document.ontouchend = null;
+                document.ontouchmove = null;
+            }
+        }
+        
+        function checkClockAnswer() {
+            const minuteAngle = getRotation(minuteHand);
+            const hourAngle = getRotation(hourHand);
+            
+            const setMinute = Math.round(minuteAngle / 6) % 60;
+            const setHour = (Math.round(hourAngle / 30)) % 12 || 12;
+
+            const feedback = document.getElementById('set-clock-feedback');
+            if (setHour === targetHour && setMinute === targetMinute) {
+                feedback.textContent = lang.correct_feedback[currentLang];
+                feedback.style.color = 'var(--correct-color)';
+                setTimeout(initSetTheClockGame, 1500);
+            } else {
+                feedback.textContent = lang.wrong_feedback[currentLang];
+                feedback.style.color = 'var(--wrong-color)';
+            }
+        }
+
+        function getRotation(el) {
+            const st = window.getComputedStyle(el, null);
+            const tm = st.getPropertyValue("transform");
+            if (!tm || tm === 'none') return 0;
+            const values = tm.split('(')[1].split(')')[0].split(',');
+            const angle = Math.round(Math.atan2(values[1], values[0]) * (180 / Math.PI));
+            return (angle < 0 ? angle + 360 : angle);
+        }
+
+        // --- MODULE 2: Race to the Finish ---
+        let raceDuration = { minutes: 0, seconds: 0 };
+
+        function initRaceFinishGame() {
+            const startHour = 10;
+            const startMin = Math.floor(Math.random() * 50);
+            const startSec = Math.floor(Math.random() * 60);
+            const durationSec = 30 + Math.floor(Math.random() * 150); // 30s to 3m
+            
+            const startTotalSec = startHour * 3600 + startMin * 60 + startSec;
+            const endTotalSec = startTotalSec + durationSec;
+
+            const endHour = Math.floor(endTotalSec / 3600);
+            const endMin = Math.floor((endTotalSec % 3600) / 60);
+            const endSec = endTotalSec % 60;
+
+            raceDuration.minutes = Math.floor(durationSec / 60);
+            raceDuration.seconds = durationSec % 60;
+
+            const startTime = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:${String(startSec).padStart(2, '0')}`;
+            const endTime = `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:${String(endSec).padStart(2, '0')}`;
+            
+            document.getElementById('race-finish-instruction').innerHTML = lang.race_finish_instruction[currentLang]
+                .replace('{start}', `<b>${startTime}</b>`)
+                .replace('{end}', `<b>${endTime}</b>`);
+
+            document.getElementById('race-minutes-answer').value = '';
+            document.getElementById('race-seconds-answer').value = '';
+            document.getElementById('race-finish-feedback').textContent = '';
+        }
+
+        function checkRaceFinishAnswer() {
+            const userMin = parseInt(document.getElementById('race-minutes-answer').value) || 0;
+            const userSec = parseInt(document.getElementById('race-seconds-answer').value) || 0;
+            const feedback = document.getElementById('race-finish-feedback');
+
+            if (userMin === raceDuration.minutes && userSec === raceDuration.seconds) {
+                feedback.textContent = lang.correct_feedback[currentLang];
+                feedback.style.color = 'var(--correct-color)';
+                setTimeout(initRaceFinishGame, 1500);
+            } else {
+                feedback.textContent = lang.wrong_feedback[currentLang];
+                feedback.style.color = 'var(--wrong-color)';
+            }
+        }
+
+        // --- MODULE 3: Calendar Puzzle ---
+        let calendarAnswer = '';
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        function initCalendarPuzzleGame() {
+            const grid = document.getElementById('calendar-grid');
+            const question = document.getElementById('calendar-question');
+            grid.innerHTML = '';
+            
+            dayNames.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'calendar-header';
+                dayHeader.textContent = lang[day][currentLang].substring(0, 3);
+                grid.appendChild(dayHeader);
+            });
+
+            const month = Math.floor(Math.random() * 12);
+            const year = 2024;
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) {
+                grid.appendChild(document.createElement('div'));
+            }
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day';
+                dayCell.textContent = i;
+                grid.appendChild(dayCell);
+            }
+            
+            // Generate question
+            if (Math.random() > 0.5) { // Ask for day of the week
+                const randomDate = Math.floor(Math.random() * daysInMonth) + 1;
+                const dayOfWeek = new Date(year, month, randomDate).getDay();
+                calendarAnswer = lang[dayNames[dayOfWeek]][currentLang];
+                question.textContent = lang.calendar_question_day[currentLang].replace('{date}', randomDate);
+            } else { // Ask for date
+                const randomDay = Math.floor(Math.random() * 7);
+                const randomOrdinal = Math.floor(Math.random() * 4) + 1;
+                let count = 0;
+                calendarAnswer = '';
+                for (let i = 1; i <= daysInMonth; i++) {
+                    if (new Date(year, month, i).getDay() === randomDay) {
+                        count++;
+                        if (count === randomOrdinal) {
+                            calendarAnswer = i.toString();
+                            break;
+                        }
+                    }
+                }
+                 if (!calendarAnswer) { // fallback if date not found
+                    initCalendarPuzzleGame();
+                    return;
+                }
+                const ordinals = ['first', 'second', 'third', 'fourth'];
+                question.textContent = lang.calendar_question_date[currentLang]
+                    .replace('{ordinal}', lang[ordinals[randomOrdinal-1]][currentLang])
+                    .replace('{day}', lang[dayNames[randomDay]][currentLang]);
+            }
+            document.getElementById('calendar-answer').value = '';
+            document.getElementById('calendar-feedback').textContent = '';
+        }
+
+        function checkCalendarAnswer() {
+            const userAnswer = document.getElementById('calendar-answer').value.trim();
+            const feedback = document.getElementById('calendar-feedback');
+            if (userAnswer.toLowerCase() === calendarAnswer.toLowerCase()) {
+                feedback.textContent = lang.correct_feedback[currentLang];
+                feedback.style.color = 'var(--correct-color)';
+                setTimeout(initCalendarPuzzleGame, 1500);
+            } else {
+                feedback.textContent = lang.wrong_feedback[currentLang];
+                feedback.style.color = 'var(--wrong-color)';
+            }
+        }
+
+        // --- MODULE 4: Time Conversion ---
+        let conversionAnswer = 0;
+        function initTimeConversionGame() {
+            const question = document.getElementById('conversion-question');
+            const conversions = [
+                { from: 'hour', to: 'minutes', val: 1, ans: 60 }, { from: 'hour', to: 'minutes', val: 2, ans: 120 },
+                { from: 'hour', to: 'minutes', val: 3, ans: 180 }, { from: 'minute', to: 'seconds', val: 1, ans: 60 },
+                { from: 'minute', to: 'seconds', val: 2, ans: 120 }, { from: 'minute', to: 'seconds', val: 3, ans: 180 },
+                { from: 'hour', to: 'seconds', val: 1, ans: 3600 }, { from: 'minutes', to: 'hour', val: 120, ans: 2 },
+                { from: 'seconds', to: 'minute', val: 180, ans: 3 }, { from: 'minutes', to: 'hour', val: 90, ans: 1.5 },
+                { from: 'seconds', to: 'minute', val: 90, ans: 1.5 }, { from: 'minutes', to: 'seconds', val: 10, ans: 600 },
+                { from: 'hours', to: 'minutes', val: 5, ans: 300 }, { from: 'minutes', to: 'seconds', val: 30, ans: 1800 },
+                { from: 'seconds', to: 'minutes', val: 300, ans: 5 }
+            ];
+            const currentConv = conversions[Math.floor(Math.random() * conversions.length)];
+            conversionAnswer = currentConv.ans;
+            
+            const questionText = lang.conversion_question[currentLang]
+                .replace('{value}', currentConv.val)
+                .replace('{from_unit}', lang[currentConv.from][currentLang])
+                .replace('{to_unit}', lang[currentConv.to][currentLang]);
+            
+            question.textContent = questionText;
+
+            document.getElementById('conversion-answer').value = '';
+            document.getElementById('conversion-feedback').textContent = '';
+        }
+
+        function checkConversionAnswer() {
+            const userAnswer = parseFloat(document.getElementById('conversion-answer').value);
+            const feedback = document.getElementById('conversion-feedback');
+            if (userAnswer === conversionAnswer) {
+                feedback.textContent = lang.correct_feedback[currentLang];
+                feedback.style.color = 'var(--correct-color)';
+                setTimeout(initTimeConversionGame, 1500);
+            } else {
+                feedback.textContent = lang.wrong_feedback[currentLang];
+                feedback.style.color = 'var(--wrong-color)';
+            }
+        }
+
+        // --- MODULE 5: End Time ---
+        let endHour = 0, endMinute = 0;
+        function initEndTimeGame() {
+            const startHour = Math.floor(Math.random() * 10) + 1;
+            const startMin = (Math.floor(Math.random() * 4)) * 15;
+            const durHour = Math.floor(Math.random() * 3);
+            const durMin = (Math.floor(Math.random() * 4)) * 15;
+            
+            if (durHour === 0 && durMin === 0) { // Ensure duration is not zero
+                initEndTimeGame();
+                return;
+            }
+
+            const totalMinutes = (startHour * 60 + startMin) + (durHour * 60 + durMin);
+            endHour = Math.floor(totalMinutes / 60);
+            endMinute = totalMinutes % 60;
+            if (endHour > 12) endHour %= 12;
+            if (endHour === 0) endHour = 12;
+
+
+            const startTime = `${String(startHour).padStart(2,'0')}:${String(startMin).padStart(2,'0')}`;
+            const duration = currentLang === 'en' ? `${durHour} hr ${durMin} min` : `${durHour} മണിക്കൂർ ${durMin} മിനിറ്റ്`;
+            
+            document.getElementById('end-time-instruction').innerHTML = lang.end_time_instruction[currentLang]
+                .replace('{start}', `<b>${startTime}</b>`)
+                .replace('{duration}', `<b>${duration}</b>`);
+            
+            document.getElementById('end-hour-answer').value = '';
+            document.getElementById('end-minute-answer').value = '';
+            document.getElementById('end-time-feedback').textContent = '';
+        }
+
+        function checkEndTimeAnswer() {
+            const userHour = parseInt(document.getElementById('end-hour-answer').value);
+            const userMin = parseInt(document.getElementById('end-minute-answer').value);
+            const feedback = document.getElementById('end-time-feedback');
+
+            if (userHour === endHour && userMin === endMinute) {
+                feedback.textContent = lang.correct_feedback[currentLang];
+                feedback.style.color = 'var(--correct-color)';
+                setTimeout(initEndTimeGame, 1500);
+            } else {
+                feedback.textContent = lang.wrong_feedback[currentLang];
+                feedback.style.color = 'var(--wrong-color)';
+            }
+        }
+        
+        // --- INITIALIZE APP ---
+        setLanguage(currentLang);
+    </script>
+</body>
+</html>
+

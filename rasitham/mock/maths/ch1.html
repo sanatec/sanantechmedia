@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lines and Shapes</title>
+    <style>
+        /* --- General Styling & Fonts --- */
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap');
+        
+        :root {
+            --primary-color: #9C27B0; /* Creative Purple */
+            --secondary-color: #00BCD4; /* Bright Cyan */
+            --background-color: #F3E5F5; /* Light Purple */
+            --text-color: #333;
+            --correct-color: #4CAF50; /* Green */
+            --wrong-color: #F44336; /* Red */
+            --white: #FFFFFF;
+            --font-main: 'Baloo 2', cursive;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Main App Container --- */
+        #app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 900px;
+            background: var(--white);
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 5px solid var(--white);
+        }
+
+        /* --- Header --- */
+        header {
+            background: linear-gradient(45deg, var(--primary-color), #7B1FA2);
+            color: var(--white);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        #lang-selector {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--white);
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            font-family: var(--font-main);
+            font-weight: 700;
+        }
+        #lang-selector option { color: black; }
+
+        /* --- Main Content Area --- */
+        main {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            text-align: center;
+            background: var(--background-color);
+        }
+        
+        .module { display: none; }
+        .module.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h2 {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            font-size: 1.2em;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            color: #555;
+        }
+
+        /* --- Buttons & Inputs --- */
+        .btn, button {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--secondary-color), #00ACC1);
+            color: var(--white);
+            font-family: var(--font-main);
+            padding: 14px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.3em;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 8px 5px;
+        }
+
+        .btn:hover, button:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0,188,212,0.4);
+        }
+        
+        .main-menu-btn {
+            display: block;
+            width: 90%;
+            margin: 10px auto;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        .main-menu-btn:hover { background: var(--primary-color); color: var(--white); }
+        
+        .back-btn { background: #f1f1f1; color: #555; font-size: 1.1em; padding: 10px 25px; }
+        .back-btn:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+        .feedback { font-size: 1.3em; font-weight: 700; margin-top: 20px; height: 35px; transition: all 0.3s; }
+
+        /* --- Game-Specific Styles --- */
+        .game-emoji { font-size: 100px; margin-bottom: 15px; }
+        .shape-display { height: 120px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
+        .shape { background-color: var(--secondary-color); }
+        .rectangle { width: 150px; height: 90px; }
+        .square { width: 100px; height: 100px; }
+        .triangle { width: 0; height: 0; border-left: 60px solid transparent; border-right: 60px solid transparent; border-bottom: 100px solid var(--secondary-color); background-color: transparent; }
+        .circle { width: 100px; height: 100px; border-radius: 50%; }
+        .oval { width: 150px; height: 90px; border-radius: 50%; }
+        .star { width: 100px; height: 100px; clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+        .pentagon { width: 100px; height: 100px; clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); }
+        .not-rectangle { width: 150px; height: 90px; transform: skew(20deg); }
+
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        
+        .option-btn {
+            width: 100%;
+            padding: 15px 10px;
+            font-size: 1.2em;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid #ddd;
+        }
+        .option-btn.correct { background: var(--correct-color); color: var(--white); border-color: var(--correct-color); animation: pulse 0.5s; }
+        .option-btn.wrong { background: var(--wrong-color); color: var(--white); border-color: var(--wrong-color); animation: shake 0.5s; }
+        
+        .pattern-option { font-size: 60px; padding: 20px; line-height: 1; }
+
+        /* Tangram Styles */
+        #tangram-board { position: relative; width: 300px; height: 300px; margin: 10px auto; }
+        #tangram-outline { width: 100%; height: 100%; background-repeat: no-repeat; background-position: center; background-size: contain; }
+        #tangram-pieces-container { position: absolute; top:0; left:0; width:100%; height:100%;}
+        .tangram-piece {
+            position: absolute;
+            cursor: grab;
+            transition: transform 0.2s ease-out;
+        }
+        .tangram-piece:active { cursor: grabbing; z-index: 100; }
+
+        /* Geoboard Styles */
+        #geoboard-container { position: relative; width: 300px; height: 300px; margin: 10px auto; display: flex; justify-content: center; align-items: center; }
+        #geoboard-grid { display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(6, 1fr); width: 250px; height: 250px; }
+        .geoboard-peg { width: 20px; height: 20px; background: var(--primary-color); border-radius: 50%; margin: auto; cursor: pointer; transition: transform 0.2s; }
+        .geoboard-peg:hover, .geoboard-peg.selected { background: var(--secondary-color); transform: scale(1.2); }
+        #geoboard-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        #geoboard-target-display { width: 80px; height: 80px; border: 2px dashed var(--secondary-color); margin-bottom: 10px; display:flex; justify-content:center; align-items:center; }
+        #geoboard-target-shape { background-color: var(--secondary-color); opacity: 0.5; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1 data-lang-key="app_title">Lines and Shapes</h1>
+            <select id="lang-selector">
+                <option value="en">English</option>
+                <option value="ml">മലയാളം</option>
+            </select>
+        </header>
+
+        <main>
+            <!-- Welcome Screen Module -->
+            <div id="welcome-screen" class="module active">
+                <h2 data-lang-key="welcome_title">Lines and Shapes!</h2>
+                <div class="game-emoji">🎨</div>
+                <p class="instruction" data-lang-key="welcome_subtitle">Choose a game to start creating!</p>
+                <button class="main-menu-btn" onclick="showModule('shape-identifier-game')" data-lang-key="activity1_btn">Shape Identifier</button>
+                <button class="main-menu-btn" onclick="showModule('side-sorter-game')" data-lang-key="activity2_btn">Side Sorter</button>
+                <button class="main-menu-btn" onclick="showModule('rectangle-game')" data-lang-key="activity3_btn">Is it a Rectangle?</button>
+                <button class="main-menu-btn" onclick="showModule('pattern-game')" data-lang-key="activity4_btn">Shape Patterns</button>
+                <button class="main-menu-btn" onclick="showModule('tangram-game')" data-lang-key="activity5_btn">Tangram Builder</button>
+                <button class="main-menu-btn" onclick="showModule('geoboard-game')" data-lang-key="activity6_btn">Geoboard Puzzle</button>
+            </div>
+
+            <!-- Module 1: Shape Identifier -->
+            <div id="shape-identifier-game" class="module">
+                <h2 data-lang-key="shape_identifier_title">Shape Identifier</h2>
+                <div class="game-emoji">👇</div>
+                <div class="shape-display">
+                    <div id="shape-to-identify" class="shape"></div>
+                </div>
+                <p class="instruction" data-lang-key="shape_identifier_instruction">What shape is this?</p>
+                <div id="shape-options" class="options-grid"></div>
+                <div id="shape-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+            
+            <!-- Module 2: Side Sorter -->
+            <div id="side-sorter-game" class="module">
+                <h2 data-lang-key="side_sorter_title">Side Sorter</h2>
+                <div class="game-emoji">📏</div>
+                <p id="side-sorter-question" class="instruction"></p>
+                <div id="side-sorter-options" class="options-grid"></div>
+                <div id="side-sorter-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 3: Is it a Rectangle? -->
+            <div id="rectangle-game" class="module">
+                <h2 data-lang-key="rectangle_title">Is it a Rectangle?</h2>
+                 <div class="game-emoji">🤔</div>
+                <div class="shape-display">
+                    <div id="rectangle-to-identify" class="shape"></div>
+                </div>
+                <p class="instruction" data-lang-key="rectangle_instruction">Is this shape a rectangle?</p>
+                <div id="rectangle-options" class="options-grid"></div>
+                <div id="rectangle-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 4: Shape Patterns -->
+            <div id="pattern-game" class="module">
+                <h2 data-lang-key="pattern_title">Shape Patterns</h2>
+                <div class="game-emoji">✨</div>
+                <p class="instruction" data-lang-key="pattern_instruction">What shape comes next?</p>
+                <div id="pattern-display" class="shape-display"></div>
+                <div id="pattern-options" class="options-grid"></div>
+                <div id="pattern-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 5: Tangram Builder -->
+            <div id="tangram-game" class="module">
+                <h2 data-lang-key="tangram_title">Tangram Builder</h2>
+                <div class="game-emoji">🧩</div>
+                <p class="instruction" data-lang-key="tangram_instruction">Drag and double-click to rotate the pieces to build the fish!</p>
+                <div id="tangram-board">
+                    <div id="tangram-outline"></div>
+                    <div id="tangram-pieces-container"></div>
+                </div>
+                <div id="tangram-feedback" class="feedback"></div>
+                <button class="btn" onclick="resetTangram()" data-lang-key="reset_btn">Reset</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <!-- Module 6: Geoboard Puzzle -->
+            <div id="geoboard-game" class="module">
+                <h2 data-lang-key="geoboard_title">Geoboard Puzzle</h2>
+                <div class="game-emoji">📌</div>
+                <p class="instruction" data-lang-key="geoboard_instruction">Copy the shape on the Geoboard!</p>
+                <div id="geoboard-target-display"><div id="geoboard-target-shape"></div></div>
+                <div id="geoboard-container">
+                    <canvas id="geoboard-canvas"></canvas>
+                    <div id="geoboard-grid"></div>
+                </div>
+                <div id="geoboard-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkGeoboard()" data-lang-key="check_btn">Check</button>
+                 <button class="back-btn" onclick="initGeoboardGame()" data-lang-key="reset_btn">Reset</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 1. LANGUAGE & TEXT DATA ---
+        const lang = {
+            'app_title': { en: 'Lines and Shapes', ml: 'വരകൾ രൂപങ്ങൾ ' },
+            'back_to_menu': { en: 'Menu', ml: 'മെനു' },
+            'check_btn': { en: 'Check', ml: 'പരിശോധിക്കുക' },
+            'reset_btn': { en: 'Reset', ml: 'പുനഃക്രമീകരിക്കുക' },
+            'welcome_title': { en: 'Lines and Shapes!', ml: 'വരകൾ രൂപങ്ങൾ !' },
+            'welcome_subtitle': { en: 'Choose a game to start creating!', ml: 'സൃഷ്ടിക്കാൻ ഒരു ഗെയിം തിരഞ്ഞെടുക്കുക!' },
+            'correct_feedback': { en: 'Correct! 🎉', ml: 'ശരിയാണ്! 🎉' },
+            'wrong_feedback': { en: 'Not quite. Try again! 🤔', ml: 'കൃത്യമല്ല. വീണ്ടും ശ്രമിക്കൂ! 🤔' },
+            'yes': { en: 'Yes', ml: 'അതെ' },
+            'no': { en: 'No', ml: 'അല്ല' },
+            
+            'activity1_btn': { en: 'Shape Identifier', ml: 'രൂപം കണ്ടെത്താം' },
+            'activity2_btn': { en: 'Side Sorter', ml: 'വശങ്ങൾ തരംതിരിക്കാം' },
+            'activity3_btn': { en: 'Is it a Rectangle?', ml: 'ഇതൊരു ചതുരമാണോ?' },
+            'activity4_btn': { en: 'Shape Patterns', ml: 'രൂപ പാറ്റേണുകൾ' },
+            'activity5_btn': { en: 'Tangram Builder', ml: 'ടാൻഗ്രാം നിർമ്മാണം' },
+            'activity6_btn': { en: 'Geoboard Puzzle', ml: 'ജിയോബോർഡ് പസിൽ' },
+
+            'shape_identifier_title': { en: 'Shape Identifier', ml: 'രൂപം കണ്ടെത്താം' },
+            'shape_identifier_instruction': { en: 'What shape is this?', ml: 'ഇത് ഏത് രൂപമാണ്?' },
+            'rectangle': { en: 'Rectangle', ml: 'ചതുരം' },
+            'square': { en: 'Square', ml: 'സമചതുരം' },
+            'triangle': { en: 'Triangle', ml: 'ത്രികോണം' },
+            'circle': { en: 'Circle', ml: 'വൃത്തം' },
+            'oval': { en: 'Oval', ml: 'അണ്ഡാകൃതി' },
+            'star': { en: 'Star', ml: 'നക്ഷത്രം' },
+            'pentagon': { en: 'Pentagon', ml: 'പഞ്ചഭുജം' },
+            
+            'side_sorter_title': { en: 'Side Sorter', ml: 'വശങ്ങൾ തരംതിരിക്കാം' },
+            'side_sorter_question': { en: 'How many sides does a {shape} have?', ml: 'ഒരു {shape}-ന് എത്ര വശങ്ങളുണ്ട്?' },
+            
+            'rectangle_title': { en: 'Is it a Rectangle?', ml: 'ഇതൊരു ചതുരമാണോ?' },
+            'rectangle_instruction': { en: 'Is this shape a rectangle?', ml: 'ഈ രൂപം ഒരു ചതുരമാണോ?' },
+            
+            'pattern_title': { en: 'Shape Patterns', ml: 'രൂപ പാറ്റേണുകൾ' },
+            'pattern_instruction': { en: 'What shape comes next?', ml: 'അടുത്തത് ഏത് രൂപമാണ്?' },
+            
+            'tangram_title': { en: 'Tangram Builder', ml: 'ടാൻഗ്രാം നിർമ്മാണം' },
+            'tangram_instruction': { en: 'Drag and double-click to rotate the pieces to build the fish!', ml: 'മത്സ്യം നിർമ്മിക്കാൻ കഷണങ്ങൾ വലിച്ചിടുക, തിരിക്കാൻ ഡബിൾ ക്ലിക്ക് ചെയ്യുക!' },
+
+            'geoboard_title': { en: 'Geoboard Puzzle', ml: 'ജിയോബോർഡ് പസിൽ' },
+            'geoboard_instruction': { en: 'Copy the shape on the Geoboard!', ml: 'ജിയോബോർഡിൽ കാണുന്ന രൂപം പകർത്തുക!' },
+        };
+
+        let currentLang = 'en';
+
+        function setLanguage(langCode) {
+            currentLang = langCode;
+            document.querySelectorAll('[data-lang-key]').forEach(elem => {
+                const key = elem.getAttribute('data-lang-key');
+                if (lang[key] && lang[key][currentLang]) {
+                    elem.innerHTML = lang[key][currentLang];
+                }
+            });
+            const activeModuleId = document.querySelector('.module.active').id;
+            switch(activeModuleId) {
+                case 'shape-identifier-game': initShapeIdentifierGame(); break;
+                case 'side-sorter-game': initSideSorterGame(); break;
+                case 'rectangle-game': initRectangleGame(); break;
+                case 'pattern-game': initPatternGame(); break;
+                case 'tangram-game': initTangramGame(); break;
+                case 'geoboard-game': initGeoboardGame(); break;
+            }
+        }
+
+        document.getElementById('lang-selector').addEventListener('change', (e) => setLanguage(e.target.value));
+
+        // --- 2. NAVIGATION & MODULE HANDLING ---
+        function showModule(moduleId) {
+            document.querySelectorAll('.module').forEach(module => module.classList.remove('active'));
+            document.getElementById(moduleId).classList.add('active');
+            
+            switch(moduleId) {
+                case 'shape-identifier-game': initShapeIdentifierGame(); break;
+                case 'side-sorter-game': initSideSorterGame(); break;
+                case 'rectangle-game': initRectangleGame(); break;
+                case 'pattern-game': initPatternGame(); break;
+                case 'tangram-game': initTangramGame(); break;
+                case 'geoboard-game': initGeoboardGame(); break;
+            }
+        }
+
+        // --- 3. GAME LOGIC ---
+
+        const shapes = [
+            { name: 'rectangle', sides: 4, ml_name: 'ചതുരം' },
+            { name: 'square', sides: 4, ml_name: 'സമചതുരം' },
+            { name: 'triangle', sides: 3, ml_name: 'ത്രികോണം' },
+            { name: 'circle', sides: 0, ml_name: 'വൃത്തം' },
+            { name: 'oval', sides: 0, ml_name: 'അണ്ഡാകൃതി' },
+            { name: 'star', sides: 10, ml_name: 'നക്ഷത്രം' },
+            { name: 'pentagon', sides: 5, ml_name: 'പഞ്ചഭുജം' }
+        ];
+
+        // --- MODULE 1: Shape Identifier ---
+        function initShapeIdentifierGame() {
+            const shapeContainer = document.getElementById('shape-to-identify');
+            const optionsContainer = document.getElementById('shape-options');
+            const feedbackElem = document.getElementById('shape-feedback');
+            
+            feedbackElem.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            const currentShape = shapes[Math.floor(Math.random() * shapes.length)];
+            shapeContainer.className = `shape ${currentShape.name}`;
+
+            let shuffledOptions = [...shapes].sort(() => 0.5 - Math.random()).slice(0, 4);
+            if (!shuffledOptions.find(s => s.name === currentShape.name)) {
+                shuffledOptions.pop();
+                shuffledOptions.push(currentShape);
+                shuffledOptions.sort(() => 0.5 - Math.random());
+            }
+
+            shuffledOptions.forEach(shape => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = currentLang === 'ml' ? shape.ml_name : shape.name;
+                button.onclick = () => checkShape(shape.name, currentShape.name, button);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function checkShape(selected, correct, btn) {
+            const feedbackElem = document.getElementById('shape-feedback');
+            const allButtons = document.querySelectorAll('#shape-options .option-btn');
+            allButtons.forEach(b => b.disabled = true);
+
+            if (selected === correct) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                btn.classList.add('correct');
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+                btn.classList.add('wrong');
+            }
+            setTimeout(() => {
+                initShapeIdentifierGame();
+                allButtons.forEach(b => b.disabled = false);
+            }, 1500);
+        }
+
+        // --- MODULE 2: Side Sorter ---
+        function initSideSorterGame() {
+            const questionElem = document.getElementById('side-sorter-question');
+            const optionsContainer = document.getElementById('side-sorter-options');
+            const feedbackElem = document.getElementById('side-sorter-feedback');
+
+            feedbackElem.textContent = '';
+            optionsContainer.innerHTML = '';
+
+            const currentShape = shapes[Math.floor(Math.random() * shapes.length)];
+            const shapeName = currentLang === 'ml' ? currentShape.ml_name : currentShape.name;
+            questionElem.textContent = lang.side_sorter_question[currentLang].replace('{shape}', shapeName);
+
+            let options = [currentShape.sides];
+            const distractorSides = [0, 3, 4, 5, 6, 8, 10];
+            while(options.length < 4) {
+                const randomNum = distractorSides[Math.floor(Math.random() * distractorSides.length)];
+                if (!options.includes(randomNum)) {
+                    options.push(randomNum);
+                }
+            }
+            
+            options.sort(() => Math.random() - 0.5).forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.onclick = () => checkSides(option, currentShape.sides, button);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function checkSides(selected, correct, btn) {
+            const feedbackElem = document.getElementById('side-sorter-feedback');
+            const allButtons = document.querySelectorAll('#side-sorter-options .option-btn');
+            allButtons.forEach(b => b.disabled = true);
+
+            if (selected === correct) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                btn.classList.add('correct');
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+                btn.classList.add('wrong');
+            }
+            setTimeout(() => {
+                initSideSorterGame();
+                allButtons.forEach(b => b.disabled = false);
+            }, 1500);
+        }
+        
+        // --- MODULE 3: Is it a Rectangle? ---
+        function initRectangleGame() {
+            const shapeContainer = document.getElementById('rectangle-to-identify');
+            const optionsContainer = document.getElementById('rectangle-options');
+            const feedbackElem = document.getElementById('rectangle-feedback');
+
+            feedbackElem.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            const isRectangle = Math.random() > 0.5;
+            shapeContainer.className = isRectangle ? 'shape rectangle' : 'shape not-rectangle';
+
+            const yesButton = document.createElement('button');
+            yesButton.className = 'option-btn';
+            yesButton.textContent = lang.yes[currentLang];
+            yesButton.onclick = () => checkRectangle(true, isRectangle, yesButton);
+            optionsContainer.appendChild(yesButton);
+
+            const noButton = document.createElement('button');
+            noButton.className = 'option-btn';
+            noButton.textContent = lang.no[currentLang];
+            noButton.onclick = () => checkRectangle(false, isRectangle, noButton);
+            optionsContainer.appendChild(noButton);
+        }
+
+        function checkRectangle(selected, correct, btn) {
+            const feedbackElem = document.getElementById('rectangle-feedback');
+            const allButtons = document.querySelectorAll('#rectangle-options .option-btn');
+            allButtons.forEach(b => b.disabled = true);
+
+            if (selected === correct) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                btn.classList.add('correct');
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+                btn.classList.add('wrong');
+            }
+            setTimeout(initRectangleGame, 1500);
+        }
+
+        // --- MODULE 4: Shape Patterns ---
+        const patterns = [
+            ['🟥', '🔵', '🟥', '🔵'], ['🔺', '🔺', '🟩', '🟩'],
+            ['🟡', '🟪', '🟡', '🟪'], ['🔷', '🔶', '🔷', '🔶'],
+        ];
+        function initPatternGame() {
+            const displayContainer = document.getElementById('pattern-display');
+            const optionsContainer = document.getElementById('pattern-options');
+            const feedbackElem = document.getElementById('pattern-feedback');
+
+            displayContainer.innerHTML = '';
+            optionsContainer.innerHTML = '';
+            feedbackElem.textContent = '';
+            
+            const currentPattern = patterns[Math.floor(Math.random() * patterns.length)];
+            const answer = currentPattern[3];
+            
+            for(let i=0; i < 3; i++) {
+                const shapeElem = document.createElement('span');
+                shapeElem.style.fontSize = '60px';
+                shapeElem.textContent = currentPattern[i];
+                displayContainer.appendChild(shapeElem);
+            }
+            const qMark = document.createElement('span');
+            qMark.style.fontSize = '60px';
+            qMark.textContent = '?';
+            displayContainer.appendChild(qMark);
+            
+            let options = [answer];
+            const allEmojis = ['🟥', '🔵', '🟩', '🟡', '🟪', '🔷', '🔶', '🔺'];
+            while(options.length < 4) {
+                const randomShape = allEmojis[Math.floor(Math.random() * allEmojis.length)];
+                if (!options.includes(randomShape)) {
+                    options.push(randomShape);
+                }
+            }
+
+            options.sort(() => 0.5 - Math.random()).forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn pattern-option';
+                button.textContent = option;
+                button.onclick = () => checkPattern(option, answer, button);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function checkPattern(selected, correct, btn) {
+            const feedbackElem = document.getElementById('pattern-feedback');
+            const allButtons = document.querySelectorAll('#pattern-options .option-btn');
+            allButtons.forEach(b => b.disabled = true);
+
+            if (selected === correct) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                btn.classList.add('correct');
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+                btn.classList.add('wrong');
+            }
+            setTimeout(initPatternGame, 1500);
+        }
+
+        // --- MODULE 5: Tangram ---
+        function initTangramGame() {
+            const container = document.getElementById('tangram-pieces-container');
+            const outline = document.getElementById('tangram-outline');
+            container.innerHTML = '';
+            document.getElementById('tangram-feedback').textContent = '';
+
+            // SVG outline for a fish shape
+            outline.style.backgroundImage = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M100 10 L190 100 L100 190 L80 150 L20 170 L50 100 L20 30 L80 50 Z' fill='none' stroke='%23BDBDBD' stroke-width='2' stroke-dasharray='5,5'/%3E%3C/svg%3E")`;
+
+            const pieces = [
+                { id: 't1', color: '#FFC107', top: '10px', left: '10px', w: '100px', h: '50px', clip: 'polygon(50% 0, 0 100%, 100% 100%)' },
+                { id: 't2', color: '#4CAF50', top: '10px', left: '120px', w: '70px', h: '70px', clip: 'polygon(0 0, 100% 100%, 0 100%)' },
+                { id: 't3', color: '#F44336', top: '10px', left: '200px', w: '50px', h: '100px', clip: 'polygon(100% 50%, 0 0, 0 100%)' },
+                { id: 't4', color: '#2196F3', top: '150px', left: '10px', w: '70px', h: '70px', clip: 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)' },
+                { id: 't5', color: '#9C27B0', top: '150px', left: '90px', w: '70px', h: '35px', clip: 'polygon(0 0, 100% 0, 50% 100%)' },
+                { id: 't6', color: '#E91E63', top: '150px', left: '170px', w: '50px', h: '50px' },
+                { id: 't7', color: '#00BCD4', top: '220px', left: '10px', w: '100px', h: '50px', clip: 'polygon(0 0, 100% 0, 75% 100%, 25% 100%)' },
+            ];
+            
+            pieces.forEach(p => {
+                const piece = document.createElement('div');
+                piece.id = p.id;
+                piece.className = 'tangram-piece';
+                piece.style.backgroundColor = p.color;
+                piece.style.top = p.top;
+                piece.style.left = p.left;
+                piece.style.width = p.w;
+                piece.style.height = p.h;
+                piece.dataset.rotation = 0;
+                if(p.clip) piece.style.clipPath = p.clip;
+                container.appendChild(piece);
+                makeDraggableAndRotatable(piece);
+            });
+        }
+
+        function resetTangram() { initTangramGame(); }
+
+        function makeDraggableAndRotatable(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            element.onmousedown = dragMouseDown;
+            element.ontouchstart = dragMouseDown;
+            element.ondblclick = rotateElement;
+
+            function rotateElement(e) {
+                let currentRotation = parseInt(element.dataset.rotation) || 0;
+                currentRotation = (currentRotation + 45) % 360;
+                element.dataset.rotation = currentRotation;
+                element.style.transform = `rotate(${currentRotation}deg)`;
+            }
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                pos4 = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+                document.onmouseup = closeDragElement;
+                document.ontouchend = closeDragElement;
+                document.onmousemove = elementDrag;
+                document.ontouchmove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                const currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+                const currentY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+                pos1 = pos3 - currentX;
+                pos2 = pos4 - currentY;
+                pos3 = currentX;
+                pos4 = currentY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                document.ontouchend = null;
+                document.ontouchmove = null;
+            }
+        }
+
+        // --- MODULE 6: Geoboard ---
+        let selectedPegs = [];
+        let geoboardCanvas, ctx;
+        let geoboardTarget = [];
+
+        function initGeoboardGame() {
+            const gridContainer = document.getElementById('geoboard-grid');
+            geoboardCanvas = document.getElementById('geoboard-canvas');
+            const container = document.getElementById('geoboard-container');
+            const targetDisplay = document.getElementById('geoboard-target-shape');
+            
+            const containerSize = container.clientWidth;
+            geoboardCanvas.width = containerSize;
+            geoboardCanvas.height = containerSize;
+            ctx = geoboardCanvas.getContext('2d');
+
+            gridContainer.innerHTML = '';
+            selectedPegs = [];
+            clearCanvas();
+            document.getElementById('geoboard-feedback').textContent = '';
+
+            for (let i = 0; i < 36; i++) {
+                const peg = document.createElement('div');
+                peg.className = 'geoboard-peg';
+                peg.dataset.index = i;
+                peg.onclick = () => selectPeg(peg);
+                gridContainer.appendChild(peg);
+            }
+            
+            const targets = [
+                { pegs: [7, 9, 19, 21], class: 'square', w: '40px', h: '40px' }, // 2x2 Square
+                { pegs: [13, 16, 25, 28], class: 'rectangle', w: '60px', h: '40px' }, // 3x2 Rectangle
+            ];
+            const currentTarget = targets[Math.floor(Math.random() * targets.length)];
+            geoboardTarget = currentTarget.pegs;
+            targetDisplay.className = `shape ${currentTarget.class}`;
+            targetDisplay.style.width = currentTarget.w;
+            targetDisplay.style.height = currentTarget.h;
+        }
+
+        function selectPeg(peg) {
+            const index = parseInt(peg.dataset.index);
+            peg.classList.toggle('selected');
+            if (selectedPegs.includes(index)) {
+                selectedPegs = selectedPegs.filter(i => i !== index);
+            } else {
+                selectedPegs.push(index);
+            }
+            drawGeoboardLines();
+        }
+
+        function drawGeoboardLines() {
+            clearCanvas();
+            if (selectedPegs.length < 2) return;
+            
+            ctx.beginPath();
+            ctx.strokeStyle = 'var(--secondary-color)';
+            ctx.lineWidth = 5;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+
+            const containerRect = document.getElementById('geoboard-container').getBoundingClientRect();
+
+            const getPegCenter = (index) => {
+                const pegElem = document.querySelector(`.geoboard-peg[data-index='${index}']`);
+                const pegRect = pegElem.getBoundingClientRect();
+                // Calculate position relative to the canvas's top-left corner
+                const x = pegRect.left - containerRect.left + pegRect.width / 2;
+                const y = pegRect.top - containerRect.top + pegRect.height / 2;
+                return {x, y};
+            }
+
+            const points = selectedPegs.map(getPegCenter);
+
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) {
+                ctx.lineTo(points[i].x, points[i].y);
+            }
+            if (selectedPegs.length > 2) {
+                ctx.closePath();
+            }
+            ctx.stroke();
+        }
+
+        function clearCanvas() {
+            if(ctx) ctx.clearRect(0, 0, geoboardCanvas.width, geoboardCanvas.height);
+        }
+
+        function checkGeoboard() {
+            const feedbackElem = document.getElementById('geoboard-feedback');
+            
+            const sortedUser = [...selectedPegs].sort((a,b) => a - b);
+            const sortedTarget = [...geoboardTarget].sort((a,b) => a - b);
+            
+            const isCorrect = JSON.stringify(sortedUser) === JSON.stringify(sortedTarget);
+
+            if (isCorrect) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(initGeoboardGame, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+        
+        // --- INITIALIZE APP ---
+        setLanguage(currentLang);
+    </script>
+</body>
+</html>
+
