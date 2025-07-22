@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Ultimate Math Challenge</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new graph paper/math theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #eef2ff; /* Indigo 50 background */
+            background-image: linear-gradient(rgba(129, 140, 248, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(129, 140, 248, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .quiz-container {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e7ff; /* Indigo 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #c7d2fe; /* Indigo 200 */
+        }
+        .option-btn:hover {
+             background-color: #e0e7ff; /* Indigo 200 */
+        }
+        .option-btn.selected {
+            background-color: #6366f1; /* Indigo 500 for selected */
+            color: white;
+            border-color: #4f46e5; /* Indigo 600 */
+        }
+        .option-btn.correct {
+            background-color: #22c55e; /* Green 500 for correct */
+            color: white;
+            border-color: #16a34a;
+        }
+        .option-btn.wrong {
+            background-color: #ef4444; /* Red 500 for wrong */
+            color: white;
+            border-color: #dc2626;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-indigo-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-indigo-800 mb-2">Ultimate Math Challenge!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">100 Questions to Test Your Skills!</p>
+            <img src="https://placehold.co/400x200/6366f1/ffffff?text=Ready+to+Calculate%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Math Challenge Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-300 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-teal-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3"></div>
+                
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                <h2 id="review-title" class="text-3xl font-black text-indigo-800 mb-2">Quiz Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                <div class="bg-teal-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-teal-800"></span>
+                </div>
+                <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Ultimate Math Challenge!", welcomeSubtitle: "100 Questions to Test Your Skills!", startBtn: "Start Quiz", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Quiz Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "ഗണിതശാസ്ത്ര വെല്ലുവിളി!", welcomeSubtitle: "നിങ്ങളുടെ കഴിവുകൾ പരീക്ഷിക്കാൻ 100 ചോദ്യങ്ങൾ!", startBtn: "ക്വിസ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ക്വിസ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- Full Question Bank (100 questions) from maths.pdf ---
+        const fullQuizData = [
+            // Page 1
+            { en: { question: "A number made of 80 hundreds is equal to how many 500s?", options: ["10", "16", "20", "8"], answer: "16" }, ml: { question: "80 നൂറുകൾ ചേർന്ന സംഖ്യ എത്ര 500-കൾ ചേർന്നതിന് തുല്യമാണ്?", options: ["10", "16", "20", "8"], answer: "16" } },
+            { en: { question: "The sum of 20 fifties and the sum of 25 forties are the same. What is the sum?", options: ["500", "1000", "1500", "2000"], answer: "1000" }, ml: { question: "20 അൻപതുകൾ ചേർന്ന തുകയും 25 നാൽപ്പതുകൾ ചേർന്ന തുകയും ഒന്നുതന്നെയാണ് എങ്കിൽ തുക ഏത്?", options: ["500", "1000", "1500", "2000"], answer: "1000" } },
+            { en: { question: "What is the maximum possible sum of four 4-digit numbers made using 4 consecutive digits?", options: ["30888", "29888", "31888", "30000"], answer: "30888" }, ml: { question: "തുടർച്ചയായ 4 അക്കങ്ങൾ ഉപയോഗിച്ച് ഉണ്ടാക്കിയ 4 നാലക്കസംഖ്യകളുടെ തുക പരമാവധി എത്രയാകാം?", options: ["30888", "29888", "31888", "30000"], answer: "30888" } },
+            { en: { question: "Write a 4-digit number where the place value of 5 is fifty, five hundred, and five thousand.", options: ["5550", "5055", "5505", "5555"], answer: "5550" }, ml: { question: "5 എന്ന സംഖ്യയുടെ സ്ഥാനവില അമ്പതും അഞ്ഞൂറും അയ്യായിരവും ആയി വരുന്ന നാലക്കസംഖ്യ എഴുതുക?", options: ["5550", "5055", "5505", "5555"], answer: "5550" } },
+            { en: { question: "The number 1111 is a 4-digit number with repeating digits. How many such 4-digit numbers are there?", options: ["8", "10", "9", "11"], answer: "9" }, ml: { question: "1111 ഇത് ഒരേ അക്കം ആവർത്തിച്ചുവരുന്ന നാലക്കസംഖ്യയാണ് എങ്കിൽ ഇത്തരത്തിലുള്ള എത്ര നാലക്കസംഖ്യകളുണ്ട്?", options: ["8", "10", "9", "11"], answer: "9" } },
+            { en: { question: "Write a 4-digit number formed by the largest 3-digit number and the smallest 4-digit number.", options: ["1000999", "9991000", "1999", "9991"], answer: "1999" }, ml: { question: "ഏറ്റവും വലിയ മൂന്നക്കസംഖ്യയും ഏറ്റവും ചെറിയ നാലക്കസംഖ്യയും ചേർന്നു വരുന്ന ഒരു നാലക്കസംഖ്യ എഴുതുക?", options: ["1000999", "9991000", "1999", "9991"], answer: "1999" } },
+            { en: { question: "What is the error in this pattern: 3197, 3198, 3199, 4000, 4001?", options: ["4000 should be 3200", "4001 should be 3201", "The pattern is correct", "3199 should be 3190"], answer: "4000 should be 3200" }, ml: { question: "3197, 3198, 3199, 4000, 4001 ഈ പാറ്റേണിലെ തെറ്റ് എന്താണ്?", options: ["4000, 3200 ആകണം", "4001, 3201 ആകണം", "പാറ്റേൺ ശരിയാണ്", "3199, 3190 ആകണം"], answer: "4000, 3200 ആകണം" } },
+            { en: { question: "The sum of four consecutive even numbers is 5100. What are the numbers?", options: ["1270,1272,1274,1276", "1272,1274,1276,1278", "1274,1276,1278,1280", "1276,1278,1280,1282"], answer: "1272,1274,1276,1278" }, ml: { question: "തുടർച്ചയായ നാല് ഇരട്ട സംഖ്യകളുടെ തുക 5100 ആണ്. സംഖ്യകൾ ഏതൊക്കെ?", options: ["1270,1272,1274,1276", "1272,1274,1276,1278", "1274,1276,1278,1280", "1276,1278,1280,1282"], answer: "1272,1274,1276,1278" } },
+            { en: { question: "How do you write 999 in Roman numerals?", options: ["IM", "CMXCIX", "XCIX", "LM"], answer: "CMXCIX" }, ml: { question: "999 എന്ന് എങ്ങനെ റോമൻ സംഖ്യയിൽ എഴുതാം?", options: ["IM", "CMXCIX", "XCIX", "LM"], answer: "CMXCIX" } },
+            { en: { question: "How do you write 2021 in Roman numerals?", options: ["MMXXI", "MMXX", "MMI", "MMXI"], answer: "MMXXI" }, ml: { question: "2021 എന്ന് എങ്ങനെ റോമൻസംഖ്യയിൽ എഴുതാം?", options: ["MMXXI", "MMXX", "MMI", "MMXI"], answer: "MMXXI" } },
+            { en: { question: "What number is XLIII in Roman numerals?", options: ["42", "63", "43", "62"], answer: "43" }, ml: { question: "XLIII എന്നത് എത്രയാണ്?", options: ["42", "63", "43", "62"], answer: "43" } },
+            { en: { question: "What is the next number in the pattern: 4443, 5554, 6665, 7776, ...?", options: ["8887", "8888", "7778", "8889"], answer: "8887" }, ml: { question: "പാറ്റേണിലെ അടുത്ത സംഖ്യഏത്? 4443, 5554, 6665, 7776, ...", options: ["8887", "8888", "7778", "8889"], answer: "8887" } },
+            { en: { question: "What is the sum of the first 100 consecutive counting numbers?", options: ["5000", "5050", "10100", "1000"], answer: "5050" }, ml: { question: "ഒന്നു മുതൽ തുടർച്ചയായ നൂറ് എണ്ണൽ സംഖ്യകളുടെ തുക എത്ര?", options: ["5000", "5050", "10100", "1000"], answer: "5050" } },
+            { en: { question: "What is the difference between the largest and smallest number formed using the digits 0, 1, 2, 3?", options: ["3087", "2187", "1987", "3187"], answer: "2187" }, ml: { question: "0,1,2,3 എന്നീ അക്കങ്ങൾ ചേർത്ത് നിർമ്മിക്കാവുന്ന ഏറ്റവും വലിയ സംഖ്യയും ഏറ്റവും ചെറിയ സംഖ്യയും തമ്മിലുള്ള വ്യത്യാസം എത്ര?", options: ["3087", "2187", "1987", "3187"], answer: "2187" } },
+            { en: { question: "I am a 4-digit number between 2200 and 2300. The tens digit is double the thousands digit. The ones digit is double the hundreds digit. The thousands and hundreds digits are the same. Who am I?", options: ["2244", "2224", "2346", "2248"], answer: "2244" }, ml: { question: "ഞാനൊരു നാലക്ക സംഖ്യയാണ്. 2200-നും 2300-നും ഇടയിലാണ് എന്റെ സ്ഥാനം. ആയിരത്തിന്റെ ഇരട്ടിയാണ് പത്തിന്റെ സ്ഥാനം. നൂറിന്റെ ഇരട്ടിയാണ് ഒറ്റയുടെ സ്ഥാനം. ആയിരത്തിന്റെയും നൂറിന്റെയും സ്ഥാനത്ത് ഒരേ സംഖ്യകളാണ്. ഞാനാര്?", options: ["2244", "2224", "2346", "2248"], answer: "2244" } },
+            // Page 2
+            { en: { question: "Which set of four digits can be used to write 18 four-digit numbers without repetition?", options: ["1,2,3,4", "6,7,8,9", "4,8,6,7", "0,1,2,3"], answer: "0,1,2,3" }, ml: { question: "അക്കങ്ങൾ ആവർത്തിക്കാതെ 18 നാലക്കസംഖ്യകൾ എഴുതാൻ കഴിയുന്ന നാല് അക്കങ്ങൾ ഏവ?", options: ["1,2,3,4", "6,7,8,9", "4,8,6,7", "0,1,2,3"], answer: "0,1,2,3" } },
+            { en: { question: "What is the total amount of 2 notes of 2000, 5 notes of 500, 2 notes of 200, 10 notes of 10, and 5 notes of 5?", options: ["7205", "7025", "7225", "7250"], answer: "7025" }, ml: { question: "2000 രൂപയുടെ 2 നോട്ടുകളും, 500 രൂപയുടെ 5 നോട്ടുകളും, 200 രൂപയുടെ 2 നോട്ടുകളും, 10 രൂപയുടെ 10 നോട്ടുകളും, 5 രൂപയുടെ 5 നോട്ടുകളും ചേർന്നാൽ ആകെ എത്ര രൂപ?", options: ["7205", "7025", "7225", "7250"], answer: "7025" } },
+            { en: { question: "What is the next number in the pattern: 4091, 4094, 4099, ...?", options: ["4100", "4010", "4106", "4016"], answer: "4106" }, ml: { question: "ഈ പാറ്റേണിലെ അടുത്ത സംഖ്യ ഏത്: 4091, 4094, 4099, ...?", options: ["4100", "4010", "4106", "4016"], answer: "4106" } },
+            { en: { question: "Which country discovered the number zero?", options: ["India", "USA", "China", "Japan"], answer: "India" }, ml: { question: "പൂജ്യം കണ്ടുപിടിച്ചത് ഏത് രാജ്യം?", options: ["ഇന്ത്യ", "അമേരിക്ക", "ചൈന", "ജപ്പാൻ"], answer: "ഇന്ത്യ" } },
+            { en: { question: "How many tens are in 6666?", options: ["6000", "66", "600", "666"], answer: "666" }, ml: { question: "6666-ൽ എത്ര പത്തുകളുണ്ട്?", options: ["6000", "66", "600", "666"], answer: "666" } },
+            { en: { question: "How do you write 1947 in Roman numerals?", options: ["MMCXLVII", "CMXLVII", "MCMXLVII", "MCMXXXXVII"], answer: "MCMXLVII" }, ml: { question: "1947 എന്ന സംഖ്യ റോമൻ അക്കത്തിലെഴുതിയാൽ എത്ര?", options: ["MMCXLVII", "CMXLVII", "MCMXLVII", "MCMXXXXVII"], answer: "MCMXLVII" } },
+            // Page 3
+            { en: { question: "How many even numbers are there between 1 and 99?", options: ["50", "49", "48", "47"], answer: "49" }, ml: { question: "1-നും 99-നും ഇടക്ക് എത്ര ഇരട്ട സംഖ്യകൾ ഉണ്ട്?", options: ["50", "49", "48", "47"], answer: "49" } },
+            { en: { question: "The sum 3200 + 1701 lies between which two numbers?", options: ["4000-5000", "4000-4000", "4500-5000", "4200-4700"], answer: "4500-5000" }, ml: { question: "3200+1701 ഇതിൻ്റെ ഉത്തരം ഏത് സംഖ്യകൾക്കിടയിലാണ്?", options: ["4000-നും 5000-നും", "4000-നും 4000-നും", "4500-നും 5000-നും", "4200-നും 4700-നും"], answer: "4500-നും 5000-നും" } },
+            { en: { question: "When writing numbers from 1 to 99, which digit is used the least?", options: ["0", "1", "5", "9"], answer: "0" }, ml: { question: "ഒന്ന് മുതൽ 99 വരെ സംഖ്യകൾ തുടർച്ചയായി എഴുതുമ്പോൾ ഏറ്റവും കുറച്ച് ഉപയോഗിക്കുന്ന അക്കം ഏത്?", options: ["പൂജ്യം", "ഒന്ന്", "അഞ്ച്", "ഒൻപത്"], answer: "പൂജ്യം" } },
+            { en: { question: "A class has 24 students. The first student's admission number is 2071. What is the admission number of the 22nd student?", options: ["2092", "2094", "2091", "2093"], answer: "2092" }, ml: { question: "മീനുവിന്റെ ക്ലാസ്സിൽ 24 കുട്ടികളുണ്ട്. ആദ്യത്തെ കുട്ടിയുടെ പ്രവേശന നമ്പർ 2071 ആണ്. എങ്കിൽ 22-ാമത്തെ കുട്ടിയുടെ പ്രവേശന നമ്പർ എത്ര?", options: ["2092", "2094", "2091", "2093"], answer: "2092" } },
+            // Page 4 & 5
+            { en: { question: "A school collected funds. Class 1: ₹7510, Class 2: ₹9100, Class 3: ₹6500, Class 4: ₹9600. Which class collected the most?", options: ["Class 1", "Class 2", "Class 3", "Class 4"], answer: "Class 4" }, ml: { question: "ഒരു സ്കൂൾ ഫണ്ട് പിരിച്ചു. ക്ലാസ് 1: ₹7510, ക്ലാസ് 2: ₹9100, ക്ലാസ് 3: ₹6500, ക്ലാസ് 4: ₹9600. ഏത് ക്ലാസ്സാണ് ഏറ്റവും കൂടുതൽ തുക പിരിച്ചത്?", options: ["ക്ലാസ് 1", "ക്ലാസ് 2", "ക്ലാസ് 3", "ക്ലാസ് 4"], answer: "ക്ലാസ് 4" } },
+            { en: { question: "From the school fund collection, what is the difference between the highest (₹9600) and lowest (₹6500) amounts?", options: ["₹3000", "₹3100", "₹2900", "₹3200"], answer: "₹3100" }, ml: { question: "സ്കൂൾ ഫണ്ട് പിരിവിൽ, ഏറ്റവും കൂടിയ തുകയും (₹9600) കുറഞ്ഞ തുകയും (₹6500) തമ്മിലുള്ള വ്യത്യാസം എത്ര?", options: ["₹3000", "₹3100", "₹2900", "₹3200"], answer: "₹3100" } },
+            { en: { question: "An office works from 8 am to 10 pm. What is the total working time?", options: ["12 hours", "13 hours", "14 hours", "15 hours"], answer: "14 hours" }, ml: { question: "രാവിലെ 8 മണി മുതൽ രാത്രി 10 മണി വരെ പ്രവർത്തിക്കുന്ന ഒരു ഓഫീസിലെ ആകെ പ്രവർത്തനസമയം എത്ര മണിക്കൂർ?", options: ["12 മണിക്കൂർ", "13 മണിക്കൂർ", "14 മണിക്കൂർ", "15 മണിക്കൂർ"], answer: "14 മണിക്കൂർ" } },
+            { en: { question: "Rakhi worked for 2 hours, Meenu for 140 minutes, and Sabu for 1 hour 50 minutes. Who worked the longest?", options: ["Rakhi", "Meenu", "Sabu", "All are equal"], answer: "Meenu" }, ml: { question: "രാഖി 2 മണിക്കൂർ, മീനു 140 മിനിറ്റ്, സാബു 1 മണിക്കൂർ 50 മിനിറ്റ് ജോലി ചെയ്തു. ആരാണ് ഏറ്റവും കൂടുതൽ സമയം ജോലി ചെയ്തത്?", options: ["രാഖി", "മീനു", "സാബു", "എല്ലാവരും തുല്യം"], answer: "മീനു" } },
+            { en: { question: "If May 1st is a Saturday, how many holidays will Babu get in May if he has off on all Sundays and the second Saturday?", options: ["5", "6", "7", "8"], answer: "6" }, ml: { question: "മെയ് 1 ശനിയാഴ്ചയാണെങ്കിൽ, എല്ലാ ഞായറാഴ്ചയും രണ്ടാം ശനിയാഴ്ചയും അവധിയുള്ള ബാബുവിന് മെയ് മാസത്തിൽ എത്ര അവധി ലഭിക്കും?", options: ["5", "6", "7", "8"], answer: "6" } },
+            // Page 6
+            { en: { question: "If Jan 1, 2016 was a Friday, what day was March 1, 2016? (2016 is a leap year)", options: ["Monday", "Tuesday", "Wednesday", "Thursday"], answer: "Tuesday" }, ml: { question: "2016 ജനുവരി 1 വെള്ളിയാഴ്ച ആണെങ്കിൽ 2016 മാർച്ച് 1 എന്ത് ദിവസമായിരിക്കും? (2016 അധിവർഷമാണ്)", options: ["തിങ്കൾ", "ചൊവ്വ", "ബുധൻ", "വ്യാഴം"], answer: "ചൊവ്വ" } },
+            { en: { question: "If Feb 1, 2013 was a Friday, how many Fridays were in that month?", options: ["3", "4", "5", "Cannot be determined"], answer: "4" }, ml: { question: "2013 ഫെബ്രുവരി 1 വെള്ളിയാഴ്ച ആണെങ്കിൽ ആ മാസം എത്ര വെള്ളിയാഴ്ചകൾ ഉണ്ടാകും?", options: ["3", "4", "5", "കണ്ടെത്താൻ കഴിയില്ല"], answer: "4" } },
+            { en: { question: "Mia was born on Feb 29, 2012. When did she celebrate her first birthday?", options: ["Feb 29, 2013", "Feb 28, 2014", "Feb 29, 2016", "March 1, 2013"], answer: "Feb 29, 2016" }, ml: { question: "2012 ഫെബ്രുവരി 29 ന് ജനിച്ച മിയ ആദ്യമായി ജന്മദിനം ആഘോഷിച്ചത് എന്നായിരുന്നു?", options: ["2013 ഫെബ്രുവരി 29", "2014 ഫെബ്രുവരി 28", "2016 ഫെബ്രുവരി 29", "2013 മാർച്ച് 1"], answer: "2016 ഫെബ്രുവരി 29" } },
+            { en: { question: "A bus leaves Bangalore at 21:15 and reaches Kozhikode at 5:45 the next morning. What is the travel time?", options: ["8h 0m", "8h 15m", "8h 30m", "9h 0m"], answer: "8h 30m" }, ml: { question: "ബാംഗ്ലൂരിൽ നിന്ന് 21:15 ന് പുറപ്പെടുന്ന ബസ് പിറ്റേന്ന് രാവിലെ 5:45 ന് കോഴിക്കോട് എത്തും. യാത്രയ്ക്ക് എത്ര സമയമെടുക്കും?", options: ["8 മണിക്കൂർ", "8 മണിക്കൂർ 15 മിനിറ്റ്", "8 മണിക്കൂർ 30 മിനിറ്റ്", "9 മണിക്കൂർ"], answer: "8 മണിക്കൂർ 30 മിനിറ്റ്" } },
+            { en: { question: "An express train reached Alappuzha at 11 PM (23:00) after a journey of 10 hours 30 minutes. What was the departure time?", options: ["10:30 am", "12:30 am", "10:30 pm", "12:30 pm"], answer: "12:30 pm" }, ml: { question: "ഒരു എക്സ്പ്രസ് ട്രെയിൻ 10 മണിക്കൂർ 30 മിനിറ്റ് യാത്ര ചെയ്ത് രാത്രി 11 മണിക്ക് ആലപ്പുഴയിൽ എത്തി. പുറപ്പെട്ട സമയം എത്ര?", options: ["10:30 am", "12:30 am", "10:30 pm", "12:30 pm"], answer: "12:30 pm" } },
+            { en: { question: "Convert 2 minutes and 5 seconds into seconds.", options: ["205 seconds", "250 seconds", "120 seconds", "125 seconds"], answer: "125 seconds" }, ml: { question: "2 മിനിറ്റ് 5 സെക്കൻഡിനെ സെക്കൻഡിലേക്ക് മാറ്റുക.", options: ["205 സെക്കൻഡ്", "250 സെക്കൻഡ്", "120 സെക്കൻഡ്", "125 സെക്കൻഡ്"], answer: "125 സെക്കൻഡ്" } },
+            { en: { question: "If a clock's reflection in a mirror shows 3:30, what is the actual time?", options: ["8:30", "9:30", "2:30", "3:30"], answer: "8:30" }, ml: { question: "ഒരു ക്ലോക്കിന്റെ സമയം കണ്ണാടിയിൽ 3:30 എന്ന് കാണിച്ചാൽ യഥാർത്ഥ സമയം എത്ര?", options: ["8:30", "9:30", "2:30", "3:30"], answer: "8:30" } },
+            { en: { question: "If August 1st is a Saturday and August 31st is a Monday, how many Sundays are in that month?", options: ["4", "5", "6", "3"], answer: "5" }, ml: { question: "ആഗസ്ത് 1 ശനിയാഴ്ചയും 31 തിങ്കളാഴ്ചയും ആണെങ്കിൽ ഈ മാസം എത്ര ഞായറാഴ്ചകൾ ഉണ്ടാകും?", options: ["4", "5", "6", "3"], answer: "5" } },
+            { en: { question: "Ramu ran 400m in 56s, Raju in 58s, and Ramesh in 54s. Who is the winner?", options: ["Ramu", "Raju", "Ramesh", "It's a tie"], answer: "Ramesh" }, ml: { question: "400 മീറ്റർ ഓട്ടം രാമു 56 സെക്കൻഡിലും, രാജു 58 സെക്കൻഡിലും, രമേശ് 54 സെക്കൻഡിലും പൂർത്തിയാക്കി. വിജയി ആര്?", options: ["രാമു", "രാജു", "രമേശ്", "സമനില"], answer: "രമേശ്" } },
+            // Page 7
+            { en: { question: "How many seconds are in one hour?", options: ["60", "120", "3600", "1440"], answer: "3600" }, ml: { question: "ഒരു മണിക്കൂറിൽ എത്ര സെക്കൻഡ് ഉണ്ട്?", options: ["60", "120", "3600", "1440"], answer: "3600" } },
+            { en: { question: "How many minutes are in one day?", options: ["60", "3600", "1440", "24"], answer: "1440" }, ml: { question: "ഒരു ദിവസത്തിൽ എത്ര മിനിറ്റുകൾ ഉണ്ട്?", options: ["60", "3600", "1440", "24"], answer: "1440" } },
+            { en: { question: "At 01:30:45, where is the second hand pointing?", options: ["3", "6", "9", "12"], answer: "9" }, ml: { question: "01:30:45-ന് സെക്കൻഡ് സൂചി ഏത് സംഖ്യയുടെ നേരെ ആയിരിക്കും?", options: ["3", "6", "9", "12"], answer: "9" } },
+            { en: { question: "How much time does it take for the second hand to move from 3 to 6?", options: ["3 seconds", "6 seconds", "15 seconds", "30 seconds"], answer: "15 seconds" }, ml: { question: "സെക്കൻഡ് സൂചി 3-ൽ നിന്ന് 6-ൽ എത്താൻ എത്ര സമയമെടുക്കും?", options: ["3 സെക്കൻഡ്", "6 സെക്കൻഡ്", "15 സെക്കൻഡ്", "30 സെക്കൻഡ്"], answer: "15 seconds" } },
+            { en: { question: "Raju started at 10:45 and took 2 hours 35 minutes to reach home. What time did he arrive?", options: ["1:10", "1:20", "1:30", "1:40"], answer: "1:20" }, ml: { question: "രാജു 10:45-ന് പുറപ്പെട്ട് 2 മണിക്കൂർ 35 മിനിറ്റ് കൊണ്ട് വീട്ടിലെത്തി. എത്തിയ സമയം എത്ര?", options: ["1:10", "1:20", "1:30", "1:40"], answer: "1:20" } },
+            { en: { question: "If the last Tuesday of a month is the 30th, what was the date of the first Monday?", options: ["1st", "2nd", "3rd", "31st"], answer: "1st" }, ml: { question: "ഒരു മാസത്തിലെ അവസാന ചൊവ്വാഴ്ച 30-ാം തീയതിയാണെങ്കിൽ, ആദ്യ തിങ്കളാഴ്ച ഏത് തീയതിയായിരിക്കും?", options: ["1", "2", "3", "31"], answer: "1st" } },
+            { en: { question: "If Jan 3rd is a Tuesday, what day is Feb 1st?", options: ["Tuesday", "Wednesday", "Thursday", "Friday"], answer: "Wednesday" }, ml: { question: "ജനുവരി 3 ചൊവ്വാഴ്ചയാണെങ്കിൽ, ഫെബ്രുവരി 1 ഏത് ദിവസമായിരിക്കും?", options: ["ചൊവ്വ", "ബുധൻ", "വ്യാഴം", "വെള്ളി"], answer: "ബുധൻ" } },
+            { en: { question: "A person walks 2 km in 10 minutes. How long will it take to walk 10 km?", options: ["20 minutes", "40 minutes", "50 minutes", "60 minutes"], answer: "50 minutes" }, ml: { question: "ഒരാൾ 10 മിനിറ്റിൽ 2 കിലോമീറ്റർ നടക്കും. 10 കിലോമീറ്റർ നടക്കാൻ എത്ര സമയമെടുക്കും?", options: ["20 മിനിറ്റ്", "40 മിനിറ്റ്", "50 മിനിറ്റ്", "60 മിനിറ്റ്"], answer: "50 minutes" } },
+            { en: { question: "If Dec 1, 2021 was a Wednesday, what day was Christmas (Dec 25) that year?", options: ["Friday", "Saturday", "Sunday", "Monday"], answer: "Saturday" }, ml: { question: "2021 ഡിസംബർ 1 ബുധനാഴ്ചയാണെങ്കിൽ, ആ വർഷത്തെ ക്രിസ്മസ് (ഡിസംബർ 25) ഏത് ദിവസമായിരിക്കും?", options: ["വെള്ളി", "ശനി", "ഞായർ", "തിങ്കൾ"], answer: "ശനി" } },
+            { en: { question: "A school works from 8:45 am to 3:15 pm with a 1-hour break. What is the total study time?", options: ["5h 0m", "5h 15m", "5h 30m", "6h 30m"], answer: "5h 30m" }, ml: { question: "ഒരു വിദ്യാലയം രാവിലെ 8:45 മുതൽ 3:15 വരെ പ്രവർത്തിക്കുന്നു, 1 മണിക്കൂർ ഇടവേളയുണ്ട്. ആകെ പഠനസമയം എത്ര?", options: ["5 മണിക്കൂർ", "5 മണിക്കൂർ 15 മിനിറ്റ്", "5 മണിക്കൂർ 30 മിനിറ്റ്", "6 മണിക്കൂർ 30 മിനിറ്റ്"], answer: "5h 30m" } },
+            // Page 8 & 9
+            { en: { question: "A bus scheduled for 4:50 left 30 minutes late and arrived at 14:10. What was the travel duration?", options: ["8h 50m", "9h 20m", "8h 20m", "9h 50m"], answer: "8h 50m" }, ml: { question: "4:50-ന് പുറപ്പെടേണ്ട ബസ് 30 മിനിറ്റ് വൈകി പുറപ്പെട്ട് 14:10-ന് എത്തി. യാത്രയ്ക്ക് എടുത്ത സമയം എത്ര?", options: ["8h 50m", "9h 20m", "8h 20m", "9h 50m"], answer: "8h 50m" } },
+            { en: { question: "Manoj started from Kollam at 6 PM on Sep 7 and reached Kasaragod at 8:30 AM on Sep 8. How long was the journey?", options: ["14h 0m", "14h 30m", "15h 0m", "15h 30m"], answer: "14h 30m" }, ml: { question: "മനോജ് സെപ്റ്റംബർ 7-ന് വൈകുന്നേരം 6 മണിക്ക് കൊല്ലത്തുനിന്ന് പുറപ്പെട്ട് സെപ്റ്റംബർ 8-ന് രാവിലെ 8:30-ന് കാസർഗോഡ് എത്തി. യാത്രയ്ക്ക് എത്ര സമയമെടുത്തു?", options: ["14h 0m", "14h 30m", "15h 0m", "15h 30m"], answer: "14h 30m" } },
+            { en: { question: "A factory's Shift 1 is from 6:30 am to 2:30 pm with a 45 min break. What is the actual work time?", options: ["8h 0m", "7h 30m", "7h 15m", "7h 45m"], answer: "7h 15m" }, ml: { question: "ഒരു ഫാക്ടറിയിലെ ഷിഫ്റ്റ് 1 രാവിലെ 6:30 മുതൽ 2:30 വരെയും 45 മിനിറ്റ് ഇടവേളയുമുണ്ട്. യഥാർത്ഥ ജോലി സമയം എത്ര?", options: ["8h 0m", "7h 30m", "7h 15m", "7h 45m"], answer: "7h 15m" } },
+            // Page 10 & 11
+            { en: { question: "If it takes 15 minutes to walk 1 km, how many seconds does it take to walk half a kilometer?", options: ["450 seconds", "900 seconds", "300 seconds", "600 seconds"], answer: "450 seconds" }, ml: { question: "1 കിലോമീറ്റർ നടക്കാൻ 15 മിനിറ്റ് എടുക്കുമെങ്കിൽ, അര കിലോമീറ്റർ നടക്കാൻ എത്ര സെക്കൻഡ് എടുക്കും?", options: ["450 സെക്കൻഡ്", "900 സെക്കൻഡ്", "300 സെക്കൻഡ്", "600 സെക്കൻഡ്"], answer: "450 seconds" } },
+            { en: { question: "How many days are there from Sep 15 to Dec 25 (inclusive)?", options: ["100", "101", "102", "103"], answer: "102" }, ml: { question: "സെപ്റ്റംബർ 15 മുതൽ ഡിസംബർ 25 വരെ എത്ര ദിവസങ്ങളുണ്ട് (രണ്ടും ഉൾപ്പെടെ)?", options: ["100", "101", "102", "103"], answer: "102" } },
+            { en: { question: "Convert 234 seconds to minutes and seconds.", options: ["3m 54s", "4m 14s", "3m 44s", "4m 54s"], answer: "3m 54s" }, ml: { question: "234 സെക്കൻഡിനെ മിനിറ്റും സെക്കൻഡുമായി മാറ്റുക.", options: ["3മി 54സെ", "4മി 14സെ", "3മി 44സെ", "4മി 54സെ"], answer: "3മി 54സെ" } },
+            { en: { question: "A bat and ball cost ₹420. The bat costs ₹200 more than the ball. What is the price of the bat?", options: ["₹300", "₹310", "₹220", "₹110"], answer: "₹310" }, ml: { question: "ഒരു ബാറ്റിനും ബോളിനും കൂടി വില 420 രൂപ. ബോളിനേക്കാൾ 200 രൂപ കൂടുതലാണ് ബാറ്റിന്. ബാറ്റിന്റെ വിലയെത്ര?", options: ["₹300", "₹310", "₹220", "₹110"], answer: "₹310" } },
+            { en: { question: "How many hundreds are in 20000?", options: ["20", "200", "2", "2000"], answer: "200" }, ml: { question: "20000-ത്തിൽ എത്ര നൂറുകൾ ഉണ്ട്?", options: ["20", "200", "2", "2000"], answer: "200" } },
+            // Page 12 & 13
+            { en: { question: "The sum of two numbers is 150 and their difference is 10. What are the numbers?", options: ["140, 10", "130, 20", "120, 30", "80, 70"], answer: "80, 70" }, ml: { question: "രണ്ടു സംഖ്യകളുടെ തുക 150, വ്യത്യാസം 10. സംഖ്യകൾ ഏവ?", options: ["140, 10", "130, 20", "120, 30", "80, 70"], answer: "80, 70" } },
+            { en: { question: "What is the next number in the pattern: 1685, 1700, 1715, 1730, ...?", options: ["1740", "1745", "1750", "1755"], answer: "1745" }, ml: { question: "പാറ്റേണിലെ അടുത്ത സംഖ്യ ഏത്? 1685, 1700, 1715, 1730, ...", options: ["1740", "1745", "1750", "1755"], answer: "1745" } },
+            { en: { question: "How many 100 rupee notes would you get if you exchange a 2000 rupee note?", options: ["10", "25", "20", "30"], answer: "20" }, ml: { question: "2000 രൂപ ചില്ലറയാക്കിയാൽ എത്ര നൂറ് രൂപ നോട്ടുകൾ കിട്ടും?", options: ["10", "25", "20", "30"], answer: "20" } },
+            { en: { question: "What number is formed by 3 thousands, 6 hundreds, and 9 ones?", options: ["3690", "3609", "3699", "3069"], answer: "3609" }, ml: { question: "3 ആയിരം, 6 നൂറ്, 9 ഒന്നുകൾ ചേർന്നാൽ സംഖ്യ എത്ര?", options: ["3690", "3609", "3699", "3069"], answer: "3609" } },
+            { en: { question: "What must be added to 6666 to get 7777?", options: ["1111", "1000", "1100", "1110"], answer: "1111" }, ml: { question: "6666-നോട് എത്ര കൂട്ടിയാൽ 7777 കിട്ടും?", options: ["1111", "1000", "1100", "1110"], answer: "1111" } },
+            { en: { question: "What is the sum of 10 consecutive numbers starting from 45?", options: ["490", "495", "500", "505"], answer: "495" }, ml: { question: "45 മുതൽ തുടർച്ചയായ 10 എണ്ണൽ സംഖ്യകളുടെ തുക എത്ര?", options: ["490", "495", "500", "505"], answer: "495" } },
+            { en: { question: "A car's number has 4 consecutive digits. The sum of the first and last digit is 9. What is the number?", options: ["6349", "5674", "1248", "3456"], answer: "3456" }, ml: { question: "ഒരു കാറിന്റെ നമ്പർ തുടർച്ചയായ 4 അക്കങ്ങളാണ്. ആദ്യത്തെയും അവസാനത്തെയും അക്കങ്ങളുടെ തുക 9 ആണ്. നമ്പർ എത്ര?", options: ["6349", "5674", "1248", "3456"], answer: "3456" } },
+            { en: { question: "In the number 7297, what is the difference between the place values of the two 7s?", options: ["6993", "6000", "7007", "6990"], answer: "6993" }, ml: { question: "7297 എന്ന സംഖ്യയിൽ 7-ന്റെ സ്ഥാനവിലകൾ തമ്മിലുള്ള വ്യത്യാസം എത്ര?", options: ["6993", "6000", "7007", "6990"], answer: "6993" } },
+            { en: { question: "What is the sum of the largest 4-digit number and the smallest 3-digit number?", options: ["10099", "10998", "999900", "10098"], answer: "10099" }, ml: { question: "ഏറ്റവും വലിയ നാലക്കസംഖ്യയും ഏറ്റവും ചെറിയ മൂന്നക്കസംഖ്യയും തമ്മിൽ കൂട്ടിയാൽ എത്ര?", options: ["10099", "10998", "999900", "10098"], answer: "10099" } },
+            { en: { question: "If 3247 + X = 5000, what is X?", options: ["1753", "1853", "1763", "1863"], answer: "1753" }, ml: { question: "3247 + X = 5000 ആയാൽ, X എത്ര?", options: ["1753", "1853", "1763", "1863"], answer: "1753" } },
+            // Page 14 & 15
+            { en: { question: "What is the difference between the largest 4-digit number and the smallest 4-digit number?", options: ["8999", "9000", "8888", "9998"], answer: "8999" }, ml: { question: "ഏറ്റവും വലിയ നാലക്കസംഖ്യയും ഏറ്റവും ചെറിയ നാലക്കസംഖ്യയും തമ്മിലുള്ള വ്യത്യാസം എത്ര?", options: ["8999", "9000", "8888", "9998"], answer: "8999" } },
+            { en: { question: "What is the sum of the smallest 4-digit number and the largest 3-digit number?", options: ["1999", "2000", "10998", "1899"], answer: "1999" }, ml: { question: "ഏറ്റവും ചെറിയ നാലക്കസംഖ്യയും വലിയ മൂന്നക്കസംഖ്യയും തമ്മിലുള്ള തുക?", options: ["1999", "2000", "10998", "1899"], answer: "1999" } },
+            { en: { question: "What is the sum of counting numbers from 21 to 40?", options: ["600", "610", "620", "630"], answer: "610" }, ml: { question: "21 മുതൽ 40 വരെയുള്ള എണ്ണൽസംഖ്യകളുടെ തുക?", options: ["600", "610", "620", "630"], answer: "610" } },
+            { en: { question: "How many hundreds are in one lakh (100,000)?", options: ["10", "100", "1000", "10000"], answer: "1000" }, ml: { question: "ഒരു ലക്ഷത്തിൽ എത്ര നൂറുകൾ ഉണ്ട്?", options: ["10", "100", "1000", "10000"], answer: "1000" } },
+            { en: { question: "What is the next number in the pattern: 1635, 2546, 3457, 4368, ...?", options: ["5279", "5379", "5289", "5389"], answer: "5279" }, ml: { question: "പാറ്റേണിലെ അടുത്ത സംഖ്യ? 1635, 2546, 3457, 4368, ...", options: ["5279", "5379", "5289", "5389"], answer: "5279" } },
+            { en: { question: "What is the difference between the largest and smallest number formed using 4, 7, 0, 5?", options: ["3483", "3517", "7083", "7483"], answer: "3483" }, ml: { question: "4,7,0,5 ഇവ ഉപയോഗിച്ച് എഴുതാവുന്ന ഏറ്റവും വലിയ സംഖ്യയും, ചെറിയ സംഖ്യയും തമ്മിലുള്ള വ്യത്യാസം?", options: ["3483", "3517", "7083", "7483"], answer: "3483" } },
+            { en: { question: "How many 500 rupee notes make 10000?", options: ["10", "20", "50", "100"], answer: "20" }, ml: { question: "എത്ര 500 രൂപ നോട്ടുകൾ ചേർന്നതാണ് 10000?", options: ["10", "20", "50", "100"], answer: "20" } },
+            { en: { question: "If the first student's registration number is 4620 and there are 20 students, what is the last student's number?", options: ["4639", "4640", "4641", "4638"], answer: "4639" }, ml: { question: "ആദ്യ കുട്ടിയുടെ രജിസ്ട്രേഷൻ നമ്പർ 4620 ആണെങ്കിൽ, 20 പേരുള്ള ക്ലാസ്സിലെ അവസാന കുട്ടിയുടെ നമ്പർ എത്ര?", options: ["4639", "4640", "4641", "4638"], answer: "4639" } },
+            { en: { question: "What number should be added to 2493 to get 4250?", options: ["1757", "1767", "1857", "1867"], answer: "1757" }, ml: { question: "2493 നോട് എത്ര കൂട്ടിയാൽ 4250 കിട്ടും?", options: ["1757", "1767", "1857", "1867"], answer: "1757" } },
+            { en: { question: "A number made of 50 hundreds is equal to how many 500s?", options: ["10", "20", "5", "100"], answer: "10" }, ml: { question: "50 നൂറുകൾ ചേർന്ന സംഖ്യ എത്ര 500-കൾ ചേർന്നതിന് തുല്യമാണ്?", options: ["10", "20", "5", "100"], answer: "10" } },
+            // Page 16, 17, 18
+            { en: { question: "What is the total electricity consumption if the meter reading changes from 5745 to 5983?", options: ["238", "248", "228", "258"], answer: "238" }, ml: { question: "വൈദ്യുത മീറ്റർ റീഡിംഗ് 5745-ൽ നിന്ന് 5983 ആയാൽ ആകെ എത്ര യൂണിറ്റ് വൈദ്യുതി ഉപയോഗിച്ചു?", options: ["238", "248", "228", "258"], answer: "238" } },
+            { en: { question: "Out of 1160 kg of rice, 945 kg was used. How much rice is left?", options: ["205 kg", "215 kg", "225 kg", "235 kg"], answer: "215 kg" }, ml: { question: "1160 കിലോഗ്രാം അരിയിൽ 945 കിലോഗ്രാം ഉപയോഗിച്ചു. ഇനി എത്ര കിലോഗ്രാം അരി മിച്ചമുണ്ട്?", options: ["205 kg", "215 kg", "225 kg", "235 kg"], answer: "215 kg" } },
+            { en: { question: "What number should be added to 5063 to get 6028?", options: ["965", "975", "1065", "1075"], answer: "965" }, ml: { question: "5063 നോട് എത്ര കൂട്ടിയാൽ 6028 കിട്ടും?", options: ["965", "975", "1065", "1075"], answer: "965" } },
+            { en: { question: "What is the next number in the pattern: 6743, 6632, 6521, 6410, ...?", options: ["6300", "6311", "6299", "6309"], answer: "6299" }, ml: { question: "പാറ്റേണിലെ അടുത്ത സംഖ്യ ഏത്? 6743, 6632, 6521, 6410, ...", options: ["6300", "6311", "6299", "6309"], answer: "6299" } },
+            { en: { question: "Rahim bought items for ₹435 and gave a ₹2000 note. How much change did he get?", options: ["₹1555", "₹1565", "₹1665", "₹1655"], answer: "₹1565" }, ml: { question: "റഹിം 435 രൂപയുടെ സാധനങ്ങൾ വാങ്ങി 2000 രൂപ കൊടുത്തു. ബാക്കി എത്ര രൂപ കിട്ടും?", options: ["₹1555", "₹1565", "₹1665", "₹1655"], answer: "₹1565" } },
+            { en: { question: "What is the difference between the largest and smallest 4-digit numbers formed using 4, 3, 5, 0 (once each)?", options: ["2385", "2085", "5085", "5385"], answer: "2385" }, ml: { question: "4,3,5,0 എന്നീ അക്കങ്ങൾ ഒരു പ്രാവശ്യം മാത്രം ഉപയോഗിച്ച് എഴുതാവുന്ന ഏറ്റവും വലിയതും ചെറിയതുമായ സംഖ്യകൾ തമ്മിലുള്ള വ്യത്യാസം?", options: ["2385", "2085", "5085", "5385"], answer: "2385" } },
+            { en: { question: "The total weight of a packet of sweets is 110g. The sweets weigh 100g more than the packet. What is the weight of the packet?", options: ["5g", "10g", "15g", "20g"], answer: "5g" }, ml: { question: "ഒരു പാക്കറ്റ് മിഠായിയുടെ ഭാരം 110 ഗ്രാം. പാക്കറ്റിനേക്കാൾ 100 ഗ്രാം അധികമുണ്ട് മിഠായിക്ക്. പാക്കറ്റിന്റെ ഭാരമെത്ര?", options: ["5g", "10g", "15g", "20g"], answer: "5g" } },
+            { en: { question: "What is the difference between the largest and smallest 3-digit numbers?", options: ["899", "900", "888", "998"], answer: "899" }, ml: { question: "ഏറ്റവും വലിയ മൂന്നക്കസംഖ്യയും ഏറ്റവും ചെറിയ മൂന്നക്കസംഖ്യയും തമ്മിലുള്ള വ്യത്യാസം എത്ര?", options: ["899", "900", "888", "998"], answer: "899" } },
+            { en: { question: "If the first admission number this year was 2947 and the last was 3009, how many students joined?", options: ["61", "62", "63", "64"], answer: "63" }, ml: { question: "ഈ വർഷം ആദ്യം ചേർന്ന കുട്ടിയുടെ പ്രവേശന നമ്പർ 2947, അവസാനം ചേർന്ന കുട്ടിയുടേത് 3009. ആകെ എത്ര കുട്ടികൾ ചേർന്നു?", options: ["61", "62", "63", "64"], answer: "63" } },
+            { en: { question: "The age of a father and son together is 65. The father is 25 years older than the son. What is the son's age?", options: ["15", "20", "25", "30"], answer: "20" }, ml: { question: "അച്ഛനും മകനും കൂടി പ്രായം 65. മകനേക്കാൾ 25 വയസ്സ് കൂടുതലാണ് അച്ഛന്. മകൻ്റെ പ്രായം എത്ര?", options: ["15", "20", "25", "30"], answer: "20" } },
+            // Page 26 - 33 (Geometry)
+            { en: { question: "Which geometric shape has no sides or vertices?", options: ["Triangle", "Square", "Rectangle", "Circle"], answer: "Circle" }, ml: { question: "വശങ്ങളും മൂലകളും ഇല്ലാത്ത ജ്യാമിതീയ രൂപം ഏതാണ്?", options: ["ത്രികോണം", "സമചതുരം", "ചതുരം", "വൃത്തം"], answer: "വൃത്തം" } },
+            { en: { question: "A geometric shape with four equal sides is a?", options: ["Rectangle", "Rhombus", "Square", "Trapezoid"], answer: "Square" }, ml: { question: "നാല് വശങ്ങളും തുല്യമായ ജ്യാമിതീയ രൂപം ഏതാണ്?", options: ["ചതുരം", "സമഭുജസാമാന്തരികം", "സമചതുരം", "ലംബകം"], answer: "സമചതുരം" } },
+            { en: { question: "How many faces does a brick have?", options: ["4", "5", "6", "8"], answer: "6" }, ml: { question: "ഒരു ഇഷ്ടികയ്ക്ക് എത്ര മുഖങ്ങൾ ഉണ്ട്?", options: ["4", "5", "6", "8"], answer: "6" } },
+            { en: { question: "What is the formula for the perimeter of a rectangle?", options: ["length x width", "2 x (length + width)", "4 x side", "length + width"], answer: "2 x (length + width)" }, ml: { question: "ഒരു ചതുരത്തിന്റെ ചുറ്റളവ് കണ്ടെത്താനുള്ള സൂത്രവാക്യം ഏതാണ്?", options: ["നീളം x വീതി", "2 x (നീളം + വീതി)", "4 x വശം", "നീളം + വീതി"], answer: "2 x (നീളം + വീതി)" } },
+            { en: { question: "What is the perimeter of a square with a side length of 8 cm?", options: ["16 cm", "24 cm", "32 cm", "64 cm"], answer: "32 cm" }, ml: { question: "ഒരു വശത്തിന് 8 സെ.മീ നീളമുള്ള ഒരു സമചതുരത്തിന്റെ ചുറ്റളവ് എത്ര?", options: ["16 സെ.മീ", "24 സെ.മീ", "32 സെ.മീ", "64 സെ.മീ"], answer: "32 സെ.മീ" } },
+            { en: { question: "A square has a perimeter of 24 cm. What is the length of one side?", options: ["4 cm", "6 cm", "8 cm", "12 cm"], answer: "6 cm" }, ml: { question: "24 സെ.മീ ചുറ്റളവുള്ള ഒരു സമചതുരത്തിന്റെ ഒരു വശത്തിന്റെ നീളം എത്ര?", options: ["4 സെ.മീ", "6 സെ.മീ", "8 സെ.മീ", "12 സെ.മീ"], answer: "6 cm" } },
+            { en: { question: "What is the perimeter of a triangle with all sides measuring 6 cm?", options: ["12 cm", "18 cm", "24 cm", "36 cm"], answer: "18 cm" }, ml: { question: "മൂന്ന് വശങ്ങളും 6 സെ.മീ ആയ ഒരു ത്രികോണത്തിന്റെ ചുറ്റളവ് എത്ര?", options: ["12 സെ.മീ", "18 സെ.മീ", "24 സെ.മീ", "36 സെ.മീ"], answer: "18 cm" } },
+            { en: { question: "A rectangle has a length of 12 cm and a width of 10 cm. What is its perimeter?", options: ["22 cm", "34 cm", "44 cm", "120 cm"], answer: "44 cm" }, ml: { question: "12 സെ.മീ നീളവും 10 സെ.മീ വീതിയുമുള്ള ഒരു ചതുരത്തിന്റെ ചുറ്റളവ് എത്ര?", options: ["22 സെ.മീ", "34 സെ.മീ", "44 സെ.മീ", "120 സെ.മീ"], answer: "44 cm" } },
+            { en: { question: "If a rectangle has the same perimeter as a square with a side of 11 cm, what is the perimeter?", options: ["22 cm", "33 cm", "44 cm", "121 cm"], answer: "44 cm" }, ml: { question: "11 സെ.മീ വശമുള്ള ഒരു സമചതുരത്തിന്റെ അതേ ചുറ്റളവാണ് ഒരു ചതുരത്തിന്. എങ്കിൽ ചുറ്റളവ് എത്ര?", options: ["22 സെ.മീ", "33 സെ.മീ", "44 സെ.മീ", "121 സെ.മീ"], answer: "44 cm" } },
+            { en: { question: "A rectangle has a perimeter of 32 cm and a width of 6 cm. What is its length?", options: ["10 cm", "13 cm", "20 cm", "26 cm"], answer: "10 cm" }, ml: { question: "ഒരു ചതുരത്തിന്റെ ചുറ്റളവ് 32 സെ.മീ, വീതി 6 സെ.മീ. എങ്കിൽ നീളം എത്ര?", options: ["10 സെ.മീ", "13 സെ.മീ", "20 സെ.മീ", "26 സെ.മീ"], answer: "10 cm" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 100-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-green-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-red-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-300">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-900/50' : 'bg-rose-900/50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-100">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+

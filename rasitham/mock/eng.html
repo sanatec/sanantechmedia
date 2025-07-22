@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Quest Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            touch-action: manipulation;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 1.5rem;
+            padding: 1.5rem 2rem 2rem 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background-image: linear-gradient(to right, #4f46e5 0%, #818cf8 100%);
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(0, 0, 0, 0.1);
+        }
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+        .option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border: 2px solid #e5e7eb;
+            background-color: #f9fafb;
+            color: #1f2937;
+            font-weight: 600;
+        }
+        .option-btn.selected {
+            border-color: #6366f1;
+            background-color: #e0e7ff;
+        }
+        .option-btn.correct {
+            background-color: #dcfce7;
+            border-color: #22c55e;
+            color: #15803d;
+            animation: pulseCorrect 0.5s;
+        }
+        .option-btn.incorrect {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+            color: #b91c1c;
+            animation: shake 0.5s;
+        }
+        .screen {
+            animation: fadeIn 0.6s ease-in-out;
+        }
+        #progress-bar-fill {
+            transition: width 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        @keyframes pulseCorrect {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-lg mx-auto">
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen text-center">
+            <div class="card">
+                <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500 mb-3">English Quest</h1>
+                <p class="text-lg text-gray-600 mb-8">Choose a unit to begin your adventure!</p>
+                <div id="unit-selection" class="grid grid-cols-1 gap-4">
+                    <!-- Unit buttons will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden screen">
+            <div class="card">
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 id="quiz-title" class="text-xl font-bold text-indigo-600">Quiz</h2>
+                        <p id="question-counter" class="text-gray-500 font-semibold"></p>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="progress-bar-fill" class="bg-indigo-500 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div id="question-container" class="mb-6">
+                    <p id="question-text" class="text-xl font-medium mb-6 min-h-[6rem] flex items-center"></p>
+                    <div id="options-container"></div>
+                </div>
+                <div id="feedback-container" class="text-center h-8">
+                    <p id="feedback-text" class="text-lg font-semibold"></p>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button id="next-btn" class="btn btn-primary hidden">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="hidden screen text-center">
+            <div class="card">
+                <h2 class="text-3xl font-bold text-indigo-600 mb-4">Quiz Complete!</h2>
+                <p class="text-xl text-gray-600 mb-2">You finished the <span id="results-title" class="font-bold"></span> quiz.</p>
+                <p class="text-6xl font-bold my-8 text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500" id="score-text"></p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button id="restart-btn" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 110 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" /></svg>
+                        <span>Try Again</span>
+                    </button>
+                    <button id="home-btn" class="btn btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>
+                        <span>Back to Home</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                unitId: 1,
+                unitTitle: "Unit 1: Beyond Fear",
+                questions: [
+                    // 50 Questions for Unit 1 with new types
+                    { type: 'jumbled', question: "Unscramble the word: UOCREGA", options: ["Courage", "Garage", "Cargo", "Argue"], answer: "Courage" },
+                    { type: 'odd_one_out', question: "Which is the odd one out?", options: ["Dilna", "Isaac", "Mother", "Fireman"], answer: "Fireman" },
+                    { type: 'rearrange', question: "Rearrange the words: 'mother / on / was / floor / the / lying'", options: ["The mother was lying on the floor.", "On the floor the mother was lying.", "Lying on the floor was the mother.", "The floor was lying on the mother."], answer: "The mother was lying on the floor." },
+                    { type: 'riddle', question: "Riddle: I have a siren and carry water. I came to help Dilna. What am I?", options: ["Police Car", "Ambulance", "Fire Engine", "School Bus"], answer: "Fire Engine" },
+                    { type: 'choose_word', question: "Dilna was only eight years old, but she had to do ______.", options: ["nothing", "something", "everything", "anything"], answer: "something" },
+                    { type: 'preposition', question: "Dilna rushed ______ her mother's side.", options: ["on", "to", "from", "with"], answer: "to" },
+                    { type: 'opposite', question: "The opposite of 'bravery' is ______.", options: ["fear", "strength", "joy", "anger"], answer: "fear" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Emergency", "Emergancy", "Emargency", "Emergecy"], answer: "Emergency" },
+                    { type: 'comprehension', question: "What is Dilna's little brother's name?", options: ["Isaac", "Ivan", "Max", "Leo"], answer: "Isaac" },
+                    { type: 'comprehension', question: "What did Dilna's grandmother teach her to do in an emergency?", options: ["Hide under the bed", "Call 101", "Run to a neighbor", "Wait for her father"], answer: "Call 101" },
+                    { type: 'jumbled', question: "Unscramble the word: EHOR", options: ["Hero", "Heir", "Hoer", "Here"], answer: "Hero" },
+                    { type: 'odd_one_out', question: "Which is the odd one out?", options: ["Scared", "Worried", "Happy", "Frightened"], answer: "Happy" },
+                    { type: 'rearrange', question: "Rearrange the words: 'a / great / job / you're / doing'", options: ["A great job you're doing.", "You're doing a great job.", "Doing a great job you're.", "Great job you're a doing."], answer: "You're doing a great job." },
+                    { type: 'riddle', question: "Riddle: I am a vegetable seller with long ears. I used a mirror to become a hero. Who am I?", options: ["A Deer", "A Donkey", "Kichu the rabbit", "Kunkan the wolf"], answer: "Kichu the rabbit" },
+                    { type: 'choose_word', question: "The fireman smiled and ______ her on the back.", options: ["patted", "hit", "pushed", "kicked"], answer: "patted" },
+                    { type: 'preposition', question: "Kichu's shop was filled ______ fresh vegetables.", options: ["of", "by", "with", "from"], answer: "with" },
+                    { type: 'opposite', question: "The opposite of 'inside' is ______.", options: ["outside", "above", "below", "beside"], answer: "outside" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Grandmother", "Grandmuther", "Grandmotther", "Grendmother"], answer: "Grandmother" },
+                    { type: 'comprehension', question: "What award did Dilna receive from the Fire Station?", options: ["An award for bravery", "A cash prize", "A scholarship", "A certificate of courage"], answer: "An award for bravery" },
+                    { type: 'comprehension', question: "In 'The Trick of Kichu', what kind of merchant was Kichu?", options: ["Fruit merchant", "Vegetable merchant", "Cloth merchant", "Toy merchant"], answer: "Vegetable merchant" },
+                    { type: 'jumbled', question: "Unscramble the word: RORMIR", options: ["Mirror", "Rimorr", "Morrir", "Rormir"], answer: "Mirror" },
+                    { type: 'odd_one_out', question: "Which is the odd one out?", options: ["Carrot", "Cabbage", "Pumpkin", "Mirror"], answer: "Mirror" },
+                    { type: 'rearrange', question: "Rearrange the words: 'was / Kichu / a / rabbit / brave'", options: ["A brave rabbit was Kichu.", "Kichu was a brave rabbit.", "Brave was a Kichu rabbit.", "Rabbit was a brave Kichu."], answer: "Kichu was a brave rabbit." },
+                    { type: 'riddle', question: "Riddle: I am a feeling of great fear. Dilna felt me but was still brave. What am I?", options: ["Happiness", "Sadness", "Fear", "Anger"], answer: "Fear" },
+                    { type: 'choose_word', question: "The animals were ______ and most of them ran away.", options: ["happy", "brave", "frightened", "calm"], answer: "frightened" },
+                    { type: 'preposition', question: "The mother was lying ______ the floor.", options: ["on", "in", "at", "under"], answer: "on" },
+                    { type: 'opposite', question: "The opposite of 'softly' is ______.", options: ["gently", "quietly", "loudly", "slowly"], answer: "loudly" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Vegetable", "Vegitable", "Vagetable", "Vegatible"], answer: "Vegetable" },
+                    { type: 'comprehension', question: "Who was the bully in the Little Market?", options: ["Jiggu the Fox", "Kunkan the Wolf", "A big bear", "A sly snake"], answer: "Kunkan the Wolf" },
+                    { type: 'comprehension', question: "What was the first thing the firemen gave to the mother?", options: ["A blanket", "First aid", "Cookies", "A cup of tea"], answer: "First aid" },
+                    { type: 'jumbled', question: "Unscramble the word: TATIONST", options: ["Station", "Tastion", "Stantion", "Tatsion"], answer: "Station" },
+                    { type: 'odd_one_out', question: "Which is not a quality of a hero?", options: ["Courage", "Bravery", "Cowardice", "Strength"], answer: "Cowardice" },
+                    { type: 'rearrange', question: "Rearrange the words: 'her / hands / were / shaking'", options: ["Shaking her were hands.", "Her hands were shaking.", "Were her hands shaking.", "Hands were her shaking."], answer: "Her hands were shaking." },
+                    { type: 'riddle', question: "Riddle: I am a piece of paper that invites you to an event. One was prepared for Dilna's award ceremony. What am I?", options: ["A Letter", "A Book", "A Notice", "A Poster"], answer: "A Notice" },
+                    { type: 'choose_word', question: "Dilna remembered to speak loudly and ______.", options: ["softly", "sadly", "clearly", "quickly"], answer: "clearly" },
+                    { type: 'preposition', question: "The firemen invited Dilna ______ the Fire Station.", options: ["in", "at", "to", "on"], answer: "to" },
+                    { type: 'opposite', question: "The opposite of 'cried' is ______.", options: ["shouted", "whispered", "laughed", "smiled"], answer: "laughed" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Helpline", "Helplean", "Helplien", "Halpline"], answer: "Helpline" },
+                    { type: 'comprehension', question: "What did Isaac and Dilna find on the kitchen table?", options: ["A plate of fruit", "A glass of milk", "A plate of cookies", "A loaf of bread"], answer: "A plate of cookies" },
+                    { type: 'comprehension', question: "The name Kichu invented for the wolf in the mirror was...", options: ["Kunkan", "Chinnu", "Jiggu", "Rocky"], answer: "Jiggu" },
+                    { type: 'jumbled', question: "Unscramble the word: FOMUNIR", options: ["Uniform", "Fromuni", "Infomur", "Mufinor"], answer: "Uniform" },
+                    { type: 'odd_one_out', question: "Which is not an 'action word' (verb)?", options: ["Ran", "Shook", "Called", "Floor"], answer: "Floor" },
+                    { type: 'rearrange', question: "Rearrange the words: 'a / hero / is / she'", options: ["Is she a hero.", "Hero is a she.", "She is a hero.", "A she is hero."], answer: "She is a hero." },
+                    { type: 'riddle', question: "Riddle: I am a quality of being fearless. Dilna showed me. What am I?", options: ["Bravery", "Sadness", "Happiness", "Anger"], answer: "Bravery" },
+                    { type: 'choose_word', "question": "The mother smiled at the firemen and ______ them.", "options": ["scolded", "thanked", "ignored", "pushed"], "answer": "thanked" },
+                    { type: 'preposition', question: "The poem 'Everyday Heroes' is ______ Robert Longley.", options: ["with", "by", "for", "at"], answer: "by" },
+                    { type: 'opposite', question: "The opposite of 'remembered' is ______.", options: ["forgot", "knew", "saw", "thought"], answer: "forgot" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Courageous", "Couragous", "Coragous", "Courageos"], answer: "Courageous" },
+                    { type: 'comprehension', question: "Where was Dilna and Isaac's father?", options: ["At the market", "Working abroad", "In the next room", "Visiting a friend"], answer: "Working abroad" },
+                    { type: 'comprehension', question: "What happened to Kunkan Wolf at the end of the story?", options: ["He became friends with Kichu", "He ran away and never came back", "He was caught by the other animals", "He bought vegetables from Kichu"], answer: "He ran away and never came back" }
+                ]
+            },
+            {
+                unitId: 2,
+                unitTitle: "Unit 2: Voices in Unison",
+                questions: [
+                    // 50 Questions for Unit 2 with new types
+                    { type: 'jumbled', question: "Unscramble the word: YUTIN", options: ["Unity", "Untie", "Tiny", "Unit"], answer: "Unity" },
+                    { type: 'odd_one_out', question: "Which is the odd one out?", options: ["Red", "Blue", "Green", "Wall"], answer: "Wall" },
+                    { type: 'rearrange', question: "Rearrange the words: 'people / the / down / walls / pulled / their'", options: ["Their walls pulled down the people.", "The people pulled down their walls.", "Down the walls the people pulled.", "The walls pulled down their people."], answer: "The people pulled down their walls." },
+                    { type: 'riddle', question: "Riddle: I am made of paper and fly with the help of wind, a string, and a tail. What am I?", options: ["A Bird", "An Airplane", "A Kite", "A Leaf"], answer: "A Kite" },
+                    { type: 'choose_word', question: "The villagers pulled down their walls and ______ their ribbons.", options: ["cut", "burned", "combined", "hid"], answer: "combined" },
+                    { type: 'preposition', question: "Colorful ribbons began to fall ______ the sky.", options: ["in", "on", "from", "at"], answer: "from" },
+                    { type: 'opposite', question: "The opposite of 'together' is ______.", options: ["apart", "happy", "with", "group"], answer: "apart" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Peacful", "Peacfull", "Peaceful", "Peacefull"], answer: "Peaceful" },
+                    { type: 'comprehension', question: "In 'The Rainbow People', what was the village built on?", options: ["A grassy field", "A rocky mountain", "A vast sandy land", "The bank of a river"], answer: "A vast sandy land" },
+                    { type: 'comprehension', question: "What was the stranger's advice to the Rainbow People?", options: ["Build stronger walls", "Fight for resources", "Share what you have", "Wait for a miracle"], answer: "Share what you have" },
+                    { type: 'jumbled', question: "Unscramble the word: OBRIBN", options: ["Ribbon", "Robin", "Bornbi", "Nibbor"], answer: "Ribbon" },
+                    { type: 'odd_one_out', question: "Which is the odd one out?", options: ["Boy", "Wind", "Tail", "Mayor"], answer: "Mayor" },
+                    { type: 'rearrange', question: "Rearrange the words: 'a / beautiful / what / sight'", options: ["A what beautiful sight.", "What a beautiful sight.", "Sight what a beautiful.", "Beautiful what a sight."], answer: "What a beautiful sight." },
+                    { type: 'riddle', question: "Riddle: I am tiny, I work hard, and I never say 'can't'. What am I?", options: ["A Bee", "An Ant", "A Spider", "A Fly"], answer: "An Ant" },
+                    { type: 'choose_word', question: "The kite started ______ in the air.", options: ["crying", "sleeping", "dancing", "sinking"], answer: "dancing" },
+                    { type: 'preposition', question: "The Mayor strolled ______ the park.", options: ["through", "over", "under", "without"], answer: "through" },
+                    { type: 'opposite', question: "The opposite of 'calm' is ______.", options: ["quiet", "agitated", "peaceful", "soft"], answer: "agitated" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Stranger", "Strainger", "Strenger", "Straynger"], answer: "Stranger" },
+                    { type: 'comprehension', question: "What did the combined ribbons turn into at the end?", options: ["A big blanket", "A beautiful rainbow", "A long rope", "A colorful house"], answer: "A beautiful rainbow" },
+                    { type: 'comprehension', question: "What was the function of the kite's tail?", options: ["To make it look pretty", "To keep the kite steady", "To make it fly faster", "To carry messages"], answer: "To keep the kite steady" },
+                    { type: 'jumbled', question: "Unscramble the word: ETIK", options: ["Kite", "Tiek", "Kiet", "Iket"], answer: "Kite" },
+                    { type: 'odd_one_out', question: "Which is not a feeling?", options: ["Happy", "Sad", "Panicked", "Shelter"], answer: "Shelter" },
+                    { type: 'rearrange', question: "Rearrange the words: 'the / only / is / sharing / way'", options: ["Is sharing the only way.", "The only way is sharing.", "Sharing is the only way.", "Only sharing is the way."], answer: "Sharing is the a only way." },
+                    { type: 'riddle', question: "Riddle: I am a feeling of great happiness or victory, often shouted. What am I?", options: ["Alas", "Ouch", "Hurray", "Wow"], answer: "Hurray" },
+                    { type: 'choose_word', question: "The green group had wood, but no ______.", options: ["food", "water", "shelter", "friends"], answer: "shelter" },
+                    { type: 'preposition', question: "The poem 'Ants' says they climb up ______, around, and through.", options: ["over", "in", "at", "from"], answer: "over" },
+                    { type: 'opposite', question: "The opposite of 'friend' is ______.", options: ["pal", "buddy", "enemy", "ally"], answer: "enemy" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Together", "Togather", "Togeather", "Togethar"], answer: "Together" },
+                    { type: 'comprehension', question: "The poem 'Ants' says that ants have no word for...", options: ["'Stop'", "'Can't'", "'Help'", "'Lost'"], answer: "'Can't'" },
+                    { type: 'comprehension', question: "The quote 'Alone we can do so little; together we can do so much' is by...", options: ["Mahatma Gandhi", "Helen Keller", "Michael Rogers", "Edgar Guest"], answer: "Helen Keller" },
+                    { type: 'jumbled', question: "Unscramble the word: EGLNHEELRKLE", options: ["Helen Keller", "Hellen Keller", "Helen Keler", "Hellen Keler"], answer: "Helen Keller" },
+                    { type: 'odd_one_out', question: "Which is not part of a kite?", options: ["String", "Tail", "Wind", "Engine"], answer: "Engine" },
+                    { type: 'rearrange', question: "Rearrange the words: 'we / can / achieve / anything / together'", options: ["Achieve we can anything together.", "Together we can achieve anything.", "Anything we can achieve together.", "Can we achieve anything together."], answer: "Together we can achieve anything." },
+                    { type: 'riddle', question: "Riddle: I am a group of people who all wear red ribbons. I have water but no food. Who am I?", options: ["The Blue Group", "The Green Group", "The Red Group", "The Yellow Group"], answer: "The Red Group" },
+                    { type: 'choose_word', question: "The blue group had food, but no ______.", options: ["water", "shelter", "wood", "hope"], answer: "water" },
+                    { type: 'preposition', question: "The children were making a sandcastle ______ the beach.", options: ["in", "on", "at", "with"], answer: "on" },
+                    { type: 'opposite', question: "The opposite of 'beautiful' is ______.", options: ["pretty", "lovely", "ugly", "nice"], answer: "ugly" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Colourful", "Colorfull", "Colourfull", "Colurful"], answer: "Colourful" },
+                    { type: 'comprehension', question: "What is the final message of the kite story?", options: ["Kites are difficult to fly", "The Mayor knows everything", "Unity and teamwork achieve great things", "Boys are better at flying kites"], answer: "Unity and teamwork achieve great things" },
+                    { type: 'comprehension', question: "The main theme of Unit 2 is...", options: ["The beauty of nature", "The importance of unity and cooperation", "The joy of flying kites", "The life of different animals"], answer: "The importance of unity and cooperation" },
+                    { type: 'jumbled', question: "Unscramble the word: HARSING", options: ["Sharing", "Harsing", "Shargin", "Rashing"], answer: "Sharing" },
+                    { type: 'odd_one_out', question: "Which is not an interjection?", options: ["Wow", "Alas", "Ouch", "Because"], answer: "Because" },
+                    { type: 'rearrange', question: "Rearrange the words: 'is / strength / union'", options: ["Strength is union.", "Is union strength.", "Union is strength.", "Strength union is."], answer: "Union is strength." },
+                    { type: 'riddle', question: "Riddle: I am a feeling of sudden fear that spread through the village. What am I?", options: ["Joy", "Panic", "Calm", "Excitement"], answer: "Panic" },
+                    { type: 'choose_word', question: "The wind whispered ______.", options: ["loudly", "softly", "angrily", "sadly"], answer: "softly" },
+                    { type: 'preposition', question: "The animals drove the mongoose ______ from the tree.", options: ["to", "away", "in", "on"], answer: "away" },
+                    { type: 'opposite', question: "The opposite of 'whispered' is ______.", options: ["mumbled", "spoke", "shouted", "sang"], answer: "shouted" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Achieve", "Acheive", "Acheve", "Achiev"], answer: "Achieve" },
+                    { type: 'comprehension', question: "What lesson can we learn from ants, according to the poem?", options: ["How to build hills", "How to find food", "How to earn respect through perseverance", "How to march in a line"], answer: "How to earn respect through perseverance" },
+                    { type: 'comprehension', question: "In the picture story on page 52, what did Reni plant?", options: ["A flower", "A sapling", "Vegetable seeds", "A big tree"], answer: "A sapling" }
+                ]
+            },
+            {
+                unitId: 3,
+                unitTitle: "Unit 3: Pages of Wonder",
+                questions: [
+                    // 50 Questions for Unit 3 with new types
+                    { type: 'jumbled', question: "Unscramble the word: KOOB", options: ["Book", "Kobo", "Oobk", "Boko"], answer: "Book" },
+                    { type: 'odd_one_out', question: "Which is the odd one out?", options: ["Muthu", "Ninnu", "Taju", "Puchku"], answer: "Puchku" },
+                    { type: 'rearrange', question: "Rearrange the words: 'Didi / books / brought / for / children / the'", options: ["The children brought books for Didi.", "For the children Didi brought books.", "Didi brought books for the children.", "Books for Didi the children brought."], answer: "Didi brought books for the children." },
+                    { type: 'riddle', question: "Riddle: I have pages but no age, stories to tell but no voice. What am I?", options: ["A Teacher", "A Computer", "A Book", "A Television"], answer: "A Book" },
+                    { type: 'choose_word', question: "Puchku loved how letters become words, and words become ______.", options: ["numbers", "pictures", "stories", "songs"], answer: "stories" },
+                    { type: 'preposition', question: "Puchku was hiding ______ a corner, reading a book.", options: ["on", "at", "in", "under"], answer: "in" },
+                    { type: 'opposite', question: "The opposite of 'lonesome' is ______.", options: ["lonely", "sad", "accompanied", "single"], answer: "accompanied" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Librarian", "Lybrarian", "Librarien", "Librarean"], answer: "Librarian" },
+                    { type: 'comprehension', question: "In 'The Colourful Treasure', where did the children live?", options: ["In a big city", "Near a forest", "Close to a garbage dump", "By the sea"], answer: "Close to a garbage dump" },
+                    { type: 'comprehension', question: "What 'treasure' did Didi bring for the children in her bag?", options: ["Toys", "Sweets", "Books", "Clothes"], answer: "Books" },
+                    { type: 'jumbled', question: "Unscramble the word: ARESDU", question: "Unscramble the word: ERUSAERT", options: ["Treasure", "Erasuret", "Serrateu", "Reasuret"], answer: "Treasure" },
+                    { type: 'odd_one_out', question: "Which is the odd one out?", options: ["Book", "Page", "Story", "Garbage"], answer: "Garbage" },
+                    { type: 'rearrange', question: "Rearrange the words: 'she / to / them / week / meet / next / promised'", options: ["She promised to meet them next week.", "Next week she promised to meet them.", "To meet them next week she promised.", "She promised them to meet next week."], answer: "She promised to meet them next week." },
+                    { type: 'riddle', question: "Riddle: I am a girl who loves books so much I tried to make a tower to reach them. Who am I?", options: ["Dilna", "Didi", "Puchku", "Ninnu"], answer: "Puchku" },
+                    { type: 'choose_word', question: "The children's laughter rang like ______ amidst the garbage.", options: ["sirens", "bells", "drums", "whispers"], answer: "bells" },
+                    { type: 'preposition', question: "The librarian lifted Puchku up ______ reach the books.", options: ["for", "at", "to", "on"], answer: "to" },
+                    { type: 'opposite', question: "The opposite of 'lower' is ______.", options: ["down", "under", "upper", "smaller"], answer: "upper" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Adventure", "Advancture", "Adventur", "Advencher"], answer: "Adventure" },
+                    { type: 'comprehension', question: "How did the children find Didi's house when she was ill?", options: ["She gave them a map", "They followed her one day", "They found her address in a book", "They asked a police officer"], answer: "They found her address in a book" },
+                    { type: 'comprehension', question: "Who helped Puchku reach the books on the high shelf?", options: ["Her friends Boltu and Dodla", "Her mother", "The tall librarian", "She used a ladder"], answer: "The tall librarian" },
+                    { type: 'jumbled', question: "Unscramble the word: YRARLBI", options: ["Library", "Braliry", "Lirbary", "Rarybil"], answer: "Library" },
+                    { type: 'odd_one_out', question: "Which is not one of Puchku's friends?", options: ["Boltu", "Dodla", "The Librarian", "Didi"], answer: "Didi" },
+                    { type: 'rearrange', question: "Rearrange the words: 'are / for / you / these / books'", options: ["For you are these books.", "Are these books for you.", "These books are for you.", "You are for these books."], answer: "These books are for you." },
+                    { type: 'riddle', question: "Riddle: I am a woman with a red dupatta who brings the magic of reading to children. Who am I?", options: ["Puchku's Mother", "The Librarian", "Didi", "Sathi M V"], answer: "Didi" },
+                    { type: 'choose_word', question: "The children were ______ and inched closer.", options: ["bored", "scared", "curious", "tired"], answer: "curious" },
+                    { type: 'preposition', question: "The children sat around her and read stories ______ her.", options: ["with", "by", "for", "at"], answer: "for" },
+                    { type: 'opposite', question: "The opposite of 'beautiful' is ______.", options: ["pretty", "lovely", "ugly", "nice"], answer: "ugly" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Character", "Charactar", "Charecter", "Carecter"], answer: "Character" },
+                    { type: 'comprehension', question: "The news report on page 74 is about a voracious reader named...", options: ["Dilna", "Puchku", "Sathi M V", "Didi"], answer: "Sathi M V" },
+                    { type: 'comprehension', question: "According to the poem, books are 'constant friends' because they...", options: ["are always new", "can be sold", "remain even if you stop caring for them", "are expensive"], answer: "remain even if you stop caring for them" },
+                    { type: 'jumbled', question: "Unscramble the word: ATDPAPU", options: ["Dupatta", "Pattadu", "Taduppa", "Aputpad"], answer: "Dupatta" },
+                    { type: 'odd_one_out', question: "Which is not a place where Puchku reads?", options: ["At home", "In school", "In the kitchen", "In the park"], answer: "In the kitchen" },
+                    { type: 'rearrange', question: "Rearrange the words: 'the / children / back / waved'", options: ["Waved back the children.", "The children waved back.", "Back the children waved.", "The waved children back."], answer: "The children waved back." },
+                    { type: 'riddle', question: "Riddle: I am something you put in a book to save your page, so you don't have to fold it. What am I?", options: ["A pen", "A bookmark", "A paperclip", "A rubber band"], answer: "A bookmark" },
+                    { type: 'choose_word', question: "They did not ______ their eyes till the red dupatta disappeared.", options: ["close", "open", "wink", "rub"], answer: "wink" },
+                    { type: 'preposition', question: "Sathi M V has been bedridden ______ the past 25 years.", options: ["since", "at", "for", "in"], answer: "for" },
+                    { type: 'opposite', question: "The opposite of 'friend' is ______.", options: ["pal", "buddy", "enemy", "ally"], answer: "enemy" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Illustration", "Ilustration", "Illustrasion", "Ilustrasion"], answer: "Illustration" },
+                    { type: 'comprehension', question: "What did the children do for Didi when they found her ill in bed?", options: ["They cooked for her", "They cleaned her house", "They read stories to her", "They brought her flowers"], answer: "They read stories to her" },
+                    { type: 'comprehension', question: "Despite being bedridden, how many books has Sathi read?", options: ["About 100", "More than 500", "More than 2000", "About 1000"], answer: "More than 2000" },
+                    { type: 'jumbled', question: "Unscramble the word: EGLAGARB", options: ["Garbage", "Baggage", "Gaberag", "Ragbage"], answer: "Garbage" },
+                    { type: 'odd_one_out', question: "Which word describes something in bad condition?", options: ["Shiny", "Crumpled", "Tattered", "Broken"], answer: "Shiny" },
+                    { type: 'rearrange', question: "Rearrange the words: 'much / so / fun / having'", options: ["Having so much fun.", "So much having fun.", "Fun having so much.", "Much fun so having."], answer: "Having so much fun." },
+                    { type: 'riddle', question: "Riddle: I am a feeling of being alone. The poem 'Good Books' says books can help when you feel this way. What am I?", options: ["Lonesome", "Joyful", "Angry", "Excited"], answer: "Lonesome" },
+                    { type: 'choose_word', question: "The librarian ______ and lifted Puchku up.", options: ["scolded", "shouted", "chuckled", "cried"], answer: "chuckled" },
+                    { type: 'preposition', question: "The children saw other children going to school ______ bus.", options: ["in", "with", "by", "on"], answer: "by" },
+                    { type: 'opposite', question: "The opposite of 'still' is ______.", options: ["quiet", "moving", "calm", "silent"], answer: "moving" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Promised", "Promissed", "Promesed", "Promisd"], answer: "Promised" },
+                    { type: 'comprehension', question: "What is the main message of Unit 3?", options: ["the magic of friendship", "the joy and transformative power of reading", "the importance of cleanliness", "how to be a good student"], answer: "the joy and transformative power of reading" },
+                    { type: 'comprehension', question: "The quote 'A book is a dream that you hold in your hand' is by...", options: ["Edgar Guest", "Rukmini Banerji", "Neil Gaiman", "Deepanjana Pal"], answer: "Neil Gaiman" }
+                ]
+            }
+        ];
+
+        // --- DOM ELEMENTS ---
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        
+        const unitSelectionContainer = document.getElementById('unit-selection');
+        const quizTitle = document.getElementById('quiz-title');
+        const questionCounter = document.getElementById('question-counter');
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackText = document.getElementById('feedback-text');
+        const nextBtn = document.getElementById('next-btn');
+        
+        const resultsTitle = document.getElementById('results-title');
+        const scoreText = document.getElementById('score-text');
+        const restartBtn = document.getElementById('restart-btn');
+        const homeBtn = document.getElementById('home-btn');
+
+        // --- STATE & AUDIO ---
+        let currentUnit = null;
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let audioReady = false;
+
+        // Create synthesizers for sound effects
+        const correctSynth = new Tone.Synth({
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.5 }
+        }).toDestination();
+        
+        const incorrectSynth = new Tone.Synth({
+            oscillator: { type: 'square' },
+            envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.3 }
+        }).toDestination();
+
+        function playSound(type) {
+            if (!audioReady) return;
+            if (type === 'correct') {
+                correctSynth.triggerAttackRelease('C5', '8n', Tone.now());
+                correctSynth.triggerAttackRelease('G5', '8n', Tone.now() + 0.2);
+            } else {
+                incorrectSynth.triggerAttackRelease('A2', '8n', Tone.now());
+            }
+        }
+
+        function init() {
+            unitSelectionContainer.innerHTML = '';
+            quizData.forEach(unit => {
+                const button = document.createElement('button');
+                button.textContent = unit.unitTitle;
+                button.className = 'btn btn-primary w-full text-lg py-4';
+                button.onclick = () => startQuiz(unit.unitId);
+                unitSelectionContainer.appendChild(button);
+            });
+        }
+
+        async function startQuiz(unitId) {
+            if (!audioReady) {
+                try {
+                    await Tone.start();
+                    audioReady = true;
+                } catch (e) {
+                    console.error("Could not start audio context:", e);
+                }
+            }
+            currentUnit = quizData.find(u => u.unitId === unitId);
+            currentQuestionIndex = 0;
+            score = 0;
+            
+            showScreen('quiz');
+            displayQuestion();
+        }
+
+        function displayQuestion() {
+            nextBtn.classList.add('hidden');
+            feedbackText.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            const question = currentUnit.questions[currentQuestionIndex];
+            const progressPercentage = ((currentQuestionIndex) / currentUnit.questions.length) * 100;
+            
+            quizTitle.textContent = currentUnit.unitTitle;
+            questionCounter.textContent = `${currentQuestionIndex + 1} / ${currentUnit.questions.length}`;
+            progressBarFill.style.width = `${progressPercentage}%`;
+            questionText.textContent = question.question;
+
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'btn option-btn';
+                button.onclick = () => selectAnswer(button, option, question.answer);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function selectAnswer(selectedButton, selectedOption, correctAnswer) {
+            const optionButtons = optionsContainer.querySelectorAll('.option-btn');
+            optionButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('selected');
+            });
+
+            if (selectedOption === correctAnswer) {
+                score++;
+                selectedButton.classList.add('correct');
+                feedbackText.textContent = "Correct!";
+                feedbackText.className = "text-lg font-semibold text-green-600";
+                playSound('correct');
+            } else {
+                selectedButton.classList.add('incorrect');
+                feedbackText.textContent = `Correct answer: ${correctAnswer}`;
+                feedbackText.className = "text-lg font-semibold text-red-600";
+                playSound('incorrect');
+                optionButtons.forEach(btn => {
+                    if (btn.textContent === correctAnswer) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+            
+            progressBarFill.style.width = `${(currentQuestionIndex + 1) / currentUnit.questions.length * 100}%`;
+            nextBtn.classList.remove('hidden');
+        }
+        
+        function handleNextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentUnit.questions.length) {
+                displayQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            resultsTitle.textContent = currentUnit.unitTitle;
+            scoreText.textContent = `${score}/${currentUnit.questions.length}`;
+            showScreen('results');
+        }
+
+        function showScreen(screenName) {
+            startScreen.classList.add('hidden');
+            quizScreen.classList.add('hidden');
+            resultsScreen.classList.add('hidden');
+
+            const screenMap = {
+                start: startScreen,
+                quiz: quizScreen,
+                results: resultsScreen
+            };
+            screenMap[screenName].classList.remove('hidden');
+        }
+
+        nextBtn.onclick = handleNextQuestion;
+        restartBtn.onclick = () => startQuiz(currentUnit.unitId);
+        homeBtn.onclick = () => {
+            init();
+            showScreen('start');
+        };
+
+        init();
+    </script>
+</body>
+</html>
+

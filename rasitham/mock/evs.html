@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: LSS Mega Quiz</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new dark mode theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #0f172a; /* Slate 900 background */
+            color: #e2e8f0; /* Slate 200 text */
+        }
+        .quiz-container {
+            background: #1e293b; /* Slate 800 */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155; /* Slate 700 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .option-btn {
+            background-color: #334155; /* Slate 700 */
+            border: 2px solid #475569; /* Slate 600 */
+        }
+        .option-btn:hover {
+             background-color: #475569;
+        }
+        .option-btn.selected {
+            background-color: #4f46e5; /* Indigo 600 for selected */
+            color: white;
+            border-color: #6366f1; /* Indigo 500 */
+        }
+        .option-btn.correct {
+            background-color: #16a34a; /* Green 600 for correct */
+            color: white;
+            border-color: #22c55e;
+        }
+        .option-btn.wrong {
+            background-color: #dc2626; /* Red 600 for wrong */
+            color: white;
+            border-color: #ef4444;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-cyan-400 mb-2">LSS Mega Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-400 mb-6">The Ultimate Challenge!</p>
+            <img src="https://placehold.co/400x200/083344/e0f2fe?text=Final+Challenge&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Mega Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-300">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-400"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-700 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-cyan-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-100 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3"></div>
+                
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6 text-center">
+                <h2 id="review-title" class="text-3xl font-black text-cyan-400 mb-2">Quiz Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-400 mb-4">Great job! Here's your score:</p>
+                <div class="bg-slate-700 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-cyan-300"></span>
+                </div>
+             </div>
+             <div id="review-content" class="mt-6 space-y-4"></div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "LSS Mega Quiz!", welcomeSubtitle: "The Ultimate Challenge!", startBtn: "Start Quiz", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Quiz Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "LSS മെഗാ ക്വിസ്!", welcomeSubtitle: "അന്തിമ വെല്ലുവിളി!", startBtn: "ക്വിസ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ക്വിസ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- Large Question Bank (100 questions) from evslss.pdf ---
+        const fullQuizData = [
+            // Unit 1: വയലും വനവും (Field and Forest) - 20 Questions
+            { en: { question: "What helps fish to breathe?", options: ["Lungs", "Gills", "Skin", "Fins"], answer: "Gills" }, ml: { question: "മത്സ്യങ്ങളെ ശ്വസിക്കുന്നതിന് സഹായിക്കുന്നതെന്ത്?", options: ["ശ്വാസകോശം", "ശകുലങ്ങൾ", "ത്വക്ക്", "ചിറകുകൾ"], answer: "ശകുലങ്ങൾ" } },
+            { en: { question: "Animals that complete their life cycle in both water and on land are called?", options: ["Reptiles", "Mammals", "Amphibians", "Birds"], answer: "Amphibians" }, ml: { question: "വെള്ളത്തിലും കരയിലുമായി ജീവിതചക്രം പൂർത്തിയാക്കുന്ന ജീവികൾക്ക് പറയുന്ന പേര്?", options: ["ഉരഗങ്ങൾ", "സസ്തനികൾ", "ഉഭയജീവികൾ", "പക്ഷികൾ"], answer: "ഉഭയജീവികൾ" } },
+            { en: { question: "Which are the largest frogs in the world?", options: ["Bullfrog", "Goliath frog", "Tree frog", "Poison dart frog"], answer: "Goliath frog" }, ml: { question: "ഏറ്റവും വലുപ്പം കൂടിയ തവളകൾ ഏത്?", options: ["പോക്കാച്ചിത്തവള", "ഗോലിയാത്ത് തവള", "മരത്തവള", "വിഷത്തവള"], answer: "ഗോലിയാത്ത് തവള" } },
+            { en: { question: "Which of these is an example of an aquatic plant?", options: ["Rose", "Water Hyacinth", "Mango Tree", "Cactus"], answer: "Water Hyacinth" }, ml: { question: "ജലസസ്യങ്ങൾക്ക് ഒരു ഉദാഹരണം ഏതാണ്?", options: ["റോസ്", "കുളവാഴ", "മാവ്", "കള്ളിമുൾച്ചെടി"], answer: "കുളവാഴ" } },
+            { en: { question: "What helps a water snake (Neerkoli) move on land?", options: ["Fins", "Legs", "Scales on its belly", "Wings"], answer: "Scales on its belly" }, ml: { question: "നീർക്കോലിക്ക് കരയിൽ സഞ്ചരിക്കാൻ സഹായിക്കുന്നത് എന്ത്?", options: ["ചിറകുകൾ", "കാലുകൾ", "ഉരസിലെ ശൽക്കങ്ങൾ", "തൂവലുകൾ"], answer: "ഉരസിലെ ശൽക്കങ്ങൾ" } },
+            { en: { question: "Which of these is an example of an amphibian?", options: ["Fish", "Snake", "Salamander", "Lizard"], answer: "Salamander" }, ml: { question: "ഉഭയജീവികൾക്ക് ഒരു ഉദാഹരണം ഏതാണ്?", options: ["മത്സ്യം", "പാമ്പ്", "സാലമാണ്ടർ", "പല്ലി"], answer: "സാലമാണ്ടർ" } },
+            { en: { question: "Why do lotus and water lily float on water?", options: ["They are light", "They have air chambers", "They have small roots", "Water pushes them up"], answer: "They have air chambers" }, ml: { question: "ആമ്പലും താമരയും വെള്ളത്തിൽ പൊങ്ങിക്കിടക്കുന്നത് എന്തുകൊണ്ട്?", options: ["അവയ്ക്ക് ഭാരം കുറവാണ്", "തണ്ടിലും ഇലയിലും വായു അറകളുണ്ട്", "ചെറിയ വേരുകളാണുള്ളത്", "വെള്ളം മുകളിലേക്ക് തള്ളുന്നു"], answer: "തണ്ടിലും ഇലയിലും വായു അറകളുണ്ട്" } },
+            { en: { question: "What is the characteristic shape of a fish's body?", options: ["Round", "Flat", "Boat-shaped (streamlined)", "Square"], answer: "Boat-shaped (streamlined)" }, ml: { question: "മത്സ്യത്തിന്റെ ശരീരാകൃതിയുടെ പ്രത്യേകതയെന്ത്?", options: ["വൃത്താകൃതി", "പരന്നത്", "തോണിയുടെ ആകൃതി (ധാരാരേഖിതം)", "ചതുരാകൃതി"], answer: "തോണിയുടെ ആകൃതി (ധാരാരേഖിതം)" } },
+            { en: { question: "Who first used the term 'ecosystem'?", options: ["Charles Darwin", "Arthur Tansley", "Gregor Mendel", "Louis Pasteur"], answer: "Arthur Tansley" }, ml: { question: "ആവാസവ്യവസ്ഥ എന്ന പദം ആദ്യമായി ഉപയോഗിച്ചത് ആര്?", options: ["ചാൾസ് ഡാർവിൻ", "ആർതർ ടാൻസ്ലി", "ഗ്രിഗർ മെൻഡൽ", "ലൂയി പാസ്ചർ"], answer: "ആർതർ ടാൻസ്ലി" } },
+            { en: { question: "How does a frog breathe on land?", options: ["Gills", "Skin", "Nostrils", "Mouth"], answer: "Nostrils" }, ml: { question: "കരയിലായിരിക്കുമ്പോൾ തവള എങ്ങനെയാണ് ശ്വസിക്കുന്നത്?", options: ["ചെകിളപ്പൂക്കൾ വഴി", "ത്വക്ക് വഴി", "നാസാരന്ധ്രങ്ങൾ വഴി", "വായ വഴി"], answer: "നാസാരന്ധ്രങ്ങൾ വഴി" } },
+            { en: { question: "A special feature that helps an organism survive in its habitat is called?", options: ["Habit", "Feature", "Adaptation", "Instinct"], answer: "Adaptation" }, ml: { question: "ഒരു ജീവിക്ക് അതിന്റെ വാസസ്ഥലത്ത് ജീവിക്കാൻ സഹായകമായ സവിശേഷതക്ക് പറയുന്ന പേരെന്ത്?", options: ["ശീലം", "സവിശേഷത", "അനുകൂലനം", "വാസന"], answer: "അനുകൂലനം" } },
+            { en: { question: "How does a frog breathe in water?", options: ["Gills", "Lungs", "Skin", "Nostrils"], answer: "Skin" }, ml: { question: "വെള്ളത്തിൽ ആയിരിക്കുമ്പോൾ തവള എങ്ങനെയാണ് ശ്വസിക്കുന്നത്?", options: ["ചെകിളപ്പൂക്കൾ വഴി", "ശ്വാസകോശം വഴി", "ത്വക്ക് വഴി", "നാസാരന്ധ്രങ്ങൾ വഴി"], answer: "ത്വക്ക് വഴി" } },
+            { en: { question: "Which is the official fish of Kerala?", options: ["Sardine", "Mackerel", "Pearl Spot (Karimeen)", "Tuna"], answer: "Pearl Spot (Karimeen)" }, ml: { question: "കേരളത്തിന്റെ ഔദ്യോഗിക മത്സ്യം ഏതാണ്?", options: ["മത്തി", "അയല", "കരിമീൻ", "ചൂര"], answer: "കരിമീൻ" } },
+            { en: { question: "Which part of a fish helps it change direction while swimming?", options: ["Gills", "Scales", "Tail fin", "Eyes"], answer: "Tail fin" }, ml: { question: "നീന്തുമ്പോൾ ദിശ മാറ്റാൻ മത്സ്യത്തെ സഹായിക്കുന്ന അവയവം ഏതാണ്?", options: ["ചെകിളപ്പൂക്കൾ", "ശൽക്കങ്ങൾ", "വാൽച്ചിറക്", "കണ്ണുകൾ"], answer: "വാൽച്ചിറക്" } },
+            { en: { question: "Which of these is an abiotic component of an ecosystem?", options: ["Small animals", "Water", "Small plants", "Bushes"], answer: "Water" }, ml: { question: "താഴെ പറയുന്നവയിൽ അജീവീയ ഘടകം ഏതാണ്?", options: ["ചെറുജീവികൾ", "വെള്ളം", "ചെറുസസ്യങ്ങൾ", "കുറ്റിച്ചെടികൾ"], answer: "വെള്ളം" } },
+            { en: { question: "What is the name of the tadpole that hatches from a frog's egg?", options: ["Larva", "Tadpole", "Nymph", "Pupa"], answer: "Tadpole" }, ml: { question: "തവളയുടെ മുട്ട വിരിഞ്ഞുണ്ടാകുന്ന കുഞ്ഞിന് പറയുന്ന പേരെന്താണ്?", options: ["ലാർവ", "വാൽമാക്രി", "നിംഫ്", "പ്യൂപ്പ"], answer: "വാൽമാക്രി" } },
+            { en: { question: "Which pair is NOT an example of interdependence?", options: ["Butterfly & Flower", "Whale & Air", "Earthworm & Soil", "Plant & Sunlight"], answer: "Whale & Air" }, ml: { question: "പരസ്പരാശ്രയത്തിൽ പെടാത്ത ജോഡി ഏതാണ്?", options: ["പൂമ്പാറ്റയും പൂവും", "തിമിംഗലവും വായുവും", "മണ്ണിരയും മണ്ണും", "സസ്യവും സൂര്യപ്രകാശവും"], answer: "തിമിംഗലവും വായുവും" } },
+            { en: { question: "Which activity is beneficial for the survival of an ecosystem?", options: ["Filling paddy fields", "Planting trees", "Concreting the ground", "Leveling hills"], answer: "Planting trees" }, ml: { question: "ആവാസവ്യവസ്ഥയുടെ നിലനിൽപ്പിന് അനുയോജ്യമായ പ്രസ്താവന ഏതാണ്?", options: ["വയലുകൾ നികത്തുന്നു", "മരങ്ങൾ വെച്ചുപിടിപ്പിക്കുന്നു", "നിലം കോൺക്രീറ്റ് ചെയ്യുന്നു", "കുന്നുകൾ നിരപ്പാക്കുന്നു"], answer: "മരങ്ങൾ വെച്ചുപിടിപ്പിക്കുന്നു" } },
+            { en: { question: "Which human activity leads to the loss of habitat for animals?", options: ["Planting trees", "Deforestation", "Creating parks", "Protecting forests"], answer: "Deforestation" }, ml: { question: "മനുഷ്യന്റെ ഏത് പ്രവർത്തനമാണ് ജീവികളുടെ വാസസ്ഥലം നഷ്ടപ്പെടാൻ കാരണമാകുന്നത്?", options: ["മരം നടൽ", "വനനശീകരണം", "പാർക്കുകൾ നിർമ്മിക്കൽ", "വനം സംരക്ഷിക്കൽ"], answer: "വനനശീകരണം" } },
+            { en: { question: "What adaptation helps a duck swim in water?", options: ["Sharp beak", "Webbed feet", "Long neck", "Strong wings"], answer: "Webbed feet" }, ml: { question: "താറാവിന് വെള്ളത്തിൽ നീന്താൻ സഹായിക്കുന്ന അനുകൂലനം ഏതാണ്?", options: ["കൂർത്ത കൊക്ക്", "ചർമ്മബന്ധിതമായ വിരലുകൾ", "നീണ്ട കഴുത്ത്", "ശക്തമായ ചിറകുകൾ"], answer: "ചർമ്മബന്ധിതമായ വിരലുകൾ" } },
+            // Unit 2: ഇലയ്ക്കുമുണ്ട് പറയാൻ (The Leaf Also Has to Say) - 20 Questions
+            { en: { question: "A plant with a taproot system will have which type of leaf venation?", options: ["Parallel", "Reticulate", "No veins", "Circular"], answer: "Reticulate" }, ml: { question: "തായ്‌വേരുപടലമുള്ള ഒരു സസ്യത്തിന് ഏത് തരം സിരാവിന്യാസമാണ് ഉണ്ടാകുക?", options: ["സമാന്തരം", "ജാലിക", "സിരകളില്ല", "വൃത്താകൃതി"], answer: "ജാലിക" } },
+            { en: { question: "A plant with a fibrous root system is likely to be a...", options: ["Dicot", "Monocot", "Tricot", "Gymnosperm"], answer: "Monocot" }, ml: { question: "നാരുവേരുപടലമുള്ള ഒരു സസ്യം സാധാരണയായി എന്തായിരിക്കും?", options: ["ദ്വിബീജപത്രം", "ഏകബീജപത്രം", "ത്രിബീജപത്രം", "ജിംനോസ്പേം"], answer: "ഏകബീജപത്രം" } },
+            { en: { question: "What is the part of a sprouting seed that grows downwards to become the root?", options: ["Plumule", "Cotyledon", "Radicle", "Seed coat"], answer: "Radicle" }, ml: { question: "മുളയ്ക്കുന്ന വിത്തിൽ നിന്ന് താഴേക്ക് വളർന്ന് വേരായി മാറുന്ന ഭാഗം ഏതാണ്?", options: ["ബീജശീർഷം", "ബീജപത്രം", "ബീജമൂലം", "ബീജകവചം"], answer: "ബീജമൂലം" } },
+            { en: { question: "What substance gives leaves their green color?", options: ["Xanthophyll", "Carotene", "Chlorophyll", "Anthocyanin"], answer: "Chlorophyll" }, ml: { question: "ഇലകൾക്ക് പച്ച നിറം നൽകുന്ന വസ്തു ഏതാണ്?", options: ["സാന്തോഫിൽ", "കരോട്ടിൻ", "ഹരിതകം", "ആന്തോസയാനിൻ"], answer: "ഹരിതകം" } },
+            { en: { question: "The process by which plants make their own food is called?", options: ["Respiration", "Photosynthesis", "Transpiration", "Germination"], answer: "Photosynthesis" }, ml: { question: "സസ്യങ്ങൾ സ്വയം ആഹാരം നിർമ്മിക്കുന്ന പ്രക്രിയക്ക് പറയുന്ന പേരെന്ത്?", options: ["ശ്വസനം", "പ്രകാശസംശ്ലേഷണം", "സസ്യസ്വേദനം", "ബീജാങ്കുരണം"], answer: "പ്രകാശസംശ്ലേഷണം" } },
+            { en: { question: "Which part of the plant is known as the 'kitchen' of the plant?", options: ["Root", "Stem", "Leaf", "Flower"], answer: "Leaf" }, ml: { question: "സസ്യത്തിന്റെ അടുക്കള എന്നറിയപ്പെടുന്ന ഭാഗമേത്?", options: ["വേര്", "തണ്ട്", "ഇല", "പൂവ്"], answer: "ഇല" } },
+            { en: { question: "Which Indian scientist discovered that plants have life?", options: ["C.V. Raman", "Homi Bhabha", "J.C. Bose", "S.N. Bose"], answer: "J.C. Bose" }, ml: { question: "സസ്യങ്ങൾക്ക് ജീവനുണ്ടെന്ന് കണ്ടെത്തിയ ഇന്ത്യൻ ശാസ്ത്രജ്ഞൻ ആര്?", options: ["സി.വി. രാമൻ", "ഹോമി ഭാഭ", "ജെ.സി. ബോസ്", "എസ്.എൻ. ബോസ്"], answer: "ജെ.സി. ബോസ്" } },
+            { en: { question: "Which plant is known as 'poor man's timber'?", options: ["Teak", "Bamboo", "Rosewood", "Sandalwood"], answer: "Bamboo" }, ml: { question: "പാവപ്പെട്ടവന്റെ തടി എന്നറിയപ്പെടുന്ന സസ്യമേത്?", options: ["തേക്ക്", "മുള", "ഈട്ടി", "ചന്ദനം"], answer: "മുള" } },
+            { en: { question: "Which plant is known as 'China Rose'?", options: ["Jasmine", "Lotus", "Hibiscus", "Rose"], answer: "Hibiscus" }, ml: { question: "'ചൈനാ റോസ്' എന്നറിയപ്പെടുന്ന സസ്യം ഏതാണ്?", options: ["മുല്ല", "താമര", "ചെമ്പരത്തി", "റോസ്"], answer: "ചെമ്പരത്തി" } },
+            { en: { question: "Which plant stores food in its stem?", options: ["Carrot", "Beetroot", "Sugarcane", "Radish"], answer: "Sugarcane" }, ml: { question: "തായ്ത്തടിയിൽ ആഹാരം സംഭരിച്ചുവച്ചിരിക്കുന്ന സസ്യമേത്?", options: ["കാരറ്റ്", "ബീറ്റ്റൂട്ട്", "കരിമ്പ്", "മുള്ളങ്കി"], answer: "കരിമ്പ്" } },
+            { en: { question: "Which part of the sprouting seed grows upwards to become the stem?", options: ["Radicle", "Plumule", "Cotyledon", "Root cap"], answer: "Plumule" }, ml: { question: "മുളയ്ക്കുന്ന വിത്തിൽ നിന്ന് മുകളിലേക്ക് വളർന്ന് കാണ്ഡമായി മാറുന്ന ഭാഗം ഏതാണ്?", options: ["ബീജമൂലം", "ബീജശീർഷം", "ബീജപത്രം", "വേരിന്റെ തൊപ്പി"], answer: "ബീജശീർഷം" } },
+            { en: { question: "Where is the food for a sprouting seed stored?", options: ["Radicle", "Plumule", "Cotyledons", "Leaves"], answer: "Cotyledons" }, ml: { question: "മുളയ്ക്കുന്ന വിത്തിന് ആവശ്യമായ ആഹാരം എവിടെയാണ് സംഭരിച്ചിരിക്കുന്നത്?", options: ["ബീജമൂലം", "ബീജശീർഷം", "ബീജപത്രങ്ങൾ", "ഇലകൾ"], answer: "ബീജപത്രങ്ങൾ" } },
+            { en: { question: "Which root system is harder to pull out from the soil?", options: ["Fibrous root", "Taproot", "Both are easy", "Depends on the plant"], answer: "Taproot" }, ml: { question: "ഏത് വേരുപടലമാണ് മണ്ണിൽ നിന്ന് പറിച്ചെടുക്കാൻ പ്രയാസം?", options: ["നാരുവേര്", "തായ്‌വേര്", "രണ്ടും എളുപ്പമാണ്", "സസ്യത്തെ ആശ്രയിച്ചിരിക്കും"], answer: "തായ്‌വേര്" } },
+            { en: { question: "Which type of venation has veins running parallel to each other?", options: ["Reticulate", "Parallel", "Dichotomous", "Palmate"], answer: "Parallel" }, ml: { question: "ഏത് തരം സിരാവിന്യാസത്തിലാണ് സിരകൾ പരസ്പരം സമാന്തരമായി പോകുന്നത്?", options: ["ജാലിക", "സമാന്തരം", "ഡൈക്കോട്ടോമസ്", "പാൽമേറ്റ്"], answer: "സമാന്തരം" } },
+            { en: { question: "A coconut tree has which type of root system?", options: ["Taproot", "Fibrous root", "Prop root", "Stilt root"], answer: "Fibrous root" }, ml: { question: "തെങ്ങിന് ഏത് തരം വേരുപടലമാണ് ഉള്ളത്?", options: ["തായ്‌വേര്", "നാരുവേര്", "പൊയ്ക്കാൽ വേര്", "താങ്ങ് വേര്"], answer: "നാരുവേര്" } },
+            { en: { question: "A mango tree has which type of leaf venation?", options: ["Parallel", "Reticulate", "Linear", "None of these"], answer: "Reticulate" }, ml: { question: "മാവിന്റെ ഇലയിൽ ഏത് തരം സിരാവിന്യാസമാണ് ഉള്ളത്?", options: ["സമാന്തരം", "ജാലിക", "ലീനിയർ", "ഇവയൊന്നുമല്ല"], answer: "ജാലിക" } },
+            { en: { question: "The scientific study of plants is called?", options: ["Zoology", "Botany", "Geology", "Ornithology"], answer: "Botany" }, ml: { question: "സസ്യങ്ങളെക്കുറിച്ചുള്ള ശാസ്ത്രീയ പഠനം അറിയപ്പെടുന്നത്?", options: ["ജന്തുശാസ്ത്രം", "സസ്യശാസ്ത്രം", "ഭൂഗർഭശാസ്ത്രം", "പക്ഷിശാസ്ത്രം"], answer: "സസ്യശാസ്ത്രം" } },
+            { en: { question: "Which plant has its seed outside the fruit?", options: ["Mango", "Jackfruit", "Cashew", "Apple"], answer: "Cashew" }, ml: { question: "ഫലത്തിന് പുറത്ത് വിത്തുള്ള സസ്യമേത്?", options: ["മാവ്", "പ്ലാവ്", "കശുമാവ്", "ആപ്പിൾ"], answer: "കശുമാവ്" } },
+            { en: { question: "Fungi like mushrooms lack which substance, preventing them from making their own food?", options: ["Water", "Sunlight", "Chlorophyll", "Carbon Dioxide"], answer: "Chlorophyll" }, ml: { question: "കൂൺ പോലുള്ള ഫംഗസുകൾക്ക് സ്വയം ആഹാരം നിർമ്മിക്കാൻ കഴിയാത്തത് എന്തിന്റെ അഭാവം മൂലമാണ്?", options: ["ജലം", "സൂര്യപ്രകാശം", "ഹരിതകം", "കാർബൺ ഡൈ ഓക്സൈഡ്"], answer: "ഹരിതകം" } },
+            { en: { question: "Which spice was known as 'Yavanapriya'?", options: ["Cardamom", "Clove", "Cinnamon", "Black Pepper"], answer: "Black Pepper" }, ml: { question: "'യവനപ്രിയ' എന്ന് വിളിച്ചിരുന്ന സുഗന്ധദ്രവ്യം ഏത്?", options: ["ഏലം", "ഗ്രാമ്പൂ", "കറുവപ്പട്ട", "കുരുമുളക്"], answer: "കുരുമുളക്" } },
+            // Unit 3: സ്വാതന്ത്ര്യത്തിലേക്ക് (Towards Freedom) - 15 Questions
+            { en: { question: "The Jallianwala Bagh massacre took place in which year?", options: ["1917", "1919", "1930", "1942"], answer: "1919" }, ml: { question: "ജാലിയൻ വാലാബാഗ് കൂട്ടക്കൊല നടന്ന വർഷം ഏതാണ്?", options: ["1917", "1919", "1930", "1942"], answer: "1919" } },
+            { en: { question: "The slogan 'Do or Die' is associated with which movement?", options: ["Non-Cooperation Movement", "Civil Disobedience Movement", "Quit India Movement", "Champaran Satyagraha"], answer: "Quit India Movement" }, ml: { question: "'പ്രവർത്തിക്കുക അല്ലെങ്കിൽ മരിക്കുക' എന്ന മുദ്രാവാക്യം ഏത് സമരവുമായി ബന്ധപ്പെട്ടതാണ്?", options: ["നിസ്സഹകരണ സമരം", "നിയമലംഘന സമരം", "ക്വിറ്റ് ഇന്ത്യാ സമരം", "ചമ്പാരൻ സത്യാഗ്രഹം"], answer: "ക്വിറ്റ് ഇന്ത്യാ സമരം" } },
+            { en: { question: "Who is known as the 'Kerala Gandhi'?", options: ["A. K. Gopalan", "K. Kelappan", "E. M. S. Namboodiripad", "T. K. Madhavan"], answer: "K. Kelappan" }, ml: { question: "'കേരളഗാന്ധി' എന്നറിയപ്പെടുന്നത് ആരാണ്?", options: ["എ. കെ. ഗോപാലൻ", "കെ. കേളപ്പൻ", "ഇ. എം. എസ്. നമ്പൂതിരിപ്പാട്", "ടി. കെ. മാധവൻ"], answer: "കെ. കേളപ്പൻ" } },
+            { en: { question: "Where did the Salt Satyagraha take place in Kerala?", options: ["Kozhikode", "Vaikom", "Payyanur", "Guruvayur"], answer: "Payyanur" }, ml: { question: "കേരളത്തിൽ ഉപ്പുസത്യാഗ്രഹം നടന്നത് എവിടെ വെച്ച്?", options: ["കോഴിക്കോട്", "വൈക്കം", "പയ്യന്നൂർ", "ഗുരുവായൂർ"], answer: "പയ്യന്നൂർ" } },
+            { en: { question: "What is the meaning of the word 'Satyagraha'?", options: ["Hold fast to truth", "Fight for freedom", "Non-violence", "Protest march"], answer: "Hold fast to truth" }, ml: { question: "സത്യഗ്രഹം എന്ന വാക്കിന്റെ അർത്ഥമെന്ത്?", options: ["സത്യത്തെ മുറുകെ പിടിക്കുക", "സ്വാതന്ത്ര്യത്തിനായി പോരാടുക", "അഹിംസ", "പ്രതിഷേധ മാർച്ച്"], answer: "സത്യത്തെ മുറുകെ പിടിക്കുക" } },
+            { en: { question: "Who was Gandhiji's political guru?", options: ["Jawaharlal Nehru", "Sardar Patel", "Gopal Krishna Gokhale", "Bal Gangadhar Tilak"], answer: "Gopal Krishna Gokhale" }, ml: { question: "ഗാന്ധിജിയുടെ രാഷ്ട്രീയഗുരു ആരാണ്?", options: ["ജവഹർലാൽ നെഹ്‌റു", "സർദാർ പട്ടേൽ", "ഗോപാലകൃഷ്ണ ഗോഖലെ", "ബാലഗംഗാധര തിലകൻ"], answer: "ഗോപാലകൃഷ്ണ ഗോഖലെ" } },
+            { en: { question: "Who is known as the 'Iron Man of India'?", options: ["Mahatma Gandhi", "Jawaharlal Nehru", "Sardar Vallabhbhai Patel", "Subhas Chandra Bose"], answer: "Sardar Vallabhbhai Patel" }, ml: { question: "ഇന്ത്യയുടെ ഉരുക്കുമനുഷ്യൻ എന്നറിയപ്പെടുന്നത് ആരാണ്?", options: ["മഹാത്മാഗാന്ധി", "ജവഹർലാൽ നെഹ്‌റു", "സർദാർ വല്ലഭായ് പട്ടേൽ", "സുഭാഷ് ചന്ദ്രബോസ്"], answer: "സർദാർ വല്ലഭായ് പട്ടേൽ" } },
+            { en: { question: "Who said 'Freedom is my birthright'?", options: ["Mahatma Gandhi", "Bhagat Singh", "Bal Gangadhar Tilak", "Jawaharlal Nehru"], answer: "Bal Gangadhar Tilak" }, ml: { question: "സ്വാതന്ത്ര്യം എന്റെ ജന്മാവകാശമാണ് എന്ന് പ്രഖ്യാപിച്ചത് ആര്?", options: ["മഹാത്മാഗാന്ധി", "ഭഗത് സിംഗ്", "ബാലഗംഗാധര തിലകൻ", "ജവഹർലാൽ നെഹ്‌റു"], answer: "ബാലഗംഗാധര തിലകൻ" } },
+            { en: { question: "The day of Gandhiji's return from South Africa is celebrated as?", options: ["Republic Day", "Independence Day", "Pravasi Bharatiya Divas", "Gandhi Jayanti"], answer: "Pravasi Bharatiya Divas" }, ml: { question: "ഗാന്ധിജി ദക്ഷിണാഫ്രിക്കയിൽ നിന്ന് തിരിച്ചെത്തിയ ദിവസം എന്തായി ആചരിക്കുന്നു?", options: ["റിപ്പബ്ലിക് ദിനം", "സ്വാതന്ത്ര്യദിനം", "പ്രവാസി ഭാരതീയ ദിവസ്", "ഗാന്ധി ജയന്തി"], answer: "പ്രവാസി ഭാരതീയ ദിവസ്" } },
+            { en: { question: "The 'Wagon Tragedy' is associated with which event in Kerala's history?", options: ["Guruvayur Satyagraha", "Vaikom Satyagraha", "Malabar Rebellion", "Punnapra-Vayalar uprising"], answer: "Malabar Rebellion" }, ml: { question: "'വാഗൺ ട്രാജഡി' കേരള ചരിത്രത്തിലെ ഏത് സംഭവവുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", options: ["ഗുരുവായൂർ സത്യാഗ്രഹം", "വൈക്കം സത്യാഗ്രഹം", "മലബാർ കലാപം", "പുന്നപ്ര-വയലാർ സമരം"], answer: "മലബാർ കലാപം" } },
+            { en: { question: "Who is the author of the book 'Discovery of India'?", options: ["Mahatma Gandhi", "Sardar Patel", "Jawaharlal Nehru", "Subhas Chandra Bose"], answer: "Jawaharlal Nehru" }, ml: { question: "'ഇന്ത്യയെ കണ്ടെത്തൽ' എന്ന പുസ്തകത്തിന്റെ രചയിതാവ് ആര്?", options: ["മഹാത്മാഗാന്ധി", "സർദാർ പട്ടേൽ", "ജവഹർലാൽ നെഹ്‌റു", "സുഭാഷ് ചന്ദ്രബോസ്"], answer: "ജവഹർലാൽ നെഹ്‌റു" } },
+            { en: { question: "Who founded the 'Servants of India Society'?", options: ["Mahatma Gandhi", "Gopal Krishna Gokhale", "Jawaharlal Nehru", "B. R. Ambedkar"], answer: "Gopal Krishna Gokhale" }, ml: { question: "'സെർവന്റ്സ് ഓഫ് ഇന്ത്യ സൊസൈറ്റിയുടെ സ്ഥാപകൻ ആരാണ്?", options: ["മഹാത്മാഗാന്ധി", "ഗോപാലകൃഷ്ണ ഗോഖലെ", "ജവഹർലാൽ നെഹ്‌റു", "ബി. ആർ. അംബേദ്കർ"], answer: "ഗോപാലകൃഷ്ണ ഗോഖലെ" } },
+            { en: { question: "The Champaran Satyagraha in 1917 was Gandhiji's first satyagraha in India. It was for the rights of:", options: ["Textile mill workers", "Indigo farmers", "Salt merchants", "Landless laborers"], answer: "Indigo farmers" }, ml: { question: "1917-ലെ ചമ്പാരൻ സത്യാഗ്രഹം ആരുടെ അവകാശങ്ങൾക്ക് വേണ്ടിയായിരുന്നു?", options: ["തുണിമിൽ തൊഴിലാളികൾ", "നീലക്കർഷകർ", "ഉപ്പ് വ്യാപാരികൾ", "ഭൂരഹിതരായ തൊഴിലാളികൾ"], answer: "നീലക്കർഷകർ" } },
+            { en: { question: "The Kheda Satyagraha of 1918 was related to:", options: ["Increased wages", "Tax exemption for farmers", "Entry to temples", "Boycotting foreign goods"], answer: "Tax exemption for farmers" }, ml: { question: "1918-ലെ ഖേഡാ സമരം എന്തുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", options: ["കൂലി വർദ്ധന", "കർഷകർക്കുള്ള നികുതിയിളവ്", "ക്ഷേത്ര പ്രവേശനം", "വിദേശ വസ്തുക്കൾ ബഹിഷ്കരിക്കൽ"], answer: "കർഷകർക്കുള്ള നികുതിയിളവ്" } },
+            { en: { question: "The Chauri Chaura incident led to the suspension of which movement?", options: ["Quit India Movement", "Civil Disobedience Movement", "Non-Cooperation Movement", "Khilafat Movement"], answer: "Non-Cooperation Movement" }, ml: { question: "ചൗരി ചൗരാ സംഭവം ഏത് സമരം നിർത്തിവെക്കാൻ കാരണമായി?", options: ["ക്വിറ്റ് ഇന്ത്യാ സമരം", "നിയമലംഘന സമരം", "നിസ്സഹകരണ സമരം", "ഖിലാഫത്ത് പ്രസ്ഥാനം"], answer: "നിസ്സഹകരണ സമരം" } },
+            // Unit 4: പക്ഷികളുടെ കൗതുകലോകം (The Curious World of Birds) - 15 Questions
+            { en: { question: "Which of the following birds cannot fly?", options: ["Crow", "Parrot", "Ostrich", "Eagle"], answer: "Ostrich" }, ml: { question: "താഴെ പറയുന്നവയിൽ പറക്കാൻ കഴിയാത്ത പക്ഷി ഏതാണ്?", options: ["കാക്ക", "തത്ത", "ഒട്ടകപ്പക്ഷി", "പരുന്ത്"], answer: "ഒട്ടകപ്പക്ഷി" } },
+            { en: { question: "Which bird lays its eggs in a crow's nest?", options: ["Sparrow", "Cuckoo", "Myna", "Pigeon"], answer: "Cuckoo" }, ml: { question: "കാക്കയുടെ കൂട്ടിൽ മുട്ടയിടുന്ന പക്ഷി ഏതാണ്?", options: ["കുരുവി", "കുയിൽ", "മൈന", "പ്രാവ്"], answer: "കുയിൽ" } },
+            { en: { question: "Who is the author of the book 'Birds of Kerala'?", options: ["Salim Ali", "Induchoodan (K.K. Neelakantan)", "Vallathol", "Kumaranasan"], answer: "Induchoodan (K.K. Neelakantan)" }, ml: { question: "'കേരളത്തിലെ പക്ഷികൾ' എന്ന പുസ്തകം രചിച്ചത് ആരാണ്?", options: ["സലിം അലി", "ഇന്ദുചൂഡൻ (കെ.കെ. നീലകണ്ഠൻ)", "വള്ളത്തോൾ", "കുമാരനാശാൻ"], answer: "ഇന്ദുചൂഡൻ (കെ.കെ. നീലകണ്ഠൻ)" } },
+            { en: { question: "Which bird is known for migrating the longest distance?", options: ["Siberian Crane", "Arctic Tern", "Golden Oriole", "Flamingo"], answer: "Arctic Tern" }, ml: { question: "ഏറ്റവും കൂടുതൽ ദൂരം ദേശാടനം നടത്തുന്ന പക്ഷി ഏതാണ്?", options: ["സൈബീരിയൻ കൊക്ക്", "ആർട്ടിക് ടേൺ", "മഞ്ഞക്കിളി", "ഫ്ലമിംഗോ"], answer: "ആർട്ടിക് ടേൺ" } },
+            { en: { question: "What is the state bird of Kerala?", options: ["Peacock", "Great Hornbill", "Parrot", "Kingfisher"], answer: "Great Hornbill" }, ml: { question: "കേരളത്തിന്റെ സംസ്ഥാന പക്ഷി ഏതാണ്?", options: ["മയിൽ", "മലമുഴക്കി വേഴാമ്പൽ", "തത്ത", "പൊന്മാൻ"], answer: "മലമുഴക്കി വേഴാമ്പൽ" } },
+            { en: { question: "Who is the author of the autobiography 'The Fall of a Sparrow'?", options: ["Jawaharlal Nehru", "Induchoodan", "Salim Ali", "Mahatma Gandhi"], answer: "Salim Ali" }, ml: { question: "'ഒരു കുരുവിയുടെ പതനം' ആരുടെ ആത്മകഥയാണ്?", options: ["ജവഹർലാൽ നെഹ്‌റു", "ഇന്ദുചൂഡൻ", "സലിം അലി", "മഹാത്മാഗാന്ധി"], answer: "സലിം അലി" } },
+            { en: { question: "Which bird has the longest wingspan?", options: ["Eagle", "Ostrich", "Wandering Albatross", "Condor"], answer: "Wandering Albatross" }, ml: { question: "ഏറ്റവും വലിയ ചിറകുകളുള്ള പക്ഷി ഏതാണ്?", options: ["പരുന്ത്", "ഒട്ടകപ്പക്ഷി", "വാൻഡറിംഗ് ആൽബട്രോസ്", "കഴുകൻ"], answer: "വാൻഡറിംഗ് ആൽബട്രോസ്" } },
+            { en: { question: "What is the study of birds called?", options: ["Botany", "Zoology", "Ornithology", "Geology"], answer: "Ornithology" }, ml: { question: "പക്ഷികളെക്കുറിച്ചുള്ള പഠനശാഖ ഏതാണ്?", options: ["സസ്യശാസ്ത്രം", "ജന്തുശാസ്ത്രം", "പക്ഷിശാസ്ത്രം", "ഭൂഗർഭശാസ്ത്രം"], answer: "പക്ഷിശാസ്ത്രം" } },
+            { en: { question: "Which bird is known as 'farmer's friend'?", options: ["Crow", "Owl", "Sparrow", "Pigeon"], answer: "Owl" }, ml: { question: "കർഷകന്റെ മിത്രം എന്നറിയപ്പെടുന്ന പക്ഷി ഏതാണ്?", options: ["കാക്ക", "മൂങ്ങ", "കുരുവി", "പ്രാവ്"], answer: "മൂങ്ങ" } },
+            { en: { question: "Where is the Thattekad Bird Sanctuary located?", options: ["Wayanad", "Idukki", "Ernakulam", "Palakkad"], answer: "Ernakulam" }, ml: { question: "തട്ടേക്കാട് പക്ഷി സങ്കേതം ഏത് ജില്ലയിലാണ്?", options: ["വയനാട്", "ഇടുക്കി", "എറണാകുളം", "പാലക്കാട്"], answer: "എറണാകുളം" } },
+            { en: { question: "Which bird can fly backwards?", options: ["Sparrow", "Hummingbird", "Eagle", "Owl"], answer: "Hummingbird" }, ml: { question: "പിറകോട്ടു പറക്കാൻ കഴിയുന്ന പക്ഷി ഏത്?", options: ["കുരുവി", "ഹമ്മിംഗ് ബേർഡ്", "പരുന്ത്", "മൂങ്ങ"], answer: "ഹമ്മിംഗ് ബേർഡ്" } },
+            { en: { question: "Which is the largest bird in the world?", options: ["Emu", "Eagle", "Ostrich", "Albatross"], answer: "Ostrich" }, ml: { question: "ലോകത്തിലെ ഏറ്റവും വലിയ പക്ഷി ഏതാണ്?", options: ["എമു", "പരുന്ത്", "ഒട്ടകപ്പക്ഷി", "ആൽബട്രോസ്"], answer: "ഒട്ടകപ്പക്ഷി" } },
+            { en: { question: "Which bird is known as the 'King of Birds'?", options: ["Peacock", "Eagle", "Ostrich", "Hornbill"], answer: "Eagle" }, ml: { question: "പക്ഷികളുടെ രാജാവ് എന്നറിയപ്പെടുന്ന പക്ഷി ഏതാണ്?", options: ["മയിൽ", "കഴുകൻ", "ഒട്ടകപ്പക്ഷി", "വേഴാമ്പൽ"], answer: "കഴുകൻ" } },
+            { en: { question: "Which is the smallest bird in the world?", options: ["Sparrow", "Finch", "Hummingbird", "Wren"], answer: "Hummingbird" }, ml: { question: "ലോകത്തിലെ ഏറ്റവും ചെറിയ പക്ഷി ഏതാണ്?", options: ["കുരുവി", "ഫിഞ്ച്", "ഹമ്മിംഗ് ബേർഡ്", "റെൻ"], answer: "ഹമ്മിംഗ് ബേർഡ്" } },
+            { en: { question: "Who is known as the 'Birdman of India'?", options: ["J.C. Bose", "Induchoodan", "C.V. Raman", "Salim Ali"], answer: "Salim Ali" }, ml: { question: "ഇന്ത്യയുടെ പക്ഷിമനുഷ്യൻ എന്നറിയപ്പെടുന്നത് ആരാണ്?", options: ["ജെ.സി. ബോസ്", "ഇന്ദുചൂഡൻ", "സി.വി. രാമൻ", "സലിം അലി"], answer: "സലിം അലി" } },
+            // Unit 5: കലകളുടെ നാട് (Land of Arts) - 15 Questions
+            { en: { question: "Which is the national festival of Kerala?", options: ["Vishu", "Christmas", "Onam", "Eid"], answer: "Onam" }, ml: { question: "കേരളത്തിന്റെ ദേശീയ ഉത്സവം ഏതാണ്?", options: ["വിഷു", "ക്രിസ്മസ്", "ഓണം", "ഈദ്"], answer: "ഓണം" } },
+            { en: { question: "Which art form is known as the 'King of Arts'?", options: ["Mohiniyattam", "Kathakali", "Thullal", "Theyyam"], answer: "Kathakali" }, ml: { question: " 'കലകളുടെ രാജാവ്' എന്നറിയപ്പെടുന്ന കലാരൂപം ഏതാണ്?", options: ["മോഹിനിയാട്ടം", "കഥകളി", "തുള്ളൽ", "തെയ്യം"], answer: "കഥകളി" } },
+            { en: { question: "Who is considered the creator of the art form 'Thullal'?", options: ["Swathi Thirunal", "Irayimman Thampi", "Kunchan Nambiar", "Vallathol"], answer: "Kunchan Nambiar" }, ml: { question: "'തുള്ളൽ' എന്ന കലാരൂപത്തിന്റെ ഉപജ്ഞാതാവ് ആരാണ്?", options: ["സ്വാതി തിരുനാൾ", "ഇരയിമ്മൻ തമ്പി", "കുഞ്ചൻ നമ്പ്യാർ", "വള്ളത്തോൾ"], answer: "കുഞ്ചൻ നമ്പ്യാർ" } },
+            { en: { question: "Where is the Kerala Kalamandalam located?", options: ["Thiruvananthapuram", "Kochi", "Cheruthuruthy, Thrissur", "Kozhikode"], answer: "Cheruthuruthy, Thrissur" }, ml: { question: "കേരള കലാമണ്ഡലം എവിടെയാണ് സ്ഥിതി ചെയ്യുന്നത്?", options: ["തിരുവനന്തപുരം", "കൊച്ചി", "ചെറുതുരുത്തി, തൃശ്ശൂർ", "കോഴിക്കോട്"], answer: "ചെറുതുരുത്തി, തൃശ്ശൂർ" } },
+            { en: { question: "Which is the traditional theatre art form of Kerala?", options: ["Bharatanatyam", "Kuchipudi", "Koodiyattam", "Odissi"], answer: "Koodiyattam" }, ml: { question: "കേരളത്തിന്റെ പരമ്പരാഗതമായ നാടകാഭിനയരൂപം ഏതാണ്?", options: ["ഭരതനാട്യം", "കുച്ചിപ്പുടി", "കൂടിയാട്ടം", "ഒഡീസി"], answer: "കൂടിയാട്ടം" } },
+            { en: { question: "The literary form of Kathakali is known as?", options: ["Kavyam", "Natakam", "Attakatha", "Gadyam"], answer: "Attakatha" }, ml: { question: "കഥകളിയുടെ സാഹിത്യരൂപം ഏത്?", options: ["കാവ്യം", "നാടകം", "ആട്ടക്കഥ", "ഗദ്യം"], answer: "ആട്ടക്കഥ" } },
+            { en: { question: "Who is the founder of Kerala Kalamandalam?", options: ["Kunchan Nambiar", "Swathi Thirunal", "Raja Ravi Varma", "Mahakavi Vallathol"], answer: "Mahakavi Vallathol" }, ml: { question: "കേരള കലാമണ്ഡലത്തിന്റെ സ്ഥാപകൻ ആര്?", options: ["കുഞ്ചൻ നമ്പ്യാർ", "സ്വാതി തിരുനാൾ", "രാജാ രവിവർമ്മ", "മഹാകവി വള്ളത്തോൾ"], answer: "മഹാകവി വള്ളത്തോൾ" } },
+            { en: { question: "Which art form uses 'Mizhavu' as a musical instrument?", options: ["Kathakali", "Chakyar Koothu", "Mohiniyattam", "Thullal"], answer: "Chakyar Koothu" }, ml: { question: "ചാക്യാർകൂത്തിൽ ഉപയോഗിക്കുന്ന വാദ്യോപകരണം ഏതാണ്?", options: ["കഥകളി", "ചാക്യാർകൂത്ത്", "മോഹിനിയാട്ടം", "തുള്ളൽ"], answer: "ചാക്യാർകൂത്ത്" } },
+            { en: { question: "Who composed the famous lullaby 'Omanathinkal Kidavo'?", options: ["Swathi Thirunal", "Kunchan Nambiar", "Irayimman Thampi", "Vallathol"], answer: "Irayimman Thampi" }, ml: { question: "'ഓമനത്തിങ്കൾ കിടാവോ' എന്ന താരാട്ടുപാട്ട് രചിച്ചത് ആര്?", options: ["സ്വാതി തിരുനാൾ", "കുഞ്ചൻ നമ്പ്യാർ", "ഇരയിമ്മൻ തമ്പി", "വള്ളത്തോൾ"], answer: "ഇരയിമ്മൻ തമ്പി" } },
+            { en: { question: "Which art form is known as 'the common man's Kathakali'?", options: ["Chakyar Koothu", "Koodiyattam", "Ottan Thullal", "Mohiniyattam"], answer: "Ottan Thullal" }, ml: { question: "സാധാരണക്കാരുടെ കഥകളി എന്നറിയപ്പെടുന്നത് ഏതാണ്?", options: ["ചാക്യാർകൂത്ത്", "കൂടിയാട്ടം", "ഓട്ടൻതുള്ളൽ", "മോഹിനിയാട്ടം"], answer: "ഓട്ടൻതുള്ളൽ" } },
+            { en: { question: "The art form 'Oppana' is associated with which community?", options: ["Hindu", "Christian", "Muslim", "Parsi"], answer: "Muslim" }, ml: { question: "ഒപ്പന എന്ന കലാരൂപം ഏത് സമുദായവുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", options: ["ഹിന്ദു", "ക്രിസ്ത്യൻ", "മുസ്ലിം", "പാഴ്സി"], answer: "മുസ്ലിം" } },
+            { en: { question: "The art form 'Margamkali' is associated with which community?", options: ["Muslims", "Syrian Christians", "Hindus", "Jews"], answer: "Syrian Christians" }, ml: { question: "മാർഗംകളി എന്ന കലാരൂപം ഏത് സമുദായവുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", options: ["മുസ്ലിങ്ങൾ", "സുറിയാനി ക്രിസ്ത്യാനികൾ", "ഹിന്ദുക്കൾ", "ജൂതന്മാർ"], answer: "സുറിയാനി ക്രിസ്ത്യാനികൾ" } },
+            { en: { question: "What is the main musical instrument used in Padayani?", options: ["Mizhavu", "Chenda", "Thappu", "Veena"], answer: "Thappu" }, ml: { question: "പടയണിയിൽ ഉപയോഗിക്കുന്ന പ്രധാന വാദ്യം ഏതാണ്?", options: ["മിഴാവ്", "ചെണ്ട", "തപ്പ്", "വീണ"], answer: "തപ്പ്" } },
+            { en: { question: "Who was the first musician to receive the Bharat Ratna?", options: ["Lata Mangeshkar", "Bhimsen Joshi", "Ravi Shankar", "M.S. Subbulakshmi"], answer: "M.S. Subbulakshmi" }, ml: { question: "ഭാരതരത്നം ലഭിച്ച ആദ്യത്തെ സംഗീതജ്ഞ ആരാണ്?", options: ["ലതാ മങ്കേഷ്കർ", "ഭീംസെൻ ജോഷി", "രവിശങ്കർ", "എം.എസ്. സുബ്ബലക്ഷ്മി"], answer: "എം.എസ്. സുബ്ബലക്ഷ്മി" } },
+            { en: { question: "Which is the first art form to be recognized by UNESCO as a Masterpiece of the Oral and Intangible Heritage of Humanity?", options: ["Kathakali", "Koodiyattam", "Bharatanatyam", "Mohiniyattam"], answer: "Koodiyattam" }, ml: { question: "യുനെസ്കോ ലോകപൈതൃകമായി അംഗീകരിച്ച ആദ്യത്തെ ഭാരതീയ നൃത്തരൂപം ഏതാണ്?", options: ["കഥകളി", "കൂടിയാട്ടം", "ഭരതനാട്യം", "മോഹിനിയാട്ടം"], answer: "കൂടിയാട്ടം" } },
+            // Unit 6: മാനത്തേക്ക് (To the Sky) - 15 Questions
+            { en: { question: "What causes day and night on Earth?", options: ["Earth's revolution", "Earth's rotation", "Moon's rotation", "Sun's movement"], answer: "Earth's rotation" }, ml: { question: "ഭൂമിയിൽ രാവും പകലും ഉണ്ടാകാൻ കാരണം എന്താണ്?", options: ["ഭൂമിയുടെ പരിക്രമണം", "ഭൂമിയുടെ ഭ്രമണം", "ചന്ദ്രന്റെ ഭ്രമണം", "സൂര്യന്റെ ചലനം"], answer: "ഭൂമിയുടെ ഭ്രമണം" } },
+            { en: { question: "Who was the first person to step on the Moon?", options: ["Rakesh Sharma", "Kalpana Chawla", "Yuri Gagarin", "Neil Armstrong"], answer: "Neil Armstrong" }, ml: { question: "ചന്ദ്രനിൽ ആദ്യമായി കാലുകുത്തിയത് ആരാണ്?", options: ["രാകേഷ് ശർമ്മ", "കൽപ്പന ചൗള", "യൂറി ഗഗാറിൻ", "നീൽ ആംസ്ട്രോങ്"], answer: "നീൽ ആംസ്ട്രോങ്" } },
+            { en: { question: "What is India's first mission to the Moon called?", options: ["Mangalyaan", "Gaganyaan", "Chandrayaan-1", "Aryabhata"], answer: "Chandrayaan-1" }, ml: { question: "ഇന്ത്യയുടെ ആദ്യത്തെ ചാന്ദ്രദൗത്യത്തിന്റെ പേരെന്താണ്?", options: ["മംഗൾയാൻ", "ഗഗൻയാൻ", "ചന്ദ്രയാൻ-1", "ആര്യഭട്ട"], answer: "ചന്ദ്രയാൻ-1" } },
+            { en: { question: "Which planet is known as the 'Red Planet'?", options: ["Venus", "Mars", "Jupiter", "Mercury"], answer: "Mars" }, ml: { question: "'ചുവന്ന ഗ്രഹം' എന്നറിയപ്പെടുന്ന ഗ്രഹം ഏതാണ്?", options: ["ശുക്രൻ", "ചൊവ്വ", "വ്യാഴം", "ബുധൻ"], answer: "ചൊവ്വ" } },
+            { en: { question: "Which is the largest planet in our solar system?", options: ["Earth", "Saturn", "Jupiter", "Neptune"], answer: "Jupiter" }, ml: { question: "നമ്മുടെ സൗരയൂഥത്തിലെ ഏറ്റവും വലിയ ഗ്രഹം ഏതാണ്?", options: ["ഭൂമി", "ശനി", "വ്യാഴം", "നെപ്ട്യൂൺ"], answer: "വ്യാഴം" } },
+            { en: { question: "What is the day when the moon is completely invisible from Earth?", options: ["Full Moon (Pournami)", "New Moon (Amavasi)", "Half Moon", "Lunar Eclipse"], answer: "New Moon (Amavasi)" }, ml: { question: "ഭൂമിയിൽ നിന്ന് ചന്ദ്രനെ പൂർണ്ണമായും കാണാൻ കഴിയാത്ത ദിവസം ഏതാണ്?", options: ["പൗർണ്ണമി", "അമാവാസി", "അർദ്ധചന്ദ്രൻ", "ചന്ദ്രഗ്രഹണം"], answer: "അമാവാസി" } },
+            { en: { question: "What is the name of the first artificial satellite launched by India?", options: ["Chandrayaan", "Sputnik", "Aryabhata", "INSAT"], answer: "Aryabhata" }, ml: { question: "ഇന്ത്യ വിക്ഷേപിച്ച ആദ്യത്തെ കൃത്രിമ ഉപഗ്രഹത്തിന്റെ പേരെന്താണ്?", options: ["ചന്ദ്രയാൻ", "സ്പുട്നിക്", "ആര്യഭട്ട", "ഇൻസാറ്റ്"], answer: "ആര്യഭട്ട" } },
+            { en: { question: "Which planet is known for its rings?", options: ["Jupiter", "Mars", "Saturn", "Uranus"], answer: "Saturn" }, ml: { question: "വലയങ്ങളാൽ അറിയപ്പെടുന്ന ഗ്രഹം ഏതാണ്?", options: ["വ്യാഴം", "ചൊവ്വ", "ശനി", "യുറാനസ്"], answer: "ശനി" } },
+            { en: { question: "Who invented the telescope?", options: ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Nikola Tesla"], answer: "Galileo Galilei" }, ml: { question: "ടെലിസ്കോപ്പ് കണ്ടുപിടിച്ചത് ആരാണ്?", options: ["ഐസക് ന്യൂട്ടൺ", "ആൽബർട്ട് ഐൻസ്റ്റീൻ", "ഗലീലിയോ ഗലീലി", "നിക്കോള ടെസ്ല"], answer: "ഗലീലിയോ ഗലീലി" } },
+            { en: { question: "What is the study of the Moon called?", options: ["Astrology", "Selenology", "Cosmology", "Geology"], answer: "Selenology" }, ml: { question: "ചന്ദ്രനെക്കുറിച്ചുള്ള പഠനശാഖ ഏതാണ്?", options: ["ജ്യോതിഷം", "സെലനോളജി", "പ്രപഞ്ചശാസ്ത്രം", "ഭൂഗർഭശാസ്ത്രം"], answer: "സെലനോളജി" } },
+            { en: { question: "What is the name of India's mission to Mars?", options: ["Chandrayaan", "Gaganyaan", "Aditya-L1", "Mangalyaan"], answer: "Mangalyaan" }, ml: { question: "ഇന്ത്യയുടെ ചൊവ്വാ ദൗത്യത്തിന്റെ പേരെന്താണ്?", options: ["ചന്ദ്രയാൻ", "ഗഗൻയാൻ", "ആദിത്യ-എൽ1", "മംഗൾയാൻ"], answer: "മംഗൾയാൻ" } },
+            { en: { question: "Which is the closest star to Earth after the Sun?", options: ["Alpha Centauri", "Proxima Centauri", "Sirius", "Betelgeuse"], answer: "Proxima Centauri" }, ml: { question: "സൂര്യൻ കഴിഞ്ഞാൽ ഭൂമിയോട് ഏറ്റവും അടുത്തുള്ള നക്ഷത്രം ഏതാണ്?", options: ["ആൽഫ സെന്റോറി", "പ്രോക്സിമ സെന്റോറി", "സിറിയസ്", "ബീറ്റൽഗ്യൂസ്"], answer: "പ്രോക്സിമ സെന്റോറി" } },
+            { en: { question: "What is the name of the first man-made satellite?", options: ["Aryabhata", "Explorer 1", "Sputnik 1", "Chandrayaan"], answer: "Sputnik 1" }, ml: { question: "മനുഷ്യൻ നിർമ്മിച്ച ആദ്യത്തെ ഉപഗ്രഹത്തിന്റെ പേരെന്താണ്?", options: ["ആര്യഭട്ട", "എക്സ്പ്ലോറർ 1", "സ്പുട്നിക് 1", "ചന്ദ്രയാൻ"], answer: "സ്പുട്നിക് 1" } },
+            { en: { question: "Which planet is known as Earth's twin?", options: ["Mars", "Mercury", "Jupiter", "Venus"], answer: "Venus" }, ml: { question: "ഭൂമിയുടെ ഇരട്ട എന്നറിയപ്പെടുന്ന ഗ്രഹം ഏതാണ്?", options: ["ചൊവ്വ", "ബുധൻ", "വ്യാഴം", "ശുക്രൻ"], answer: "ശുക്രൻ" } },
+            { en: { question: "The movement of the Earth around the Sun is called?", options: ["Rotation", "Revolution", "Orbiting", "Spinning"], answer: "Revolution" }, ml: { question: "ഭൂമി സൂര്യനെ ചുറ്റുന്നതിനെ എന്തു പറയുന്നു?", options: ["ഭ്രമണം", "പരിക്രമണം", "പ്രദക്ഷിണം", "കറക്കം"], answer: "പരിക്രമണം" } },
+            // Unit 7: കല്ലായ്.... കാറ്റായ്... (As Stone... As Wind...) - 15 Questions
+            { en: { question: "What is the solid state of water?", options: ["Vapour", "Liquid", "Ice", "Gas"], answer: "Ice" }, ml: { question: "ജലത്തിന്റെ ഖരാവസ്ഥ ഏതാണ്?", options: ["നീരാവി", "ദ്രാവകം", "ഐസ്", "വാതകം"], answer: "ഐസ്" } },
+            { en: { question: "Which of the following is in a gaseous state?", options: ["Kerosene", "Smoke", "Brick", "Milk"], answer: "Smoke" }, ml: { question: "താഴെ പറയുന്നവയിൽ വാതകാവസ്ഥയിലുള്ളത് ഏതാണ്?", options: ["മണ്ണെണ്ണ", "പുക", "ഇഷ്ടിക", "പാൽ"], answer: "പുക" } },
+            { en: { question: "Which substance is known as the 'universal solvent'?", options: ["Milk", "Oil", "Water", "Alcohol"], answer: "Water" }, ml: { question: "'സാർവത്രിക ലായകം' എന്നറിയപ്പെടുന്ന പദാർത്ഥം ഏതാണ്?", options: ["പാൽ", "എണ്ണ", "ജലം", "ആൽക്കഹോൾ"], answer: "ജലം" } },
+            { en: { question: "The process of water turning into water vapour due to heat is called?", options: ["Condensation", "Evaporation", "Precipitation", "Freezing"], answer: "Evaporation" }, ml: { question: "ചൂടുകൊണ്ട് ജലം നീരാവിയായി മാറുന്ന പ്രക്രിയക്ക് പറയുന്ന പേരെന്ത്?", options: ["സാന്ദ്രീകരണം", "ബാഷ്പീകരണം", "വർഷണം", "ഘനീഭവിക്കൽ"], answer: "ബാഷ്പീകരണം" } },
+            { en: { question: "What is the gaseous state of water?", options: ["Ice", "Liquid", "Steam/Vapour", "Solid"], answer: "Steam/Vapour" }, ml: { question: "ജലത്തിന്റെ വാതകാവസ്ഥ ഏതാണ്?", options: ["ഐസ്", "ദ്രാവകം", "നീരാവി", "ഖരം"], answer: "നീരാവി" } },
+            { en: { question: "What is the fourth state of matter, examples of which are fire and lightning?", options: ["Solid", "Liquid", "Gas", "Plasma"], answer: "Plasma" }, ml: { question: "പദാർത്ഥത്തിന്റെ നാലാമത്തെ അവസ്ഥ ഏതാണ്? (ഉദാഹരണം: തീ, ഇടിമിന്നൽ)", options: ["ഖരം", "ദ്രാവകം", "വാതകം", "പ്ലാസ്മ"], answer: "പ്ലാസ്മ" } },
+            { en: { question: "Which of these has a definite shape?", options: ["Water", "Air", "Stone", "Smoke"], answer: "Stone" }, ml: { question: "താഴെ പറയുന്നവയിൽ നിശ്ചിത ആകൃതിയുള്ളത് ഏതിനാണ്?", options: ["വെള്ളം", "വായു", "കല്ല്", "പുക"], answer: "കല്ല്" } },
+            { en: { question: "The process of water vapour turning back into water upon cooling is called?", options: ["Evaporation", "Melting", "Condensation", "Boiling"], answer: "Condensation" }, ml: { question: "നീരാവി തണുത്ത് വീണ്ടും ജലമായി മാറുന്ന പ്രക്രിയക്ക് പറയുന്ന പേരെന്ത്?", options: ["ബാഷ്പീകരണം", "ഉരുകൽ", "സാന്ദ്രീകരണം", "തിളയ്ക്കൽ"], answer: "സാന്ദ്രീകരണം" } },
+            { en: { question: "What is the purest form of water on Earth?", options: ["River water", "Sea water", "Well water", "Rainwater"], answer: "Rainwater" }, ml: { question: "ഭൂമിയിലെ ഏറ്റവും ശുദ്ധമായ ജലം ഏതാണ്?", options: ["പുഴവെള്ളം", "കടൽവെള്ളം", "കിണർവെള്ളം", "മഴവെള്ളം"], answer: "മഴവെള്ളം" } },
+            { en: { question: "Where is the wind farm in Kerala that generates electricity from wind?", options: ["Idukki", "Kanjikode", "Kochi", "Thiruvananthapuram"], answer: "Kanjikode" }, ml: { question: "കാറ്റിൽ നിന്നും വൈദ്യുതി ഉൽപാദിപ്പിക്കുന്ന കേരളത്തിലെ വൈദ്യുതനിലയം എവിടെയാണ്?", options: ["ഇടുക്കി", "കഞ്ചിക്കോട്", "കൊച്ചി", "തിരുവനന്തപുരം"], answer: "കഞ്ചിക്കോട്" } },
+            { en: { question: "What is the solid form of carbon dioxide called?", options: ["Ice", "Dry Ice", "Vapour", "Liquid CO2"], answer: "Dry Ice" }, ml: { question: "കാർബൺ ഡൈ ഓക്സൈഡിന്റെ ഖരരൂപത്തിന് പറയുന്ന പേരെന്ത്?", options: ["ഐസ്", "ഡ്രൈ ഐസ്", "നീരാവി", "ദ്രാവക CO2"], answer: "ഡ്രൈ ഐസ്" } },
+            { en: { question: "What is the liquid state of matter characterized by?", options: ["Fixed shape", "Flows and takes the shape of container", "No weight", "Is invisible"], answer: "Flows and takes the shape of container" }, ml: { question: "ദ്രാവകാവസ്ഥയുടെ പ്രധാന സവിശേഷത എന്താണ്?", options: ["നിശ്ചിത ആകൃതി", "ഒഴുകുന്നു, പാത്രത്തിന്റെ ആകൃതി സ്വീകരിക്കുന്നു", "ഭാരമില്ല", "അദൃശ്യമാണ്"], answer: "ഒഴുകുന്നു, പാത്രത്തിന്റെ ആകൃതി സ്വീകരിക്കുന്നു" } },
+            { en: { question: "Which of these is a characteristic of a solid?", options: ["Flows easily", "Has no definite shape", "Has a definite shape and volume", "Fills any container completely"], answer: "Has a definite shape and volume" }, ml: { question: "താഴെ പറയുന്നവയിൽ ഖരപദാർത്ഥത്തിന്റെ സവിശേഷത ഏതാണ്?", options: ["എളുപ്പത്തിൽ ഒഴുകുന്നു", "നിശ്ചിത ആകൃതിയില്ല", "നിശ്ചിത ആകൃതിയും വ്യാപ്തിയും ഉണ്ട്", "ഏത് പാത്രവും പൂർണ്ണമായി നിറയ്ക്കുന്നു"], answer: "നിശ്ചിത ആകൃതിയും വ്യാപ്തിയും ഉണ്ട്" } },
+            { en: { question: "What causes a balloon to inflate when you press on a sealed plastic bottle it's attached to?", options: ["Air needs space", "Air has weight", "Air has no shape", "Air is hot"], answer: "Air needs space" }, ml: { question: "ബലൂൺ ഘടിപ്പിച്ച ഒരു പ്ലാസ്റ്റിക് കുപ്പിയിൽ അമർത്തുമ്പോൾ ബലൂൺ വീർക്കാൻ കാരണമെന്ത്?", options: ["വായുവിന് സ്ഥിതിചെയ്യാൻ സ്ഥലം ആവശ്യമാണ്", "വായുവിന് ഭാരമുണ്ട്", "വായുവിന് ആകൃതിയില്ല", "വായു ചൂടുള്ളതാണ്"], answer: "വായുവിന് സ്ഥിതിചെയ്യാൻ സ്ഥലം ആവശ്യമാണ്" } },
+            { en: { question: "How is rain formed?", options: ["Clouds get heavy", "Evaporation and Condensation", "Wind blows the clouds", "Sun melts the clouds"], answer: "Evaporation and Condensation" }, ml: { question: "മഴ ഉണ്ടാകുന്നത് എങ്ങനെ?", options: ["മേഘങ്ങൾക്ക് ഭാരം കൂടുമ്പോൾ", "ബാഷ്പീകരണവും സാന്ദ്രീകരണവും വഴി", "കാറ്റ് മേഘങ്ങളെ നീക്കുമ്പോൾ", "സൂര്യൻ മേഘങ്ങളെ ഉരുക്കുമ്പോൾ"], answer: "ബാഷ്പീകരണവും സാന്ദ്രീകരണവും വഴി" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 100-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-green-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-red-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-300">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-900/50' : 'bg-rose-900/50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-100">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+

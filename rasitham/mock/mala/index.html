@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>പ്രൊഫഷണൽ മലയാളം MCQ ക്വിസ്</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans Malayalam', 'Poppins', sans-serif;
+            background: #f0f2f5; /* Light Gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .quiz-wrapper {
+            width: 100%;
+            max-width: 480px; /* Optimized for mobile */
+            background-color: #ffffff;
+            border-radius: 20px; /* Softer edges */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-container, .results-container-content {
+            padding: 1.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .quiz-wrapper {
+                max-width: 550px;
+            }
+            .quiz-container, .results-container-content {
+                padding: 2rem;
+            }
+        }
+
+        .option-btn {
+            transition: all 0.2s ease-in-out;
+            background-color: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            font-weight: 600;
+            color: #495057;
+        }
+        .option-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border-color: #007bff; /* Professional Blue */
+        }
+        .correct {
+            background-color: #28a745 !important; /* Success Green */
+            color: white !important;
+            border-color: #28a745 !important;
+            transform: scale(1.03);
+            box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+        }
+        .incorrect {
+            background-color: #dc3545 !important; /* Danger Red */
+            color: white !important;
+            border-color: #dc3545 !important;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .correct-answer-reveal {
+             background-color: #17a2b8 !important; /* Info Blue */
+             color: white !important;
+             border-color: #17a2b8 !important;
+        }
+        .nav-btn {
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            font-weight: 700;
+        }
+        .nav-btn:active {
+            transform: scale(0.96);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .progress-bar-fill {
+            transition: width 0.4s ease-in-out;
+            background: linear-gradient(90deg, #007bff, #0056b3); /* Professional Blue Gradient */
+        }
+        #question-text {
+            line-height: 1.6;
+        }
+        #results-container .nav-btn {
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            color: white;
+            padding: 0.8rem 2rem;
+            font-size: 1.1rem;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="quiz-wrapper">
+        <div id="quiz-container" class="quiz-container h-full">
+            
+            <header class="mb-5 text-center">
+                <h1 class="text-2xl md:text-3xl font-bold" style="color: #003d7a;">മലയാളം LSS/USS ക്വിസ്</h1>
+                <p class="text-gray-500 mt-1">നിങ്ങളുടെ അറിവ് പരീക്ഷിക്കുക</p>
+            </header>
+
+            <div id="progress-container" class="w-full bg-gray-200 rounded-full h-2.5 mb-5">
+                <div id="progress-bar" class="h-2.5 rounded-full progress-bar-fill" style="width: 0%"></div>
+            </div>
+
+            <div id="question-area" class="flex-grow mb-4">
+                <h2 id="question-text" class="text-lg md:text-xl font-semibold text-gray-800 mb-5 min-h-[90px]">ക്വിസ് ലോഡ് ചെയ്യുന്നു...</h2>
+                <div id="options-container" class="space-y-3">
+                    </div>
+            </div>
+            
+            <div id="feedback-area" class="mt-3 text-center min-h-[28px]">
+                 <p id="feedback-text" class="text-lg font-bold"></p>
+            </div>
+
+            <footer class="mt-6 pt-4 border-t border-gray-200">
+                <div class="flex justify-between items-center">
+                    <button id="back-btn" class="nav-btn bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                        പുറകോട്ട്
+                    </button>
+                    <div id="question-counter" class="text-md font-semibold text-gray-600"></div>
+                    <button id="next-btn" class="nav-btn bg-blue-600 hover:bg-blue-700 text-white py-2 px-5 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed">
+                        അടുത്തത്
+                    </button>
+                </div>
+            </footer>
+        </div>
+        
+        <div id="results-container" class="hidden">
+             <div class="results-container-content text-center">
+                <h2 class="text-3xl md:text-4xl font-bold" style="color: #003d7a;" class="mb-3">ക്വിസ് പൂർത്തിയായി!</h2>
+                <p class="text-lg text-gray-700 mb-2 mt-4">നിങ്ങളുടെ സ്കോർ:</p>
+                <p id="score-text" class="text-6xl font-bold text-blue-600 my-3"></p>
+                <p id="summary-text" class="text-md text-gray-500 mb-8"></p>
+                <button id="restart-btn" class="nav-btn">
+                    വീണ്ടും തുടങ്ങുക
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="correct-sound" src="correct.mp3" preload="auto"></audio>
+    <audio id="incorrect-sound" src="incorrect.mp3" preload="auto"></audio>
+
+    <script>
+        const quizData = [
+            { question: "നെഹ്റു ട്രോഫി വള്ളംകളി നടക്കുന്ന കായൽ ഏത്?", options: ["അഷ്ടമുടി കായൽ", "വേമ്പനാട്ട് കായൽ", "ശാസ്താംകോട്ട കായൽ", "പുന്നമടക്കായൽ"], answer: "പുന്നമടക്കായൽ" },
+            { question: "\"ഒരു ചെടിയും നട്ടുവളർത്തീലോണപ്പൂവെങ്ങനെ നുള്ളാൻ ഒരു വയലും പൂട്ടി വീതിച്ചീലോണ ചോറെങ്ങനെയുണ്ണാൻ\" - ഈ വരികൾ ആരുടേതാണ്?", options: ["എൻ.വി. കൃഷ്ണ‌വാര്യർ", "ഒ.എൻ.വി. കുറുപ്പ്", "ചങ്ങമ്പുഴ", "വള്ളത്തോൾ"], answer: "എൻ.വി. കൃഷ്ണ‌വാര്യർ" },
+            { question: "\"പച്ചപ്പലക കൊട്ടാരത്തിൽ പത്തും നൂറും കൊട്ടത്തേങ്ങ\" ഈ കടങ്കഥയുടെ ഉത്തരം എന്ത്?", options: ["കൈതച്ചക്ക", "പപ്പായ", "തേങ്ങ", "മാങ്ങ"], answer: "പപ്പായ" },
+            { question: "ആധുനിക കവിത്രയത്തിൽ പെടാത്തത് ആര്?", options: ["കുമാരനാശാൻ", "ഉള്ളൂർ", "വള്ളത്തോൾ", "ചെറുശ്ശേരി"], answer: "ചെറുശ്ശേരി" },
+            { question: "ഒ.എൻ.വി യുടെ മുഴുവൻ പേര് എന്താണ്?", options: ["ഒറ്റപ്പാലക്കൽ നീലകണ്ഠൻ വേലുപ്പിള്ള", "ഒറ്റപ്ലാക്കൽ നീലകണ്ഠ‌ൻ വേലുകുറുപ്പ്", "ഒറ്റപ്പാലം നീലകണ്ഠൻ വേലുകുറുപ്പ്", "ഒറ്റപ്ലാക്കൽ നാരായണൻ വേലുകുറുപ്പ്"], answer: "ഒറ്റപ്ലാക്കൽ നീലകണ്ഠ‌ൻ വേലുകുറുപ്പ്" },
+            { question: "മാതൃഭാഷയിലെ മഹനീയങ്ങളായ കാവ്യങ്ങളിൽ അഗ്രിമസ്ഥാനം ഏത് കാവ്യത്തിനാണ്?", options: ["കൃഷ്ണഗാഥ", "കുമാരസംഭവം", "അദ്ധ്യാത്മരാമായണം", "മഹാഭാരതം"], answer: "കൃഷ്ണഗാഥ" },
+            { question: "'കണ്ണന്റെ മുഖം' എന്നർത്ഥം വരുന്ന പദം ഏത്?", options: ["കണ്ണന്താനന്നേരം", "കണ്ണന്താനാനനം", "കണ്ണാന്താന്നാനം", "കണ്ണന്താന്നാനനം"], answer: "കണ്ണന്താനാനനം" },
+            { question: "'ക്ഷുഭിതൻ' എന്ന പദത്തിൻ്റെ അർത്ഥം എന്താണ്?", options: ["സന്തോഷിച്ചവൻ", "ദുഃഖിച്ചവൻ", "കോപിച്ചവൻ", "ക്ഷമിച്ചവൻ"], answer: "കോപിച്ചവൻ" },
+            { question: "കൃഷ്ണഗാഥയുടെ രചനയ്ക്കു പിന്നിലെ വിനോദം ഏതായിരുന്നു?", options: ["ചതുരംഗം", "പകിടകളി", "കവടി നിരത്തൽ", "വേട്ട"], answer: "ചതുരംഗം" },
+            { question: "താഴെ കൊടുത്തിരിക്കുന്നവയിൽ ശരിയായ പദം ഏത്?", options: ["പീഢ", "പീഠ", "പീട", "പീഡ"], answer: "പീഡ" },
+            { question: "\"കനകച്ചിലങ്ക കിലുങ്ങിക്കിലുങ്ങി കാഞ്ചനകാഞ്ചി കുലുങ്ങിക്കുലുങ്ങി\" - ഈ വരികൾ ആരുടേതാണ്?", options: ["ചങ്ങമ്പുഴ", "ഇടശ്ശേരി", "വൈലോപ്പിള്ളി", "ജി. ശങ്കരക്കുറുപ്പ്"], answer: "ചങ്ങമ്പുഴ" },
+            { question: "'നാമ്പുണരുന്നത്' പിരിച്ചെഴുതുക.", options: ["നാമ്പ് + ഉണരുന്നത്", "നാമ്പു + ഉണരുന്നത്", "നാമ്പ് + ണരുന്നത്", "നാമ്പു + ണരുന്നത്"], answer: "നാമ്പ് + ഉണരുന്നത്" },
+            { question: "'വേനൽക്കിനാക്കൾ' പിരിച്ചെഴുതുക.", options: ["വേനൽക്കി + നാക്കൾ", "വേനൽ + കിനാക്കൾ", "വേന + ൽക്കിനാക്കൾ", "വേനൽക്കിനാ + ക്കൾ"], answer: "വേനൽ + കിനാക്കൾ" },
+            { question: "\"പത്തായം പെറും ചക്കി കുത്തും അമ്മ വെയ്ക്കും, ഉണ്ണി ഉണ്ണും\" ഈ ചൊല്ലിൻ്റെ ആശയം എന്ത്?", options: ["കഠിനാധ്വാനത്തിന്റെ മഹത്വം", "കൂട്ടുകുടുംബത്തിന്റെ പ്രാധാന്യം", "അധ്വാനിക്കാതെ സുഖിച്ച് ജീവിക്കുന്നവരെ സൂചിപ്പിക്കുന്നു.", "ഭക്ഷണം പാഴാക്കരുത്"], answer: "അധ്വാനിക്കാതെ സുഖിച്ച് ജീവിക്കുന്നവരെ സൂചിപ്പിക്കുന്നു." },
+            { question: "\"വിത്ത് കുത്തി ഉണ്ണരുത്\" ഈ ചൊല്ലിന്റെ അർത്ഥം എന്ത്?", options: ["വിത്തുകൾ ഭക്ഷ്യയോഗ്യമല്ല", "എല്ലാം കരുതിവെയ്ക്കണം (ഭാവിയെക്കുറിച്ച് ഓർമ്മ വേണം)", "കൃഷി ചെയ്യരുത്", "വിത്തുകൾ സൂക്ഷിക്കാൻ പ്രയാസമാണ്"], answer: "എല്ലാം കരുതിവെയ്ക്കണം (ഭാവിയെക്കുറിച്ച് ഓർമ്മ വേണം)" },
+            { question: "ഏത് രാജാവിന്റെ ആജ്ഞപ്രകാരമാണ് ചെറുശ്ശേരി കൃഷ്ണഗാഥ രചിച്ചത്?", options: ["സാമൂതിരി രാജാവ്", "മാർത്താണ്ഡവർമ്മ", "ശക്തി തമ്പുരാൻ", "ഉദയവർമ്മൻ കോലത്തിരി"], answer: "ഉദയവർമ്മൻ കോലത്തിരി" },
+            { question: "ചെറുശ്ശേരി കൃഷ്ണഗാഥ രചിച്ചത് ഏത് കൃതിയെ അടിസ്ഥാനമാക്കിയാണ്?", options: ["ഭാഗവതം, ദശമസ്കന്ധം", "രാമായണം, ബാലകാണ്ഡം", "മഹാഭാരതം, ആദിപർവ്വം", "നാരദപുരാണം"], answer: "ഭാഗവതം, ദശമസ്കന്ധം" },
+            { question: "'കുഞ്ഞേടത്തി' എന്ന കവിത ആരുടേതാണ്?", options: ["ഇടശ്ശേരി", "ഒ.എൻ.വി കുറുപ്പ്", "സുഗതകുമാരി", "ബാലാമണിയമ്മ"], answer: "ഒ.എൻ.വി കുറുപ്പ്" },
+            { question: "'കുടയില്ലാത്തവർ' എന്ന കവിത ആരുടേതാണ്?", options: ["ഒ.എൻ.വി കുറുപ്പ്", "വയലാർ രാമവർമ്മ", "പി. ഭാസ്കരൻ", "ചങ്ങമ്പുഴ"], answer: "ഒ.എൻ.വി കുറുപ്പ്" },
+            { question: "\"നിന്നെപ്പോലെ നിൻ്റെ അയൽക്കാരനേയും സ്നേഹിക്കുക\" ഈ മഹത് വചനം ആരുടേതാണ്?", options: ["ശ്രീബുദ്ധൻ", "ശ്രീനാരായണഗുരു", "യേശുക്രിസ്തു", "മുഹമ്മദ് നബി"], answer: "യേശുക്രിസ്തു" },
+            { question: "ഗാഥാ പ്രസ്ഥാനത്തിന്റെ ഉപജ്ഞാതാവ് ആര്?", options: ["കുഞ്ചൻ നമ്പ്യാർ", "എഴുത്തച്ഛൻ", "ചെറുശ്ശേരി", "ഉണ്ണായി വാര്യർ"], answer: "ചെറുശ്ശേരി" },
+            { question: "\"അന്യജീവനുതകി സ്വജീവിതം ധന്യമാക്കുമമലേ വിവേകികൾ\" - ആരുടെ വരികളാണിത്?", options: ["ഉള്ളൂർ", "വള്ളത്തോൾ", "കുമാരനാശാൻ", "ചങ്ങമ്പുഴ"], answer: "കുമാരനാശാൻ" },
+            { question: "'വിശപ്പ്' എന്ന കഥ ആരുടേതാണ്?", options: ["എം.ടി. വാസുദേവൻ നായർ", "ഡോ. കെ. ശ്രീകുമാർ", "വൈക്കം മുഹമ്മദ് ബഷീർ", "തകഴി ശിവശങ്കരപ്പിള്ള"], answer: "ഡോ. കെ. ശ്രീകുമാർ" },
+            { question: "\"സ്നേഹമാണഖിലസാരമൂഴിയിൽ\" - ഇത് ആരുടെ വാക്കുകളാണ്?", options: ["വള്ളത്തോൾ", "കുമാരനാശാൻ", "ഉള്ളൂർ", "ജി. ശങ്കരക്കുറുപ്പ്"], answer: "കുമാരനാശാൻ" },
+            { question: "\"സ്നേഹിക്കയില്ല ഞാൻ നോവുമാത്മാവിനെ സ്നേഹിച്ചിടാത്തൊരു തത്വശാസ്ത്രത്തേയും\" - ആരുടെ വരികളാണിത്?", options: ["ഒ.എൻ.വി. കുറുപ്പ്", "വയലാർ രാമവർമ്മ", "പി. ഭാസ്കരൻ", "യൂസഫലി കേച്ചേരി"], answer: "വയലാർ രാമവർമ്മ" },
+            { question: "\"ഒരു പീഡയുറുമ്പിനും വരുത്തരുത്\" - ഇത് ആരുടെ വാക്കുകളാണ്?", options: ["ഗാന്ധിജി", "ശ്രീനാരായണഗുരു", "ചട്ടമ്പി സ്വാമികൾ", "അയ്യങ്കാളി"], answer: "ശ്രീനാരായണഗുരു" },
+            { question: "കൃഷ്ണഗാഥയുടെ മറ്റൊരു പേരെന്ത്?", options: ["കൃഷ്ണചരിതം", "കൃഷ്ണപ്പാട്ട്", "കൃഷ്ണകഥ", "ഗോപികാഗീതം"], answer: "കൃഷ്ണപ്പാട്ട്" },
+            { question: "ഗുരു നിത്യചൈതന്യയതിയുടെ ആദ്യത്തെ പേരെന്തായിരുന്നു?", options: ["നാരായണൻ", "ജയചന്ദ്രൻ", "ഗോവിന്ദൻ", "രാമചന്ദ്രൻ"], answer: "ജയചന്ദ്രൻ" },
+            { question: "പ്രാചീന കവിത്രയത്തിൽ ഉൾപ്പെടുന്നവർ ആരെല്ലാം?", options: ["ആശാൻ, ഉള്ളൂർ, വള്ളത്തോൾ", "ചെറുശ്ശേരി, എഴുത്തച്ഛൻ, കുഞ്ചൻനമ്പ്യാർ", "ചങ്ങമ്പുഴ, ഇടപ്പള്ളി, വൈലോപ്പിള്ളി", "ഒ.എൻ.വി, വയലാർ, പി. ഭാസ്കരൻ"], answer: "ചെറുശ്ശേരി, എഴുത്തച്ഛൻ, കുഞ്ചൻനമ്പ്യാർ" },
+            { question: "ആധുനിക കവിത്രയത്തിൽ ഉൾപ്പെടുന്നവർ ആരെല്ലാം?", options: ["ചെറുശ്ശേരി, എഴുത്തച്ഛൻ, കുഞ്ചൻനമ്പ്യാർ", "ആശാൻ, ഉള്ളൂർ, വള്ളത്തോൾ", "ജി. ശങ്കരക്കുറുപ്പ്, ബാലാമണിയമ്മ, ഇടശ്ശേരി", "സുഗതകുമാരി, അയ്യപ്പപ്പണിക്കർ, സച്ചിദാനന്ദൻ"], answer: "ആശാൻ, ഉള്ളൂർ, വള്ളത്തോൾ" },
+            { question: "\"പേടിപ്പിച്ചോടിക്കാൻ നോക്കി പൂതം പേടിക്കാതങ്ങനെ നിന്നാളമ്മ\" - ഈ വരികൾ ആരുടേതാണ്?", options: ["ഒളപ്പമണ്ണ", "ഇടശ്ശേരി ഗോവിന്ദൻ നായർ", "വൈലോപ്പിള്ളി ശ്രീധരമേനോൻ", "അക്കിത്തം"], answer: "ഇടശ്ശേരി ഗോവിന്ദൻ നായർ" },
+            { question: "കൃഷ്ണഗാഥയുടെ ഉള്ളടക്കം എന്താണ്?", options: ["രാമന്റെ ജനനം മുതൽ മരണം വരെയുള്ള കഥ", "പാണ്ഡവരുടെ കഥ", "ശ്രീകൃഷ്ണന്റെ ജനനം മുതൽ സ്വർഗ്ഗാരോഹണം വരെയുള്ള കഥ", "ശിവന്റെയും പാർവ്വതിയുടെയും കഥ"], answer: "ശ്രീകൃഷ്ണന്റെ ജനനം മുതൽ സ്വർഗ്ഗാരോഹണം വരെയുള്ള കഥ" },
+            { question: "'സ്നാനം' എന്ന പദത്തിൻ്റെ അർത്ഥം എന്താണ്?", options: ["യാത്ര", "ഭക്ഷണം", "കുളി", "ഉറക്കം"], answer: "കുളി" },
+            { question: "'വേനലൊഴിവെത്ര' പിരിച്ചെഴുതിയാൽ എങ്ങനെയിരിക്കും?", options: ["വേനൽ + ഒഴിവ്", "വേനൽ + എത്ര", "വേനൽ + ഒഴിവ് + എത്ര", "വേനലൊഴിവ് + എത്ര"], answer: "വേനൽ + ഒഴിവ് + എത്ര" },
+            { question: "'ഇത്യാദി' പിരിച്ചെഴുതുക.", options: ["ഇത് + യാദി", "ഇതി + ആദി", "ഇത്യ + ആദി", "ഇത് + ആദി"], answer: "ഇതി + ആദി" },
+            { question: "'ചെങ്കുപ്പായം' പിരിച്ചെഴുതുന്നത് എങ്ങനെ?", options: ["ചെ + കുപ്പായം", "ചെങ്കു + പായം", "ചെങ്ക + കുപ്പായം", "ചെം + കുപ്പായം"], answer: "ചെം + കുപ്പായം" },
+            { question: "'വ്യാഹതി' എന്ന പദത്തിൻ്റെ അർത്ഥം എന്താണ്?", options: ["സന്തോഷം", "തടസ്സം", "വേഗത", "സൗന്ദര്യം"], answer: "തടസ്സം" },
+            { question: "കേരളത്തിൻ്റെ ഉപവസന്തം എന്നറിയപ്പെടുന്ന ഋതു ഏതാണ്?", options: ["വർഷം", "ഗ്രീഷ്മം", "ഹേമന്തം", "ശരത്"], answer: "ശരത്" },
+            { question: "ഐതിഹ്യമാലയുടെ കർത്താവ് ആര്?", options: ["കേരളവർമ്മ വലിയകോയിത്തമ്പുരാൻ", "കൊട്ടാരത്തിൽ ശങ്കുണ്ണി", "ഏ.ആർ. രാജരാജവർമ്മ", "ചന്തുമേനോൻ"], answer: "കൊട്ടാരത്തിൽ ശങ്കുണ്ണി" },
+            { question: "2007-ൽ ജ്ഞാനപീഠം നേടിയ മലയാളകവി ആര്?", options: ["അക്കിത്തം അച്യുതൻ നമ്പൂതിരി", "എം.ടി. വാസുദേവൻ നായർ", "ഒ.എൻ.വി. കുറുപ്പ്", "സുഗതകുമാരി"], answer: "ഒ.എൻ.വി. കുറുപ്പ്" },
+            { question: "ഏറ്റവും ഒടുവിൽ ജ്ഞാനപീഠം നേടിയ മലയാളകവി ആര്?", options: ["ഒ.എൻ.വി. കുറുപ്പ്", "അക്കിത്തം അച്യുതൻ നമ്പൂതിരി", "എം.ടി. വാസുദേവൻ നായർ", "സച്ചിദാനന്ദൻ"], answer: "അക്കിത്തം അച്യുതൻ നമ്പൂതിരി" },
+            { question: "ഈയിടെ അന്തരിച്ച പരിസ്ഥിതി പ്രവർത്തകയായ പ്രശസ്ത കവയിത്രി?", options: ["ബാലാമണിയമ്മ", "മാധവിക്കുട്ടി", "സുഗതകുമാരി ടീച്ചർ", "ലളിതാംബിക അന്തർജ്ജനം"], answer: "സുഗതകുമാരി ടീച്ചർ" },
+            { question: "\"ആറ്റിൻ വക്കത്തെ മാളിക വീട്ടിലന്നാറ്റുനോറ്റിട്ടൊരുണ്ണി പിറന്നു.\" - ആരുടേതാണീ വരികൾ?", options: ["ചങ്ങമ്പുഴ", "ഇടശ്ശേരി", "വൈലോപ്പിള്ളി", "ഒ.എൻ.വി. കുറുപ്പ്"], answer: "ഇടശ്ശേരി" },
+            { question: "\"ഒരൊറ്റ മതമുണ്ടുലകിന്നുയിരാം പ്രേമמതൊന്നല്ലോ\" - ഈ വരികൾ ആരുടേതാണ്?", options: ["കുമാരനാശാൻ", "വള്ളത്തോൾ", "ഉള്ളൂർ.എസ്. പരമേശ്വരയ്യർ", "ശ്രീനാരായണഗുരു"], answer: "ഉള്ളൂർ.എസ്. പരമേശ്വരയ്യർ" },
+            { question: "സ്നേഹഗായകൻ എന്നറിയപ്പെടുന്ന കവി?", options: ["ചങ്ങമ്പുഴ", "വള്ളത്തോൾ", "കുമാരനാശാൻ", "ഇടപ്പള്ളി"], answer: "കുമാരനാശാൻ" },
+            { question: "'സംസ്കൃതി' എന്ന പദത്തിൻ്റെ അർത്ഥം?", options: ["ഭാഷ", "ചരിത്രം", "സംസ്കാരം", "കല"], answer: "സംസ്കാരം" },
+            { question: "'അനുവാസരം' എന്ന പദത്തിൻ്റെ അർത്ഥം?", options: ["എല്ലാ മാസവും", "എല്ലാ ആഴ്ചയും", "ദിവസം തോറും", "വർഷം തോറും"], answer: "ദിവസം തോറും" },
+            { question: "\"ശാരികപൈതലിൻ മോടി കണ്ടു മാരുതനും ചെന്നുകൂടി\" ഇതിൽ കാറ്റിന് പകരം ഉപയോഗിച്ച പദം ഏത്?", options: ["ശാരിക", "പൈതൽ", "മോടി", "മാരുതൻ"], answer: "മാരുതൻ" },
+            { question: "\"പറഞ്ഞുനോക്കുക വെറുതെ നിങ്ങൾക്കെത്ര കിളിയുടെ പാട്ടറിയാം.\" - ആരുടെ വരികൾ?", options: ["സച്ചിദാനന്ദൻ", "പി. മധുസൂദനൻ", "കടമ്മനിട്ട", "ബാലചന്ദ്രൻ ചുള്ളിക്കാട്"], answer: "പി. മധുസൂദനൻ" },
+            { question: "കൃഷ്ണഗാഥ രചിച്ചിരിക്കുന്നത് ഏത് വൃത്തത്തിലാണ്?", options: ["കേക", "കാകളി", "മഞ്ജരിവൃത്തം", "കളകാഞ്ചി"], answer: "മഞ്ജരിവൃത്തം" },
+            { question: "\"ചെടിയിൻമേൽ കായ കായമേൽ ചെടി\" ഈ കടങ്കഥയ്ക്ക് ഉത്തരം എഴുതുക.", options: ["മാങ്ങ", "ചക്ക", "വാഴപ്പഴം", "കൈതച്ചക്ക"], answer: "കൈതച്ചക്ക" },
+            { question: "\"അക്കരെ നിൽക്കും തുഞ്ചാണി ഇക്കരെ നിൽക്കും തുഞ്ചാണി കൂട്ടിമുട്ടും തുഞ്ചാണി\" - ഉത്തരം എന്ത്?", options: ["കൺപീലി", "പുരികം", "ചുണ്ട്", "വിരലുകൾ"], answer: "കൺപീലി" },
+            { question: "\"വയറൊന്ന് വായ രണ്ട് വയറ്റിൽ നിറയെ മക്കൾ\" - ഉത്തരം എന്ത്?", options: ["കുടം", "തീപ്പെട്ടി", "പേന", "പുസ്തകം"], answer: "തീപ്പെട്ടി" },
+            { question: "താഴെ തന്നിട്ടുള്ളവയിൽ തെറ്റായ ജോഡി ഏത്?", options: ["ചെറുശ്ശേരി : കൃഷ്ണഗാഥ", "കുഞ്ചൻനമ്പ്യാർ : കല്ല്യാണസൗഗന്ധികം", "കുമാരാനാശാൻ : വീണപൂവ്", "വൈലോപ്പിള്ളി : ഭൂമിയ്ക്ക് ഒരു ചരമഗീതം"], answer: "വൈലോപ്പിള്ളി : ഭൂമിയ്ക്ക് ഒരു ചരമഗീതം" },
+            { question: "\"തടികണ്ടത്തിൽ തല കല്യാണപന്തലിൽ\" എന്ന കടങ്കഥയുടെ ഉത്തരം?", options: ["തെങ്ങ്", "കവുങ്ങ്", "വാഴ", "പ്ലാവ്"], answer: "വാഴ" },
+            { question: "'കാടുണരുന്നു' ആരുടെ കൃതിയാണ്?", options: ["പിണ്ടാണി എൻ.ബി. പിള്ള", "ഉറൂബ്", "എസ്.കെ. പൊറ്റക്കാട്", "ബഷീർ"], answer: "പിണ്ടാണി എൻ.ബി. പിള്ള" },
+            { question: "ശരിയായ പദം ഏത്?", options: ["ദൃഷ്ടി", "സൃഷ്ടി", "ദ്രഷ്ടി", "ദൃഷ്ഠി"], answer: "ദൃഷ്ടി" },
+            { question: "'അപാരം' എന്ന വാക്കിൻ്റെ അർത്ഥം?", options: ["ചെറുത്", "അതിരില്ലാത്തത്", "മനോഹരം", "അപകടം"], answer: "അതിരില്ലാത്തത്" },
+            { question: "'മിന്നൽപ്പിണരുകൾ' ഈ പദം പിരിച്ചെഴുതുക", options: ["മിന്നൽ + പിണരുകൾ", "മിന്നൽപ്പി + നരുകൾ", "മിന്ന + പിണരുകൾ", "മിന്നൽ + ഇണരുകൾ"], answer: "മിന്നൽ + പിണരുകൾ" },
+            { question: "'ഞാവൽക്കാട്' ആരുടെ കൃതിയാണ്?", options: ["പിണ്ടാണി എൻ.ബി. പിള്ള", "ജി. ശങ്കരക്കുറുപ്പ്", "ഒ.എൻ.വി. കുറുപ്പ്", "വൈലോപ്പിള്ളി"], answer: "പിണ്ടാണി എൻ.ബി. പിള്ള" },
+            { question: "കടവാതിൽ എന്നറിയപ്പെടുന്ന പക്ഷി?", options: ["മൂങ്ങ", "വവ്വാൽ", "പ്രാവ്", "മരംകൊത്തി"], answer: "വവ്വാൽ" },
+            { question: "പക്ഷികളുടെ രാജാവ് എന്നറിയപ്പെടുന്ന പക്ഷി?", options: ["മയിൽ", "കഴുകൻ", "ഗരുഡൻ", "ഒട്ടകപക്ഷി"], answer: "ഗരുഡൻ" },
+            { question: "പച്ചക്കിളി എന്ന കവിത ഏത് വിഭാഗത്തിൽപ്പെടുന്നു?", options: ["വിലാപകാവ്യം", "കീർത്തനം", "താരാട്ട്", "വഞ്ചിപ്പാട്ട്"], answer: "താരാട്ട്" },
+            { question: "\"പൂക്കുന്നിതാമുല്ല പൂക്കുന്നിലഞ്ഞി പൂക്കുന്നു തേൻമാവു പൂക്കുന്നശോകം.\" - ആരുടെ വരികൾ?", options: ["വള്ളത്തോൾ", "ഉള്ളൂർ", "കുമാരനാശാൻ", "ചങ്ങമ്പഴ"], answer: "കുമാരനാശാൻ" },
+            { question: "കേരളത്തിൽ പക്ഷി നിരീക്ഷണ പ്രവർത്തനങ്ങൾക്ക് തുടക്കമിട്ട പ്രസിദ്ധനായ പക്ഷി നിരീക്ഷകൻ?", options: ["ഇന്ദുചൂഢൻ", "സലിം അലി", "കെ.കെ. നീലകണ്ഠൻ", "സി. റഹിം"], answer: "കെ.കെ. നീലകണ്ഠൻ" },
+            { question: "കെ.കെ. നീലകണ്ഠൻ്റെ അപരനാമം?", options: ["കേരള കാളിദാസൻ", "ഇന്ദുചൂഢൻ", "കേസരി", "മാലി"], answer: "ഇന്ദുചൂഢൻ" },
+            { question: "അപൂർവ ദേശാടനപക്ഷികൾ വിരുന്നെത്തുന്ന പതിരാമണൽ ദ്വീപ് ഏത് കായലിൽ ആണ് സ്ഥിതി ചെയ്യുന്നത്?", options: ["അഷ്ടമുടി കായൽ", "പുന്നമടക്കായൽ", "ശാസ്താംകോട്ട കായൽ", "വേമ്പനാട്ടുകായൽ"], answer: "വേമ്പനാട്ടുകായൽ" },
+            { question: "ഇന്ത്യയുടെ പക്ഷി മനുഷ്യൻ എന്നറിയപ്പെടുന്നത് ആര്?", options: ["കെ.കെ. നീലകണ്ഠൻ", "ഡോ. സലീം അലി", "മാധവ് ഗാഡ്ഗിൽ", "ജെ.സി. ഡാനിയൽ"], answer: "ഡോ. സലീം അലി" },
+            { question: "ഡോ. സലീം അലിയുടെ ആത്മകഥയുടെ പേരെന്ത്?", options: ["എന്റെ കഥ", "കഴിഞ്ഞ കാലം", "ഒരു കുരുവിയുടെ പതനം", "ഓർമ്മയുടെ അറകൾ"], answer: "ഒരു കുരുവിയുടെ പതനം" },
+            { question: "\"അകത്ത് തിരിതെറുത്തു പുറത്ത് മുട്ടയിട്ടു\" - ഈ കടങ്കഥയുടെ ഉത്തരം?", options: ["കുരുമുളക്", "ഏലം", "ഗ്രാമ്പൂ", "ജാതിക്ക"], answer: "കുരുമുളക്" },
+            { question: "\"ആനയെ കെട്ടാൻ തടിയുണ്ട് ജീരകം പൊതിയാനിലയില്ല\" - ഉത്തരം എന്ത്?", options: ["തെങ്ങ്", "പുളിമരം", "മാവ്", "പ്ലാവ്"], answer: "പുളിമരം" },
+            { question: "\"അടിപാറ നടുവടി മീതെ കുട\" - ഉത്തരം എന്ത്?", options: ["ചേന", "ചേമ്പ്", "കാച്ചിൽ", "കൂൺ"], answer: "ചേന" },
+            { question: "\"ജലജീവിയായി ജനിച്ച് ഗാനകോകിലമായി മാറി\" - ഉത്തരം എന്ത്?", options: ["തവള", "തുമ്പി", "കൊതുക്", "ചീവീട്"], answer: "കൊതുക്" },
+            { question: "\"വെള്ളിക്കിണ്ണത്തിൽ ഞാവൽപഴം\" - ഉത്തരം എന്ത്?", options: ["കണ്ണ്", "മൂക്ക്", "ചെവി", "വായ"], answer: "കണ്ണ്" },
+            { question: "\"അമ്പാട്ടെ പട്ടിയ്ക്ക് മുമ്പോട്ട് വാല്\" - ഉത്തരം എന്ത്?", options: ["അമ്മി", "ഉരൽ", "ചിരവ", "മുറം"], answer: "ചിരവ" },
+            { question: "\"അടയ്ക്കും തുറക്കും കിങ്ങിണിപ്പത്തായം\" - ഉത്തരം എന്ത്?", options: ["വാതിൽ", "ജനൽ", "കണ്ണ്", "പെട്ടി"], answer: "കണ്ണ്" },
+            { question: "ആകാശം എന്ന പദത്തിന് സമാനപദമല്ലാത്തത്?", options: ["ഗഗനം", "വദനം", "മാനം", "വാനം"], answer: "വദനം" },
+            { question: "'ഏഴരപ്പൊന്നാന' ആരുടെ കൃതിയാണ്?", options: ["ഒളപ്പമണ്ണ", "ഏറ്റുമാനൂർ സോമദാസൻ", "പി. കുഞ്ഞിരാമൻ നായർ", "അക്കിത്തം"], answer: "ഏറ്റുമാനൂർ സോമദാസൻ" },
+            { question: "ഓമനയുടെ ഓണം ഏത് കവിതാസമാഹാരത്തിൽ നിന്ന് എടുത്തതാണ്?", options: ["കാറ്റുപറഞ്ഞ കഥ", "ഇലപൊഴിയും കാലം", "രാമരാജ്യം", "കർക്കിടകം"], answer: "കാറ്റുപറഞ്ഞ കഥ" },
+            { question: "ഓണം വന്നാൽ തൊടിയിൽ എന്ത് കളിക്കാനാണ് ഓമന ആഗ്രഹിക്കുന്നത്?", options: ["ഊഞ്ഞാലാടാൻ", "കിളിത്തട്ട്", "തലപ്പന്ത്", "കബഡി"], answer: "കിളിത്തട്ട്" },
+            { question: "ഓമനയുടെ ഓണക്കോടിക്ക് ഏത് പൂവിനേക്കാൾ ഭംഗിയുണ്ടെന്നാണ് ഓമന കരുതുന്നത്?", options: ["തുമ്പ", "കാക്കപ്പൂവ്", "മുക്കുറ്റി", "ചെമ്പരത്തി"], answer: "മുക്കുറ്റി" },
+            { question: "താഴെ പറയുന്നവയിൽ ശരിയായ പദം ഏത്?", options: ["ഉത്കണ്ഠ", "ഉദ്ക്കണ്ഠ", "ഉൽക്കണ്ഠ", "ഉദ്കണ്ഠ"], answer: "ഉത്കണ്ഠ" },
+            { question: "ശരിയായ പദം ഏത്?", options: ["വിജ്ഞാനം", "വിഞ്ജാനം", "വിഞ്ഞാനം", "വിജ്ജാനം"], answer: "വിജ്ഞാനം" },
+            { question: "പത്തായം ഏത് കൃതിയിൽ നിന്നെടുത്തതാണ്?", options: ["ഓർമയിലെ കൃഷിക്കാഴ്ച‌കൾ", "ഒരു ദേശത്തിന്റെ കഥ", "കയർ", "നാലുകെട്ട്"], answer: "ഓർമയിലെ കൃഷിക്കാഴ്ച‌കൾ" },
+            { question: "പത്തായത്തിന്റെ ഉപയോഗമെന്ത്?", options: ["വസ്ത്രങ്ങൾ സൂക്ഷിക്കാൻ", "ആഭരണങ്ങൾ വെക്കാൻ", "ധാന്യങ്ങൾ സംഭരിച്ചുവെയ്ക്കുന്നതിന്", "വെള്ളം സംഭരിക്കാൻ"], answer: "ധാന്യങ്ങൾ സംഭരിച്ചുവെയ്ക്കുന്നതിന്" },
+            { question: "\"കുട്ടികളെത്തി കുറ്റിക്കാട്ടിൽ പൊട്ടിവിടർന്നു പൊന്നോണം\" - ആരുടെ വരികൾ?", options: ["ഇടശ്ശേരി", "വൈലോപ്പിള്ളി", "ഒളപ്പമണ്ണ", "ജി. ശങ്കരക്കുറുപ്പ്"], answer: "ഒളപ്പമണ്ണ" },
+            { question: "'ഗതകാലം' എന്ന പദത്തിൻ്റെ പകരം പദം", options: ["വരുംകാലം", "ഇപ്പോഴത്തെ കാലം", "കഴിഞ്ഞകാലം", "നല്ലകാലം"], answer: "കഴിഞ്ഞകാലം" },
+            { question: "'സാർവത്രികം' എന്ന പദത്തിൻ്റെ അർത്ഥം?", options: ["പ്രത്യേകമായ", "അപൂർവമായ", "സർവസാധാരണമായ", "രഹസ്യമായ"], answer: "സർവസാധാരണമായ" },
+            { question: "ധാന്യങ്ങൾ അളക്കുന്നതിന് പണ്ടുപയോഗിച്ചിരുന്ന ഉപകരണങ്ങൾ ഏവ?", options: ["ലിറ്റർ, മില്ലിലിറ്റർ", "കിലോ, ഗ്രാം", "പറ, ഇടങ്ങഴി, നാഴി", "മീറ്റർ, സെന്റിമീറ്റർ"], answer: "പറ, ഇടങ്ങഴി, നാഴി" },
+            { question: "'അനുവേലമെന്നന്തരംഗം' പിരിച്ചെഴുതുക", options: ["അനുവേലം + അന്തരംഗം", "അനുവേലം + എൻ + അന്തരംഗം", "അനുവേലമെ + അന്തരംഗം", "അനുവേലമെന്ന + രംഗം"], answer: "അനുവേലം + എൻ + അന്തരംഗം" },
+            { question: "'പൊൻപുലരിത്തുടിപ്പ്' - പിരിച്ചെഴുതുക", options: ["പൊൻ + പുലരി + തുടിപ്പ്", "പൊൻപുലരി + തുടിപ്പ്", "പൊൻ + പുലരിത്തുടിപ്പ്", "പൊന്നും + പുലരിത്തുടിപ്പ്"], answer: "പൊൻ + പുലരി + തുടിപ്പ്" },
+            { question: "'മുത്തണിഞ്ഞ്' - പിരിച്ചെഴുതുക", options: ["മുത്ത് + അണിഞ്ഞ്", "മുത്ത + അണിഞ്ഞ്", "മുത്ത് + യണിഞ്ഞ്", "മുത്തണി +ഞ്ഞ്"], answer: "മുത്ത് + അണിഞ്ഞ്" },
+            { question: "'ചെമ്പനീർച്ചെടി' - പിരിച്ചെഴുതുക", options: ["ചെമ്പ് + പനിനീർ + ചെടി", "ചെം + പനിനീർ + ചെടി", "ചെമ്പനി + നീർച്ചെടി", "ചെമ്പനിച്ചെടി"], answer: "ചെം + പനിനീർ + ചെടി" },
+            { question: "'ക്ഷുദ്രം' എന്ന പദത്തിൻ്റെ പകരം പദം", options: ["വലുത്", "പ്രധാനപ്പെട്ട", "ചെറിയ / നിസ്സാരമായ", "കഠിനമായ"], answer: "ചെറിയ / നിസ്സാരമായ" },
+            { question: "'നാമാവശേഷമാകുക' എന്ന പദത്തിന്റെ അർത്ഥം?", options: ["പ്രശസ്തമാവുക", "ഇല്ലാതാവുക", "പുതുതായി തുടങ്ങുക", "വളരുക"], answer: "ഇല്ലാതാവുക" },
+            { question: "'നാന്ദി കുറിക്കുക' എന്ന പദത്തിൻ്റെ അർത്ഥം", options: ["അവസാനിപ്പിക്കുക", "തുടക്കം കുറിക്കുക", "തടസ്സപ്പെടുത്തുക", "വേഗത്തിലാക്കുക"], answer: "തുടക്കം കുറിക്കുക" },
+            { question: "കുചേലവൃത്തം വഞ്ചിപ്പാട്ടിൻ്റെ താളത്തിൽ കുമാരനാശാൻ എഴുതിയ കാവ്യം", options: ["ലീല", "നളിനി", "കരുണ", "ദുരവസ്ഥ"], answer: "കരുണ" },
+            { question: "കേരളസിംഹം എന്നറിയപ്പെടുന്നത്?", options: ["വേലുത്തമ്പി ദളവ", "കുഞ്ഞാലി മരക്കാർ", "പഴശ്ശിരാജ", "മാർത്താണ്ഡവർമ്മ"], answer: "പഴശ്ശിരാജ" },
+            { question: "നവഭാരതശിൽപ്പി എന്നറിയപ്പെടുന്നത്?", options: ["മഹാത്മാ ഗാന്ധി", "സർദാർ വല്ലഭായ് പട്ടേൽ", "ജവഹർലാൽ നെഹ്റു", "ബി.ആർ. അംബേദ്കർ"], answer: "ജവഹർലാൽ നെഹ്റു" },
+            { question: "സർപ്പാകൃതിയിലുള്ള വള്ളങ്ങൾക്ക് പറയുന്ന പേര്?", options: ["ചുരുളൻ വള്ളങ്ങൾ", "വെപ്പ് വള്ളങ്ങൾ", "ഓടി വള്ളങ്ങൾ", "ചുണ്ടൻ വള്ളങ്ങൾ"], answer: "ചുണ്ടൻ വള്ളങ്ങൾ" },
+            { question: "നെഹ്റു ട്രോഫി വള്ളംകളി തുടക്കത്തിൽ അറിയപ്പെട്ടത് ഏത് പേരിലാണ്?", options: ["പ്രൈം മിനിസ്റ്റേഴ്സ് ട്രോഫി", "പ്രസിഡന്റ്സ് ട്രോഫി", "രാജീവ് ഗാന്ധി ട്രോഫി", "ഇന്ദിരാ ഗാന്ധി ട്രോഫി"], answer: "പ്രൈം മിനിസ്റ്റേഴ്സ് ട്രോഫി" },
+            { question: "ഒരു സംഭവം കണ്ടുകൊണ്ടിരിക്കുമ്പോൾ നടത്തുന്ന വ്യക്തമായ വിവരണത്തിനുപറയുന്ന പേര്?", options: ["കഥാപ്രസംഗം", "ദൃക്സാക്ഷി വിവരണം", "അഭിമുഖം", "റിപ്പോർട്ട്"], answer: "ദൃക്സാക്ഷി വിവരണം" },
+            { question: "ഏഷ്യയുടെ പ്രകാശം എന്നറിയപ്പെടുന്നത് ആര്?", options: ["യേശുക്രിസ്തു", "മുഹമ്മദ് നബി", "ശ്രീബുദ്ധൻ", "ശങ്കരാചാര്യർ"], answer: "ശ്രീബുദ്ധൻ" },
+            { question: "രാമപുരത്ത് വാര്യർ എഴുതിയ പ്രസിദ്ധമായ വഞ്ചിപ്പാട്ട്?", options: ["കുചേലവൃത്തം വഞ്ചിപ്പാട്ട്", "ഭീഷ്മപർവ്വം വഞ്ചിപ്പാട്ട്", "ദ്രോണപർവ്വം വഞ്ചിപ്പാട്ട്", "കർണ്ണപർവ്വം വഞ്ചിപ്പാട്ട്"], answer: "കുചേലവൃത്തം വഞ്ചിപ്പാട്ട്" },
+            { question: "കൂട്ടത്തിൽപെടാത്തത് ഏത്?", options: ["ആഹ്ളാദം", "ആമോദം", "ആരവം", "ആനന്ദം"], answer: "ആരവം" },
+            { question: "നെഹ്റുട്രോഫി വള്ളംകളി എന്ന പാഠഭാഗം ഏത് കൃതിയിൽ നിന്നെടുത്തതാണ്?", options: ["കേരളത്തിലെ ഉത്സവങ്ങൾ", "തെയ് തെയ്", "കുട്ടനാടൻ കാഴ്ചകൾ", "എന്റെ കേരളം"], answer: "തെയ് തെയ്" },
+            { question: "നെഹ്റു ട്രോഫി വള്ളംകളി നടക്കുന്ന ജില്ല?", options: ["കൊല്ലം", "എറണാകുളം", "കോട്ടയം", "ആലപ്പുഴ"], answer: "ആലപ്പുഴ" },
+            { question: "\"മിന്നുന്നതെല്ലാം പൊന്നല്ല\" ഈ ചൊല്ലിൻ്റെ ആശയമെന്ത്?", options: ["പുറംമോടി കണ്ട് ഭ്രമിക്കരുത്", "സ്വർണ്ണം വിലയേറിയതാണ്", "എല്ലാ ലോഹങ്ങളും സ്വർണ്ണമല്ല", "മിന്നുന്ന വസ്തുക്കൾ അപകടകരമാണ്"], answer: "പുറംമോടി കണ്ട് ഭ്രമിക്കരുത്" },
+            { question: "ശക്തിയുടെ കവി എന്നറിയപ്പെടുന്നത്?", options: ["വൈലോപ്പിള്ളി", "ഇടശ്ശേരി", "അക്കിത്തം", "ഒളപ്പമണ്ണ"], answer: "ഇടശ്ശേരി" },
+            { question: "ജനകീയ കവി എന്നറിയപ്പെടുന്നത്?", options: ["എഴുത്തച്ഛൻ", "ചെറുശ്ശേരി", "കുഞ്ചൻനമ്പ്യാർ", "പൂന്താനം"], answer: "കുഞ്ചൻനമ്പ്യാർ" },
+            { question: "നിളയുടെ കഥാകാരൻ എന്നറിയപ്പെടുന്നത്?", options: ["തകഴി", "ബഷീർ", "എം.ടി. വാസുദേവൻ നായർ", "ഉറൂബ്"], answer: "എം.ടി. വാസുദേവൻ നായർ" },
+            { question: "ആശയഗംഭീരൻ എന്നറിയപ്പെടുന്നത്?", options: ["വള്ളത്തോൾ", "ഉള്ളൂർ", "കുമാരനാശാൻ", "ജി. ശങ്കരക്കുറുപ്പ്"], answer: "കുമാരനാശാൻ" },
+            { question: "ചുണ്ടൻ വള്ളങ്ങളുടെ നിർമ്മാണത്തിനുപയോഗിക്കുന്ന തടിയേത്?", options: ["തേക്ക്", "ഈട്ടി", "പ്ലാവ്", "ആഞ്ഞിലി"], answer: "ആഞ്ഞിലി" },
+            { question: "വിശിഷ്ടാതിഥിയായ നെഹ്റു മണ്ഡപത്തിലേക്ക് കയറിയപ്പോൾ ആദരസൂചകമായി 63 കതിനാവെടികൾ പൊട്ടി. ഈ 63 എന്ന സംഖ്യ എന്തിനെയാണ് അനുസ്മരിപ്പിക്കുന്നത്?", options: ["വള്ളങ്ങളുടെ എണ്ണം", "തുഴച്ചിൽക്കാരുടെ എണ്ണം", "നെഹ്റുവിന്റെ വയസ്സിനെ", "സ്വാതന്ത്ര്യം കിട്ടിയ വർഷം"], answer: "നെഹ്റുവിന്റെ വയസ്സിനെ" },
+            { question: "കൂട്ടത്തിൽ പെടാത്തത് ഏത്?", options: ["തിങ്കൾ", "ശശി", "ഇന്ദു", "ചന്ദ്രിക"], answer: "ചന്ദ്രിക" },
+            { question: "സ്നേഹവ്യാഹതി തന്നെ മരണം ഈ വരിയോട് യോജിച്ച ആശയമേത്?", options: ["സ്നേഹമാണ് മരണം", "സ്നേഹം കൊണ്ട് മരിക്കുന്നു", "മരിക്കുമ്പോൾ സ്നേഹം ഇല്ലാതാകുന്നു", "സ്നേഹമില്ലെങ്കിൽ മരണത്തിന് തുല്യമാണ്"], answer: "സ്നേഹമില്ലെങ്കിൽ മരണത്തിന് തുല്യമാണ്" }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const nextBtn = document.getElementById('next-btn');
+        const backBtn = document.getElementById('back-btn');
+        const questionCounter = document.getElementById('question-counter');
+        const progressBar = document.getElementById('progress-bar');
+        const quizContainer = document.getElementById('quiz-container');
+        const resultsContainer = document.getElementById('results-container');
+        const scoreText = document.getElementById('score-text');
+        const summaryText = document.getElementById('summary-text');
+        const restartBtn = document.getElementById('restart-btn');
+        const feedbackText = document.getElementById('feedback-text');
+        const correctSound = document.getElementById('correct-sound');
+        const incorrectSound = document.getElementById('incorrect-sound');
+
+        
+        function playSound(type) {
+            if (type === 'correct') {
+                correctSound.currentTime = 0;
+                correctSound.play();
+            } else {
+                incorrectSound.currentTime = 0;
+                incorrectSound.play();
+            }
+        }
+        
+        function loadQuestion() {
+            if (currentQuestionIndex >= quizData.length) {
+                showResults();
+                return;
+            }
+
+            feedbackText.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionText.textContent = `${currentQuestionIndex + 1}. ${currentQuestion.question}`;
+
+            const shuffledOptions = [...currentQuestion.options].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('option-btn', 'w-full', 'text-left', 'p-3', 'md:p-4', 'rounded-lg');
+                button.onclick = () => selectAnswer(button, option);
+                optionsContainer.appendChild(button);
+            });
+
+            updateProgress();
+            updateNavigation();
+            restoreAnswer();
+        }
+
+        function selectAnswer(button, selectedOption) {
+            if (userAnswers[currentQuestionIndex] !== null) return;
+            
+            const currentQuestion = quizData[currentQuestionIndex];
+            const isCorrect = selectedOption === currentQuestion.answer;
+            
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, isCorrect: isCorrect };
+
+            if (isCorrect) {
+                score++;
+                button.classList.add('correct');
+                feedbackText.textContent = 'ശരിയുത്തരം!';
+                feedbackText.className = 'text-lg font-bold text-green-500';
+                playSound('correct');
+            } else {
+                button.classList.add('incorrect');
+                feedbackText.textContent = 'തെറ്റായ ഉത്തരം.';
+                feedbackText.className = 'text-lg font-bold text-red-500';
+                playSound('incorrect');
+                Array.from(optionsContainer.children).forEach(btn => {
+                    if (btn.textContent === currentQuestion.answer) {
+                        btn.classList.add('correct-answer-reveal');
+                    }
+                });
+            }
+            
+            Array.from(optionsContainer.children).forEach(btn => {
+                btn.disabled = true;
+                btn.style.cursor = 'not-allowed';
+            });
+
+            nextBtn.disabled = false;
+        }
+
+        function restoreAnswer() {
+            const answerData = userAnswers[currentQuestionIndex];
+            if (answerData === null) return;
+
+            const { selected, isCorrect } = answerData;
+            const currentQuestion = quizData[currentQuestionIndex];
+
+            Array.from(optionsContainer.children).forEach(button => {
+                button.disabled = true;
+                 button.style.cursor = 'not-allowed';
+
+                if (button.textContent === selected) {
+                    button.classList.add(isCorrect ? 'correct' : 'incorrect');
+                }
+                if (!isCorrect && button.textContent === currentQuestion.answer) {
+                    button.classList.add('correct-answer-reveal');
+                }
+            });
+            
+            if (isCorrect) {
+                 feedbackText.textContent = 'ശരിയുത്തരം!';
+                 feedbackText.className = 'text-lg font-bold text-green-500';
+            } else {
+                 feedbackText.textContent = 'തെറ്റായ ഉത്തരം.';
+                 feedbackText.className = 'text-lg font-bold text-red-500';
+            }
+        }
+
+        function updateProgress() {
+            const progressPercentage = ((currentQuestionIndex) / quizData.length) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+            questionCounter.textContent = `${currentQuestionIndex + 1} / ${quizData.length}`;
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            if (currentQuestionIndex >= quizData.length -1) {
+                 nextBtn.textContent = "പൂർത്തിയാക്കുക";
+            } else {
+                 nextBtn.textContent = "അടുത്തത്";
+            }
+            nextBtn.disabled = userAnswers[currentQuestionIndex] === null;
+        }
+
+        function showResults() {
+            quizContainer.classList.add('hidden');
+            resultsContainer.classList.remove('hidden');
+            scoreText.textContent = `${score}/${quizData.length}`;
+            
+            const percentage = (score / quizData.length) * 100;
+            let summary = '';
+            if (percentage === 100) {
+                summary = 'അദ്ഭുതം! നിങ്ങൾ എല്ലാ ചോദ്യങ്ങൾക്കും ശരിയായി ഉത്തരം നൽകി!';
+            } else if (percentage >= 75) {
+                summary = 'കൊള്ളാം! വളരെ മികച്ച പ്രകടനം!';
+            } else if (percentage >= 50) {
+                summary = 'നന്നായിരിക്കുന്നു! കുറച്ചുകൂടി മെച്ചപ്പെടുത്താം.';
+            } else {
+                summary = 'പരിശ്രമം തുടരുക! അടുത്ത തവണ മെച്ചപ്പെടുത്താം.';
+            }
+            summaryText.textContent = summary;
+        }
+        
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers.fill(null);
+            resultsContainer.classList.add('hidden');
+            quizContainer.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            loadQuestion();
+        }
+
+        nextBtn.addEventListener('click', () => {
+             if (userAnswers[currentQuestionIndex] === null) return;
+             if (currentQuestionIndex >= quizData.length - 1) {
+                showResults();
+            } else {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        });
+
+        backBtn.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        });
+        
+        restartBtn.addEventListener('click', restartQuiz);
+
+        // Initial Load
+        loadQuestion();
+    </script>
+
+</body>
+</html>
