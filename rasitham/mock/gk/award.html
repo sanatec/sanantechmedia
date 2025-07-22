@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>പുരസ്‌കാരങ്ങൾ ക്വിസ്</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .malayalam {
+            font-family: 'Manjari', sans-serif;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-option:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+        .correct {
+            animation: pulse-green 1s;
+            background-color: #22c55e !important; /* Green-500 */
+            color: white !important;
+            border-color: #16a34a !important; /* Green-600 */
+        }
+        .wrong {
+            animation: shake 0.5s;
+            background-color: #ef4444 !important; /* Red-500 */
+            color: white !important;
+            border-color: #dc2626 !important; /* Red-600 */
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-500 to-pink-600 min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Language Selection Screen -->
+        <div id="language-screen" class="text-center text-white p-8 rounded-2xl shadow-2xl card">
+            <h1 class="text-4xl font-bold mb-2 malayalam">പുരസ്‌കാരങ്ങൾ ക്വിസ്</h1>
+            <h2 class="text-2xl font-bold mb-8">Awards Quiz</h2>
+            <p class="mb-4 malayalam">ഭാഷ തിരഞ്ഞെടുക്കുക:</p>
+            <p class="mb-8">Select Language:</p>
+            <div class="flex flex-col space-y-4">
+                <button onclick="startQuiz('ml')" class="bg-white text-pink-600 font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-pink-50 transition-transform transform hover:scale-105 malayalam">മലയാളം</button>
+                <button onclick="startQuiz('en')" class="bg-white text-purple-600 font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-purple-50 transition-transform transform hover:scale-105">English</button>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden p-6 bg-white/90 rounded-2xl shadow-2xl card">
+            <div id="header" class="flex justify-between items-center mb-4">
+                <div id="question-counter" class="text-lg font-semibold text-gray-700"></div>
+                <div id="score-counter" class="text-lg font-semibold text-green-600"></div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-purple-500 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <div id="question-container" class="mb-6">
+                <p id="question-text" class="text-2xl font-bold text-center text-gray-800" style="min-height: 100px;"></p>
+            </div>
+            <div id="options-container" class="grid grid-cols-1 gap-4">
+                <!-- Options will be dynamically inserted here -->
+            </div>
+            <div id="feedback" class="mt-4 text-center font-bold text-lg" style="min-height: 30px;"></div>
+            <div class="flex justify-between mt-8">
+                <button id="back-btn" onclick="prevQuestion()" class="bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg shadow hover:bg-gray-400 transition-transform transform hover:scale-105">&lt; Back</button>
+                <button id="next-btn" onclick="nextQuestion()" class="bg-pink-600 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-pink-700 transition-transform transform hover:scale-105">Next &gt;</button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center p-8 bg-white/90 rounded-2xl shadow-2xl card">
+            <h2 id="result-title" class="text-4xl font-bold mb-4 text-gray-800"></h2>
+            <p id="final-score" class="text-2xl mb-6 text-gray-700"></p>
+            <p id="result-message" class="text-xl mb-8"></p>
+            <button onclick="restartQuiz()" class="bg-purple-600 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg hover:bg-purple-700 transition-transform transform hover:scale-105">
+                വീണ്ടും കളിക്കാം / Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Sound Synthesis ---
+        const correctSound = new Tone.Synth({
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
+        }).toDestination();
+
+        const wrongSound = new Tone.Synth({
+            oscillator: { type: 'square' },
+            envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.2 }
+        }).toDestination();
+
+        function playCorrectSound() {
+            Tone.start();
+            correctSound.triggerAttackRelease("C5", "8n");
+        }
+
+        function playWrongSound() {
+            Tone.start();
+            wrongSound.triggerAttackRelease("C3", "8n");
+        }
+
+        // --- Quiz Data (100 Questions about Awards) ---
+        const quizData = [
+            { id: 1, ml: { q: "2022-ലെ വയലാർ അവാർഡ് നേടിയ സാഹിത്യകാരൻ?", o: ["ബെന്യാമിൻ", "എസ്. ഹരീഷ്", "എസ്. ഗിരീഷ്", "കെ.ആർ. മീര"], a: "എസ്. ഹരീഷ്" }, en: { q: "Who won the Vayalar Award in 2022?", o: ["Benyamin", "S. Hareesh", "S. Girish", "K. R. Meera"], a: "S. Hareesh" } },
+            { id: 2, ml: { q: "സംസ്ഥാന സർക്കാരിന്റെ ഏറ്റവും വലിയ സാഹിത്യ ബഹുമതി?", o: ["വയലാർ അവാർഡ്", "വള്ളത്തോൾ പുരസ്കാരം", "എഴുത്തച്ഛൻ പുരസ്കാരം", "ഓടക്കുഴൽ അവാർഡ്"], a: "എഴുത്തച്ഛൻ പുരസ്കാരം" }, en: { q: "What is the highest literary honor of the state government (Kerala)?", o: ["Vayalar Award", "Vallathol Puraskaram", "Ezhuthachan Puraskaram", "Odakkuzhal Award"], a: "Ezhuthachan Puraskaram" } },
+            { id: 3, ml: { q: "2022-ലെ എഴുത്തച്ഛൻ പുരസ്കാരം നേടിയ സാഹിത്യകാരൻ?", o: ["പി. വത്സല", "സേതു", "സക്കറിയ", "എം. മുകുന്ദൻ"], a: "സേതു" }, en: { q: "Which writer won the Ezhuthachan Puraskaram in 2022?", o: ["P. Valsala", "Sethu", "Zacharia", "M. Mukundan"], a: "Sethu" } },
+            { id: 4, ml: { q: "ഇന്ത്യയിലെ പരമോന്നത സിവിലിയൻ ബഹുമതി ഏതാണ്?", o: ["പത്മവിഭൂഷൺ", "പത്മഭൂഷൺ", "ഭാരതരത്നം", "പത്മശ്രീ"], a: "ഭാരതരത്നം" }, en: { q: "What is the highest civilian award in India?", o: ["Padma Vibhushan", "Padma Bhushan", "Bharat Ratna", "Padma Shri"], a: "Bharat Ratna" } },
+            { id: 5, ml: { q: "ജ്ഞാനപീഠ പുരസ്കാരം നേടിയ ആദ്യ മലയാളി?", o: ["തകഴി ശിവശങ്കരപ്പിള്ള", "എസ്.കെ. പൊറ്റെക്കാട്ട്", "ജി. ശങ്കരക്കുറുപ്പ്", "എം.ടി. വാസുദേവൻ നായർ"], a: "ജി. ശങ്കരക്കുറുപ്പ്" }, en: { q: "Who was the first Malayali to win the Jnanpith Award?", o: ["Thakazhi Sivasankara Pillai", "S. K. Pottekkatt", "G. Sankara Kurup", "M. T. Vasudevan Nair"], a: "G. Sankara Kurup" } },
+            { id: 6, ml: { q: "നോബൽ സമ്മാനം നേടിയ ആദ്യ ഇന്ത്യക്കാരൻ?", o: ["സി.വി. രാമൻ", "മദർ തെരേസ", "രബീന്ദ്രനാഥ ടാഗോർ", "അമർത്യ സെൻ"], a: "രബീന്ദ്രനാഥ ടാഗോർ" }, en: { q: "Who was the first Indian to win the Nobel Prize?", o: ["C. V. Raman", "Mother Teresa", "Rabindranath Tagore", "Amartya Sen"], a: "Rabindranath Tagore" } },
+            { id: 7, ml: { q: "ഓസ്കാർ അവാർഡ് നേടിയ ആദ്യ ഇന്ത്യക്കാരൻ?", o: ["സത്യജിത് റേ", "എ.ആർ. റഹ്മാൻ", "റസൂൽ പൂക്കുട്ടി", "ഭാനു അത്തയ്യ"], a: "ഭാനു അത്തയ്യ" }, en: { q: "Who was the first Indian to win an Oscar Award?", o: ["Satyajit Ray", "A. R. Rahman", "Resul Pookutty", "Bhanu Athaiya"], a: "Bhanu Athaiya" } },
+            { id: 8, ml: { q: "ഇന്ത്യൻ സിനിമയിലെ പരമോന്നത പുരസ്കാരം?", o: ["ദേശീയ ചലച്ചിത്ര പുരസ്കാരം", "ഫിലിംഫെയർ അവാർഡ്", "ദാദാസാഹിബ് ഫാൽക്കെ അവാർഡ്", "IIFA അവാർഡ്"], a: "ദാദാസാഹിബ് ഫാൽക്കെ അവാർഡ്" }, en: { q: "What is the highest honor in Indian cinema?", o: ["National Film Award", "Filmfare Award", "Dadasaheb Phalke Award", "IIFA Award"], a: "Dadasaheb Phalke Award" } },
+            { id: 9, ml: { q: "2023-ലെ ഓടക്കുഴൽ അവാർഡ് ജേതാവ്?", o: ["അംബികാസുതൻ മാങ്ങാട്", "സാറാ ജോസഫ്", "പി.എൻ. ഗോപീകൃഷ്ണൻ", "ടി.ഡി. രാമകൃഷ്ണൻ"], a: "പി.എൻ. ഗോപീകൃഷ്ണൻ" }, en: { q: "Who is the winner of the Odakkuzhal Award 2023?", o: ["Ambikasuthan Mangad", "Sarah Joseph", "P. N. Gopikrishnan", "T. D. Ramakrishnan"], a: "P. N. Gopikrishnan" } },
+            { id: 10, ml: { q: "ഭാരതരത്നം നേടിയ ആദ്യ വനിത?", o: ["സരോജിനി നായിഡു", "എം.എസ്. സുബ്ബുലക്ഷ്മി", "ഇന്ദിരാഗാന്ധി", "മദർ തെരേസ"], a: "ഇന്ദിരാഗാന്ധി" }, en: { q: "Who was the first woman to receive the Bharat Ratna?", o: ["Sarojini Naidu", "M. S. Subbulakshmi", "Indira Gandhi", "Mother Teresa"], a: "Indira Gandhi" } },
+            { id: 11, ml: { q: "കേരളത്തിലെ ഏറ്റവും വലിയ ചലച്ചിത്ര പുരസ്കാരം?", o: ["സംസ്ഥാന ചലച്ചിത്ര പുരസ്കാരം", "ജെ.സി. ഡാനിയേൽ പുരസ്കാരം", "പ്രേം നസീർ അവാർഡ്", "ഫിലിം ക്രിട്ടിക്സ് അവാർഡ്"], a: "ജെ.സി. ഡാനിയേൽ പുരസ്കാരം" }, en: { q: "What is the highest film award in Kerala?", o: ["State Film Award", "J. C. Daniel Award", "Prem Nazir Award", "Film Critics Award"], a: "J. C. Daniel Award" } },
+            { id: 12, ml: { q: "ബുക്കർ സമ്മാനം നേടിയ ആദ്യ ഇന്ത്യൻ വംശജ?", o: ["അരുന്ധതി റോയ്", "കിരൺ ദേശായി", "അനിതാ ദേശായി", "ജുംപാ ലാഹിരി"], a: "അരുന്ധതി റോയ്" }, en: { q: "Who was the first Indian citizen to win the Booker Prize?", o: ["Arundhati Roy", "Kiran Desai", "Anita Desai", "Jhumpa Lahiri"], a: "Arundhati Roy" } },
+            { id: 13, ml: { q: "ഇന്ത്യയിലെ പരമോന്നത സൈനിക ബഹുമതി?", o: ["മഹാവീർ ചക്ര", "പരം വീർ ചക്ര", "വീർ ചക്ര", "അശോക ചക്ര"], a: "പരം വീർ ചക്ര" }, en: { q: "What is the highest military decoration in India?", o: ["Maha Vir Chakra", "Param Vir Chakra", "Vir Chakra", "Ashoka Chakra"], a: "Param Vir Chakra" } },
+            { id: 14, ml: { q: "സാഹിത്യത്തിനുള്ള നോബൽ സമ്മാനം നേടിയ ആദ്യ ഏഷ്യക്കാരൻ?", o: ["യാസുനാരി കവാബാത്ത", "രബീന്ദ്രനാഥ ടാഗോർ", "മോ യാൻ", "കെൻസാബുറോ ഓ"], a: "രബീന്ദ്രനാഥ ടാഗോർ" }, en: { q: "Who was the first Asian to win the Nobel Prize in Literature?", o: ["Yasunari Kawabata", "Rabindranath Tagore", "Mo Yan", "Kenzaburō Ōe"], a: "Rabindranath Tagore" } },
+            { id: 15, ml: { q: "2023-ലെ കേന്ദ്ര സാഹിത്യ അക്കാദമി അവാർഡ് (മലയാളം) നേടിയത്?", o: ["എസ്. ഹരീഷ്", "ഇ.വി. രാമകൃഷ്ണൻ", "എം. തോമസ് മാത്യു", "സുഭാഷ് ചന്ദ്രൻ"], a: "ഇ.വി. രാമകൃഷ്ണൻ" }, en: { q: "Who won the Kendra Sahitya Akademi Award 2023 (Malayalam)?", o: ["S. Hareesh", "E. V. Ramakrishnan", "M. Thomas Mathew", "Subhash Chandran"], a: "E. V. Ramakrishnan" } },
+            { id: 16, ml: { q: "ഭാരതരത്നം നേടിയ ആദ്യ കായികതാരം?", o: ["ധ്യാൻ ചന്ദ്", "കപിൽ ദേവ്", "സച്ചിൻ ടെണ്ടുൽക്കർ", "വിശ്വനാഥൻ ആനന്ദ്"], a: "സച്ചിൻ ടെണ്ടുൽക്കർ" }, en: { q: "Who was the first sportsperson to receive the Bharat Ratna?", o: ["Dhyan Chand", "Kapil Dev", "Sachin Tendulkar", "Viswanathan Anand"], a: "Sachin Tendulkar" } },
+            { id: 17, ml: { q: "വള്ളത്തോൾ പുരസ്കാരം ഏർപ്പെടുത്തിയത് ആര്?", o: ["കേരള സർക്കാർ", "വള്ളത്തോൾ സാഹിത്യ സമിതി", "മാതൃഭൂമി", "കേരള സാഹിത്യ അക്കാദമി"], a: "വള്ളത്തോൾ സാഹിത്യ സമിതി" }, en: { q: "Who instituted the Vallathol Award?", o: ["Government of Kerala", "Vallathol Sahitya Samithi", "Mathrubhumi", "Kerala Sahitya Akademi"], a: "Vallathol Sahitya Samithi" } },
+            { id: 18, ml: { q: "ദാദാസാഹിബ് ഫാൽക്കെ അവാർഡ് നേടിയ ആദ്യ മലയാളി?", o: ["പ്രേം നസീർ", "അടൂർ ഗോപാലകൃഷ്ണൻ", "എം.ടി. വാസുദേവൻ നായർ", "യേശുദാസ്"], a: "അടൂർ ഗോപാലകൃഷ്ണൻ" }, en: { q: "Who was the first Malayali to win the Dadasaheb Phalke Award?", o: ["Prem Nazir", "Adoor Gopalakrishnan", "M. T. Vasudevan Nair", "Yesudas"], a: "Adoor Gopalakrishnan" } },
+            { id: 19, ml: { q: "ഇന്ത്യയിലെ പരമോന്നത കായിക പുരസ്കാരം?", o: ["അർജുന അവാർഡ്", "ദ്രോണാചാര്യ അവാർഡ്", "മേജർ ധ്യാൻചന്ദ് ഖേൽരത്ന", "പത്മശ്രീ"], a: "മേജർ ധ്യാൻചന്ദ് ഖേൽരത്ന" }, en: { q: "What is the highest sporting honor in India?", o: ["Arjuna Award", "Dronacharya Award", "Major Dhyan Chand Khel Ratna", "Padma Shri"], a: "Major Dhyan Chand Khel Ratna" } },
+            { id: 20, ml: { q: "രമൺ മഗ്സസെ അവാർഡ് നേടിയ ആദ്യ മലയാളി?", o: ["വർഗീസ് കുര്യൻ", "എം.എസ്. സ്വാമിനാഥൻ", "ടി.എൻ. ശേഷൻ", "ഇവരാരുമല്ല"], a: "വർഗീസ് കുര്യൻ" }, en: { q: "Who was the first Malayali to win the Ramon Magsaysay Award?", o: ["Verghese Kurien", "M. S. Swaminathan", "T. N. Seshan", "None of these"], a: "Verghese Kurien" } },
+            { id: 21, ml: { q: "ഭൗതികശാസ്ത്രത്തിൽ നോബൽ സമ്മാനം നേടിയ ആദ്യ ഇന്ത്യക്കാരൻ?", o: ["ഹർഗോവിന്ദ് ഖുറാന", "സുബ്രഹ്മണ്യൻ ചന്ദ്രശേഖർ", "സി.വി. രാമൻ", "വെങ്കട്ടരാമൻ രാമകൃഷ്ണൻ"], a: "സി.വി. രാമൻ" }, en: { q: "Who was the first Indian to win the Nobel Prize in Physics?", o: ["Har Gobind Khorana", "Subrahmanyan Chandrasekhar", "C. V. Raman", "Venkatraman Ramakrishnan"], a: "C. V. Raman" } },
+            { id: 22, ml: { q: "2023-ലെ ജെ.സി. ഡാനിയേൽ പുരസ്കാരം നേടിയത്?", o: ["ഹരിഹരൻ", "ടി.വി. ചന്ദ്രൻ", "ശ്രീകുമാരൻ തമ്പി", "പി. ജയചന്ദ്രൻ"], a: "ടി.വി. ചന്ദ്രൻ" }, en: { q: "Who won the J. C. Daniel Award for 2023?", o: ["Hariharan", "T. V. Chandran", "Sreekumaran Thampi", "P. Jayachandran"], a: "T. V. Chandran" } },
+            { id: 23, ml: { q: "പത്മവിഭൂഷൺ നേടിയ ആദ്യ വനിത?", o: ["വിജയലക്ഷ്മി പണ്ഡിറ്റ്", "കമലാദേവി ചട്ടോപാധ്യായ", "ജാനകി രാമചന്ദ്രൻ", "രുക്മിണി ദേവി അരുണ്ഡേൽ"], a: "ജാനകി രാമചന്ദ്രൻ" }, en: { q: "Who was the first woman to receive the Padma Vibhushan?", o: ["Vijaya Lakshmi Pandit", "Kamaladevi Chattopadhyay", "Janaki Ramachandran", "Rukmini Devi Arundale"], a: "Janaki Ramachandran" } },
+            { id: 24, ml: { q: "സമാധാനത്തിനുള്ള നോബൽ സമ്മാനം നേടിയ ആദ്യ ഇന്ത്യൻ വനിത?", o: ["ഇന്ദിരാഗാന്ധി", "സരോജിനി നായിഡു", "മദർ തെരേസ", "അരുണ ആസഫ് അലി"], a: "മദർ തെരേസ" }, en: { q: "Who was the first Indian woman to win the Nobel Peace Prize?", o: ["Indira Gandhi", "Sarojini Naidu", "Mother Teresa", "Aruna Asaf Ali"], a: "Mother Teresa" } },
+            { id: 25, ml: { q: "ഓസ്കാറിന് നാമനിർദ്ദേശം ചെയ്യപ്പെട്ട ആദ്യ മലയാള സിനിമ?", o: ["ചെമ്മീൻ", "എലിപ്പത്തായം", "ഗുരു", "പിറവി"], a: "ഗുരു" }, en: { q: "What was the first Malayalam film to be nominated for an Oscar?", o: ["Chemmeen", "Elippathayam", "Guru", "Piravi"], a: "Guru" } },
+            { id: 26, ml: { q: "അർജുന അവാർഡ് നൽകുന്നത് ഏത് മേഖലയിലെ മികവിനാണ്?", o: ["സാഹിത്യം", "ശാസ്ത്രം", "സിനിമ", "കായികം"], a: "കായികം" }, en: { q: "For excellence in which field is the Arjuna Award given?", o: ["Literature", "Science", "Cinema", "Sports"], a: "Sports" } },
+            { id: 27, ml: { q: "2024-ൽ ഭാരതരത്നം ലഭിച്ച മുൻ പ്രധാനമന്ത്രി?", o: ["അടൽ ബിഹാരി വാജ്പേയി", "പി.വി. നരസിംഹറാവു", "മൻമോഹൻ സിംഗ്", "രാജീവ് ഗാന്ധി"], a: "പി.വി. നരസിംഹറാവു" }, en: { q: "Which former Prime Minister received the Bharat Ratna in 2024?", o: ["Atal Bihari Vajpayee", "P. V. Narasimha Rao", "Manmohan Singh", "Rajiv Gandhi"], a: "P. V. Narasimha Rao" } },
+            { id: 28, ml: { q: "ദ്രോണാചാര്യ അവാർഡ് ആർക്കാണ് നൽകുന്നത്?", o: ["മികച്ച കളിക്കാർക്ക്", "മികച്ച പരിശീലകർക്ക്", "കായിക മാധ്യമപ്രവർത്തകർക്ക്", "കായിക സംഘടനകൾക്ക്"], a: "മികച്ച പരിശീലകർക്ക്" }, en: { q: "To whom is the Dronacharya Award given?", o: ["To the best players", "To the best coaches", "To sports journalists", "To sports organizations"], a: "To the best coaches" } },
+            { id: 29, ml: { q: "ജ്ഞാനപീഠം നേടിയ ഏക മലയാള കവി?", o: ["വള്ളത്തോൾ", "കുമാരനാശാൻ", "ജി. ശങ്കരക്കുറുപ്പ്", "ഉള്ളൂർ"], a: "ജി. ശങ്കരക്കുറുപ്പ്" }, en: { q: "Who is the only Malayalam poet to have won the Jnanpith Award?", o: ["Vallathol", "Kumaran Asan", "G. Sankara Kurup", "Ulloor"], a: "G. Sankara Kurup" } },
+            { id: 30, ml: { q: "2023-ലെ ബുക്കർ സമ്മാനം നേടിയത്?", o: ["ഷെഹാൻ കരുണതിലക", "പോൾ ലിഞ്ച്", "ഡാമൺ ഗാൽഗട്ട്", "ഡഗ്ലസ് സ്റ്റുവർട്ട്"], a: "പോൾ ലിഞ്ച്" }, en: { q: "Who won the Booker Prize in 2023?", o: ["Shehan Karunatilaka", "Paul Lynch", "Damon Galgut", "Douglas Stuart"], a: "Paul Lynch" } },
+            { id: 31, ml: { q: "എഴുത്തച്ഛൻ പുരസ്കാരം നേടിയ ആദ്യ വനിത?", o: ["സുഗതകുമാരി", "മാധവിക്കുട്ടി", "ബാലാമണിയമ്മ", "കെ.ആർ. മീര"], a: "ബാലാമണിയമ്മ" }, en: { q: "Who was the first woman to win the Ezhuthachan Puraskaram?", o: ["Sugathakumari", "Madhavikutty", "Balamani Amma", "K. R. Meera"], a: "Balamani Amma" } },
+            { id: 32, ml: { q: "സംഗീതത്തിന് ഭാരതരത്നം ലഭിച്ച ആദ്യ വ്യക്തി?", o: ["ലതാ മങ്കേഷ്കർ", "ഭീംസെൻ ജോഷി", "എം.എസ്. സുബ്ബുലക്ഷ്മി", "ബിസ്മില്ലാ ഖാൻ"], a: "എം.എസ്. സുബ്ബുലക്ഷ്മി" }, en: { q: "Who was the first person to receive the Bharat Ratna for music?", o: ["Lata Mangeshkar", "Bhimsen Joshi", "M. S. Subbulakshmi", "Bismillah Khan"], a: "M. S. Subbulakshmi" } },
+            { id: 33, ml: { q: "2023-ലെ മികച്ച നടനുള്ള ദേശീയ പുരസ്കാരം നേടിയത്?", o: ["അല്ലു അർജുൻ", "സൂര്യ", "ധനുഷ്", "വിക്കി കൗശൽ"], a: "അല്ലു അർജുൻ" }, en: { q: "Who won the National Award for Best Actor in 2023?", o: ["Allu Arjun", "Suriya", "Dhanush", "Vicky Kaushal"], a: "Allu Arjun" } },
+            { id: 34, ml: { q: "ഓടക്കുഴൽ അവാർഡ് ഏർപ്പെടുത്തിയത് ആര്?", o: ["ജി. ശങ്കരക്കുറുപ്പ്", "വൈലോപ്പിള്ളി", "തകഴി", "ബഷീർ"], a: "ജി. ശങ്കരക്കുറുപ്പ്" }, en: { q: "Who instituted the Odakkuzhal Award?", o: ["G. Sankara Kurup", "Vailoppilli", "Thakazhi", "Basheer"], a: "G. Sankara Kurup" } },
+            { id: 35, ml: { q: "വൈദ്യശാസ്ത്രത്തിൽ നോബൽ സമ്മാനം നേടിയ ആദ്യ ഇന്ത്യൻ വംശജൻ?", o: ["സി.വി. രാമൻ", "ഹർഗോവിന്ദ് ഖുറാന", "അമർത്യ സെൻ", "വെങ്കി രാമകൃഷ്ണൻ"], a: "ഹർഗോവിന്ദ് ഖുറാന" }, en: { q: "Who was the first person of Indian origin to win the Nobel Prize in Medicine?", o: ["C. V. Raman", "Har Gobind Khorana", "Amartya Sen", "Venki Ramakrishnan"], a: "Har Gobind Khorana" } },
+            { id: 36, ml: { q: "പത്മശ്രീ നേടിയ ആദ്യ ട്രാൻസ്ജെൻഡർ?", o: ["ലക്ഷ്മി നാരായൺ ത്രിപാഠി", "ഗൗരി സാവന്ത്", "നർത്തകി നടരാജ്", "മഞ്ജമ്മ ജോഗതി"], a: "നർത്തകി നടരാജ്" }, en: { q: "Who was the first transgender person to receive the Padma Shri?", o: ["Laxmi Narayan Tripathi", "Gauri Sawant", "Narthaki Nataraj", "Manjamma Jogathi"], a: "Narthaki Nataraj" } },
+            { id: 37, ml: { q: "2023-ലെ വള്ളത്തോൾ പുരസ്കാരം നേടിയത്?", o: ["സക്കറിയ", "സി. രാധാകൃഷ്ണൻ", "പോൾ സക്കറിയ", "പ്രൊഫ. എം.കെ. സാനു"], a: "സി. രാധാകൃഷ്ണൻ" }, en: { q: "Who won the Vallathol Award in 2023?", o: ["Zacharia", "C. Radhakrishnan", "Paul Zacharia", "Prof. M. K. Sanu"], a: "C. Radhakrishnan" } },
+            { id: 38, ml: { q: "ഭാരതരത്നം ലഭിച്ച ആദ്യ വിദേശി?", o: ["നെൽസൺ മണ്ടേല", "ഖാൻ അബ്ദുൽ ഗാഫർ ഖാൻ", "മാർട്ടിൻ ലൂഥർ കിംഗ്", "ദലൈലാമ"], a: "ഖാൻ അബ്ദുൽ ഗാഫർ ഖാൻ" }, en: { q: "Who was the first foreigner to receive the Bharat Ratna?", o: ["Nelson Mandela", "Khan Abdul Ghaffar Khan", "Martin Luther King", "Dalai Lama"], a: "Khan Abdul Ghaffar Khan" } },
+            { id: 39, ml: { q: "മുട്ടത്തുവർക്കി പുരസ്കാരം ഏത് മേഖലയുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", o: ["സിനിമ", "നാടകം", "ശാസ്ത്രം", "സാഹിത്യം"], a: "സാഹിത്യം" }, en: { q: "The Muttathu Varkey Award is associated with which field?", o: ["Cinema", "Drama", "Science", "Literature"], a: "Literature" } },
+            { id: 40, ml: { q: "2023-ലെ മികച്ച നടിക്കുള്ള ദേശീയ പുരസ്കാരം പങ്കിട്ടത് ആരെല്ലാം?", o: ["ആലിയ ഭട്ട്, കങ്കണ റണാവത്ത്", "ആലിയ ഭട്ട്, കൃതി സനോൻ", "ദീപിക പദുകോൺ, വിദ്യാ ബാലൻ", "കീർത്തി സുരേഷ്, പ്രിയങ്ക ചോപ്ര"], a: "ആലിയ ഭട്ട്, കൃതി സനോൻ" }, en: { q: "Who shared the National Award for Best Actress in 2023?", o: ["Alia Bhatt, Kangana Ranaut", "Alia Bhatt, Kriti Sanon", "Deepika Padukone, Vidya Balan", "Keerthy Suresh, Priyanka Chopra"], a: "Alia Bhatt, Kriti Sanon" } },
+            { id: 41, ml: { q: "സരസ്വതി സമ്മാൻ ഏത് മേഖലയിലെ സംഭാവനകൾക്കാണ് നൽകുന്നത്?", o: ["സംഗീതം", "നൃത്തം", "സാഹിത്യം", "ചിത്രകല"], a: "സാഹിത്യം" }, en: { q: "For contributions in which field is the Saraswati Samman awarded?", o: ["Music", "Dance", "Literature", "Painting"], a: "Literature" } },
+            { id: 42, ml: { q: "സാമ്പത്തിക ശാസ്ത്രത്തിൽ നോബൽ സമ്മാനം നേടിയ ആദ്യ ഇന്ത്യക്കാരൻ?", o: ["സി. രംഗരാജൻ", "മൻമോഹൻ സിംഗ്", "അമർത്യ സെൻ", "അഭിജിത് ബാനർജി"], a: "അമർത്യ സെൻ" }, en: { q: "Who was the first Indian to win the Nobel Prize in Economics?", o: ["C. Rangarajan", "Manmohan Singh", "Amartya Sen", "Abhijit Banerjee"], a: "Amartya Sen" } },
+            { id: 43, ml: { q: "2021-ലെ ദാദാസാഹിബ് ഫാൽക്കെ അവാർഡ് നേടിയത്?", o: ["രജനികാന്ത്", "അമിതാഭ് ബച്ചൻ", "ആശാ പരേഖ്", "വിനോദ് ഖന്ന"], a: "ആശാ പരേഖ്" }, en: { q: "Who won the Dadasaheb Phalke Award for 2021?", o: ["Rajinikanth", "Amitabh Bachchan", "Asha Parekh", "Vinod Khanna"], a: "Asha Parekh" } },
+            { id: 44, ml: { q: "ജ്ഞാനപീഠം നേടിയ ആദ്യ വനിത?", o: ["മഹാശ്വേതാ ദേവി", "അമൃതാ പ്രീതം", "ആശാപൂർണ്ണാ ദേവി", "പ്രതിഭാ റായ്"], a: "ആശാപൂർണ്ണാ ദേവി" }, en: { q: "Who was the first woman to win the Jnanpith Award?", o: ["Mahasweta Devi", "Amrita Pritam", "Ashapoorna Devi", "Pratibha Ray"], a: "Ashapoorna Devi" } },
+            { id: 45, ml: { q: "വയലാർ അവാർഡ് നേടിയ ആദ്യ വ്യക്തി?", o: ["ഒ.വി. വിജയൻ", "ലളിതാംബിക അന്തർജ്ജനം", "വൈക്കം മുഹമ്മദ് ബഷീർ", "പൊൻകുന്നം വർക്കി"], a: "ലളിതാംബിക അന്തർജ്ജനം" }, en: { q: "Who was the first person to win the Vayalar Award?", o: ["O. V. Vijayan", "Lalithambika Antharjanam", "Vaikom Muhammad Basheer", "Ponkunnam Varkey"], a: "Lalithambika Antharjanam" } },
+            { id: 46, ml: { q: "2023-ലെ സമാധാനത്തിനുള്ള നോബൽ സമ്മാനം നേടിയത്?", o: ["മറിയ റെസ്സ", "അലസ് ബിയാലിയാറ്റ്സ്കി", "നർഗസ് മുഹമ്മദി", "ദിമിത്രി മുരാറ്റോവ്"], a: "നർഗസ് മുഹമ്മദി" }, en: { q: "Who won the Nobel Peace Prize in 2023?", o: ["Maria Ressa", "Ales Bialiatski", "Narges Mohammadi", "Dmitry Muratov"], a: "Narges Mohammadi" } },
+            { id: 47, ml: { q: "കേരള സാഹിത്യ അക്കാദമി അവാർഡ് നൽകാത്ത വിഭാഗം ഏത്?", o: ["കവിത", "നോവൽ", "സിനിമ", "ചെറുകഥ"], a: "സിനിമ" }, en: { q: "For which category is the Kerala Sahitya Akademi Award not given?", o: ["Poetry", "Novel", "Cinema", "Short Story"], a: "Cinema" } },
+            { id: 48, ml: { q: "ഭാരതരത്നം മരണാനന്തരം ലഭിച്ച ആദ്യ വ്യക്തി?", o: ["ഇന്ദിരാഗാന്ധി", "രാജീവ് ഗാന്ധി", "ലാൽ ബഹദൂർ ശാസ്ത്രി", "കെ. കാമരാജ്"], a: "ലാൽ ബഹദൂർ ശാസ്ത്രി" }, en: { q: "Who was the first person to receive the Bharat Ratna posthumously?", o: ["Indira Gandhi", "Rajiv Gandhi", "Lal Bahadur Shastri", "K. Kamaraj"], a: "Lal Bahadur Shastri" } },
+            { id: 49, ml: { q: "2023-ലെ മികച്ച ചലച്ചിത്രത്തിനുള്ള ഓസ്കാർ നേടിയത്?", o: ["അവതാർ: ദി വേ ഓഫ് വാട്ടർ", "എവരിതിംഗ് എവരിവെയർ ഓൾ അറ്റ് വൺസ്", "ടോപ്പ് ഗൺ: മാവെറിക്ക്", "ദി ബാൻഷീസ് ഓഫ് ഇനിഷെറിൻ"], a: "എവരിതിംഗ് എവരിവെയർ ഓൾ അറ്റ് വൺസ്" }, en: { q: "Which film won the Oscar for Best Picture in 2023?", o: ["Avatar: The Way of Water", "Everything Everywhere All at Once", "Top Gun: Maverick", "The Banshees of Inisherin"], a: "Everything Everywhere All at Once" } },
+            { id: 50, ml: { q: "പത്മ പുരസ്കാരങ്ങൾ നൽകുന്നത് ഏത് ദിനത്തിലാണ്?", o: ["സ്വാതന്ത്ര്യ ദിനം", "റിപ്പബ്ലിക് ദിനം", "ഗാന്ധി ജയന്തി", "പ്രധാനമന്ത്രിയുടെ ജന്മദിനം"], a: "റിപ്പബ്ലിക് ദിനം" }, en: { q: "On which day are the Padma Awards conferred?", o: ["Independence Day", "Republic Day", "Gandhi Jayanti", "Prime Minister's Birthday"], a: "Republic Day" } },
+            // Add more questions to reach 100...
+            { id: 51, ml: { q: "നോബൽ സമ്മാനം നൽകാത്ത വിഷയം ഏത്?", o: ["ഫിസിക്സ്", "കെമിസ്ട്രി", "ഗണിതം", "സാഹിത്യം"], a: "ഗണിതം" }, en: { q: "For which subject is the Nobel Prize not awarded?", o: ["Physics", "Chemistry", "Mathematics", "Literature"], a: "Mathematics" } },
+            { id: 52, ml: { q: "2023-ലെ മികച്ച ഗാനത്തിനുള്ള ഓസ്കാർ നേടിയ ഇന്ത്യൻ ഗാനം?", o: ["ജയ് ഹോ", "നാട്ടു നാട്ടു", "കലൈലാസ", "മുക്കാബല"], a: "നാട്ടു നാട്ടു" }, en: { q: "Which Indian song won the Oscar for Best Original Song in 2023?", o: ["Jai Ho", "Naatu Naatu", "Kalailaasah", "Muqabla"], a: "Naatu Naatu" } },
+            { id: 53, ml: { q: "ഭാരതരത്നം രൂപകൽപ്പന ചെയ്തിരിക്കുന്നത് ഏത് മരത്തിന്റെ ഇലയുടെ ആകൃതിയിലാണ്?", o: ["ആൽമരം", "അരയാൽ", "മാവ്", "തെങ്ങ്"], a: "അരയാൽ" }, en: { q: "The Bharat Ratna is designed in the shape of which tree's leaf?", o: ["Banyan", "Peepal", "Mango", "Coconut"], a: "Peepal" } },
+            { id: 54, ml: { q: "കേരള സംസ്ഥാന ചലച്ചിത്ര പുരസ്കാരം ഏർപ്പെടുത്തിയ വർഷം?", o: ["1965", "1969", "1972", "1980"], a: "1969" }, en: { q: "In which year were the Kerala State Film Awards instituted?", o: ["1965", "1969", "1972", "1980"], a: "1969" } },
+            { id: 55, ml: { q: "പുലിറ്റ്സർ പുരസ്കാരം ഏത് മേഖലയുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", o: ["സിനിമ", "സംഗീതം", "പത്രപ്രവർത്തനം", "ശാസ്ത്രം"], a: "പത്രപ്രവർത്തനം" }, en: { q: "The Pulitzer Prize is associated with which field?", o: ["Cinema", "Music", "Journalism", "Science"], a: "Journalism" } },
+            { id: 56, ml: { q: "ഗ്രാമി അവാർഡ് ഏത് മേഖലയിലെ മികവിനാണ് നൽകുന്നത്?", o: ["സിനിമ", "സാഹിത്യം", "സംഗീതം", "നാടകം"], a: "സംഗീതം" }, en: { q: "For excellence in which field is the Grammy Award given?", o: ["Cinema", "Literature", "Music", "Drama"], a: "Music" } },
+            { id: 57, ml: { q: "അശോകചക്രം എന്തിനുള്ള ബഹുമതിയാണ്?", o: ["സാഹിത്യം", "കല", "സമാധാന കാലത്തെ ധീരത", "യുദ്ധകാലത്തെ ധീരത"], a: "സമാധാന കാലത്തെ ധീരത" }, en: { q: "The Ashoka Chakra is an award for what?", o: ["Literature", "Art", "Peacetime gallantry", "Wartime gallantry"], a: "Peacetime gallantry" } },
+            { id: 58, ml: { q: "2023-ലെ 57-ാമത് ജ്ഞാനപീഠ പുരസ്കാരം നേടിയത്?", o: ["അമിതാവ് ഘോഷ്", "നീലമണി ഫൂക്കൻ", "ദാമോദർ മൗസോ", "കൃഷ്ണ സോബതി"], a: "ദാമോദർ മൗസോ" }, en: { q: "Who won the 57th Jnanpith Award for 2023?", o: ["Amitav Ghosh", "Nilmani Phookan", "Damodar Mauzo", "Krishna Sobti"], a: "Damodar Mauzo" } },
+            { id: 59, ml: { q: "ഇന്ത്യയിൽ ധീരതയ്ക്കുള്ള പുരസ്കാരങ്ങൾ നൽകുന്നത് ആര്?", o: ["പ്രധാനമന്ത്രി", "പ്രതിരോധ മന്ത്രി", "രാഷ്ട്രപതി", "സൈനിക മേധാവി"], a: "രാഷ്ട്രപതി" }, en: { q: "Who presents the gallantry awards in India?", o: ["Prime Minister", "Defence Minister", "President", "Chief of Army Staff"], a: "President" } },
+            { id: 60, ml: { q: "മാൻ ബുക്കർ ഇന്റർനാഷണൽ പ്രൈസ് നേടിയ ആദ്യ ഹിന്ദി നോവൽ?", o: ["രശ്മിരഥി", "മധുശാല", "ഗോദാൻ", "ടോംബ് ഓഫ് സാൻഡ്"], a: "ടോംബ് ഓഫ് സാൻഡ്" }, en: { q: "Which is the first Hindi novel to win the Man Booker International Prize?", o: ["Rashmirathi", "Madhushala", "Godan", "Tomb of Sand"], a: "Tomb of Sand" } },
+            { id: 61, ml: { q: "2022-ലെ 32-ാമത് സരസ്വതി സമ്മാൻ നേടിയത്?", o: ["ശരൺകുമാർ ലിംബാളെ", "രാംദരശ് മിശ്ര", "ശിവശങ്കരി", "വാസുദേവ് മോഹി"], a: "ശിവശങ്കരി" }, en: { q: "Who won the 32nd Saraswati Samman for 2022?", o: ["Sharankumar Limbale", "Ramdarash Mishra", "Sivasankari", "Vasdev Mohi"], a: "Sivasankari" } },
+            { id: 62, ml: { q: "ഏഷ്യയുടെ നോബൽ സമ്മാനം എന്നറിയപ്പെടുന്നത്?", o: ["ഗാന്ധി സമാധാന പുരസ്കാരം", "റൈറ്റ് ലൈവ്‌ലിഹുഡ് അവാർഡ്", "രമൺ മഗ്സസെ അവാർഡ്", "ഇന്ദിരാഗാന്ധി പുരസ്കാരം"], a: "രമൺ മഗ്സസെ അവാർഡ്" }, en: { q: "Which award is known as Asia's Nobel Prize?", o: ["Gandhi Peace Prize", "Right Livelihood Award", "Ramon Magsaysay Award", "Indira Gandhi Prize"], a: "Ramon Magsaysay Award" } },
+            { id: 63, ml: { q: "2023-ലെ മികച്ച നടനുള്ള കേരള സംസ്ഥാന ചലച്ചിത്ര പുരസ്കാരം നേടിയത്?", o: ["ഇന്ദ്രൻസ്", "മമ്മൂട്ടി", "കുഞ്ചാക്കോ ബോബൻ", "ഫഹദ് ഫാസിൽ"], a: "മമ്മൂട്ടി" }, en: { q: "Who won the Kerala State Film Award for Best Actor in 2023?", o: ["Indrans", "Mammootty", "Kunchacko Boban", "Fahadh Faasil"], a: "Mammootty" } },
+            { id: 64, ml: { q: "പരം വീർ ചക്ര രൂപകൽപ്പന ചെയ്തത് ആര്?", o: ["നെക് ചന്ദ്", "രാം വി സുതർ", "സാവിത്രി ഖനോൽക്കർ", "ബി.വി. ദോഷി"], a: "സാവിത്രി ഖനോൽക്കർ" }, en: { q: "Who designed the Param Vir Chakra medal?", o: ["Nek Chand", "Ram V. Sutar", "Savitri Khanolkar", "B. V. Doshi"], a: "Savitri Khanolkar" } },
+            { id: 65, ml: { q: "ആദ്യത്തെ ജെ.സി. ഡാനിയേൽ പുരസ്കാര ജേതാവ്?", o: ["പ്രേം നസീർ", "തിക്കുറിശ്ശി സുകുമാരൻ നായർ", "ടി.ഇ. വാസുദേവൻ", "അടൂർ ഗോപാലകൃഷ്ണൻ"], a: "ടി.ഇ. വാസുദേവൻ" }, en: { q: "Who was the first recipient of the J. C. Daniel Award?", o: ["Prem Nazir", "Thikkurissy Sukumaran Nair", "T. E. Vasudevan", "Adoor Gopalakrishnan"], a: "T. E. Vasudevan" } },
+            { id: 66, ml: { q: "2023-ലെ മേജർ ധ്യാൻചന്ദ് ഖേൽരത്ന പുരസ്കാരം നേടിയത്?", o: ["നീരജ് ചോപ്ര", "പി.വി. സിന്ധു", "ചിരാഗ് ഷെട്ടി, സാത്വിക്സായ്രാജ്", "ശരത് കമൽ"], a: "ചിരാഗ് ഷെട്ടി, സാത്വിക്സായ്രാജ്" }, en: { q: "Who won the Major Dhyan Chand Khel Ratna Award for 2023?", o: ["Neeraj Chopra", "P. V. Sindhu", "Chirag Shetty, Satwiksairaj", "Sharath Kamal"], a: "Chirag Shetty, Satwiksairaj" } },
+            { id: 67, ml: { q: "ഭാരതരത്നം ലഭിച്ച ആദ്യ ശാസ്ത്രജ്ഞൻ?", o: ["ജഗദീഷ് ചന്ദ്രബോസ്", "സി.വി. രാമൻ", "എ.പി.ജെ. അബ്ദുൾ കലാം", "ഹോമി ഭാഭ"], a: "സി.വി. രാമൻ" }, en: { q: "Who was the first scientist to receive the Bharat Ratna?", o: ["Jagadish Chandra Bose", "C. V. Raman", "A. P. J. Abdul Kalam", "Homi Bhabha"], a: "C. V. Raman" } },
+            { id: 68, ml: { q: "2023-ലെ മികച്ച നടിക്കുള്ള കേരള സംസ്ഥാന ചലച്ചിത്ര പുരസ്കാരം നേടിയത്?", o: ["അന്ന ബെൻ", "വിൻസി അലോഷ്യസ്", "രೇವതി", "ദർശന രാജേന്ദ്രൻ"], a: "വിൻസി അലോഷ്യസ്" }, en: { q: "Who won the Kerala State Film Award for Best Actress in 2023?", o: ["Anna Ben", "Vincy Aloshious", "Revathi", "Darshana Rajendran"], a: "Vincy Aloshious" } },
+            { id: 69, ml: { q: "ജ്ഞാനപീഠം നേടിയ രണ്ടാമത്തെ മലയാളി?", o: ["എം.ടി. വാസുദേവൻ നായർ", "ഒ.എൻ.വി. കുറുപ്പ്", "തകഴി ശിവശങ്കരപ്പിള്ള", "എസ്.കെ. പൊറ്റെക്കാട്ട്"], a: "എസ്.കെ. പൊറ്റെക്കാട്ട്" }, en: { q: "Who was the second Malayali to win the Jnanpith Award?", o: ["M. T. Vasudevan Nair", "O. N. V. Kurup", "Thakazhi Sivasankara Pillai", "S. K. Pottekkatt"], a: "S. K. Pottekkatt" } },
+            { id: 70, ml: { q: "ഗാന്ധി സമാധാന പുരസ്കാരം നൽകുന്നത് ആര്?", o: ["ഐക്യരാഷ്ട്രസഭ", "ഇന്ത്യൻ സർക്കാർ", "നോർവീജിയൻ നോബൽ കമ്മിറ്റി", "ഗാന്ധി പീസ് ഫൗണ്ടേഷൻ"], a: "ഇന്ത്യൻ സർക്കാർ" }, en: { q: "Who awards the Gandhi Peace Prize?", o: ["United Nations", "Government of India", "Norwegian Nobel Committee", "Gandhi Peace Foundation"], a: "Government of India" } },
+            { id: 71, ml: { q: "ആദ്യത്തെ എഴുത്തച്ഛൻ പുരസ്കാര ജേതാവ്?", o: ["തകഴി", "ബാലാമണിയമ്മ", "ശൂരനാട് കുഞ്ഞൻപിള്ള", "പൊൻകുന്നം വർക്കി"], a: "ശൂരനാട് കുഞ്ഞൻപിള്ള" }, en: { q: "Who was the first recipient of the Ezhuthachan Puraskaram?", o: ["Thakazhi", "Balamani Amma", "Sooranad Kunjan Pillai", "Ponkunnam Varkey"], a: "Sooranad Kunjan Pillai" } },
+            { id: 72, ml: { q: "2023-ൽ പത്മവിഭൂഷൺ ലഭിച്ച മലയാളി?", o: ["കെ.എസ്. ചിത്ര", "പി. ജയചന്ദ്രൻ", "എസ്.എം. കൃഷ്ണ", "ഇവരാരുമല്ല"], a: "എസ്.എം. കൃഷ്ണ" }, en: { q: "Which Malayali received the Padma Vibhushan in 2023?", o: ["K. S. Chithra", "P. Jayachandran", "S. M. Krishna", "None of these"], a: "S. M. Krishna" } },
+            { id: 73, ml: { q: "പത്മശ്രീ നേടിയ ആദ്യ മലയാളി കായികതാരം?", o: ["പി.ടി. ഉഷ", "എം.ഡി. വത്സമ്മ", "ജിമ്മി ജോർജ്ജ്", "ഐ.എം. വിജയൻ"], a: "എം.ഡി. വത്സമ്മ" }, en: { q: "Who was the first Malayali sportsperson to receive the Padma Shri?", o: ["P. T. Usha", "M. D. Valsamma", "Jimmy George", "I. M. Vijayan"], a: "M. D. Valsamma" } },
+            { id: 74, ml: { q: "2023-ലെ മികച്ച ചലച്ചിത്രത്തിനുള്ള കേരള സംസ്ഥാന പുരസ്കാരം നേടിയ സിനിമ?", o: ["ന്നാ താൻ കേസ് കൊട്", "നൻപകൽ നേരത്ത് മയക്കം", "അറിയിപ്പ്", "സൗദി വെള്ളക്ക"], a: "നൻപകൽ നേരത്ത് മയക്കം" }, en: { q: "Which film won the Kerala State Award for Best Film in 2023?", o: ["Nna Thaan Case Kodu", "Nanpakal Nerathu Mayakkam", "Ariyippu", "Saudi Vellakka"], a: "Nanpakal Nerathu Mayakkam" } },
+            { id: 75, ml: { q: "ഏറ്റവും കൂടുതൽ തവണ ദേശീയ പുരസ്കാരം നേടിയ നടൻ?", o: ["അമിതാഭ് ബച്ചൻ", "കമൽ ഹാസൻ", "മമ്മൂട്ടി", "മോഹൻലാൽ"], a: "അമിതാഭ് ബച്ചൻ" }, en: { q: "Which actor has won the most National Film Awards?", o: ["Amitabh Bachchan", "Kamal Haasan", "Mammootty", "Mohanlal"], a: "Amitabh Bachchan" } },
+            { id: 76, ml: { q: "ഭാരതരത്നം ലഭിച്ച ഏക പാകിസ്ഥാൻ പൗരൻ?", o: ["മുഹമ്മദ് അലി ജിന്ന", "ലിയാഖത്ത് അലി ഖാൻ", "ഖാൻ അബ്ദുൽ ഗാഫർ ഖാൻ", "ഇമ്രാൻ ഖാൻ"], a: "ഖാൻ അബ്ദുൽ ഗാഫർ ഖാൻ" }, en: { q: "Who is the only Pakistani citizen to have received the Bharat Ratna?", o: ["Muhammad Ali Jinnah", "Liaquat Ali Khan", "Khan Abdul Ghaffar Khan", "Imran Khan"], a: "Khan Abdul Ghaffar Khan" } },
+            { id: 77, ml: { q: "2023-ലെ സാഹിത്യത്തിനുള്ള നോബൽ സമ്മാനം നേടിയത്?", o: ["അബ്ദുൾറസാഖ് ഗുർന", "ആനി എർനോ", "യോൺ ഫോസെ", "ലൂയിസ് ഗ്ലക്ക്"], a: "യോൺ ഫോസെ" }, en: { q: "Who won the Nobel Prize in Literature in 2023?", o: ["Abdulrazak Gurnah", "Annie Ernaux", "Jon Fosse", "Louise Glück"], a: "Jon Fosse" } },
+            { id: 78, ml: { q: "ആദ്യത്തെ ദ്രോണാചാര്യ അവാർഡ് ജേതാക്കളിൽ ഉൾപ്പെടാത്തത് ആര്?", o: ["ബാലചന്ദ്ര ഭാഗവത്", "ഒ.എം. നമ്പ്യാർ", "രഘുനന്ദൻ ഗോഖലെ", "രാംനാഥൻ കൃഷ്ണൻ"], a: "രാംനാഥൻ കൃഷ്ണൻ" }, en: { q: "Who was not among the first recipients of the Dronacharya Award?", o: ["Bhalchandra Bhagwat", "O. M. Nambiar", "Raghunandan Gokhale", "Ramanathan Krishnan"], a: "Ramanathan Krishnan" } },
+            { id: 79, ml: { q: "2023-ലെ മാതൃഭൂമി സാഹിത്യ പുരസ്കാരം നേടിയത്?", o: ["സേതു", "സക്കറിയ", "യു.എ. ഖാദർ", "ടി. പത്മനാഭൻ"], a: "സേതു" }, en: { q: "Who won the Mathrubhumi Literary Award for 2023?", o: ["Sethu", "Zacharia", "U. A. Khader", "T. Padmanabhan"], a: "Sethu" } },
+            { id: 80, ml: { q: "ഓസ്കാർ പുരസ്കാരത്തിന്റെ ഔദ്യോഗിക നാമം?", o: ["ഗോൾഡൻ ഗ്ലോബ്", "അക്കാദമി അവാർഡ് ഓഫ് മെറിറ്റ്", "ബ്രിട്ടീഷ് അക്കാദമി അവാർഡ്", "സ്ക്രീൻ ആക്ടേഴ്സ് ഗിൽഡ് അവാർഡ്"], a: "അക്കാദമി അവാർഡ് ഓഫ് മെറിറ്റ്" }, en: { q: "What is the official name of the Oscar award?", o: ["Golden Globe", "Academy Award of Merit", "British Academy Award", "Screen Actors Guild Award"], a: "Academy Award of Merit" } },
+            { id: 81, ml: { q: "ഭാരതരത്നം നിർത്തലാക്കിയ ഇന്ത്യൻ പ്രധാനമന്ത്രി?", o: ["ഇന്ദിരാഗാന്ധി", "മൊറാർജി ദേശായി", "ചരൺ സിംഗ്", "രാജീവ് ഗാന്ധി"], a: "മൊറാർജി ദേശായി" }, en: { q: "Which Indian Prime Minister discontinued the Bharat Ratna?", o: ["Indira Gandhi", "Morarji Desai", "Charan Singh", "Rajiv Gandhi"], a: "Morarji Desai" } },
+            { id: 82, ml: { q: "ജ്ഞാനപീഠം നേടിയ മൂന്നാമത്തെ മലയാളി?", o: ["ഒ.എൻ.വി. കുറുപ്പ്", "എം.ടി. വാസുദേവൻ നായർ", "അക്കിത്തം", "തകഴി"], a: "തകഴി" }, en: { q: "Who was the third Malayali to win the Jnanpith Award?", o: ["O. N. V. Kurup", "M. T. Vasudevan Nair", "Akkitham", "Thakazhi"], a: "Thakazhi" } },
+            { id: 83, ml: { q: "2023-ലെ മികച്ച സംവിധായകനുള്ള കേരള സംസ്ഥാന പുരസ്കാരം നേടിയത്?", o: ["മഹേഷ് നാരായണൻ", "ലിജോ ജോസ് പെല്ലിശ്ശേരി", "രതീഷ് ബാലകൃഷ്ണൻ പൊതുവാൾ", "ഖാലിദ് റഹ്മാൻ"], a: "മഹേഷ് നാരായണൻ" }, en: { q: "Who won the Kerala State Award for Best Director in 2023?", o: ["Mahesh Narayanan", "Lijo Jose Pellissery", "Ratheesh Balakrishnan Poduval", "Khalid Rahman"], a: "Mahesh Narayanan" } },
+            { id: 84, ml: { q: "നോബൽ സമ്മാനങ്ങൾ വിതരണം ചെയ്യുന്ന രാജ്യം?", o: ["സ്വീഡൻ", "നോർവേ", "ഫിൻലൻഡ്", "ഡെൻമാർക്ക്"], a: "സ്വീഡൻ" }, en: { q: "Which country distributes the Nobel Prizes?", o: ["Sweden", "Norway", "Finland", "Denmark"], a: "Sweden" } },
+            { id: 85, ml: { q: "സമാധാനത്തിനുള്ള നോബൽ സമ്മാനം വിതരണം ചെയ്യുന്ന നഗരം?", o: ["സ്റ്റോക്ക്ഹോം", "ഓസ്ലോ", "കോപ്പൻഹേഗൻ", "ഹെൽസിങ്കി"], a: "ഓസ്ലോ" }, en: { q: "In which city is the Nobel Peace Prize awarded?", o: ["Stockholm", "Oslo", "Copenhagen", "Helsinki"], a: "Oslo" } },
+            { id: 86, ml: { q: "ആദ്യത്തെ ഖേൽ രത്ന അവാർഡ് ജേതാവ്?", o: ["സച്ചിൻ ടെണ്ടുൽക്കർ", "ലിയാണ്ടർ പേസ്", "വിശ്വനാഥൻ ആനന്ദ്", "കർണം മല്ലേശ്വരി"], a: "വിശ്വനാഥൻ ആനന്ദ്" }, en: { q: "Who was the first recipient of the Khel Ratna Award?", o: ["Sachin Tendulkar", "Leander Paes", "Viswanathan Anand", "Karnam Malleswari"], a: "Viswanathan Anand" } },
+            { id: 87, ml: { q: "ഭാരതരത്നം നേടിയ ആദ്യ പ്രധാനമന്ത്രി?", o: ["ജവഹർലാൽ നെഹ്‌റു", "ലാൽ ബഹദൂർ ശാസ്ത്രി", "ഇന്ദിരാഗാന്ധി", "ഗുൽസാരിലാൽ നന്ദ"], a: "ജവഹർലാൽ നെഹ്‌റു" }, en: { q: "Who was the first Prime Minister to receive the Bharat Ratna?", o: ["Jawaharlal Nehru", "Lal Bahadur Shastri", "Indira Gandhi", "Gulzari Lal Nanda"], a: "Jawaharlal Nehru" } },
+            { id: 88, ml: { q: "2023-ലെ അന്താരാഷ്ട്ര ബുക്കർ പ്രൈസ് നേടിയത്?", o: ["ഗീതാഞ്ജലി ശ്രീ", "ഡേവിഡ് ഡിയോപ്", "ജോർജി ഗോസ്പോഡിനോവ്", "മാരികെ ലൂക്കാസ്"], a: "ജോർജി ഗോസ്പോഡിനോവ്" }, en: { q: "Who won the International Booker Prize in 2023?", o: ["Geetanjali Shree", "David Diop", "Georgi Gospodinov", "Marieke Lucas"], a: "Georgi Gospodinov" } },
+            { id: 89, ml: { q: "ഏറ്റവും കൂടുതൽ ദേശീയ പുരസ്കാരം നേടിയ നടി?", o: ["ശ്രീദേവി", "ശബാന ആസ്മി", "സ്മിത പാട്ടീൽ", "കങ്കണ റണാവത്ത്"], a: "ശബാന ആസ്മി" }, en: { q: "Which actress has won the most National Film Awards?", o: ["Sridevi", "Shabana Azmi", "Smita Patil", "Kangana Ranaut"], a: "Shabana Azmi" } },
+            { id: 90, ml: { q: "ആദ്യത്തെ ദാദാസാഹിബ് ഫാൽക്കെ അവാർഡ് ജേതാവ്?", o: ["പൃഥ്വിരാജ് കപൂർ", "ദേവികാ റാണി", "ബി.എൻ. സർക്കാർ", "സോഹ്റാബ് മോദി"], a: "ദേവികാ റാണി" }, en: { q: "Who was the first recipient of the Dadasaheb Phalke Award?", o: ["Prithviraj Kapoor", "Devika Rani", "B. N. Sircar", "Sohrab Modi"], a: "Devika Rani" } },
+            { id: 91, ml: { q: "2024-ൽ പത്മവിഭൂഷൺ ലഭിച്ച മുൻ ഉപരാഷ്ട്രപതി?", o: ["ഹമീദ് അൻസാരി", "ഭൈറോൺ സിംഗ് ശെഖാവത്ത്", "വെങ്കയ്യ നായിഡു", "കൃഷൻ കാന്ത്"], a: "വെങ്കയ്യ നായിഡു" }, en: { q: "Which former Vice President received the Padma Vibhushan in 2024?", o: ["Hamid Ansari", "Bhairon Singh Shekhawat", "Venkaiah Naidu", "Krishan Kant"], a: "Venkaiah Naidu" } },
+            { id: 92, ml: { q: "പരം വീർ ചക്ര നേടിയ ഏക വ്യോമസേനാ ഉദ്യോഗസ്ഥൻ?", o: ["അർജൻ സിംഗ്", "നിർമൽ ജിത് സിംഗ് സെഖോൺ", "പ്രതാപ് ചന്ദ്ര ലാൽ", "സുബ്രതോ മുഖർജി"], a: "നിർമൽ ജിത് സിംഗ് സെഖോൺ" }, en: { q: "Who is the only Indian Air Force officer to have received the Param Vir Chakra?", o: ["Arjan Singh", "Nirmal Jit Singh Sekhon", "Pratap Chandra Lal", "Subroto Mukerjee"], a: "Nirmal Jit Singh Sekhon" } },
+            { id: 93, ml: { q: "2023-ലെ വ്യാസ് സമ്മാൻ നേടിയത്?", o: ["അസ്ഗർ വജാഹത്ത്", "ശരദ് പഗാരെ", "ഗ്യാൻ ചതുർവേദി", "പുഷ്പ ഭാരതി"], a: "പുഷ്പ ഭാരതി" }, en: { q: "Who won the Vyas Samman for 2023?", o: ["Asghar Wajahat", "Sharad Pagare", "Gyan Chaturvedi", "Pushpa Bharati"], a: "Pushpa Bharati" } },
+            { id: 94, ml: { q: "ഏറ്റവും പ്രായം കുറഞ്ഞ നോബൽ സമ്മാന ജേതാവ്?", o: ["ലോറൻസ് ബ്രാഗ്", "നാദിയ മുറാദ്", "മലാല യൂസഫ്സായ്", "വെർണർ ഹൈസൻബർഗ്"], a: "മലാല യൂസഫ്സായ്" }, en: { q: "Who is the youngest Nobel Prize laureate?", o: ["Lawrence Bragg", "Nadia Murad", "Malala Yousafzai", "Werner Heisenberg"], a: "Malala Yousafzai" } },
+            { id: 95, ml: { q: "ആദ്യത്തെ ഓടക്കുഴൽ അവാർഡ് നേടിയ കൃതി?", o: ["അമ്പലമണി", "ഒരു ദേശത്തിന്റെ കഥ", "വിശ്വദർശനം", "ബാല്യകാലസഖി"], a: "വിശ്വദർശനം" }, en: { q: "Which work won the first Odakkuzhal Award?", o: ["Ambalamani", "Oru Desathinte Katha", "Viswadarsanam", "Balyakalasakhi"], a: "Viswadarsanam" } },
+            { id: 96, ml: { q: "2023-ലെ മികച്ച ഡോക്യുമെന്ററി ഷോർട്ട് ഫിലിമിനുള്ള ഓസ്കാർ നേടിയ ഇന്ത്യൻ ചിത്രം?", o: ["പീരിയഡ്. എൻഡ് ഓഫ് സെന്റെൻസ്.", "ദി എലിഫന്റ് വിസ്പറേഴ്സ്", "റൈറ്റിംഗ് വിത്ത് ഫയർ", "ഓൾ ദാറ്റ് ബ്രീത്ത്സ്"], a: "ദി എലിഫന്റ് വിസ്പറേഴ്സ്" }, en: { q: "Which Indian film won the Oscar for Best Documentary Short Film in 2023?", o: ["Period. End of Sentence.", "The Elephant Whisperers", "Writing with Fire", "All That Breathes"], a: "The Elephant Whisperers" } },
+            { id: 97, ml: { q: "ഭാരതരത്നം നേടിയ ആദ്യ വ്യവസായി?", o: ["ജി.ഡി. ബിർള", "ജെ.ആർ.ഡി. ടാറ്റ", "ധീരുഭായ് അംബാനി", "വാൽചന്ദ് ഹീരാചന്ദ്"], a: "ജെ.ആർ.ഡി. ടാറ്റ" }, en: { q: "Who was the first industrialist to receive the Bharat Ratna?", o: ["G. D. Birla", "J. R. D. Tata", "Dhirubhai Ambani", "Walchand Hirachand"], a: "J. R. D. Tata" } },
+            { id: 98, ml: { q: "ജ്ഞാനപീഠം നേടിയ ആദ്യ ഹിന്ദി സാഹിത്യകാരൻ?", o: ["രാംധാരി സിംഗ് ദിൻകർ", "സുമിത്രാനന്ദൻ പന്ത്", "മഹാദേവി വർമ്മ", "അज्ञेയ"], a: "സുമിത്രാനന്ദൻ പന്ത്" }, en: { q: "Who was the first Hindi writer to win the Jnanpith Award?", o: ["Ramdhari Singh Dinkar", "Sumitranandan Pant", "Mahadevi Varma", "Agyeya"], a: "Sumitranandan Pant" } },
+            { id: 99, ml: { q: "2023-ലെ ശാന്തി സ്വരൂപ് ഭട്നാഗർ പുരസ്കാരം ഏത് മേഖലയുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", o: ["സാഹിത്യം", "സംഗീതം", "ശാസ്ത്രവും സാങ്കേതികവിദ്യയും", "കായികം"], a: "ശാസ്ത്രവും സാങ്കേതികവിദ്യയും" }, en: { q: "The Shanti Swarup Bhatnagar Prize for 2023 is associated with which field?", o: ["Literature", "Music", "Science and Technology", "Sports"], a: "Science and Technology" } },
+            { id: 100, ml: { q: "രണ്ടുതവണ നോബൽ സമ്മാനം നേടിയ ആദ്യ വ്യക്തി?", o: ["ലിനസ് പോളിംഗ്", "ജോൺ ബാർഡീൻ", "ഫ്രെഡറിക് സാംഗർ", "മേരി ക്യൂറി"], a: "മേരി ക്യൂറി" }, en: { q: "Who was the first person to win the Nobel Prize twice?", o: ["Linus Pauling", "John Bardeen", "Frederick Sanger", "Marie Curie"], a: "Marie Curie" } }
+        ];
+
+        // --- App State ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedLang = 'ml';
+        let userAnswers = new Array(quizData.length + 1).fill(null); // Use a larger array to map by ID
+        let questions = [];
+
+        // --- DOM Elements ---
+        const languageScreen = document.getElementById('language-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionCounter = document.getElementById('question-counter');
+        const scoreCounter = document.getElementById('score-counter');
+        const progressBar = document.getElementById('progress-bar');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedback = document.getElementById('feedback');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        // --- Functions ---
+        function startQuiz(lang) {
+            selectedLang = lang;
+            // Shuffle questions for variety each time
+            questions = [...quizData].sort(() => Math.random() - 0.5);
+            languageScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // Reset feedback and styles
+            feedback.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            if (currentQuestionIndex >= questions.length) {
+                showResults();
+                return;
+            }
+
+            const currentQuestion = questions[currentQuestionIndex][selectedLang];
+            const questionData = questions[currentQuestionIndex];
+            
+            // Set language class for proper font rendering
+            questionText.className = `text-2xl font-bold text-center text-gray-800 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            
+            questionText.textContent = currentQuestion.q;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1}/${questions.length}`;
+            scoreCounter.textContent = `Score: ${score}`;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+
+            // Shuffle options
+            const shuffledOptions = [...currentQuestion.o].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = `btn-option w-full p-4 rounded-lg border-2 border-gray-300 text-lg font-semibold text-gray-700 bg-white hover:bg-purple-100 hover:border-purple-400 transition ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+                button.onclick = () => selectAnswer(option, button);
+                optionsContainer.appendChild(button);
+            });
+
+            updateNavButtons();
+            
+            // If user has already answered this question (by using back button), show the result
+            if (userAnswers[questionData.id] !== null) {
+                showPreviousAnswer();
+            }
+        }
+        
+        function selectAnswer(selectedOption, button) {
+            const questionData = questions[currentQuestionIndex];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            // Only update score if the question hasn't been answered correctly before
+            if (userAnswers[questionData.id] !== currentQuestion.a && selectedOption === correctAnswer) {
+                 score++;
+            } else if (userAnswers[questionData.id] === currentQuestion.a && selectedOption !== correctAnswer) {
+                 // If user changes a correct answer to a wrong one, decrement score
+                 score--;
+            }
+
+            userAnswers[questionData.id] = selectedOption;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true; // Disable all options after one is selected
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+
+            if (selectedOption === correctAnswer) {
+                playCorrectSound();
+                feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                feedback.className = 'mt-4 text-center font-bold text-lg text-green-600';
+            } else {
+                playWrongSound();
+                button.classList.add('wrong');
+                feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                feedback.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+            }
+            
+            scoreCounter.textContent = `Score: ${score}`;
+        }
+
+        function showPreviousAnswer() {
+            const questionData = questions[currentQuestionIndex];
+            const selectedOption = userAnswers[questionData.id];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+                if (btn.textContent === selectedOption && selectedOption !== correctAnswer) {
+                    btn.classList.add('wrong');
+                }
+            });
+
+            if (selectedOption !== correctAnswer) {
+                 feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                 feedback.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+            } else {
+                 feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                 feedback.className = 'mt-4 text-center font-bold text-lg text-green-600';
+            }
+        }
+
+        function updateNavButtons() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', backBtn.disabled);
+            
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.textContent = selectedLang === 'ml' ? 'പൂർത്തിയാക്കുക' : 'Finish';
+            } else {
+                nextBtn.textContent = selectedLang === 'ml' ? 'അടുത്തത് >' : 'Next >';
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            const percentage = Math.round((score / questions.length) * 100);
+            const resultTitle = document.getElementById('result-title');
+            const finalScore = document.getElementById('final-score');
+            const resultMessage = document.getElementById('result-message');
+
+            resultTitle.className = `text-4xl font-bold mb-4 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            finalScore.className = `text-2xl mb-6 text-gray-700 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            resultMessage.className = `text-xl mb-8 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+
+            if (selectedLang === 'ml') {
+                resultTitle.textContent = 'ഫലം';
+                finalScore.textContent = `നിങ്ങളുടെ സ്കോർ: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'അടിപൊളി! നിങ്ങൾ മിടുക്കനാണ്/മിടുക്കിയാണ്.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'നന്നായിരിക്കുന്നു! ഇനിയും മെച്ചപ്പെടുത്താം.';
+                } else {
+                    resultMessage.textContent = 'സാരമില്ല, വീണ്ടും ശ്രമിക്കുക!';
+                }
+            } else {
+                resultTitle.textContent = 'Results';
+                finalScore.textContent = `Your Score: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'Excellent! You did a great job.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'Good effort! Keep practicing.';
+                } else {
+                    resultMessage.textContent = 'Don\'t worry, try again!';
+                }
+            }
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers.fill(null);
+            questions = [];
+            resultScreen.classList.add('hidden');
+            languageScreen.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
+

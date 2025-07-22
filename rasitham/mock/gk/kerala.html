@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>കേരള ക്വിസ്</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .malayalam {
+            font-family: 'Manjari', sans-serif;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-option:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+        .correct {
+            animation: pulse-green 1s;
+            background-color: #10b981 !important; /* Emerald-500 */
+            color: white !important;
+            border-color: #059669 !important; /* Emerald-600 */
+        }
+        .wrong {
+            animation: shake 0.5s;
+            background-color: #ef4444 !important; /* Red-500 */
+            color: white !important;
+            border-color: #dc2626 !important; /* Red-600 */
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-400 to-teal-600 min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Language Selection Screen -->
+        <div id="language-screen" class="text-center text-white p-8 rounded-2xl shadow-2xl card">
+            <h1 class="text-4xl font-bold mb-2 malayalam">കേരള ക്വിസ്</h1>
+            <h2 class="text-2xl font-bold mb-8">Kerala Quiz</h2>
+            <p class="mb-4 malayalam">ഭാഷ തിരഞ്ഞെടുക്കുക:</p>
+            <p class="mb-8">Select Language:</p>
+            <div class="flex flex-col space-y-4">
+                <button onclick="startQuiz('ml')" class="bg-white text-teal-600 font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-teal-50 transition-transform transform hover:scale-105 malayalam">മലയാളം</button>
+                <button onclick="startQuiz('en')" class="bg-white text-green-600 font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-green-50 transition-transform transform hover:scale-105">English</button>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden p-6 bg-white/90 rounded-2xl shadow-2xl card">
+            <div id="header" class="flex justify-between items-center mb-4">
+                <div id="question-counter" class="text-lg font-semibold text-gray-700"></div>
+                <div id="score-counter" class="text-lg font-semibold text-green-600"></div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-teal-500 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <div id="question-container" class="mb-6">
+                <p id="question-text" class="text-2xl font-bold text-center text-gray-800" style="min-height: 100px;"></p>
+            </div>
+            <div id="options-container" class="grid grid-cols-1 gap-4">
+                <!-- Options will be dynamically inserted here -->
+            </div>
+            <div id="feedback" class="mt-4 text-center font-bold text-lg" style="min-height: 30px;"></div>
+            <div class="flex justify-between mt-8">
+                <button id="back-btn" onclick="prevQuestion()" class="bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg shadow hover:bg-gray-400 transition-transform transform hover:scale-105">&lt; Back</button>
+                <button id="next-btn" onclick="nextQuestion()" class="bg-teal-500 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-teal-600 transition-transform transform hover:scale-105">Next &gt;</button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center p-8 bg-white/90 rounded-2xl shadow-2xl card">
+            <h2 id="result-title" class="text-4xl font-bold mb-4 text-gray-800"></h2>
+            <p id="final-score" class="text-2xl mb-6 text-gray-700"></p>
+            <p id="result-message" class="text-xl mb-8"></p>
+            <button onclick="restartQuiz()" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg hover:bg-green-700 transition-transform transform hover:scale-105">
+                വീണ്ടും കളിക്കാം / Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Sound Synthesis ---
+        const correctSound = new Tone.Synth({
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
+        }).toDestination();
+
+        const wrongSound = new Tone.Synth({
+            oscillator: { type: 'square' },
+            envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.2 }
+        }).toDestination();
+
+        function playCorrectSound() {
+            Tone.start();
+            correctSound.triggerAttackRelease("C5", "8n");
+        }
+
+        function playWrongSound() {
+            Tone.start();
+            wrongSound.triggerAttackRelease("C3", "8n");
+        }
+
+        // --- Quiz Data (100 Questions about Kerala) ---
+        const quizData = [
+            { id: 1, ml: { q: "കേരളപ്പിറവി ദിനമായി ആചരിക്കുന്നത് എന്നാണ്?", o: ["നവംബർ 1", "ഒക്ടോബർ 2", "ഓഗസ്റ്റ് 15", "ജനുവരി 26"], a: "നവംബർ 1" }, en: { q: "When is Kerala Piravi (Kerala Formation Day) celebrated?", o: ["November 1", "October 2", "August 15", "January 26"], a: "November 1" } },
+            { id: 2, ml: { q: "കേരളത്തിന്റെ തലസ്ഥാനം എവിടെയാണ്?", o: ["കൊച്ചി", "കോഴിക്കോട്", "തൃശൂർ", "തിരുവനന്തപുരം"], a: "തിരുവനന്തപുരം" }, en: { q: "What is the capital of Kerala?", o: ["Kochi", "Kozhikode", "Thrissur", "Thiruvananthapuram"], a: "Thiruvananthapuram" } },
+            { id: 3, ml: { q: "കേരളത്തിന്റെ സാംസ്കാരിക തലസ്ഥാനം ഏത്?", o: ["തിരുവനന്തപുരം", "എറണാകുളം", "തൃശൂർ", "കോട്ടയം"], a: "തൃശൂർ" }, en: { q: "Which is the cultural capital of Kerala?", o: ["Thiruvananthapuram", "Ernakulam", "Thrissur", "Kottayam"], a: "Thrissur" } },
+            { id: 4, ml: { q: "കേരള ഹൈക്കോടതി സ്ഥിതി ചെയ്യുന്നതെവിടെ?", o: ["തിരുവനന്തപുരം", "എറണാകുളം", "തൃശൂർ", "കൊല്ലം"], a: "എറണാകുളം" }, en: { q: "Where is the Kerala High Court located?", o: ["Thiruvananthapuram", "Ernakulam", "Thrissur", "Kollam"], a: "Ernakulam" } },
+            { id: 5, ml: { q: "കേരളത്തിൽ കടൽത്തീരം ഇല്ലാത്ത ജില്ലകളുടെ എണ്ണം?", o: ["4", "5", "6", "3"], a: "5" }, en: { q: "How many districts in Kerala do not have a coastline?", o: ["4", "5", "6", "3"], a: "5" } },
+            { id: 6, ml: { q: "നീലക്കുറിഞ്ഞി പൂക്കുന്ന പ്രദേശം കേരളത്തിൽ എവിടെയാണ്?", o: ["വയനാട്", "മൂന്നാർ", "തേക്കടി", "ഗവി"], a: "മൂന്നാർ" }, en: { q: "Where in Kerala does the Neelakurinji flower bloom?", o: ["Wayanad", "Munnar", "Thekkady", "Gavi"], a: "Munnar" } },
+            { id: 7, ml: { q: "നെടുമ്പാശ്ശേരി വിമാനത്താവളം ഏത് ജില്ലയിലാണ്?", o: ["തൃശൂർ", "കോട്ടയം", "എറണാകുളം", "ആലപ്പുഴ"], a: "എറണാകുളം" }, en: { q: "In which district is the Nedumbassery Airport located?", o: ["Thrissur", "Kottayam", "Ernakulam", "Alappuzha"], a: "Ernakulam" } },
+            { id: 8, ml: { q: "ശ്രീനാരായണ ഗുരു ജനിച്ചത് എവിടെ?", o: ["വർക്കല", "അരുവിപ്പുറം", "ചെമ്പഴന്തി", "ശിവഗിരി"], a: "ചെമ്പഴന്തി" }, en: { q: "Where was Sree Narayana Guru born?", o: ["Varkala", "Aruvippuram", "Chempazhanthy", "Sivagiri"], a: "Chempazhanthy" } },
+            { id: 9, ml: { q: "അയ്യങ്കാളി ജനിച്ചത് എവിടെ?", o: ["വെങ്ങാനൂർ", "വർക്കല", "നെയ്യാറ്റിൻകര", "കഴക്കൂട്ടം"], a: "വെങ്ങാനൂർ" }, en: { q: "Where was Ayyankali born?", o: ["Venganoor", "Varkala", "Neyyattinkara", "Kazhakoottam"], a: "Venganoor" } },
+            { id: 10, ml: { q: "കേരളത്തിലെ ജില്ലകളുടെ എണ്ണം?", o: ["12", "13", "14", "15"], a: "14" }, en: { q: "How many districts are there in Kerala?", o: ["12", "13", "14", "15"], a: "14" } },
+            { id: 11, ml: { q: "കേരളത്തിൽ അവസാനമായി രൂപീകരിച്ച ജില്ല ഏതാണ്?", o: ["പത്തനംതിട്ട", "ഇടുക്കി", "വയനാട്", "കാസർഗോഡ്"], a: "കാസർഗോഡ്" }, en: { q: "Which is the last district formed in Kerala?", o: ["Pathanamthitta", "Idukki", "Wayanad", "Kasaragod"], a: "Kasaragod" } },
+            { id: 12, ml: { q: "കേരളം നിലവിൽ വന്ന വർഷം?", o: ["1947", "1950", "1956", "1960"], a: "1956" }, en: { q: "In which year was the state of Kerala formed?", o: ["1947", "1950", "1956", "1960"], a: "1956" } },
+            { id: 13, ml: { q: "കേരളം നിലവിൽ വന്നപ്പോൾ എത്ര ജില്ലകളാണ് ഉണ്ടായിരുന്നത്?", o: ["5", "7", "9", "10"], a: "5" }, en: { q: "How many districts were there when Kerala was formed?", o: ["5", "7", "9", "10"], a: "5" } },
+            { id: 14, ml: { q: "കേരളത്തിന്റെ നെല്ലറ എന്ന് വിശേഷിപ്പിക്കപ്പെടുന്ന സ്ഥലം?", o: ["പാലക്കാട്", "ആലപ്പുഴ", "കുട്ടനാട്", "തൃശൂർ"], a: "കുട്ടനാട്" }, en: { q: "Which place is known as the 'Rice Bowl of Kerala'?", o: ["Palakkad", "Alappuzha", "Kuttanad", "Thrissur"], a: "Kuttanad" } },
+            { id: 15, ml: { q: "കേരളത്തിന്റെ നെല്ലറ എന്നറിയപ്പെടുന്ന ജില്ല?", o: ["ആലപ്പുഴ", "തൃശൂർ", "പാലക്കാട്", "കൊല്ലം"], a: "പാലക്കാട്" }, en: { q: "Which district is known as the 'Granary of Kerala'?", o: ["Alappuzha", "Thrissur", "Palakkad", "Kollam"], a: "Palakkad" } },
+            { id: 16, ml: { q: "കേരളത്തിൽ നക്ഷത്ര ആമകൾക്ക് പേരുകേട്ട സ്ഥലം?", o: ["തേക്കടി", "പറമ്പിക്കുളം", "ചിന്നാർ", "ഇരവികുളം"], a: "ചിന്നാർ" }, en: { q: "Which place in Kerala is famous for star tortoises?", o: ["Thekkady", "Parambikulam", "Chinnar", "Iravikulam"], a: "Chinnar" } },
+            { id: 17, ml: { q: "എൻഡോസൾഫാൻ ദുരിതബാധിതർക്ക് വേണ്ടി സമരം ചെയ്ത സാമൂഹ്യ പ്രവർത്തക?", o: ["മേധാ പട്കർ", "അരുന്ധതി റോയ്", "ദയാഭായി", "സാറാ ജോസഫ്"], a: "ദയാഭായി" }, en: { q: "Which social activist fought for the Endosulfan victims?", o: ["Medha Patkar", "Arundhati Roy", "Daya Bai", "Sarah Joseph"], a: "Daya Bai" } },
+            { id: 18, ml: { q: "കേരളസിംഹം എന്നറിയപ്പെട്ടിരുന്നത്?", o: ["വേലുത്തമ്പി ദളവ", "കുഞ്ഞാലി മരക്കാർ", "പഴശ്ശിരാജ", "ശക്തൻ തമ്പുരാൻ"], a: "പഴശ്ശിരാജ" }, en: { q: "Who was known as the 'Lion of Kerala'?", o: ["Velu Thampi Dalawa", "Kunjali Marakkar", "Pazhassi Raja", "Sakthan Thampuran"], a: "Pazhassi Raja" } },
+            { id: 19, ml: { q: "കേരളത്തിലെ കായലുകളുടെ എണ്ണം?", o: ["24", "34", "44", "54"], a: "34" }, en: { q: "How many backwaters (Kayals) are there in Kerala?", o: ["24", "34", "44", "54"], a: "34" } },
+            { id: 20, ml: { q: "കേരളത്തിന്റെ ആദ്യത്തെ വിദ്യാഭ്യാസ മന്ത്രി?", o: ["സി. അച്യുതമേനോൻ", "പട്ടം താണുപിള്ള", "ജോസഫ് മുണ്ടശ്ശേരി", "ഇ.എം.എസ്"], a: "ജോസഫ് മുണ്ടശ്ശേരി" }, en: { q: "Who was the first Education Minister of Kerala?", o: ["C. Achutha Menon", "Pattom Thanu Pillai", "Joseph Mundassery", "E. M. S."], a: "Joseph Mundassery" } },
+            { id: 21, ml: { q: "കേരളത്തിന്റെ സംസ്ഥാന ശലഭം?", o: ["കൃഷ്ണശലഭം", "ചുട്ടിക്കറുപ്പൻ", "ബുദ്ധമയൂരി", "നാരക ശലഭം"], a: "ബുദ്ധമയൂരി" }, en: { q: "What is the state butterfly of Kerala?", o: ["Common Mormon", "Common Banded Peacock", "Malabar Banded Peacock (Buddha Mayoori)", "Lime Butterfly"], a: "Malabar Banded Peacock (Buddha Mayoori)" } },
+            { id: 22, ml: { q: "കിഴക്കിന്റെ വെനീസ് എന്നറിയപ്പെടുന്നത്?", o: ["കൊച്ചി", "ആലപ്പുഴ", "കൊല്ലം", "കോഴിക്കോട്"], a: "ആലപ്പുഴ" }, en: { q: "Which place is known as the 'Venice of the East'?", o: ["Kochi", "Alappuzha", "Kollam", "Kozhikode"], a: "Alappuzha" } },
+            { id: 23, ml: { q: "കേരളത്തിലെ ആദ്യ പക്ഷി സങ്കേതം എവിടെയാണ്?", o: ["കുമരകം", "മംഗളവനം", "തട്ടേക്കാട്", "ചിന്നാർ"], a: "തട്ടേക്കാട്" }, en: { q: "Where is the first bird sanctuary in Kerala?", o: ["Kumarakom", "Mangalavanam", "Thattekad", "Chinnar"], a: "Thattekad" } },
+            { id: 24, ml: { q: "കേരളത്തിലെ ഏറ്റവും വലിയ ജില്ല (വിസ്തീർണ്ണം)?", o: ["ഇടുക്കി", "മലപ്പുറം", "പാലക്കാട്", "എറണാകുളം"], a: "പാലക്കാട്" }, en: { q: "Which is the largest district in Kerala (by area)?", o: ["Idukki", "Malappuram", "Palakkad", "Ernakulam"], a: "Palakkad" } },
+            { id: 25, ml: { q: "കേരളത്തിലെ ഏറ്റവും ചെറിയ ജില്ല (വിസ്തീർണ്ണം)?", o: ["കാസർഗോഡ്", "പത്തനംതിട്ട", "ആലപ്പുഴ", "വയനാട്"], a: "ആലപ്പുഴ" }, en: { q: "Which is the smallest district in Kerala (by area)?", o: ["Kasaragod", "Pathanamthitta", "Alappuzha", "Wayanad"], a: "Alappuzha" } },
+            { id: 26, ml: { q: "അക്ഷയ പദ്ധതിക്ക് തുടക്കം കുറിച്ച ജില്ല?", o: ["കോഴിക്കോട്", "മലപ്പുറം", "എറണാകുളം", "കണ്ണൂർ"], a: "മലപ്പുറം" }, en: { q: "In which district was the Akshaya project launched?", o: ["Kozhikode", "Malappuram", "Ernakulam", "Kannur"], a: "Malappuram" } },
+            { id: 27, ml: { q: "കേരളത്തിന്റെ തെക്കേ അറ്റത്തെ ജില്ല?", o: ["കൊല്ലം", "പത്തനംതിട്ട", "തിരുവനന്തപുരം", "കന്യാകുമാരി"], a: "തിരുവനന്തപുരം" }, en: { q: "Which is the southernmost district of Kerala?", o: ["Kollam", "Pathanamthitta", "Thiruvananthapuram", "Kanyakumari"], a: "Thiruvananthapuram" } },
+            { id: 28, ml: { q: "കേരളത്തിന്റെ വടക്കേ അറ്റത്തെ ജില്ല?", o: ["കണ്ണൂർ", "കോഴിക്കോട്", "കാസർഗോഡ്", "വയനാട്"], a: "കാസർഗോഡ്" }, en: { q: "Which is the northernmost district of Kerala?", o: ["Kannur", "Kozhikode", "Kasaragod", "Wayanad"], a: "Kasaragod" } },
+            { id: 29, ml: { q: "കേരളത്തിലെ നദികളുടെ എണ്ണം?", o: ["34", "41", "44", "51"], a: "44" }, en: { q: "How many rivers are there in Kerala?", o: ["34", "41", "44", "51"], a: "44" } },
+            { id: 30, ml: { q: "ഏറ്റവും കൂടുതൽ ഭാഷകൾ സംസാരിക്കുന്ന ജില്ല?", o: ["വയനാട്", "ഇടുക്കി", "പാലക്കാട്", "കാസർഗോഡ്"], a: "കാസർഗോഡ്" }, en: { q: "Which district has the most number of spoken languages?", o: ["Wayanad", "Idukki", "Palakkad", "Kasaragod"], a: "Kasaragod" } },
+            { id: 31, ml: { q: "കേരളത്തിലെ റോക്കറ്റ് വിക്ഷേപണ കേന്ദ്രം?", o: ["ശ്രീഹരിക്കോട്ട", "തുമ്പ", "വീലർ ദ്വീപ്", "ബാലസോർ"], a: "തുമ്പ" }, en: { q: "Where is the rocket launching station in Kerala?", o: ["Sriharikota", "Thumba", "Wheeler Island", "Balasore"], a: "Thumba" } },
+            { id: 32, ml: { q: "കുമരകം പക്ഷി സങ്കേതം ഏത് ജില്ലയിലാണ്?", o: ["ആലപ്പുഴ", "എറണാകുളം", "കോട്ടയം", "പത്തനംതിട്ട"], a: "കോട്ടയം" }, en: { q: "In which district is the Kumarakom Bird Sanctuary?", o: ["Alappuzha", "Ernakulam", "Kottayam", "Pathanamthitta"], a: "Kottayam" } },
+            { id: 33, ml: { q: "തുഞ്ചൻപറമ്പ് ഏത് ജില്ലയിലാണ്?", o: ["പാലക്കാട്", "തൃശൂർ", "മലപ്പുറം", "കോഴിക്കോട്"], a: "മലപ്പുറം" }, en: { q: "In which district is Thunchan Parambu located?", o: ["Palakkad", "Thrissur", "Malappuram", "Kozhikode"], a: "Malappuram" } },
+            { id: 34, ml: { q: "അക്ഷരനഗരം എന്നറിയപ്പെടുന്നത്?", o: ["തൃശൂർ", "കോട്ടയം", "എറണാകുളം", "തിരുവനന്തപുരം"], a: "കോട്ടയം" }, en: { q: "Which city is known as the 'City of Letters'?", o: ["Thrissur", "Kottayam", "Ernakulam", "Thiruvananthapuram"], a: "Kottayam" } },
+            { id: 35, ml: { q: "സൈലന്റ് വാലി ദേശീയോദ്യാനം ഏത് ജില്ലയിലാണ്?", o: ["വയനാട്", "ഇടുക്കി", "പാലക്കാട്", "മലപ്പുറം"], a: "പാലക്കാട്" }, en: { q: "In which district is the Silent Valley National Park located?", o: ["Wayanad", "Idukki", "Palakkad", "Malappuram"], a: "Palakkad" } },
+            { id: 36, ml: { q: "രണ്ട് സംസ്ഥാനങ്ങളുമായി അതിർത്തി പങ്കിടുന്ന കേരളത്തിലെ ഏക ജില്ല?", o: ["പാലക്കാട്", "ഇടുക്കി", "വയനാട്", "കാസർഗോഡ്"], a: "വയനാട്" }, en: { q: "Which is the only district in Kerala that shares a border with two states?", o: ["Palakkad", "Idukki", "Wayanad", "Kasaragod"], a: "Wayanad" } },
+            { id: 37, ml: { q: "കേരളത്തിൽ കിഴക്കോട്ട് ഒഴുകുന്ന നദികളിൽ ഏറ്റവും വലുത്?", o: ["ഭവാനി", "പാമ്പാർ", "കബനി", "നെയ്യാർ"], a: "കബനി" }, en: { q: "Which is the largest of the east-flowing rivers in Kerala?", o: ["Bhavani", "Pambar", "Kabani", "Neyyar"], a: "Kabani" } },
+            { id: 38, ml: { q: "കേരളത്തിലെ ഏറ്റവും നീളം കൂടിയ നദി?", o: ["ഭാരതപ്പുഴ", "പമ്പ", "ചാലിയാർ", "പെരിയാർ"], a: "പെരിയാർ" }, en: { q: "Which is the longest river in Kerala?", o: ["Bharathappuzha", "Pamba", "Chaliyar", "Periyar"], a: "Periyar" } },
+            { id: 39, ml: { q: "കേരളത്തിലെ ഏറ്റവും വലിയ കായൽ?", o: ["അഷ്ടമുടി കായൽ", "ശാസ്താംകോട്ട കായൽ", "വേമ്പനാട്ട് കായൽ", "പുന്നമട കായൽ"], a: "വേമ്പനാട്ട് കായൽ" }, en: { q: "Which is the largest lake in Kerala?", o: ["Ashtamudi Lake", "Sasthamkotta Lake", "Vembanad Lake", "Punnamada Lake"], a: "Vembanad Lake" } },
+            { id: 40, ml: { q: "കേരളത്തിലെ ഏറ്റവും ഉയരം കൂടിയ കൊടുമുടി?", o: ["അഗസ്ത്യമല", "മീശപ്പുലിമല", "ആനമുടി", "ചെമ്പ്ര കൊടുമുടി"], a: "ആനമുടി" }, en: { q: "Which is the highest peak in Kerala?", o: ["Agastyamala", "Meesapulimala", "Anamudi", "Chembra Peak"], a: "Anamudi" } },
+            { id: 41, ml: { q: "കേരളത്തിന്റെ സംസ്ഥാന മൃഗം?", o: ["കടുവ", "സിംഹം", "ആന", "വരയാട്"], a: "ആന" }, en: { q: "What is the state animal of Kerala?", o: ["Tiger", "Lion", "Elephant", "Nilgiri Tahr"], a: "Elephant" } },
+            { id: 42, ml: { q: "കേരളത്തിന്റെ സംസ്ഥാന വൃക്ഷം?", o: ["മാവ്", "പ്ലാവ്", "തെങ്ങ്", "ആൽ"], a: "തെങ്ങ്" }, en: { q: "What is the state tree of Kerala?", o: ["Mango Tree", "Jackfruit Tree", "Coconut Tree", "Banyan Tree"], a: "Coconut Tree" } },
+            { id: 43, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ മുഖ്യമന്ത്രി?", o: ["പട്ടം താണുപിള്ള", "സി. അച്യുതമേനോൻ", "ഇ.എം.എസ്. നമ്പൂതിരിപ്പാട്", "ആർ. ശങ്കർ"], a: "ഇ.എം.എസ്. നമ്പൂതിരിപ്പാട്" }, en: { q: "Who was the first Chief Minister of Kerala?", o: ["Pattom Thanu Pillai", "C. Achutha Menon", "E. M. S. Namboodiripad", "R. Sankar"], a: "E. M. S. Namboodiripad" } },
+            { id: 44, ml: { q: "മലയാളത്തിലെ ആദ്യത്തെ സിനിമ?", o: ["ബാലൻ", "വിഗതകുമാരൻ", "മാർത്താണ്ഡവർമ്മ", "നീലക്കുയിൽ"], a: "വിഗതകുമാരൻ" }, en: { q: "What was the first Malayalam movie?", o: ["Balan", "Vigathakumaran", "Marthandavarma", "Neelakuyil"], a: "Vigathakumaran" } },
+            { id: 45, ml: { q: "ജ്ഞാനപീഠ പുരസ്കാരം നേടിയ ആദ്യ മലയാളി?", o: ["തകഴി", "എസ്.കെ. പൊറ്റെക്കാട്ട്", "എം.ടി. വാസുദേവൻ നായർ", "ജി. ശങ്കരക്കുറുപ്പ്"], a: "ജി. ശങ്കരക്കുറുപ്പ്" }, en: { q: "Who was the first Malayali to win the Jnanpith Award?", o: ["Thakazhi", "S. K. Pottekkatt", "M. T. Vasudevan Nair", "G. Sankara Kurup"], a: "G. Sankara Kurup" } },
+            { id: 46, ml: { q: "കേരളത്തിലെ പ്രധാന വിളവെടുപ്പ് ഉത്സവം?", o: ["വിഷു", "ഓണം", "തൃശൂർ പൂരം", "ക്രിസ്മസ്"], a: "ഓണം" }, en: { q: "What is the main harvest festival of Kerala?", o: ["Vishu", "Onam", "Thrissur Pooram", "Christmas"], a: "Onam" } },
+            { id: 47, ml: { q: "തൃശൂർ പൂരത്തിന് പേരുകേട്ട ക്ഷേത്രം?", o: ["ഗുരുവായൂർ ക്ഷേത്രം", "വടക്കുംനാഥൻ ക്ഷേത്രം", "കൊടുങ്ങല്ലൂർ ക്ഷേത്രം", "പാറമേക്കാവ് ക്ഷേത്രം"], a: "വടക്കുംനാഥൻ ക്ഷേത്രം" }, en: { q: "Which temple is famous for Thrissur Pooram?", o: ["Guruvayur Temple", "Vadakkunnathan Temple", "Kodungallur Temple", "Paramekkavu Temple"], a: "Vadakkunnathan Temple" } },
+            { id: 48, ml: { q: "കേരള ഗാന്ധി എന്നറിയപ്പെടുന്നത്?", o: ["എ.കെ. ഗോപാലൻ", "കെ. കേളപ്പൻ", "മന്നത്ത് പത്മനാഭൻ", "ഗാന്ധിജി"], a: "കെ. കേളപ്പൻ" }, en: { q: "Who is known as 'Kerala Gandhi'?", o: ["A. K. Gopalan", "K. Kelappan", "Mannathu Padmanabhan", "Gandhiji"], a: "K. Kelappan" } },
+            { id: 49, ml: { q: "മലയാള ഭാഷയുടെ പിതാവ്?", o: ["കുഞ്ചൻ നമ്പ്യാർ", "വള്ളത്തോൾ", "തുഞ്ചത്തെഴുത്തച്ഛൻ", "ഉള്ളൂർ"], a: "തുഞ്ചത്തെഴുത്തച്ഛൻ" }, en: { q: "Who is known as the father of the Malayalam language?", o: ["Kunchan Nambiar", "Vallathol", "Thunchaththu Ezhuthachan", "Ulloor"], a: "Thunchaththu Ezhuthachan" } },
+            { id: 50, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ ദേശീയോദ്യാനം?", o: ["സൈലന്റ് വാലി", "പെരിയാർ", "ഇരവികുളം", "മതികെട്ടാൻചോല"], a: "ഇരവികുളം" }, en: { q: "Which is the first national park in Kerala?", o: ["Silent Valley", "Periyar", "Iravikulam", "Mathikettan Shola"], a: "Iravikulam" } },
+            { id: 51, ml: { q: "ദൈവത്തിന്റെ സ്വന്തം നാട് എന്നറിയപ്പെടുന്നത്?", o: ["തമിഴ്നാട്", "ഗോവ", "കേരളം", "കർണാടക"], a: "കേരളം" }, en: { q: "Which state is known as 'God's Own Country'?", o: ["Tamil Nadu", "Goa", "Kerala", "Karnataka"], a: "Kerala" } },
+            { id: 52, ml: { q: "അറബിക്കടലിന്റെ റാണി എന്നറിയപ്പെടുന്നത്?", o: ["ആലപ്പുഴ", "കോഴിക്കോട്", "കൊച്ചി", "കൊല്ലം"], a: "കൊച്ചി" }, en: { q: "Which city is known as the 'Queen of the Arabian Sea'?", o: ["Alappuzha", "Kozhikode", "Kochi", "Kollam"], a: "Kochi" } },
+            { id: 53, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ റെയിൽ പാത?", o: ["ഷൊർണൂർ-എറണാകുളം", "ബേപ്പൂർ-തിരൂർ", "കൊല്ലം-ചെങ്കോട്ട", "തിരുവനന്തപുരം-കൊല്ലം"], a: "ബേപ്പൂർ-തിരൂർ" }, en: { q: "What was the first railway line in Kerala?", o: ["Shoranur-Ernakulam", "Beypore-Tirur", "Kollam-Sengottai", "Thiruvananthapuram-Kollam"], a: "Beypore-Tirur" } },
+            { id: 54, ml: { q: "കേരള സാഹിത്യ അക്കാദമിയുടെ ആസ്ഥാനം?", o: ["കോട്ടയം", "തൃശൂർ", "തിരുവനന്തപുരം", "കോഴിക്കോട്"], a: "തൃശൂർ" }, en: { q: "Where is the headquarters of Kerala Sahitya Akademi?", o: ["Kottayam", "Thrissur", "Thiruvananthapuram", "Kozhikode"], a: "Thrissur" } },
+            { id: 55, ml: { q: "ഇന്ത്യയുടെ മുൻ രാഷ്ട്രപതിയായ മലയാളി?", o: ["വി.വി. ഗിരി", "കെ.ആർ. നാരായണൻ", "എ.പി.ജെ. അബ്ദുൾ കലാം", "പ്രണബ് മുഖർജി"], a: "കെ.ആർ. നാരായണൻ" }, en: { q: "Who was the Malayali who became the President of India?", o: ["V. V. Giri", "K. R. Narayanan", "A. P. J. Abdul Kalam", "Pranab Mukherjee"], a: "K. R. Narayanan" } },
+            { id: 56, ml: { q: "പ്രസിദ്ധമായ ആറന്മുള കണ്ണാടി നിർമ്മിക്കുന്ന ജില്ല?", o: ["ആലപ്പുഴ", "കൊല്ലം", "കോട്ടയം", "പത്തനംതിട്ട"], a: "പത്തനംതിട്ട" }, en: { q: "In which district is the famous Aranmula mirror made?", o: ["Alappuzha", "Kollam", "Kottayam", "Pathanamthitta"], a: "Pathanamthitta" } },
+            { id: 57, ml: { q: "കേരള കലാമണ്ഡലം സ്ഥാപിച്ചത് ആര്?", o: ["ഉള്ളൂർ", "കുമാരനാശാൻ", "വള്ളത്തോൾ", "എഴുത്തച്ഛൻ"], a: "വള്ളത്തോൾ" }, en: { q: "Who founded the Kerala Kalamandalam?", o: ["Ulloor", "Kumaran Asan", "Vallathol", "Ezhuthachan"], a: "Vallathol" } },
+            { id: 58, ml: { q: "കേരളത്തിലെ ഏക ഡ്രൈവ്-ഇൻ ബീച്ച്?", o: ["കോവളം", "വർക്കല", "ചെറായി", "മുഴപ്പിലങ്ങാട്"], a: "മുഴപ്പിലങ്ങാട്" }, en: { q: "Which is the only drive-in beach in Kerala?", o: ["Kovalam", "Varkala", "Cherai", "Muzhappilangad"], a: "Muzhappilangad" } },
+            { id: 59, ml: { q: "മലയാളത്തിലെ ആദ്യത്തെ ശബ്ദ സിനിമ?", o: ["വിഗതകുമാരൻ", "നീലക്കുയിൽ", "ബാലൻ", "ജീവിത നൗക"], a: "ബാലൻ" }, en: { q: "What was the first talkie (sound film) in Malayalam?", o: ["Vigathakumaran", "Neelakuyil", "Balan", "Jeevitha Nouka"], a: "Balan" } },
+            { id: 60, ml: { q: "സൈലന്റ് വാലിയിലൂടെ ഒഴുകുന്ന പുഴ?", o: ["പെരിയാർ", "ചാലക്കുടിപ്പുഴ", "കുന്തിപ്പുഴ", "ഭവാനിപ്പുഴ"], a: "കുന്തിപ്പുഴ" }, en: { q: "Which river flows through the Silent Valley?", o: ["Periyar", "Chalakudy River", "Kunthipuzha", "Bhavani River"], a: "Kunthipuzha" } },
+            { id: 61, ml: { q: "കേരളത്തിലെ ഏറ്റവും വലിയ ശുദ്ധജല തടാകം?", o: ["വേമ്പനാട്", "അഷ്ടമുടി", "പൂക്കോട്", "ശാസ്താംകോട്ട"], a: "ശാസ്താംകോട്ട" }, en: { q: "Which is the largest freshwater lake in Kerala?", o: ["Vembanad", "Ashtamudi", "Pookode", "Sasthamkotta"], a: "Sasthamkotta" } },
+            { id: 62, ml: { q: "'ഒരു ദേശത്തിന്റെ കഥ' എന്ന നോവൽ എഴുതിയത്?", o: ["തകഴി", "എം.ടി", "ബഷീർ", "എസ്.കെ. പൊറ്റെക്കാട്ട്"], a: "എസ്.കെ. പൊറ്റെക്കാട്ട്" }, en: { q: "Who wrote the novel 'Oru Desathinte Katha'?", o: ["Thakazhi", "M.T.", "Basheer", "S. K. Pottekkatt"], a: "S. K. Pottekkatt" } },
+            { id: 63, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ മെട്രോ റെയിൽ?", o: ["തിരുവനന്തപുരം", "കൊച്ചി", "കോഴിക്കോട്", "തൃശൂർ"], a: "കൊച്ചി" }, en: { q: "Where is the first metro rail in Kerala?", o: ["Thiruvananthapuram", "Kochi", "Kozhikode", "Thrissur"], a: "Kochi" } },
+            { id: 64, ml: { q: "ഇന്ത്യയിലെ ആദ്യത്തെ സമ്പൂർണ്ണ സാക്ഷരതാ നഗരം?", o: ["കോട്ടയം", "എറണാകുളം", "പാലക്കാട്", "അഹമ്മദാബാദ്"], a: "കോട്ടയം" }, en: { q: "Which is the first fully literate town in India?", o: ["Kottayam", "Ernakulam", "Palakkad", "Ahmedabad"], a: "Kottayam" } },
+            { id: 65, ml: { q: "'ചെമ്മീൻ' എന്ന സിനിമ സംവിധാനം ചെയ്തത്?", o: ["അടൂർ ഗോപാലകൃഷ്ണൻ", "രാമു കാര്യാട്ട്", "ഭരതൻ", "പത്മരാജൻ"], a: "രാമു കാര്യാട്ട്" }, en: { q: "Who directed the movie 'Chemmeen'?", o: ["Adoor Gopalakrishnan", "Ramu Kariat", "Bharathan", "Padmarajan"], a: "Ramu Kariat" } },
+            { id: 66, ml: { q: "കേരളത്തിലെ ഏറ്റവും വലിയ റെയിൽവേ സ്റ്റേഷൻ (ജംഗ്ഷൻ)?", o: ["എറണാകുളം", "തിരുവനന്തപുരം", "ഷൊർണൂർ", "കോഴിക്കോട്"], a: "ഷൊർണൂർ" }, en: { q: "Which is the largest railway station (junction) in Kerala?", o: ["Ernakulam", "Thiruvananthapuram", "Shoranur", "Kozhikode"], a: "Shoranur" } },
+            { id: 67, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ പത്രം?", o: ["മലയാള മനോരമ", "മാതൃഭൂമി", "രാജ്യസമാചാരം", "പശ്ചിമോദയം"], a: "രാജ്യസമാചാരം" }, en: { q: "What was the first newspaper in Kerala?", o: ["Malayala Manorama", "Mathrubhumi", "Rajyasamacharam", "Paschimodayam"], a: "Rajyasamacharam" } },
+            { id: 68, ml: { q: "വയനാട് ചുരം സ്ഥിതി ചെയ്യുന്ന ജില്ല?", o: ["വയനാട്", "കണ്ണൂർ", "മലപ്പുറം", "കോഴിക്കോട്"], a: "കോഴിക്കോട്" }, en: { q: "In which district is the Wayanad Ghat (Churam) located?", o: ["Wayanad", "Kannur", "Malappuram", "Kozhikode"], a: "Kozhikode" } },
+            { id: 69, ml: { q: "കേരളത്തിലെ ഏറ്റവും ചെറിയ നദി?", o: ["മഞ്ചേശ്വരം പുഴ", "രാമപുരം പുഴ", "അയിരൂർ പുഴ", "ചിറ്റാരി പുഴ"], a: "മഞ്ചേശ്വരം പുഴ" }, en: { q: "Which is the shortest river in Kerala?", o: ["Manjeswaram River", "Ramapuram River", "Ayiroor River", "Chittari River"], a: "Manjeswaram River" } },
+            { id: 70, ml: { q: "'മയ്യഴിപ്പുഴയുടെ തീരങ്ങളിൽ' എഴുതിയത്?", o: ["ഒ.വി. വിജയൻ", "വി.കെ.എൻ", "എം. മുകുന്ദൻ", "പുനത്തിൽ കുഞ്ഞബ്ദുള്ള"], a: "എം. മുകുന്ദൻ" }, en: { q: "Who wrote 'Mayyazhippuzhayude Theerangalil'?", o: ["O. V. Vijayan", "V. K. N.", "M. Mukundan", "Punathil Kunjabdulla"], a: "M. Mukundan" } },
+            { id: 71, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ ഗവർണർ?", o: ["വി.വി. ഗിരി", "ബി. രാമകൃഷ്ണ റാവു", "ജ്യോതി വെങ്കിടാചലം", "പട്ടം താണുപിള്ള"], a: "ബി. രാമകൃഷ്ണ റാവു" }, en: { q: "Who was the first governor of Kerala?", o: ["V. V. Giri", "B. Ramakrishna Rao", "Jothi Venkatachalam", "Pattom Thanu Pillai"], a: "B. Ramakrishna Rao" } },
+            { id: 72, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ വനിതാ മന്ത്രി?", o: ["അക്കാമ്മ ചെറിയാൻ", "ആനി മസ്ക്രീൻ", "കെ.ആർ. ഗൗരിയമ്മ", "സുശീല ഗോപാലൻ"], a: "കെ.ആർ. ഗൗരിയമ്മ" }, en: { q: "Who was the first woman minister of Kerala?", o: ["Accamma Cherian", "Annie Mascarene", "K. R. Gouri Amma", "Susheela Gopalan"], a: "K. R. Gouri Amma" } },
+            { id: 73, ml: { q: "ഇന്ത്യയിലെ ആദ്യത്തെ ഡിജിറ്റൽ സംസ്ഥാനം?", o: ["കർണാടക", "തമിഴ്നാട്", "ഗോവ", "കേരളം"], a: "കേരളം" }, en: { q: "Which is the first digital state in India?", o: ["Karnataka", "Tamil Nadu", "Goa", "Kerala"], a: "Kerala" } },
+            { id: 74, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ ഐ.ടി പാർക്ക്?", o: ["ഇൻഫോപാർക്ക്, കൊച്ചി", "സൈബർപാർക്ക്, കോഴിക്കോട്", "ടെക്നോപാർക്ക്, തിരുവനന്തപുരം", "കിൻഫ്ര പാർക്ക്"], a: "ടെക്നോപാർക്ക്, തിരുവനന്തപുരം" }, en: { q: "Which is the first IT park in Kerala?", o: ["Infopark, Kochi", "Cyberpark, Kozhikode", "Technopark, Thiruvananthapuram", "Kinfra Park"], a: "Technopark, Thiruvananthapuram" } },
+            { id: 75, ml: { q: "കേരളത്തിലെ ഏറ്റവും തെക്കേയറ്റത്തുള്ള നദി?", o: ["കരമനയാർ", "നെയ്യാർ", "വാമനപുരം ആറ്", "കല്ലടയാർ"], a: "നെയ്യാർ" }, en: { q: "Which is the southernmost river in Kerala?", o: ["Karamana River", "Neyyar River", "Vamanapuram River", "Kallada River"], a: "Neyyar River" } },
+            { id: 76, ml: { q: "കേരളത്തിലെ ഏറ്റവും വലിയ ജലവൈദ്യുത പദ്ധതി?", o: ["ശബരിഗിരി", "പള്ളിവാസൽ", "ഇടുക്കി", "കുറ്റ്യാടി"], a: "ഇടുക്കി" }, en: { q: "Which is the largest hydroelectric project in Kerala?", o: ["Sabarigiri", "Pallivasal", "Idukki", "Kuttiyadi"], a: "Idukki" } },
+            { id: 77, ml: { q: "'ഖസാക്കിന്റെ ഇതിഹാസം' എഴുതിയത്?", o: ["എം. മുകുന്ദൻ", "ഒ.വി. വിജയൻ", "ആനന്ദ്", "വി.കെ.എൻ"], a: "ഒ.വി. വിജയൻ" }, en: { q: "Who wrote 'Khasakkinte Ithihasam'?", o: ["M. Mukundan", "O. V. Vijayan", "Anand", "V. K. N."], a: "O. V. Vijayan" } },
+            { id: 78, ml: { q: "കേരളത്തിലെ ഏറ്റവും വലിയ കോട്ട?", o: ["പാലക്കാട് കോട്ട", "അഞ്ചുതെങ്ങ് കോട്ട", "ബേക്കൽ കോട്ട", "തലശ്ശേരി കോട്ട"], a: "ബേക്കൽ കോട്ട" }, en: { q: "Which is the largest fort in Kerala?", o: ["Palakkad Fort", "Anjengo Fort", "Bekal Fort", "Thalassery Fort"], a: "Bekal Fort" } },
+            { id: 79, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ തൂക്കുപാലം എവിടെയാണ്?", o: ["പുനലൂർ", "വർക്കല", "കൊല്ലം", "പരവൂർ"], a: "പുനലൂർ" }, en: { q: "Where is the first suspension bridge in Kerala?", o: ["Punalur", "Varkala", "Kollam", "Paravur"], a: "Punalur" } },
+            { id: 80, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ സർവ്വകലാശാല?", o: ["കൊച്ചി സർവ്വകലാശാല", "കോഴിക്കോട് സർവ്വകലാശാല", "കേരള സർവ്വകലാശാല", "മഹാത്മാഗാന്ധി സർവ്വകലാശാല"], a: "കേരള സർവ്വകലാശാല" }, en: { q: "Which was the first university in Kerala?", o: ["Cochin University", "Calicut University", "University of Kerala", "Mahatma Gandhi University"], a: "University of Kerala" } },
+            { id: 81, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ മെഡിക്കൽ കോളേജ്?", o: ["കോട്ടയം", "കോഴിക്കോട്", "ആലപ്പുഴ", "തിരുവനന്തപുരം"], a: "തിരുവനന്തപുരം" }, en: { q: "Where was the first medical college in Kerala established?", o: ["Kottayam", "Kozhikode", "Alappuzha", "Thiruvananthapuram"], a: "Thiruvananthapuram" } },
+            { id: 82, ml: { q: "കേരളത്തിലെ ഏറ്റവും ജനസാന്ദ്രതയേറിയ ജില്ല?", o: ["എറണാകുളം", "കോഴിക്കോട്", "തിരുവനന്തപുരം", "മലപ്പുറം"], a: "തിരുവനന്തപുരം" }, en: { q: "Which is the most densely populated district in Kerala?", o: ["Ernakulam", "Kozhikode", "Thiruvananthapuram", "Malappuram"], a: "Thiruvananthapuram" } },
+            { id: 83, ml: { q: "കേരളത്തിലെ ഏറ്റവും ജനസാന്ദ്രത കുറഞ്ഞ ജില്ല?", o: ["വയനാട്", "ഇടുക്കി", "പത്തനംതിട്ട", "കാസർഗോഡ്"], a: "ഇടുക്കി" }, en: { q: "Which is the least densely populated district in Kerala?", o: ["Wayanad", "Idukki", "Pathanamthitta", "Kasaragod"], a: "Idukki" } },
+            { id: 84, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ വനിതാ ഗവർണർ?", o: ["ഫാത്തിമ ബീവി", "ജ്യോതി വെങ്കിടാചലം", "ശാരദാ മുഖർജി", "രാം ദുലാരി സിൻഹ"], a: "ജ്യോതി വെങ്കിടാചലം" }, en: { q: "Who was the first woman Governor of Kerala?", o: ["Fathima Beevi", "Jothi Venkatachalam", "Sarada Mukherjee", "Ram Dulari Sinha"], a: "Jothi Venkatachalam" } },
+            { id: 85, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ അണക്കെട്ട്?", o: ["ഇടുക്കി", "മുല്ലപ്പെരിയാർ", "പറമ്പിക്കുളം", "നെയ്യാർ"], a: "മുല്ലപ്പെരിയാർ" }, en: { q: "Which is the first dam in Kerala?", o: ["Idukki", "Mullaperiyar", "Parambikulam", "Neyyar"], a: "Mullaperiyar" } },
+            { id: 86, ml: { q: "കേരള നിയമസഭയിലെ ആദ്യ സ്പീക്കർ?", o: ["കെ.എം. സീതി സാഹിബ്", "ആർ. ശങ്കരനാരായണൻ തമ്പി", "ഡി. ദാമോദരൻ പോറ്റി", "അലക്സാണ്ടർ പറമ്പിത്തറ"], a: "ആർ. ശങ്കരനാരായണൻ തമ്പി" }, en: { q: "Who was the first speaker of the Kerala Legislative Assembly?", o: ["K. M. Seethi Sahib", "R. Sankaranarayanan Thampi", "D. Damodaran Potti", "Alexander Parambithara"], a: "R. Sankaranarayanan Thampi" } },
+            { id: 87, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ സമ്പൂർണ്ണ കമ്പ്യൂട്ടർ സാക്ഷരതാ പഞ്ചായത്ത്?", o: ["ചമ്രവട്ടം", "വെള്ളനാട്", "തളിക്കുളം", "ഒളവണ്ണ"], a: "ചമ്രവട്ടം" }, en: { q: "Which is the first fully computer-literate panchayat in Kerala?", o: ["Chamravattom", "Vellanad", "Thalikkulam", "Olavanna"], a: "Chamravattom" } },
+            { id: 88, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ സൈബർ പോലീസ് സ്റ്റേഷൻ എവിടെയാണ്?", o: ["കൊച്ചി", "തിരുവനന്തപുരം", "കോഴിക്കോട്", "തൃശൂർ"], a: "തിരുവനന്തപുരം" }, en: { q: "Where is the first cyber police station in Kerala?", o: ["Kochi", "Thiruvananthapuram", "Kozhikode", "Thrissur"], a: "Thiruvananthapuram" } },
+            { id: 89, ml: { q: "കേരളത്തിലെ ഏറ്റവും വലിയ പുരാവസ്തു മ്യൂസിയം?", o: ["നേപ്പിയർ മ്യൂസിയം", "ഹിൽ പാലസ്, തൃപ്പൂണിത്തുറ", "പഴശ്ശിരാജ മ്യൂസിയം", "കേരള മ്യൂസിയം"], a: "ഹിൽ പാലസ്, തൃപ്പൂണിത്തുറ" }, en: { q: "Which is the largest archaeological museum in Kerala?", o: ["Napier Museum", "Hill Palace, Thrippunithura", "Pazhassi Raja Museum", "Kerala Museum"], a: "Hill Palace, Thrippunithura" } },
+            { id: 90, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ ജലവൈദ്യുത പദ്ധതി?", o: ["ഇടുക്കി", "ശബരിഗിരി", "പള്ളിവാസൽ", "ചെങ്കുളം"], a: "പള്ളിവാസൽ" }, en: { q: "Which was the first hydroelectric project in Kerala?", o: ["Idukki", "Sabarigiri", "Pallivasal", "Sengulam"], a: "Pallivasal" } },
+            { id: 91, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ സിനിമ സ്റ്റുഡിയോ?", o: ["മെരിലാന്റ്", "ഉദയാ", "അജന്ത", "നവോദയ"], a: "ഉദയാ" }, en: { q: "Which was the first film studio in Kerala?", o: ["Merryland", "Udaya", "Ajantha", "Navodaya"], a: "Udaya" } },
+            { id: 92, ml: { q: "കേരളത്തിലെ ഏറ്റവും നീളം കൂടിയ ബീച്ച്?", o: ["കോവളം", "മുഴപ്പിലങ്ങാട്", "ചെറായി", "ബേക്കൽ"], a: "മുഴപ്പിലങ്ങാട്" }, en: { q: "Which is the longest beach in Kerala?", o: ["Kovalam", "Muzhappilangad", "Cherai", "Bekal"], a: "Muzhappilangad" } },
+            { id: 93, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ വനിതാ ചീഫ് സെക്രട്ടറി?", o: ["പത്മാ രാമചന്ദ്രൻ", "നിവേദിത പി. ഹരൻ", "ജെ. ലളിതാംബിക", "നീലാ ഗംഗാധരൻ"], a: "പത്മാ രാമചന്ദ്രൻ" }, en: { q: "Who was the first woman Chief Secretary of Kerala?", o: ["Padma Ramachandran", "Nivedita P. Haran", "J. Lalithambika", "Neela Gangadharan"], a: "Padma Ramachandran" } },
+            { id: 94, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ ഇക്കോ-ടൂറിസം കേന്ദ്രം?", o: ["ഗവി", "തെന്മല", "കോന്നി", "പറമ്പിക്കുളം"], a: "തെന്മല" }, en: { q: "Which is the first eco-tourism center in Kerala?", o: ["Gavi", "Thenmala", "Konni", "Parambikulam"], a: "Thenmala" } },
+            { id: 95, ml: { q: "കേരള ഫോറസ്റ്റ് റിസർച്ച് ഇൻസ്റ്റിറ്റ്യൂട്ട് എവിടെയാണ്?", o: ["പീച്ചി", "നിലമ്പൂർ", "കോന്നി", "മലയാറ്റൂർ"], a: "പീച്ചി" }, en: { q: "Where is the Kerala Forest Research Institute (KFRI) located?", o: ["Peechi", "Nilambur", "Konni", "Malayattoor"], a: "Peechi" } },
+            { id: 96, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ സമ്പൂർണ്ണ ബാങ്കിംഗ് ജില്ല?", o: ["എറണാകുളം", "തൃശൂർ", "പാലക്കാട്", "കോട്ടയം"], a: "പാലക്കാട്" }, en: { q: "Which is the first district in Kerala with total banking?", o: ["Ernakulam", "Thrissur", "Palakkad", "Kottayam"], a: "Palakkad" } },
+            { id: 97, ml: { q: "കേരളത്തിലെ ഏറ്റവും വലിയ ദ്വീപ്?", o: ["വൈപ്പിൻ", "വെല്ലിംഗ്ടൺ", "കുറുവാദ്വീപ്", "പാതിരാമണൽ"], a: "വെല്ലിംഗ്ടൺ" }, en: { q: "Which is the largest island in Kerala?", o: ["Vypin", "Willingdon", "Kuruva Dweep", "Pathiramanal"], a: "Willingdon" } },
+            { id: 98, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ ഡി.എൻ.എ. ബാർകോഡിംഗ് കേന്ദ്രം എവിടെയാണ്?", o: ["തിരുവനന്തപുരം", "കൊച്ചി", "പൂക്കോട്", "പീച്ചി"], a: "പൂക്കോട്" }, en: { q: "Where is the first DNA barcoding center in Kerala?", o: ["Thiruvananthapuram", "Kochi", "Pookode", "Peechi"], a: "Pookode" } },
+            { id: 99, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ കാറ്റാടി ഫാം?", o: ["രാമക്കൽമേട്", "അട്ടപ്പാടി", "കഞ്ചിക്കോട്", "അഗളി"], a: "കഞ്ചിക്കോട്" }, en: { q: "Where is the first wind farm in Kerala?", o: ["Ramakkalmedu", "Attappadi", "Kanjikode", "Agali"], a: "Kanjikode" } },
+            { id: 100, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ നിയമ മന്ത്രി?", o: ["വി.ആർ. കൃഷ്ണയ്യർ", "കെ.സി. ജോർജ്ജ്", "ടി.വി. തോമസ്", "സി.എച്ച്. കണാരൻ"], a: "വി.ആർ. കൃഷ്ണയ്യർ" }, en: { q: "Who was the first Law Minister of Kerala?", o: ["V. R. Krishna Iyer", "K. C. George", "T. V. Thomas", "C. H. Kanaran"], a: "V. R. Krishna Iyer" } }
+        ];
+
+        // --- App State ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedLang = 'ml';
+        let userAnswers = new Array(quizData.length + 1).fill(null); // Use a larger array to map by ID
+        let questions = [];
+
+        // --- DOM Elements ---
+        const languageScreen = document.getElementById('language-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionCounter = document.getElementById('question-counter');
+        const scoreCounter = document.getElementById('score-counter');
+        const progressBar = document.getElementById('progress-bar');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedback = document.getElementById('feedback');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        // --- Functions ---
+        function startQuiz(lang) {
+            selectedLang = lang;
+            // Shuffle questions for variety each time
+            questions = [...quizData].sort(() => Math.random() - 0.5);
+            languageScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // Reset feedback and styles
+            feedback.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            if (currentQuestionIndex >= questions.length) {
+                showResults();
+                return;
+            }
+
+            const currentQuestion = questions[currentQuestionIndex][selectedLang];
+            const questionData = questions[currentQuestionIndex];
+            
+            // Set language class for proper font rendering
+            questionText.className = `text-2xl font-bold text-center text-gray-800 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            
+            questionText.textContent = currentQuestion.q;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1}/${questions.length}`;
+            scoreCounter.textContent = `Score: ${score}`;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+
+            // Shuffle options
+            const shuffledOptions = [...currentQuestion.o].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = `btn-option w-full p-4 rounded-lg border-2 border-gray-300 text-lg font-semibold text-gray-700 bg-white hover:bg-teal-100 hover:border-teal-400 transition ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+                button.onclick = () => selectAnswer(option, button);
+                optionsContainer.appendChild(button);
+            });
+
+            updateNavButtons();
+            
+            // If user has already answered this question (by using back button), show the result
+            if (userAnswers[questionData.id] !== null) {
+                showPreviousAnswer();
+            }
+        }
+        
+        function selectAnswer(selectedOption, button) {
+            const questionData = questions[currentQuestionIndex];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            // Only update score if the question hasn't been answered correctly before
+            if (userAnswers[questionData.id] !== currentQuestion.a && selectedOption === correctAnswer) {
+                 score++;
+            } else if (userAnswers[questionData.id] === currentQuestion.a && selectedOption !== correctAnswer) {
+                 // If user changes a correct answer to a wrong one, decrement score
+                 score--;
+            }
+
+            userAnswers[questionData.id] = selectedOption;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true; // Disable all options after one is selected
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+
+            if (selectedOption === correctAnswer) {
+                playCorrectSound();
+                feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                feedback.className = 'mt-4 text-center font-bold text-lg text-green-600';
+            } else {
+                playWrongSound();
+                button.classList.add('wrong');
+                feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                feedback.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+            }
+            
+            scoreCounter.textContent = `Score: ${score}`;
+        }
+
+        function showPreviousAnswer() {
+            const questionData = questions[currentQuestionIndex];
+            const selectedOption = userAnswers[questionData.id];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+                if (btn.textContent === selectedOption && selectedOption !== correctAnswer) {
+                    btn.classList.add('wrong');
+                }
+            });
+
+            if (selectedOption !== correctAnswer) {
+                 feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                 feedback.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+            } else {
+                 feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                 feedback.className = 'mt-4 text-center font-bold text-lg text-green-600';
+            }
+        }
+
+        function updateNavButtons() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', backBtn.disabled);
+            
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.textContent = selectedLang === 'ml' ? 'പൂർത്തിയാക്കുക' : 'Finish';
+            } else {
+                nextBtn.textContent = selectedLang === 'ml' ? 'അടുത്തത് >' : 'Next >';
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            const percentage = Math.round((score / questions.length) * 100);
+            const resultTitle = document.getElementById('result-title');
+            const finalScore = document.getElementById('final-score');
+            const resultMessage = document.getElementById('result-message');
+
+            resultTitle.className = `text-4xl font-bold mb-4 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            finalScore.className = `text-2xl mb-6 text-gray-700 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            resultMessage.className = `text-xl mb-8 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+
+            if (selectedLang === 'ml') {
+                resultTitle.textContent = 'ഫലം';
+                finalScore.textContent = `നിങ്ങളുടെ സ്കോർ: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'അടിപൊളി! നിങ്ങൾ മിടുക്കനാണ്/മിടുക്കിയാണ്.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'നന്നായിരിക്കുന്നു! ഇനിയും മെച്ചപ്പെടുത്താം.';
+                } else {
+                    resultMessage.textContent = 'സാരമില്ല, വീണ്ടും ശ്രമിക്കുക!';
+                }
+            } else {
+                resultTitle.textContent = 'Results';
+                finalScore.textContent = `Your Score: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'Excellent! You did a great job.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'Good effort! Keep practicing.';
+                } else {
+                    resultMessage.textContent = 'Don\'t worry, try again!';
+                }
+            }
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers.fill(null);
+            questions = [];
+            resultScreen.classList.add('hidden');
+            languageScreen.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>മലയാള സാഹിത്യം ക്വിസ്</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .malayalam {
+            font-family: 'Manjari', sans-serif;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-option:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+        .correct {
+            animation: pulse-green 1s;
+            background-color: #22c55e !important; /* Green-500 */
+            color: white !important;
+            border-color: #16a34a !important; /* Green-600 */
+        }
+        .wrong {
+            animation: shake 0.5s;
+            background-color: #ef4444 !important; /* Red-500 */
+            color: white !important;
+            border-color: #dc2626 !important; /* Red-600 */
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-amber-400 to-yellow-600 min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Language Selection Screen -->
+        <div id="language-screen" class="text-center text-white p-8 rounded-2xl shadow-2xl card">
+            <h1 class="text-4xl font-bold mb-2 malayalam">മലയാള സാഹിത്യം ക്വിസ്</h1>
+            <h2 class="text-2xl font-bold mb-8">Malayalam Literature Quiz</h2>
+            <p class="mb-4 malayalam">ഭാഷ തിരഞ്ഞെടുക്കുക:</p>
+            <p class="mb-8">Select Language:</p>
+            <div class="flex flex-col space-y-4">
+                <button onclick="startQuiz('ml')" class="bg-white text-yellow-800 font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-yellow-50 transition-transform transform hover:scale-105 malayalam">മലയാളം</button>
+                <button onclick="startQuiz('en')" class="bg-white text-amber-600 font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-amber-50 transition-transform transform hover:scale-105">English</button>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden p-6 bg-white/90 rounded-2xl shadow-2xl card">
+            <div id="header" class="flex justify-between items-center mb-4">
+                <div id="question-counter" class="text-lg font-semibold text-gray-700"></div>
+                <div id="score-counter" class="text-lg font-semibold text-green-600"></div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-amber-500 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <div id="question-container" class="mb-6">
+                <p id="question-text" class="text-2xl font-bold text-center text-gray-800" style="min-height: 100px;"></p>
+            </div>
+            <div id="options-container" class="grid grid-cols-1 gap-4">
+                <!-- Options will be dynamically inserted here -->
+            </div>
+            <div id="feedback" class="mt-4 text-center font-bold text-lg" style="min-height: 30px;"></div>
+            <div class="flex justify-between mt-8">
+                <button id="back-btn" onclick="prevQuestion()" class="bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg shadow hover:bg-gray-400 transition-transform transform hover:scale-105">&lt; Back</button>
+                <button id="next-btn" onclick="nextQuestion()" class="bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-yellow-700 transition-transform transform hover:scale-105">Next &gt;</button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center p-8 bg-white/90 rounded-2xl shadow-2xl card">
+            <h2 id="result-title" class="text-4xl font-bold mb-4 text-gray-800"></h2>
+            <p id="final-score" class="text-2xl mb-6 text-gray-700"></p>
+            <p id="result-message" class="text-xl mb-8"></p>
+            <button onclick="restartQuiz()" class="bg-amber-600 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg hover:bg-amber-700 transition-transform transform hover:scale-105">
+                വീണ്ടും കളിക്കാം / Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Sound Synthesis ---
+        const correctSound = new Tone.Synth({
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
+        }).toDestination();
+
+        const wrongSound = new Tone.Synth({
+            oscillator: { type: 'square' },
+            envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.2 }
+        }).toDestination();
+
+        function playCorrectSound() {
+            Tone.start();
+            correctSound.triggerAttackRelease("C5", "8n");
+        }
+
+        function playWrongSound() {
+            Tone.start();
+            wrongSound.triggerAttackRelease("C3", "8n");
+        }
+
+        // --- Quiz Data (100 Questions about Malayalam Literature) ---
+        const quizData = [
+            { id: 1, ml: { q: "ആടുജീവിതം എന്ന നോവലിന്റെ രചയിതാവ്?", o: ["എം. മുകുന്ദൻ", "ബെന്യാമിൻ", "ടി.ഡി. രാമകൃഷ്ണൻ", "ഉണ്ണി ആർ."], a: "ബെന്യാമിൻ" }, en: { q: "Who is the author of the novel 'Aadujeevitham' (Goat Days)?", o: ["M. Mukundan", "Benyamin", "T. D. Ramakrishnan", "Unni R."], a: "Benyamin" } },
+            { id: 2, ml: { q: "ബാല്യകാലസഖി ആരുടെ കൃതിയാണ്?", o: ["തകഴി ശിവശങ്കരപ്പിള്ള", "എസ്.കെ. പൊറ്റെക്കാട്ട്", "വൈക്കം മുഹമ്മദ് ബഷീർ", "ഉറൂബ്"], a: "വൈക്കം മുഹമ്മദ് ബഷീർ" }, en: { q: "Whose work is 'Balyakalasakhi'?", o: ["Thakazhi Sivasankara Pillai", "S. K. Pottekkatt", "Vaikom Muhammad Basheer", "Uroob"], a: "Vaikom Muhammad Basheer" } },
+            { id: 3, ml: { q: "കാക്കേ കാക്കേ കൂടെവിടെ എന്ന് തുടങ്ങുന്ന കുട്ടിക്കവിത എഴുതിയത് ആരാണ്?", o: ["വള്ളത്തോൾ", "കുമാരനാശാൻ", "ഉള്ളൂർ", "ചങ്ങമ്പുഴ"], a: "ഉള്ളൂർ" }, en: { q: "Who wrote the children's poem that starts with 'Kaakke Kaakke Koodevide'?", o: ["Vallathol", "Kumaran Asan", "Ulloor", "Changampuzha"], a: "Ulloor" } },
+            { id: 4, ml: { q: "ഐതിഹ്യമാല എന്ന കൃതിയുടെ രചയിതാവ്?", o: ["കേരളവർമ്മ വലിയകോയിത്തമ്പുരാൻ", "കൊട്ടാരത്തിൽ ശങ്കുണ്ണി", "എ.ആർ. രാജരാജവർമ്മ", "സി.വി. രാമൻപിള്ള"], a: "കൊട്ടാരത്തിൽ ശങ്കുണ്ണി" }, en: { q: "Who is the author of the work 'Aithihyamala'?", o: ["Kerala Varma Valiya Koil Thampuran", "Kottarathil Sankunni", "A. R. Raja Raja Varma", "C. V. Raman Pillai"], a: "Kottarathil Sankunni" } },
+            { id: 5, ml: { q: "മലയാള സാഹിത്യത്തിലെ സുൽത്താൻ എന്നറിയപ്പെടുന്നത്?", o: ["എം.ടി. വാസുദേവൻ നായർ", "വൈക്കം മുഹമ്മദ് ബഷീർ", "ഒ.വി. വിജയൻ", "വി.കെ.എൻ"], a: "വൈക്കം മുഹമ്മദ് ബഷീർ" }, en: { q: "Who is known as the 'Sultan' of Malayalam literature?", o: ["M. T. Vasudevan Nair", "Vaikom Muhammad Basheer", "O. V. Vijayan", "V. K. N."], a: "Vaikom Muhammad Basheer" } },
+            { id: 6, ml: { q: "ഒരു കുരുവിയുടെ പതനം എന്നത് ആരുടെ ആത്മകഥയാണ്?", o: ["ഇ.കെ. ജാനകിയമ്മാൾ", "സലിം അലി", "ഇന്ദുചൂഡൻ", "മാധവ് ഗാഡ്ഗിൽ"], a: "സലിം അലി" }, en: { q: "Whose autobiography is 'Oru Kuruvivude Pathanam' (The Fall of a Sparrow)?", o: ["E. K. Janaki Ammal", "Salim Ali", "Induchoodan", "Madhav Gadgil"], a: "Salim Ali" } },
+            { id: 7, ml: { q: "കുട്ടനാടിന്റെ കഥാകാരൻ എന്നറിയപ്പെടുന്നത്?", o: ["കേശവദേവ്", "പൊൻകുന്നം വർക്കി", "തകഴി ശിവശങ്കരപ്പിള്ള", "എസ്.കെ. പൊറ്റെക്കാട്ട്"], a: "തകഴി ശിവശങ്കരപ്പിള്ള" }, en: { q: "Who is known as the 'Storyteller of Kuttanad'?", o: ["Kesavadev", "Ponkunnam Varkey", "Thakazhi Sivasankara Pillai", "S. K. Pottekkatt"], a: "Thakazhi Sivasankara Pillai" } },
+            { id: 8, ml: { q: "അഗ്നിച്ചിറകുകൾ ആരുടെ ആത്മകഥയാണ്?", o: ["വിക്രം സാരാഭായി", "സതീഷ് ധവാൻ", "എ.പി.ജെ. അബ്ദുൾ കലാം", "സി.വി. രാമൻ"], a: "എ.പി.ജെ. അബ്ദുൾ കലാം" }, en: { q: "Whose autobiography is 'Agnichirakukal' (Wings of Fire)?", o: ["Vikram Sarabhai", "Satish Dhawan", "A. P. J. Abdul Kalam", "C. V. Raman"], a: "A. P. J. Abdul Kalam" } },
+            { id: 9, ml: { q: "കൃഷ്ണഗാഥ രചിച്ചത് ആരാണ്?", o: ["എഴുത്തച്ഛൻ", "ചെറുശ്ശേരി", "കുഞ്ചൻ നമ്പ്യാർ", "പൂന്താനം"], a: "ചെറുശ്ശേരി" }, en: { q: "Who composed 'Krishnagatha'?", o: ["Ezhuthachan", "Cherusseri", "Kunchan Nambiar", "Poonthanam"], a: "Cherusseri" } },
+            { id: 10, ml: { q: "കാച്ചിക്കുറുക്കിയ കവിതകളുടെ കവി എന്നറിയപ്പെടുന്നത്?", o: ["ഇടപ്പള്ളി", "ചങ്ങമ്പുഴ", "വൈലോപ്പിള്ളി", "ബാലചന്ദ്രൻ ചുള്ളിക്കാട്"], a: "വൈലോപ്പിള്ളി" }, en: { q: "Who is known as the poet of 'finely condensed poems'?", o: ["Edappally", "Changampuzha", "Vailoppilli", "Balachandran Chullikkad"], a: "Vailoppilli" } },
+            { id: 11, ml: { q: "'രണ്ടാമൂഴം' എന്ന നോവൽ എഴുതിയത്?", o: ["ഒ.വി. വിജയൻ", "എം. മുകുന്ദൻ", "എം.ടി. വാസുദേവൻ നായർ", "ആനന്ദ്"], a: "എം.ടി. വാസുദേവൻ നായർ" }, en: { q: "Who wrote the novel 'Randamoozham'?", o: ["O. V. Vijayan", "M. Mukundan", "M. T. Vasudevan Nair", "Anand"], a: "M. T. Vasudevan Nair" } },
+            { id: 12, ml: { q: "മലയാളത്തിലെ ആദ്യത്തെ നോവൽ?", o: ["മാർത്താണ്ഡവർമ്മ", "ഇന്ദുലേഖ", "ശാരദ", "ധർമ്മരാജ"], a: "ഇന്ദുലേഖ" }, en: { q: "What is the first novel in Malayalam?", o: ["Marthandavarma", "Indulekha", "Sarada", "Dharmaraja"], a: "Indulekha" } },
+            { id: 13, ml: { q: "ആധുനിക കവിത്രയത്തിൽ ഉൾപ്പെടാത്തത് ആര്?", o: ["കുമാരനാശാൻ", "ഉള്ളൂർ", "വള്ളത്തോൾ", "എഴുത്തച്ഛൻ"], a: "എഴുത്തച്ഛൻ" }, en: { q: "Who is not part of the 'Modern Poet Trio' (Adhunika Kavithrayam)?", o: ["Kumaran Asan", "Ulloor", "Vallathol", "Ezhuthachan"], a: "Ezhuthachan" } },
+            { id: 14, ml: { q: "കേരളകാളിദാസൻ എന്നറിയപ്പെടുന്നത്?", o: ["എ.ആർ. രാജരാജവർമ്മ", "കൊടുങ്ങല്ലൂർ കുഞ്ഞിക്കുട്ടൻ തമ്പുരാൻ", "കേരളവർമ്മ വലിയകോയിത്തമ്പുരാൻ", "വള്ളത്തോൾ"], a: "കേരളവർമ്മ വലിയകോയിത്തമ്പുരാൻ" }, en: { q: "Who is known as 'Kerala Kalidasan'?", o: ["A. R. Raja Raja Varma", "Kodungallur Kunjikuttan Thampuran", "Kerala Varma Valiya Koil Thampuran", "Vallathol"], a: "Kerala Varma Valiya Koil Thampuran" } },
+            { id: 15, ml: { q: "'ചെമ്മീൻ' എന്ന നോവലിന്റെ രചയിതാവ്?", o: ["ഉറൂബ്", "ബഷീർ", "കേശവദേവ്", "തകഴി"], a: "തകഴി" }, en: { q: "Who is the author of the novel 'Chemmeen'?", o: ["Uroob", "Basheer", "Kesavadev", "Thakazhi"], a: "Thakazhi" } },
+            { id: 16, ml: { q: "തുള്ളൽ പ്രസ്ഥാനത്തിന്റെ ഉപജ്ഞാതാവ്?", o: ["ചെറുശ്ശേരി", "എഴുത്തച്ഛൻ", "കുഞ്ചൻ നമ്പ്യാർ", "പൂന്താനം"], a: "കുഞ്ചൻ നമ്പ്യാർ" }, en: { q: "Who is the founder of the 'Thullal' art form?", o: ["Cherusseri", "Ezhuthachan", "Kunchan Nambiar", "Poonthanam"], a: "Kunchan Nambiar" } },
+            { id: 17, ml: { q: "മലയാള ഭാഷയുടെ പിതാവ്?", o: ["ചെറുശ്ശേരി", "കുഞ്ചൻ നമ്പ്യാർ", "തുഞ്ചത്തെഴുത്തച്ഛൻ", "പൂന്താനം"], a: "തുഞ്ചത്തെഴുത്തച്ഛൻ" }, en: { q: "Who is the father of the Malayalam language?", o: ["Cherusseri", "Kunchan Nambiar", "Thunchaththu Ezhuthachan", "Poonthanam"], a: "Thunchaththu Ezhuthachan" } },
+            { id: 18, ml: { q: "'ഖസാക്കിന്റെ ഇതിഹാസം' ആരുടെ രചനയാണ്?", o: ["എം.ടി. വാസുദേവൻ നായർ", "ഒ.വി. വിജയൻ", "വി.കെ.എൻ", "എം. മുകുന്ദൻ"], a: "ഒ.വി. വിജയൻ" }, en: { q: "Whose work is 'Khasakkinte Ithihasam' (The Legends of Khasak)?", o: ["M. T. Vasudevan Nair", "O. V. Vijayan", "V. K. N.", "M. Mukundan"], a: "O. V. Vijayan" } },
+            { id: 19, ml: { q: "ജ്ഞാനപ്പാന രചിച്ചത് ആരാണ്?", o: ["മേൽപ്പത്തൂർ", "പൂന്താനം", "എഴുത്തച്ഛൻ", "ചെറുശ്ശേരി"], a: "പൂന്താനം" }, en: { q: "Who composed 'Jnanappana'?", o: ["Melpathur", "Poonthanam", "Ezhuthachan", "Cherusseri"], a: "Poonthanam" } },
+            { id: 20, ml: { q: "വീണപൂവ് എന്ന ഖണ്ഡകാവ്യം എഴുതിയത്?", o: ["വള്ളത്തോൾ", "ഉള്ളൂർ", "കുമാരനാശാൻ", "ചങ്ങമ്പുഴ"], a: "കുമാരനാശാൻ" }, en: { q: "Who wrote the elegy 'Veenapoovu' (The Fallen Flower)?", o: ["Vallathol", "Ulloor", "Kumaran Asan", "Changampuzha"], a: "Kumaran Asan" } },
+            { id: 21, ml: { q: "മാമ്പഴം എന്ന കവിതയുടെ രചയിതാവ്?", o: ["ജി. ശങ്കരക്കുറുപ്പ്", "വൈലോപ്പിള്ളി ശ്രീധരമേനോൻ", "ഇടശ്ശേരി", "ബാലാമണിയമ്മ"], a: "വൈലോപ്പിള്ളി ശ്രീധരമേനോൻ" }, en: { q: "Who is the author of the poem 'Mambazham' (The Mango)?", o: ["G. Sankara Kurup", "Vailoppilli Sreedhara Menon", "Edasseri", "Balamani Amma"], a: "Vailoppilli Sreedhara Menon" } },
+            { id: 22, ml: { q: "'കഴിഞ്ഞ കാലം' ആരുടെ ആത്മകഥയാണ്?", o: ["ഇ.എം.എസ്. നമ്പൂതിരിപ്പാട്", "സി. കേശവൻ", "കെ.പി. കേശവമേനോൻ", "എ.കെ. ഗോപാലൻ"], a: "കെ.പി. കേശവമേനോൻ" }, en: { q: "Whose autobiography is 'Kazhinja Kaalam'?", o: ["E. M. S. Namboodiripad", "C. Kesavan", "K. P. Kesava Menon", "A. K. Gopalan"], a: "K. P. Kesava Menon" } },
+            { id: 23, ml: { q: "മലയാളത്തിലെ ആദ്യത്തെ ചരിത്ര നോവൽ?", o: ["ഇന്ദുലേഖ", "ധർമ്മരാജ", "മാർത്താണ്ഡവർമ്മ", "രാമരാജബഹദൂർ"], a: "മാർത്താണ്ഡവർമ്മ" }, en: { q: "What is the first historical novel in Malayalam?", o: ["Indulekha", "Dharmaraja", "Marthandavarma", "Ramarajabahadur"], a: "Marthandavarma" } },
+            { id: 24, ml: { q: "ശബ്ദസുന്ദരൻ എന്നറിയപ്പെടുന്ന കവി?", o: ["കുമാരനാശാൻ", "ഉള്ളൂർ", "വള്ളത്തോൾ", "ചങ്ങമ്പുഴ"], a: "വള്ളത്തോൾ" }, en: { q: "Which poet is known as 'Shabdasundaran' (Master of beautiful words)?", o: ["Kumaran Asan", "Ulloor", "Vallathol", "Changampuzha"], a: "Vallathol" } },
+            { id: 25, ml: { q: "'ഒരു ദേശത്തിന്റെ കഥ' എഴുതിയത്?", o: ["തകഴി", "ബഷീർ", "എസ്.കെ. പൊറ്റെക്കാട്ട്", "ഉറൂബ്"], a: "എസ്.കെ. പൊറ്റെക്കാട്ട്" }, en: { q: "Who wrote 'Oru Desathinte Katha'?", o: ["Thakazhi", "Basheer", "S. K. Pottekkatt", "Uroob"], a: "S. K. Pottekkatt" } },
+            { id: 26, ml: { q: "കേരള പാണിനി എന്നറിയപ്പെടുന്നത്?", o: ["കേരളവർമ്മ വലിയകോയിത്തമ്പുരാൻ", "എ.ആർ. രാജരാജവർമ്മ", "കൊട്ടാരത്തിൽ ശങ്കുണ്ണി", "ചന്തുമേനോൻ"], a: "എ.ആർ. രാജരാജവർമ്മ" }, en: { q: "Who is known as 'Kerala Panini'?", o: ["Kerala Varma Valiya Koil Thampuran", "A. R. Raja Raja Varma", "Kottarathil Sankunni", "Chandu Menon"], a: "A. R. Raja Raja Varma" } },
+            { id: 27, ml: { q: "പാത്തുമ്മയുടെ ആട് എന്ന കൃതിയിലെ പ്രധാന കഥാപാത്രം?", o: ["മജീദ്", "സുഹ്റ", "പാത്തുമ്മ", "ആനവാരി രാമൻനായർ"], a: "പാത്തുമ്മ" }, en: { q: "Who is the main character in the work 'Pathummayude Aadu'?", o: ["Majeed", "Suhra", "Pathumma", "Aanavari Raman Nair"], a: "Pathumma" } },
+            { id: 28, ml: { q: "രമണൻ എന്ന വിലാപകാവ്യം രചിച്ചത്?", o: ["ഇടപ്പള്ളി രാഘവൻപിള്ള", "ചങ്ങമ്പുഴ കൃഷ്ണപിള്ള", "വൈലോപ്പിള്ളി", "പി. കുഞ്ഞിരാമൻ നായർ"], a: "ചങ്ങമ്പുഴ കൃഷ്ണപിള്ള" }, en: { q: "Who composed the pastoral elegy 'Ramanan'?", o: ["Edappally Raghavan Pillai", "Changampuzha Krishna Pillai", "Vailoppilli", "P. Kunhiraman Nair"], a: "Changampuzha Krishna Pillai" } },
+            { id: 29, ml: { q: "'എന്റെ കഥ' ആരുടെ ആത്മകഥയാണ്?", o: ["ബാലാമണിയമ്മ", "ലളിതാംബിക അന്തർജ്ജനം", "മാധവിക്കുട്ടി", "സാറാ ജോസഫ്"], a: "മാധവിക്കുട്ടി" }, en: { q: "Whose autobiography is 'Ente Katha' (My Story)?", o: ["Balamani Amma", "Lalithambika Antharjanam", "Madhavikutty", "Sarah Joseph"], a: "Madhavikutty" } },
+            { id: 30, ml: { q: "മയ്യഴിപ്പുഴയുടെ തീരങ്ങളിൽ എന്ന നോവലിന്റെ രചയിതാവ്?", o: ["ഒ.വി. വിജയൻ", "ആനന്ദ്", "എം. മുകുന്ദൻ", "പുനത്തിൽ കുഞ്ഞബ്ദുള്ള"], a: "എം. മുകുന്ദൻ" }, en: { q: "Who is the author of the novel 'Mayyazhippuzhayude Theerangalil'?", o: ["O. V. Vijayan", "Anand", "M. Mukundan", "Punathil Kunjabdulla"], a: "M. Mukundan" } },
+            { id: 31, ml: { q: "പ്രാചീന കവിത്രയത്തിൽ ഉൾപ്പെടുന്നത് ആരെല്ലാം?", o: ["ആശാൻ, ഉള്ളൂർ, വള്ളത്തോൾ", "ചെറുശ്ശേരി, എഴുത്തച്ഛൻ, നമ്പ്യാർ", "ബഷീർ, തകഴി, പൊറ്റെക്കാട്ട്", "എം.ടി, മുകുന്ദൻ, വിജയൻ"], a: "ചെറുശ്ശേരി, എഴുത്തച്ഛൻ, നമ്പ്യാർ" }, en: { q: "Who are included in the 'Ancient Poet Trio' (Pracheena Kavithrayam)?", o: ["Asan, Ulloor, Vallathol", "Cherusseri, Ezhuthachan, Nambiar", "Basheer, Thakazhi, Pottekkatt", "MT, Mukundan, Vijayan"], a: "Cherusseri, Ezhuthachan, Nambiar" } },
+            { id: 32, ml: { q: "കേരള സ്കോട്ട് എന്നറിയപ്പെടുന്ന എഴുത്തുകാരൻ?", o: ["ചന്തുമേനോൻ", "സി.വി. രാമൻപിള്ള", "തകഴി", "കേശവദേവ്"], a: "സി.വി. രാമൻപിള്ള" }, en: { q: "Which writer is known as the 'Scott of Kerala'?", o: ["Chandu Menon", "C. V. Raman Pillai", "Thakazhi", "Kesavadev"], a: "C. V. Raman Pillai" } },
+            { id: 33, ml: { q: "കൊഴിഞ്ഞ ഇലകൾ ആരുടെ ആത്മകഥയാണ്?", o: ["മുണ്ടശ്ശേരി", "കുട്ടികൃഷ്ണ മാരാർ", "സുകുമാർ അഴീക്കോട്", "എം. ലീലാവതി"], a: "മുണ്ടശ്ശേരി" }, en: { q: "Whose autobiography is 'Kozhinja Ilakal'?", o: ["Mundassery", "Kuttikrishna Marar", "Sukumar Azhikode", "M. Leelavathy"], a: "Mundassery" } },
+            { id: 34, ml: { q: "നാലുകെട്ട് എന്ന നോവലിലെ പ്രധാന കഥാപാത്രം?", o: ["അപ്പു", "സേതു", "ഗോവിന്ദൻകുട്ടി", "ശ്രീധരൻ"], a: "അപ്പു" }, en: { q: "Who is the main character in the novel 'Naalukettu'?", o: ["Appu", "Sethu", "Govindankutty", "Sreedharan"], a: "Appu" } },
+            { id: 35, ml: { q: "ഉമ്മാച്ചു എന്ന നോവൽ എഴുതിയത്?", o: ["ബഷീർ", "ഉറൂബ്", "പൊറ്റെക്കാട്ട്", "വി.കെ.എൻ"], a: "ഉറൂബ്" }, en: { q: "Who wrote the novel 'Ummachu'?", o: ["Basheer", "Uroob", "Pottekkatt", "V. K. N."], a: "Uroob" } },
+            { id: 36, ml: { q: "വിപ്ലവ കവി എന്നറിയപ്പെടുന്നത്?", o: ["ഇടപ്പള്ളി", "ചങ്ങമ്പുഴ", "വയലാർ", "ഒ.എൻ.വി"], a: "വയലാർ" }, en: { q: "Who is known as the 'Revolutionary Poet'?", o: ["Edappally", "Changampuzha", "Vayalar", "O. N. V."], a: "Vayalar" } },
+            { id: 37, ml: { q: "മലയാളത്തിലെ ആദ്യത്തെ ലക്ഷണമൊത്ത മഹാകാവ്യം?", o: ["കൃഷ്ണഗാഥ", "രാമചന്ദ്രവിലാസം", "ഉമാകേരളം", "ചിത്രയോഗം"], a: "രാമചന്ദ്രവിലാസം" }, en: { q: "What is the first standard Mahakavyam (epic poem) in Malayalam?", o: ["Krishnagatha", "Ramachandravilasam", "Umakeralam", "Chithrayogam"], a: "Ramachandravilasam" } },
+            { id: 38, ml: { q: "ബേപ്പൂർ സുൽത്താൻ എന്ന അപരനാമത്തിൽ അറിയപ്പെടുന്നത്?", o: ["എസ്.കെ. പൊറ്റെക്കാട്ട്", "ഉറൂബ്", "വൈക്കം മുഹമ്മദ് ബഷീർ", "തിക്കോടിയൻ"], a: "വൈക്കം മുഹമ്മദ് ബഷീർ" }, en: { q: "Who is known by the nickname 'Beypore Sultan'?", o: ["S. K. Pottekkatt", "Uroob", "Vaikom Muhammad Basheer", "Thikkodiyan"], a: "Vaikom Muhammad Basheer" } },
+            { id: 39, ml: { q: "കണ്ണീരും കിനാവും ആരുടെ ആത്മകഥയാണ്?", o: ["എം.ടി", "വി.ടി. ഭട്ടതിരിപ്പാട്", "സി.ജെ. തോമസ്", "തോപ്പിൽ ഭാസി"], a: "വി.ടി. ഭട്ടതിരിപ്പാട്" }, en: { q: "Whose autobiography is 'Kanneerum Kinavum'?", o: ["M.T.", "V. T. Bhattathiripad", "C. J. Thomas", "Thoppil Bhasi"], a: "V. T. Bhattathiripad" } },
+            { id: 40, ml: { q: "സഞ്ചാര സാഹിത്യത്തിന് പ്രശസ്തനായ എഴുത്തുകാരൻ?", o: ["തകഴി", "ബഷീർ", "എസ്.കെ. പൊറ്റെക്കാട്ട്", "എം.ടി"], a: "എസ്.കെ. പൊറ്റെക്കാട്ട്" }, en: { q: "Which writer is famous for travel literature?", o: ["Thakazhi", "Basheer", "S. K. Pottekkatt", "M.T."], a: "S. K. Pottekkatt" } },
+            { id: 41, ml: { q: "ഓർമ്മയുടെ അറകൾ ആരുടെ ആത്മകഥയാണ്?", o: ["ബഷീർ", "തകഴി", "പൊറ്റെക്കാട്ട്", "കേശവദേവ്"], a: "ബഷീർ" }, en: { q: "Whose autobiography is 'Ormayude Arakal'?", o: ["Basheer", "Thakazhi", "Pottekkatt", "Kesavadev"], a: "Basheer" } },
+            { id: 42, ml: { q: "ശക്തിയുടെ കവി എന്നറിയപ്പെടുന്നത്?", o: ["വൈലോപ്പിള്ളി", "ഇടശ്ശേരി ഗോവിന്ദൻ നായർ", "അക്കിത്തം", "ജി. ശങ്കരക്കുറുപ്പ്"], a: "ഇടശ്ശേരി ഗോവിന്ദൻ നായർ" }, en: { q: "Who is known as the 'Poet of Strength'?", o: ["Vailoppilli", "Edasseri Govindan Nair", "Akkitham", "G. Sankara Kurup"], a: "Edasseri Govindan Nair" } },
+            { id: 43, ml: { q: "ചന്തുമേനോൻ രചിച്ച പൂർത്തിയാകാത്ത നോവൽ?", o: ["ഇന്ദുലേഖ", "ശാരദ", "മാർത്താണ്ഡവർമ്മ", "പരിണാമം"], a: "ശാരദ" }, en: { q: "What is the unfinished novel written by Chandu Menon?", o: ["Indulekha", "Sarada", "Marthandavarma", "Parinamam"], a: "Sarada" } },
+            { id: 44, ml: { q: "അസുരവിത്ത് എന്ന നോവലിലെ പ്രധാന കഥാപാത്രം?", o: ["അപ്പു", "ഗോവിന്ദൻകുട്ടി", "മാടമ്പ്", "പരീക്കുട്ടി"], a: "ഗോവിന്ദൻകുട്ടി" }, en: { q: "Who is the main character in the novel 'Asuravithu'?", o: ["Appu", "Govindankutty", "Madampu", "Pareekutty"], a: "Govindankutty" } },
+            { id: 45, ml: { q: "കേരളത്തിന്റെ എമിലി ബ്രോണ്ടി എന്നറിയപ്പെടുന്നത്?", o: ["ലളിതാംബിക അന്തർജ്ജനം", "ബാലാമണിയമ്മ", "രാജലക്ഷ്മി", "മാധവിക്കുട്ടി"], a: "രാജലക്ഷ്മി" }, en: { q: "Who is known as the 'Emily Brontë of Kerala'?", o: ["Lalithambika Antharjanam", "Balamani Amma", "Rajalakshmi", "Madhavikutty"], a: "Rajalakshmi" } },
+            { id: 46, ml: { q: "ഭാഷാഭഗവതി എന്നറിയപ്പെടുന്ന സാഹിത്യകാരി?", o: ["ബാലാമണിയമ്മ", "സുഗതകുമാരി", "മാധവിക്കുട്ടി", "ലളിതാംബിക അന്തർജ്ജനം"], a: "ബാലാമണിയമ്മ" }, en: { q: "Which writer is known as 'Bhashabhagavathi' (Goddess of Language)?", o: ["Balamani Amma", "Sugathakumari", "Madhavikutty", "Lalithambika Antharjanam"], a: "Balamani Amma" } },
+            { id: 47, ml: { q: "ഫ്രാൻസിസ് ഇട്ടിക്കോര എന്ന നോവൽ എഴുതിയത്?", o: ["ബെന്യാമിൻ", "ടി.ഡി. രാമകൃഷ്ണൻ", "സന്തോഷ് ഏച്ചിക്കാനം", "ഉണ്ണി ആർ."], a: "ടി.ഡി. രാമകൃഷ്ണൻ" }, en: { q: "Who wrote the novel 'Francis Itty Cora'?", o: ["Benyamin", "T. D. Ramakrishnan", "Santhosh Echikkanam", "Unni R."], a: "T. D. Ramakrishnan" } },
+            { id: 48, ml: { q: "സ്മാരകശിലകൾ എന്ന കൃതിയുടെ രചയിതാവ്?", o: ["എം. മുകുന്ദൻ", "പുനത്തിൽ കുഞ്ഞബ്ദുള്ള", "വി.കെ.എൻ", "ഒ.വി. വിജയൻ"], a: "പുനത്തിൽ കുഞ്ഞബ്ദുള്ള" }, en: { q: "Who is the author of the work 'Smarakasilakal'?", o: ["M. Mukundan", "Punathil Kunjabdulla", "V. K. N.", "O. V. Vijayan"], a: "Punathil Kunjabdulla" } },
+            { id: 49, ml: { q: "ഇടശ്ശേരിയുടെ പ്രശസ്തമായ നാടകം?", o: ["അടുക്കളയിൽ നിന്ന് അരങ്ങത്തേക്ക്", "പാട്ടബാക്കി", "കൂട്ടുകൃഷി", "നിങ്ങളെന്നെ കമ്മ്യൂണിസ്റ്റാക്കി"], a: "കൂട്ടുകൃഷി" }, en: { q: "What is the famous play by Edasseri?", o: ["Adukkalayil Ninnu Arangathekku", "Pattabakki", "Koottukrishi", "Ningalenne Communistakki"], a: "Koottukrishi" } },
+            { id: 50, ml: { q: "ആരാണ് 'സരസകവി' എന്നറിയപ്പെടുന്നത്?", o: ["കുഞ്ഞിക്കുട്ടൻ തമ്പുരാൻ", "മൂലൂർ എസ്. പത്മനാഭപ്പണിക്കർ", "കൊടുങ്ങല്ലൂർ കുഞ്ഞിക്കുട്ടൻ തമ്പുരാൻ", "കെ.സി. കേശവപിള്ള"], a: "മൂലൂർ എസ്. പത്മനാഭപ്പണിക്കർ" }, en: { q: "Who is known as 'Sarasakavi'?", o: ["Kunjikuttan Thampuran", "Muloor S. Padmanabha Panicker", "Kodungallur Kunjikuttan Thampuran", "K. C. Kesava Pillai"], a: "Muloor S. Padmanabha Panicker" } },
+            { id: 51, ml: { q: "‘എന്റെ ജീവിതം ഒരു സമരമാണ്’ ആരുടെ ആത്മകഥയാണ്?", o: ["കെ.ആർ. ഗൗരിയമ്മ", "അക്കാമ്മ ചെറിയാൻ", "എ.വി. കുട്ടിമാളു അമ്മ", "ആനി മസ്ക്രീൻ"], a: "അക്കാമ്മ ചെറിയാൻ" }, en: { q: "Whose autobiography is 'Ente Jeevitham Oru Samaramane'?", o: ["K. R. Gouri Amma", "Accamma Cherian", "A. V. Kuttimalu Amma", "Annie Mascarene"], a: "Accamma Cherian" } },
+            { id: 52, ml: { q: "‘മനുഷ്യന് ഒരു ആമുഖം’ എന്ന നോവലിന് കേന്ദ്ര സാഹിത്യ അക്കാദമി അവാർഡ് ലഭിച്ചത് ആർക്ക്?", o: ["കെ.ആർ. മീര", "ബെന്യാമിൻ", "സുഭാഷ് ചന്ദ്രൻ", "ഉണ്ണി ആർ."], a: "സുഭാഷ് ചന്ദ്രൻ" }, en: { q: "Who received the Kendra Sahitya Akademi Award for the novel 'Manushyanu Oru Aamukham'?", o: ["K. R. Meera", "Benyamin", "Subhash Chandran", "Unni R."], a: "Subhash Chandran" } },
+            { id: 53, ml: { q: "‘രാത്രിമഴ’ എന്ന കവിതാസമാഹാരം ആരുടേതാണ്?", o: ["ബാലാമണിയമ്മ", "മാധവിക്കുട്ടി", "സുഗതകുമാരി", "വിജയലക്ഷ്മി"], a: "സുഗതകുമാരി" }, en: { q: "Whose poetry collection is 'Rathrimazha'?", o: ["Balamani Amma", "Madhavikutty", "Sugathakumari", "Vijayalakshmi"], a: "Sugathakumari" } },
+            { id: 54, ml: { q: "‘നിങ്ങളെന്നെ കമ്മ്യൂണിസ്റ്റാക്കി’ എന്ന നാടകത്തിന്റെ രചയിതാവ്?", o: ["തോപ്പിൽ ഭാസി", "കെ.ടി. മുഹമ്മദ്", "സി.ജെ. തോമസ്", "എൻ. കൃഷ്ണപിള്ള"], a: "തോപ്പിൽ ഭാസി" }, en: { q: "Who is the author of the play 'Ningalenne Communistakki'?", o: ["Thoppil Bhasi", "K. T. Muhammed", "C. J. Thomas", "N. Krishna Pillai"], a: "Thoppil Bhasi" } },
+            { id: 55, ml: { q: "‘ആരാച്ചാർ’ എന്ന നോവൽ എഴുതിയത്?", o: ["സാറാ ജോസഫ്", "കെ.ആർ. മീര", "ഇന്ദു മേനോൻ", "അനിതാ നായർ"], a: "കെ.ആർ. മീര" }, en: { q: "Who wrote the novel 'Aarachaar'?", o: ["Sarah Joseph", "K. R. Meera", "Indu Menon", "Anita Nair"], a: "K. R. Meera" } },
+            { id: 56, ml: { q: "കേരള വാൽമീകി എന്നറിയപ്പെടുന്നത്?", o: ["എഴുത്തച്ഛൻ", "വള്ളത്തോൾ", "ഉള്ളൂർ", "കുമാരനാശാൻ"], a: "വള്ളത്തോൾ" }, en: { q: "Who is known as 'Kerala Valmiki'?", o: ["Ezhuthachan", "Vallathol", "Ulloor", "Kumaran Asan"], a: "Vallathol" } },
+            { id: 57, ml: { q: "‘തത്ത്വമസി’ എന്ന കൃതിയുടെ കർത്താവ്?", o: ["നിത്യചൈതന്യ യതി", "സുകുമാർ അഴീക്കോട്", "ഗുരു ഗോപിനാഥ്", "എം. ലീലാവതി"], a: "സുകുമാർ അഴീക്കോട്" }, en: { q: "Who is the author of the work 'Tattvamasi'?", o: ["Nitya Chaitanya Yati", "Sukumar Azhikode", "Guru Gopinath", "M. Leelavathy"], a: "Sukumar Azhikode" } },
+            { id: 58, ml: { q: "മലയാളത്തിലെ ആദ്യത്തെ യാത്രാവിവരണം?", o: ["ഒരു ആഫ്രിക്കൻ യാത്ര", "വർത്തമാനപ്പുസ്തകം", "ലണ്ടൻ നോട്ട്ബുക്ക്", "ബാലിദ്വീപ്"], a: "വർത്തമാനപ്പുസ്തകം" }, en: { q: "What is the first travelogue in Malayalam?", o: ["Oru African Yatra", "Varthamanappusthakam", "London Notebook", "Bali Dweep"], a: "Varthamanappusthakam" } },
+            { id: 59, ml: { q: "‘കയർ’ എന്ന ബൃഹത്തായ നോവലിന്റെ രചയിതാവ്?", o: ["ബഷീർ", "പൊറ്റെക്കാട്ട്", "കേശവദേവ്", "തകഴി"], a: "തകഴി" }, en: { q: "Who is the author of the epic novel 'Kayar'?", o: ["Basheer", "Pottekkatt", "Kesavadev", "Thakazhi"], a: "Thakazhi" } },
+            { id: 60, ml: { q: "‘എന്റെ നാടുകടത്തൽ’ ആരുടെ ആത്മകഥയാണ്?", o: [" സ്വദേശാഭിമാനി രാമകൃഷ്ണപിള്ള", "എ.കെ. ഗോപാലൻ", "മന്നത്ത് പത്മനാഭൻ", "ഇ.എം.എസ്"], a: " സ്വദേശാഭിമാനി രാമകൃഷ്ണപിള്ള" }, en: { q: "Whose autobiography is 'Ente Nadukadathal'?", o: ["Swadeshabhimani Ramakrishna Pillai", "A. K. Gopalan", "Mannathu Padmanabhan", "E. M. S."], a: "Swadeshabhimani Ramakrishna Pillai" } },
+            { id: 61, ml: { q: "‘മഞ്ഞ്’ എന്ന ലഘുനോവൽ എഴുതിയത്?", o: ["എം. മുകുന്ദൻ", "ഒ.വി. വിജയൻ", "വി.കെ.എൻ", "എം.ടി. വാസുദേവൻ നായർ"], a: "എം.ടി. വാസുദേവൻ നായർ" }, en: { q: "Who wrote the novella 'Manju' (Mist)?", o: ["M. Mukundan", "O. V. Vijayan", "V. K. N.", "M. T. Vasudevan Nair"], a: "M. T. Vasudevan Nair" } },
+            { id: 62, ml: { q: "‘ഒരു തെരുവിന്റെ കഥ’ ആരുടെ രചനയാണ്?", o: ["ഉറൂബ്", "എസ്.കെ. പൊറ്റെക്കാട്ട്", "ബഷീർ", "തകഴി"], a: "എസ്.കെ. പൊറ്റെക്കാട്ട്" }, en: { q: "Whose work is 'Oru Theruvinte Katha'?", o: ["Uroob", "S. K. Pottekkatt", "Basheer", "Thakazhi"], a: "S. K. Pottekkatt" } },
+            { id: 63, ml: { q: "‘ഇരുപതാം നൂറ്റാണ്ടിന്റെ ഇതിഹാസം’ എന്ന കാവ്യം രചിച്ചത്?", o: ["വൈലോപ്പിള്ളി", "ഇടശ്ശേരി", "അക്കിത്തം അച്യുതൻ നമ്പൂതിരി", "ജി. ശങ്കരക്കുറുപ്പ്"], a: "അക്കിത്തം അച്യുതൻ നമ്പൂതിരി" }, en: { q: "Who composed the poem 'Irupatham Noottandinte Ithihasam'?", o: ["Vailoppilli", "Edasseri", "Akkitham Achuthan Namboothiri", "G. Sankara Kurup"], a: "Akkitham Achuthan Namboothiri" } },
+            { id: 64, ml: { q: "‘ഓർമ്മയുടെ തീരങ്ങളിൽ’ ആരുടെ ആത്മകഥയാണ്?", o: ["തകഴി", "ബഷീർ", "കേശവദേവ്", "പൊൻകുന്നം വർക്കി"], a: "തകഴി" }, en: { q: "Whose autobiography is 'Ormayude Theerangalil'?", o: ["Thakazhi", "Basheer", "Kesavadev", "Ponkunnam Varkey"], a: "Thakazhi" } },
+            { id: 65, ml: { q: "‘അലാഹയുടെ പെൺമക്കൾ’ എന്ന നോവലിന്റെ രചയിതാവ്?", o: ["കെ.ആർ. മീര", "സാറാ ജോസഫ്", "ഇന്ദു മേനോൻ", "പി. വത്സല"], a: "സാറാ ജോസഫ്" }, en: { q: "Who is the author of the novel 'Aalahayude Penmakkal'?", o: ["K. R. Meera", "Sarah Joseph", "Indu Menon", "P. Valsala"], a: "Sarah Joseph" } },
+            { id: 66, ml: { q: "‘പാടുന്ന വയലിൻ’ ആരുടെ ചെറുകഥാ സമാഹാരമാണ്?", o: ["കാരൂർ", "ഉറൂബ്", "എസ്.കെ. പൊറ്റെക്കാട്ട്", "ബഷീർ"], a: "കാരൂർ" }, en: { q: "Whose short story collection is 'Padunna Violin'?", o: ["Karoor", "Uroob", "S. K. Pottekkatt", "Basheer"], a: "Karoor" } },
+            { id: 67, ml: { q: "‘നളിനി’ എന്ന ഖണ്ഡകാവ്യത്തിലെ നായകൻ?", o: ["മദനൻ", "ദിവാകരൻ", "ചാത്തൻ", "രാമൻ"], a: "ദിവാകരൻ" }, en: { q: "Who is the hero in the elegy 'Nalini'?", o: ["Madanan", "Divakaran", "Chathan", "Raman"], a: "Divakaran" } },
+            { id: 68, ml: { q: "‘എന്റെ വഴിത്തിരിവ്’ ആരുടെ കൃതിയാണ്?", o: ["പൊൻകുന്നം വർക്കി", "സി. കേശവൻ", "വി.ടി. ഭട്ടതിരിപ്പാട്", "മന്നത്ത് പത്മനാഭൻ"], a: "പൊൻകുന്നം വർക്കി" }, en: { q: "Whose work is 'Ente Vazhithirivu'?", o: ["Ponkunnam Varkey", "C. Kesavan", "V. T. Bhattathiripad", "Mannathu Padmanabhan"], a: "Ponkunnam Varkey" } },
+            { id: 69, ml: { q: "‘മരുഭൂമികൾ ഉണ്ടാകുന്നത്’ എന്ന കൃതിയുടെ കർത്താവ്?", o: ["എം. മുകുന്ദൻ", "ആനന്ദ്", "ഒ.വി. വിജയൻ", "വി.കെ.എൻ"], a: "ആനന്ദ്" }, en: { q: "Who is the author of the work 'Marubhoomikal Undakunnathu'?", o: ["M. Mukundan", "Anand", "O. V. Vijayan", "V. K. N."], a: "Anand" } },
+            { id: 70, ml: { q: "‘മഗ്ദലനമറിയം’ എന്ന കാവ്യം രചിച്ചത്?", o: ["ഉള്ളൂർ", "വള്ളത്തോൾ", "ആശാൻ", "ചങ്ങമ്പുഴ"], a: "വള്ളത്തോൾ" }, en: { q: "Who composed the poem 'Magdalana Mariam'?", o: ["Ulloor", "Vallathol", "Asan", "Changampuzha"], a: "Vallathol" } },
+            { id: 71, ml: { q: "‘ഇന്ദുലേഖ’യിലെ നായികയുടെ പേര്?", o: ["ലക്ഷ്മി", "സരസ്വതി", "ഇന്ദുലേഖ", "കല്യാണി"], a: "ഇന്ദുലേഖ" }, en: { q: "What is the name of the heroine in 'Indulekha'?", o: ["Lakshmi", "Saraswati", "Indulekha", "Kalyani"], a: "Indulekha" } },
+            { id: 72, ml: { q: "‘ഓരോ വിളിയും കാതോർത്ത്’ ആരുടെ കവിതാസമാഹാരമാണ്?", o: ["ഒ.എൻ.വി. കുറുപ്പ്", "സുഗതകുമാരി", "വിഷ്ണുനാരായണൻ നമ്പൂതിരി", "അയ്യപ്പപ്പണിക്കർ"], a: "ഒ.എൻ.വി. കുറുപ്പ്" }, en: { q: "Whose poetry collection is 'Oro Viliyum Kathorthu'?", o: ["O. N. V. Kurup", "Sugathakumari", "Vishnunarayanan Namboothiri", "Ayyappa Paniker"], a: "O. N. V. Kurup" } },
+            { id: 73, ml: { q: "‘ഒതപ്പ്’ എന്ന നോവലിന്റെ രചയിതാവ്?", o: ["സാറാ ജോസഫ്", "കെ.ആർ. മീര", "പി. വത്സല", "മാധവിക്കുട്ടി"], a: "സാറാ ജോസഫ്" }, en: { q: "Who is the author of the novel 'Othappu'?", o: ["Sarah Joseph", "K. R. Meera", "P. Valsala", "Madhavikutty"], a: "Sarah Joseph" } },
+            { id: 74, ml: { q: "‘ഗുരുസാഗരം’ എന്ന കൃതി രചിച്ചത്?", o: ["ഒ.വി. വിജയൻ", "എം.ടി", "എം. മുകുന്ദൻ", "ആനന്ദ്"], a: "ഒ.വി. വിജയൻ" }, en: { q: "Who wrote the work 'Gurusagaram'?", o: ["O. V. Vijayan", "M.T.", "M. Mukundan", "Anand"], a: "O. V. Vijayan" } },
+            { id: 75, ml: { q: "‘കുട നന്നാക്കുന്ന ചോയി’ ഏത് കൃതിയിലെ കഥാപാത്രമാണ്?", o: ["ഒരു ദേശത്തിന്റെ കഥ", "വിഷകന്യക", "കയർ", "തോട്ടിയുടെ മകൻ"], a: "ഒരു ദേശത്തിന്റെ കഥ" }, en: { q: "In which work is the character 'Kuda Nannakkunna Choyi'?", o: ["Oru Desathinte Katha", "Vishakanyaka", "Kayar", "Thottiyude Makan"], a: "Oru Desathinte Katha" } },
+            { id: 76, ml: { q: "‘യന്ത്രം’ എന്ന നോവൽ എഴുതിയത്?", o: ["മലയാറ്റൂർ രാമകൃഷ്ണൻ", "കോവിലൻ", "പാറപ്പുറത്ത്", "വി.കെ.എൻ"], a: "മലയാറ്റൂർ രാമകൃഷ്ണൻ" }, en: { q: "Who wrote the novel 'Yanthram'?", o: ["Malayattoor Ramakrishnan", "Kovilan", "Parappurath", "V. K. N."], a: "Malayattoor Ramakrishnan" } },
+            { id: 77, ml: { q: "‘അടുക്കളയിൽ നിന്ന് അരങ്ങത്തേക്ക്’ എന്ന നാടകം രചിച്ചത്?", o: ["തോപ്പിൽ ഭാസി", "കെ. ദാമോദരൻ", "വി.ടി. ഭട്ടതിരിപ്പാട്", "സി.ജെ. തോമസ്"], a: "വി.ടി. ഭട്ടതിരിപ്പാട്" }, en: { q: "Who wrote the play 'Adukkalayil Ninnu Arangathekku'?", o: ["Thoppil Bhasi", "K. Damodaran", "V. T. Bhattathiripad", "C. J. Thomas"], a: "V. T. Bhattathiripad" } },
+            { id: 78, ml: { q: "‘ഭ്രാന്തൻ പൂക്കൾ’ ആരുടെ കവിതാസമാഹാരമാണ്?", o: ["ബാലചന്ദ്രൻ ചുള്ളിക്കാട്", "കടമ്മനിട്ട രാമകൃഷ്ണൻ", "ഡി. വിനയചന്ദ്രൻ", "അയ്യപ്പൻ"], a: "കടമ്മനിട്ട രാമകൃഷ്ണൻ" }, en: { q: "Whose poetry collection is 'Bhranthan Pookkal'?", o: ["Balachandran Chullikkad", "Kadammanitta Ramakrishnan", "D. Vinayachandran", "A. Ayyappan"], a: "Kadammanitta Ramakrishnan" } },
+            { id: 79, ml: { q: "‘എന്റെ ജീവിത സ്മരണകൾ’ ആരുടെ ആത്മകഥയാണ്?", o: ["കെ. കേളപ്പൻ", "മന്നത്ത് പത്മനാഭൻ", "സി. കേശവൻ", "പട്ടം താണുപിള്ള"], a: "മന്നത്ത് പത്മനാഭൻ" }, en: { q: "Whose autobiography is 'Ente Jeevitha Smaranakal'?", o: ["K. Kelappan", "Mannathu Padmanabhan", "C. Kesavan", "Pattom Thanu Pillai"], a: "Mannathu Padmanabhan" } },
+            { id: 80, ml: { q: "‘ഒരു സങ്കീർത്തനം പോലെ’ എന്ന നോവലിന്റെ രചയിതാവ്?", o: ["പെരുമ്പടവം ശ്രീധരൻ", "സി. രാധാകൃഷ്ണൻ", "സേതു", "ടി. പത്മനാഭൻ"], a: "പെരുമ്പടവം ശ്രീധരൻ" }, en: { q: "Who is the author of the novel 'Oru Sankeerthanam Pole'?", o: ["Perumbadavam Sreedharan", "C. Radhakrishnan", "Sethu", "T. Padmanabhan"], a: "Perumbadavam Sreedharan" } },
+            { id: 81, ml: { q: "‘ലീല’ എന്ന ഖണ്ഡകാവ്യം എഴുതിയത്?", o: ["വള്ളത്തോൾ", "കുമാരനാശാൻ", "ഉള്ളൂർ", "ചങ്ങമ്പുഴ"], a: "കുമാരനാശാൻ" }, en: { q: "Who wrote the elegy 'Leela'?", o: ["Vallathol", "Kumaran Asan", "Ulloor", "Changampuzha"], a: "Kumaran Asan" } },
+            { id: 82, ml: { q: "‘തോട്ടിയുടെ മകൻ’ എന്ന നോവൽ ആരുടേതാണ്?", o: ["തകഴി", "ബഷീർ", "കേശവദേവ്", "ഉറൂബ്"], a: "തകഴി" }, en: { q: "Whose novel is 'Thottiyude Makan'?", o: ["Thakazhi", "Basheer", "Kesavadev", "Uroob"], a: "Thakazhi" } },
+            { id: 83, ml: { q: "‘അമ്പലമണി’ എന്ന കവിത എഴുതിയത്?", o: ["ബാലാമണിയമ്മ", "പി. കുഞ്ഞിരാമൻ നായർ", "സുഗതകുമാരി", "ഒ.എൻ.വി. കുറുപ്പ്"], a: "സുഗതകുമാരി" }, en: { q: "Who wrote the poem 'Ambalamani'?", o: ["Balamani Amma", "P. Kunhiraman Nair", "Sugathakumari", "O. N. V. Kurup"], a: "Sugathakumari" } },
+            { id: 84, ml: { q: "‘യയാതി’ എന്ന നോവൽ മറാത്തിയിൽ നിന്ന് മലയാളത്തിലേക്ക് വിവർത്തനം ചെയ്തത്?", o: ["എം.എൻ. സത്യാർത്ഥി", "പി. മാധവൻ പിള്ള", "രവി ഡി.സി.", "സി.ജെ. തോമസ്"], a: "എം.എൻ. സത്യാർത്ഥി" }, en: { q: "Who translated the novel 'Yayati' from Marathi to Malayalam?", o: ["M. N. Sathyarthi", "P. Madhavan Pillai", "Ravi D.C.", "C. J. Thomas"], a: "M. N. Sathyarthi" } },
+            { id: 85, ml: { q: "‘മരുന്ന്’ എന്ന ചെറുകഥ എഴുതിയത്?", o: ["കാരൂർ", "പൊൻകുന്നം വർക്കി", "ബഷീർ", "തകഴി"], a: "പൊൻകുന്നം വർക്കി" }, en: { q: "Who wrote the short story 'Marunnu'?", o: ["Karoor", "Ponkunnam Varkey", "Basheer", "Thakazhi"], a: "Ponkunnam Varkey" } },
+            { id: 86, ml: { q: "‘കാലം’ എന്ന നോവലിലെ നായകൻ?", o: ["സേതു", "അപ്പു", "രവി", "ഗോവിന്ദൻകുട്ടി"], a: "സേതു" }, en: { q: "Who is the protagonist in the novel 'Kaalam'?", o: ["Sethu", "Appu", "Ravi", "Govindankutty"], a: "Sethu" } },
+            { id: 87, ml: { q: "‘അനുഭവങ്ങൾ പാളിച്ചകൾ’ ആരുടെ ആത്മകഥയാണ്?", o: ["തകഴി", "ബഷീർ", "കേശവദേവ്", "ഉറൂബ്"], a: "തകഴി" }, en: { q: "Whose autobiography is 'Anubhavangal Paalichakal'?", o: ["Thakazhi", "Basheer", "Kesavadev", "Uroob"], a: "Thakazhi" } },
+            { id: 88, ml: { q: "‘കുറിയേടത്ത് താത്രി’ എന്ന നാടകം എഴുതിയത്?", o: ["ശ്രീകണ്ഠൻ നായർ", "എൻ. കൃഷ്ണപിള്ള", "ജി. ശങ്കരപ്പിള്ള", "അഭയദേവ്"], a: "എൻ. കൃഷ്ണപിള്ള" }, en: { q: "Who wrote the play 'Kuriyedathu Thathri'?", o: ["Sreekandan Nair", "N. Krishna Pillai", "G. Sankara Pillai", "Abhayadev"], a: "N. Krishna Pillai" } },
+            { id: 89, ml: { q: "‘ഹിഗ്വിറ്റ’ എന്ന ചെറുകഥയുടെ രചയിതാവ്?", o: ["സക്കറിയ", "എൻ.എസ്. മാധവൻ", "പോൾ സക്കറിയ", "സന്തോഷ് ഏച്ചിക്കാനം"], a: "എൻ.എസ്. മാധവൻ" }, en: { q: "Who is the author of the short story 'Higuita'?", o: ["Zacharia", "N. S. Madhavan", "Paul Zacharia", "Santhosh Echikkanam"], a: "N. S. Madhavan" } },
+            { id: 90, ml: { q: "‘ഇതാണെന്റെ പേര്’ ആരുടെ കവിതാ സമാഹാരമാണ്?", o: ["അയ്യപ്പൻ", "ബാലചന്ദ്രൻ ചുള്ളിക്കാട്", "സച്ചിദാനന്ദൻ", "കടമ്മനിട്ട"], a: "സച്ചിദാനന്ദൻ" }, en: { q: "Whose poetry collection is 'Ithaanente Peru'?", o: ["A. Ayyappan", "Balachandran Chullikkad", "Satchidanandan", "Kadammanitta"], a: "Satchidanandan" } },
+            { id: 91, ml: { q: "‘സുന്ദരികളും സുന്ദരന്മാരും’ എന്ന നോവലിന്റെ കർത്താവ്?", o: ["ബഷീർ", "പൊറ്റെക്കാട്ട്", "ഉറൂബ്", "തകഴി"], a: "ഉറൂബ്" }, en: { q: "Who is the author of the novel 'Sundarikalum Sundaranmarum'?", o: ["Basheer", "Pottekkatt", "Uroob", "Thakazhi"], a: "Uroob" } },
+            { id: 92, ml: { q: "‘എന്റെ ജീവിതത്തിലെ ചില ഏടുകൾ’ ആരുടെ ആത്മകഥയാണ്?", o: ["കെ.പി. കേശവമേനോൻ", "കെ. കേളപ്പൻ", "സി. അച്യുതമേനോൻ", "പനമ്പിള്ളി ഗോവിന്ദമേനോൻ"], a: "സി. അച്യുതമേനോൻ" }, en: { q: "Whose autobiography is 'Ente Jeevithathile Chila Edukal'?", o: ["K. P. Kesava Menon", "K. Kelappan", "C. Achutha Menon", "Panampilly Govinda Menon"], a: "C. Achutha Menon" } },
+            { id: 93, ml: { q: "‘ഗസലിന്റെ പുസ്തകം’ ആരുടെ കൃതിയാണ്?", o: ["റഫീക്ക് അഹമ്മദ്", "ബാലചന്ദ്രൻ ചുള്ളിക്കാട്", "ഡി. വിനയചന്ദ്രൻ", "അൻവർ അലി"], a: "ഡി. വിനയചന്ദ്രൻ" }, en: { q: "Whose work is 'Ghazalinte Pusthakam'?", o: ["Rafeeq Ahamed", "Balachandran Chullikkad", "D. Vinayachandran", "Anwar Ali"], a: "D. Vinayachandran" } },
+            { id: 94, ml: { q: "‘ഭൂമിക്കൊരു ചരമഗീതം’ എന്ന കവിത എഴുതിയത്?", o: ["സുഗതകുമാരി", "ഒ.എൻ.വി. കുറുപ്പ്", "അയ്യപ്പപ്പണിക്കർ", "സച്ചിദാനന്ദൻ"], a: "ഒ.എൻ.വി. കുറുപ്പ്" }, en: { q: "Who wrote the poem 'Bhoomikkoru Charamageetham'?", o: ["Sugathakumari", "O. N. V. Kurup", "Ayyappa Paniker", "Satchidanandan"], a: "O. N. V. Kurup" } },
+            { id: 95, ml: { q: "‘ഒരു ഗ്രാമത്തിന്റെ ആത്മാവ്’ എന്ന കൃതി രചിച്ചത്?", o: ["എസ്.കെ. പൊറ്റെക്കാട്ട്", "ഉറൂബ്", "ബഷീർ", "കാരൂർ"], a: "ഉറൂബ്" }, en: { q: "Who wrote the work 'Oru Gramathinte Athmavu'?", o: ["S. K. Pottekkatt", "Uroob", "Basheer", "Karoor"], a: "Uroob" } },
+            { id: 96, ml: { q: "‘ചതുരംഗം’ എന്ന നാടകം ആരുടേതാണ്?", o: ["സി.ജെ. തോമസ്", "ജി. ശങ്കരപ്പിള്ള", "കാവാലം നാരായണപ്പണിക്കർ", "എൻ. കൃഷ്ണപിള്ള"], a: "എൻ. കൃഷ്ണപിള്ള" }, en: { q: "Whose play is 'Chathurangam'?", o: ["C. J. Thomas", "G. Sankara Pillai", "Kavalam Narayana Panicker", "N. Krishna Pillai"], a: "N. Krishna Pillai" } },
+            { id: 97, ml: { q: "‘എന്റെ ബാല്യകാല സ്മരണകൾ’ ആരുടെ ആത്മകഥയാണ്?", o: ["സി. അച്യുതമേനോൻ", "പട്ടം താണുപിള്ള", "ആർ. ശങ്കർ", "ഇ.കെ. നായനാർ"], a: "സി. അച്യുതമേനോൻ" }, en: { q: "Whose autobiography is 'Ente Balyakala Smaranakal'?", o: ["C. Achutha Menon", "Pattom Thanu Pillai", "R. Sankar", "E. K. Nayanar"], a: "C. Achutha Menon" } },
+            { id: 98, ml: { q: "‘കുടജാദ്രി’ എന്ന യാത്രാവിവരണം എഴുതിയത്?", o: ["എസ്.കെ. പൊറ്റെക്കാട്ട്", "എം.പി. വീരേന്ദ്രകുമാർ", "കെ.പി. കേശവമേനോൻ", "സക്കറിയ"], a: "എം.പി. വീരേന്ദ്രകുമാർ" }, en: { q: "Who wrote the travelogue 'Kudajadri'?", o: ["S. K. Pottekkatt", "M. P. Veerendra Kumar", "K. P. Kesava Menon", "Zacharia"], a: "M. P. Veerendra Kumar" } },
+            { id: 99, ml: { q: "‘അഗ്നിസാക്ഷി’ എന്ന നോവലിന്റെ രചയിതാവ്?", o: ["ബാലാമണിയമ്മ", "മാധവിക്കുട്ടി", "ലളിതാംബിക അന്തർജ്ജനം", "സാറാ ജോസഫ്"], a: "ലളിതാംബിക അന്തർജ്ജനം" }, en: { q: "Who is the author of the novel 'Agnisakshi'?", o: ["Balamani Amma", "Madhavikutty", "Lalithambika Antharjanam", "Sarah Joseph"], a: "Lalithambika Antharjanam" } },
+            { id: 100, ml: { q: "‘കലി’ എന്ന കവിത ആരുടേതാണ്?", o: ["കടമ്മനിട്ട", "അയ്യപ്പപ്പണിക്കർ", "ബാലചന്ദ്രൻ ചുള്ളിക്കാട്", "സച്ചിദാനന്ദൻ"], a: "അയ്യപ്പപ്പണിക്കർ" }, en: { q: "Whose poem is 'Kali'?", o: ["Kadammanitta", "Ayyappa Paniker", "Balachandran Chullikkad", "Satchidanandan"], a: "Ayyappa Paniker" } }
+        ];
+
+        // --- App State ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedLang = 'ml';
+        let userAnswers = new Array(quizData.length + 1).fill(null); // Use a larger array to map by ID
+        let questions = [];
+
+        // --- DOM Elements ---
+        const languageScreen = document.getElementById('language-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionCounter = document.getElementById('question-counter');
+        const scoreCounter = document.getElementById('score-counter');
+        const progressBar = document.getElementById('progress-bar');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedback = document.getElementById('feedback');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        // --- Functions ---
+        function startQuiz(lang) {
+            selectedLang = lang;
+            // Shuffle questions for variety each time
+            questions = [...quizData].sort(() => Math.random() - 0.5);
+            languageScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // Reset feedback and styles
+            feedback.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            if (currentQuestionIndex >= questions.length) {
+                showResults();
+                return;
+            }
+
+            const currentQuestion = questions[currentQuestionIndex][selectedLang];
+            const questionData = questions[currentQuestionIndex];
+            
+            // Set language class for proper font rendering
+            questionText.className = `text-2xl font-bold text-center text-gray-800 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            
+            questionText.textContent = currentQuestion.q;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1}/${questions.length}`;
+            scoreCounter.textContent = `Score: ${score}`;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+
+            // Shuffle options
+            const shuffledOptions = [...currentQuestion.o].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = `btn-option w-full p-4 rounded-lg border-2 border-gray-300 text-lg font-semibold text-gray-700 bg-white hover:bg-yellow-100 hover:border-yellow-400 transition ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+                button.onclick = () => selectAnswer(option, button);
+                optionsContainer.appendChild(button);
+            });
+
+            updateNavButtons();
+            
+            // If user has already answered this question (by using back button), show the result
+            if (userAnswers[questionData.id] !== null) {
+                showPreviousAnswer();
+            }
+        }
+        
+        function selectAnswer(selectedOption, button) {
+            const questionData = questions[currentQuestionIndex];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            // Only update score if the question hasn't been answered correctly before
+            if (userAnswers[questionData.id] !== currentQuestion.a && selectedOption === correctAnswer) {
+                 score++;
+            } else if (userAnswers[questionData.id] === currentQuestion.a && selectedOption !== correctAnswer) {
+                 // If user changes a correct answer to a wrong one, decrement score
+                 score--;
+            }
+
+            userAnswers[questionData.id] = selectedOption;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true; // Disable all options after one is selected
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+
+            if (selectedOption === correctAnswer) {
+                playCorrectSound();
+                feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                feedback.className = 'mt-4 text-center font-bold text-lg text-green-600';
+            } else {
+                playWrongSound();
+                button.classList.add('wrong');
+                feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                feedback.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+            }
+            
+            scoreCounter.textContent = `Score: ${score}`;
+        }
+
+        function showPreviousAnswer() {
+            const questionData = questions[currentQuestionIndex];
+            const selectedOption = userAnswers[questionData.id];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+                if (btn.textContent === selectedOption && selectedOption !== correctAnswer) {
+                    btn.classList.add('wrong');
+                }
+            });
+
+            if (selectedOption !== correctAnswer) {
+                 feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                 feedback.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+            } else {
+                 feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                 feedback.className = 'mt-4 text-center font-bold text-lg text-green-600';
+            }
+        }
+
+        function updateNavButtons() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', backBtn.disabled);
+            
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.textContent = selectedLang === 'ml' ? 'പൂർത്തിയാക്കുക' : 'Finish';
+            } else {
+                nextBtn.textContent = selectedLang === 'ml' ? 'അടുത്തത് >' : 'Next >';
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            const percentage = Math.round((score / questions.length) * 100);
+            const resultTitle = document.getElementById('result-title');
+            const finalScore = document.getElementById('final-score');
+            const resultMessage = document.getElementById('result-message');
+
+            resultTitle.className = `text-4xl font-bold mb-4 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            finalScore.className = `text-2xl mb-6 text-gray-700 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            resultMessage.className = `text-xl mb-8 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+
+            if (selectedLang === 'ml') {
+                resultTitle.textContent = 'ഫലം';
+                finalScore.textContent = `നിങ്ങളുടെ സ്കോർ: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'അടിപൊളി! നിങ്ങൾ മിടുക്കനാണ്/മിടുക്കിയാണ്.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'നന്നായിരിക്കുന്നു! ഇനിയും മെച്ചപ്പെടുത്താം.';
+                } else {
+                    resultMessage.textContent = 'സാരമില്ല, വീണ്ടും ശ്രമിക്കുക!';
+                }
+            } else {
+                resultTitle.textContent = 'Results';
+                finalScore.textContent = `Your Score: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'Excellent! You did a great job.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'Good effort! Keep practicing.';
+                } else {
+                    resultMessage.textContent = 'Don\'t worry, try again!';
+                }
+            }
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers.fill(null);
+            questions = [];
+            resultScreen.classList.add('hidden');
+            languageScreen.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ടെക്നോളജി ക്വിസ്</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .malayalam {
+            font-family: 'Manjari', sans-serif;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-option {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .btn-option:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .btn-option:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+        .correct {
+            animation: pulse-green 1s;
+            background-color: #22c55e !important; /* Green-500 */
+            color: white !important;
+            border-color: #16a34a !important; /* Green-600 */
+        }
+        .wrong {
+            animation: shake 0.5s;
+            background-color: #ef4444 !important; /* Red-500 */
+            color: white !important;
+            border-color: #dc2626 !important; /* Red-600 */
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-blue-900 to-black text-white min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Language Selection Screen -->
+        <div id="language-screen" class="text-center p-8 rounded-2xl shadow-2xl card">
+            <h1 class="text-4xl font-bold mb-2 malayalam">ടെക്നോളജി ക്വിസ്</h1>
+            <h2 class="text-2xl font-bold mb-8">Technology Quiz</h2>
+            <p class="mb-4 malayalam">ഭാഷ തിരഞ്ഞെടുക്കുക:</p>
+            <p class="mb-8">Select Language:</p>
+            <div class="flex flex-col space-y-4">
+                <button onclick="startQuiz('ml')" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg text-xl shadow-lg transition-transform transform hover:scale-105 malayalam">മലയാളം</button>
+                <button onclick="startQuiz('en')" class="bg-fuchsia-500 hover:bg-fuchsia-600 text-white font-bold py-3 px-6 rounded-lg text-xl shadow-lg transition-transform transform hover:scale-105">English</button>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden p-6 rounded-2xl shadow-2xl card">
+            <div id="header" class="flex justify-between items-center mb-4">
+                <div id="question-counter" class="text-lg font-semibold text-gray-300"></div>
+                <div id="score-counter" class="text-lg font-semibold text-green-400"></div>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-cyan-400 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <div id="question-container" class="mb-6">
+                <p id="question-text" class="text-2xl font-bold text-center text-white" style="min-height: 100px;"></p>
+            </div>
+            <div id="options-container" class="grid grid-cols-1 gap-4">
+                <!-- Options will be dynamically inserted here -->
+            </div>
+            <div id="feedback" class="mt-4 text-center font-bold text-lg" style="min-height: 30px;"></div>
+            <div class="flex justify-between mt-8">
+                <button id="back-btn" onclick="prevQuestion()" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg shadow transition-transform transform hover:scale-105">&lt; Back</button>
+                <button id="next-btn" onclick="nextQuestion()" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-6 rounded-lg shadow transition-transform transform hover:scale-105">Next &gt;</button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center p-8 rounded-2xl shadow-2xl card">
+            <h2 id="result-title" class="text-4xl font-bold mb-4 text-white"></h2>
+            <p id="final-score" class="text-2xl mb-6 text-gray-300"></p>
+            <p id="result-message" class="text-xl mb-8 text-cyan-300"></p>
+            <button onclick="restartQuiz()" class="bg-fuchsia-500 hover:bg-fuchsia-600 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg transition-transform transform hover:scale-105">
+                വീണ്ടും കളിക്കാം / Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Sound Synthesis ---
+        const correctSound = new Tone.Synth({
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
+        }).toDestination();
+
+        const wrongSound = new Tone.Synth({
+            oscillator: { type: 'square' },
+            envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.2 }
+        }).toDestination();
+
+        function playCorrectSound() {
+            Tone.start();
+            correctSound.triggerAttackRelease("C5", "8n");
+        }
+
+        function playWrongSound() {
+            Tone.start();
+            wrongSound.triggerAttackRelease("C3", "8n");
+        }
+
+        // --- Quiz Data (100 Questions) ---
+        const quizData = [
+            // IT
+            { id: 1, ml: { q: "കമ്പ്യൂട്ടറിന്റെ തലച്ചോറ് എന്നറിയപ്പെടുന്നത്?", o: ["റാം (RAM)", "ഹാർഡ് ഡിസ്ക്", "സി.പി.യു (CPU)", "മദർബോർഡ്"], a: "സി.പി.യു (CPU)" }, en: { q: "What is known as the brain of the computer?", o: ["RAM", "Hard Disk", "CPU", "Motherboard"], a: "CPU" } },
+            { id: 2, ml: { q: "WWW എന്നതിന്റെ പൂർണ്ണരൂപം?", o: ["World Wide Web", "World Web Wide", "Web World Wide", "World with Web"], a: "World Wide Web" }, en: { q: "What is the full form of WWW?", o: ["World Wide Web", "World Web Wide", "Web World Wide", "World with Web"], a: "World Wide Web" } },
+            { id: 3, ml: { q: "ഇന്റർനെറ്റിന്റെ പിതാവ് എന്നറിയപ്പെടുന്നത്?", o: ["ടിം ബർണേഴ്സ്-ലീ", "വിന്റ് സെർഫ്", "ചാൾസ് ബാബേജ്", "ബിൽ ഗേറ്റ്സ്"], a: "വിന്റ് സെർഫ്" }, en: { q: "Who is known as the father of the Internet?", o: ["Tim Berners-Lee", "Vint Cerf", "Charles Babbage", "Bill Gates"], a: "Vint Cerf" } },
+            { id: 4, ml: { q: "ഗൂഗിളിന്റെ മാതൃ കമ്പനി ഏതാണ്?", o: ["മൈക്രോസോഫ്റ്റ്", "ആപ്പിൾ", "ആൽഫബെറ്റ്", "മെറ്റാ"], a: "ആൽഫബെറ്റ്" }, en: { q: "What is the parent company of Google?", o: ["Microsoft", "Apple", "Alphabet", "Meta"], a: "Alphabet" } },
+            { id: 5, ml: { q: "ഒരു വെബ്സൈറ്റിന്റെ വിലാസത്തെ പറയുന്ന പേര്?", o: ["IP അഡ്രസ്", "URL", "ഡൊമെയ്ൻ", "ഹോസ്റ്റ്"], a: "URL" }, en: { q: "What is the address of a website called?", o: ["IP Address", "URL", "Domain", "Host"], a: "URL" } },
+            { id: 6, ml: { q: "പൈത്തൺ (Python) എന്നത് എന്താണ്?", o: ["ഓപ്പറേറ്റിംഗ് സിസ്റ്റം", "പ്രോഗ്രാമിംഗ് ഭാഷ", "വെബ് ബ്രൗസർ", "വൈറസ്"], a: "പ്രോഗ്രാമിംഗ് ഭാഷ" }, en: { q: "What is Python?", o: ["Operating System", "Programming Language", "Web Browser", "Virus"], a: "Programming Language" } },
+            { id: 7, ml: { q: "ഇന്റർനെറ്റിലൂടെ ഫയലുകൾ കൈമാറാൻ ഉപയോഗിക്കുന്ന പ്രോട്ടോക്കോൾ?", o: ["HTTP", "SMTP", "FTP", "TCP/IP"], a: "FTP" }, en: { q: "Which protocol is used to transfer files over the Internet?", o: ["HTTP", "SMTP", "FTP", "TCP/IP"], a: "FTP" } },
+            { id: 8, ml: { q: "ക്ലൗഡ് കമ്പ്യൂട്ടിംഗിന് ഉദാഹരണമല്ലാത്തത് ഏത്?", o: ["ഗൂഗിൾ ഡ്രൈവ്", "മൈക്രോസോഫ്റ്റ് വേഡ്", "ഡ്രോപ്പ്ബോക്സ്", "iCloud"], a: "മൈക്രോസോഫ്റ്റ് വേഡ്" }, en: { q: "Which of the following is not an example of cloud computing?", o: ["Google Drive", "Microsoft Word", "Dropbox", "iCloud"], a: "Microsoft Word" } },
+            { id: 9, ml: { q: "അനാവശ്യ ഇ-മെയിലുകളെ പറയുന്ന പേര്?", o: ["സ്പൂഫ്", "സ്പാം", "വൈറസ്", "ട്രോജൻ"], a: "സ്പാം" }, en: { q: "What are unsolicited emails called?", o: ["Spoof", "Spam", "Virus", "Trojan"], a: "Spam" } },
+            { id: 10, ml: { q: "ബിറ്റ്കോയിൻ പോലുള്ള ഡിജിറ്റൽ കറൻസികളുടെ അടിസ്ഥാന സാങ്കേതികവിദ്യ?", o: ["ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ്", "ബ്ലോക്ക്ചെയിൻ", "ക്ലൗഡ് കമ്പ്യൂട്ടിംഗ്", "IoT"], a: "ബ്ലോക്ക്ചെയിൻ" }, en: { q: "What is the underlying technology of digital currencies like Bitcoin?", o: ["Artificial Intelligence", "Blockchain", "Cloud Computing", "IoT"], a: "Blockchain" } },
+            { id: 11, ml: { q: "ഒരു കമ്പ്യൂട്ടറിലെ താത്കാലിക മെമ്മറി ഏതാണ്?", o: ["ROM", "Hard Disk", "SSD", "RAM"], a: "RAM" }, en: { q: "What is the temporary memory in a computer?", o: ["ROM", "Hard Disk", "SSD", "RAM"], a: "RAM" } },
+            { id: 12, ml: { q: "താഴെ പറയുന്നവയിൽ ഏതാണ് ഒരു ഓപ്പറേറ്റിംഗ് സിസ്റ്റം?", o: ["ക്രോം", "വിൻഡോസ്", "ഓഫീസ്", "ഫോട്ടോഷോപ്പ്"], a: "വിൻഡോസ്" }, en: { q: "Which of the following is an operating system?", o: ["Chrome", "Windows", "Office", "Photoshop"], a: "Windows" } },
+            { id: 13, ml: { q: "PDF എന്നതിന്റെ പൂർണ്ണരൂപം?", o: ["Portable Document Format", "Printable Document File", "Public Document Format", "Portable Data File"], a: "Portable Document Format" }, en: { q: "What is the full form of PDF?", o: ["Portable Document Format", "Printable Document File", "Public Document Format", "Portable Data File"], a: "Portable Document Format" } },
+            { id: 14, ml: { q: "ഫേസ്ബുക്കിന്റെ പുതിയ പേര്?", o: ["ടെൻസ്", "മെറ്റാ", "ആൽഫബെറ്റ്", "ട്വിറ്റർ"], a: "മെറ്റാ" }, en: { q: "What is the new name of Facebook's parent company?", o: ["Tense", "Meta", "Alphabet", "Twitter"], a: "Meta" } },
+            { id: 15, ml: { q: "കമ്പ്യൂട്ടർ മൗസ് കണ്ടുപിടിച്ചത് ആര്?", o: ["ചാൾസ് ബാബേജ്", "ഡഗ്ലസ് എംഗൽബാർട്ട്", "സ്റ്റീവ് ജോബ്സ്", "ബിൽ ഗേറ്റ്സ്"], a: "ഡഗ്ലസ് എംഗൽബാർട്ട്" }, en: { q: "Who invented the computer mouse?", o: ["Charles Babbage", "Douglas Engelbart", "Steve Jobs", "Bill Gates"], a: "Douglas Engelbart" } },
+            
+            // Space Technology
+            { id: 16, ml: { q: "ഇന്ത്യയുടെ ബഹിരാകാശ ഗവേഷണ സംഘടന?", o: ["NASA", "ESA", "ISRO", "Roscosmos"], a: "ISRO" }, en: { q: "What is India's space research organization?", o: ["NASA", "ESA", "ISRO", "Roscosmos"], a: "ISRO" } },
+            { id: 17, ml: { q: "ചന്ദ്രന്റെ ദക്ഷിണധ്രുവത്തിൽ വിജയകരമായി ഇറങ്ങിയ ആദ്യത്തെ ദൗത്യം?", o: ["ചന്ദ്രയാൻ-2", "ലൂണ 25", "ചന്ദ്രയാൻ-3", "ആർടെമിസ് 1"], a: "ചന്ദ്രയാൻ-3" }, en: { q: "Which was the first mission to successfully land on the Moon's south pole?", o: ["Chandrayaan-2", "Luna 25", "Chandrayaan-3", "Artemis 1"], a: "Chandrayaan-3" } },
+            { id: 18, ml: { q: "ഇന്ത്യയുടെ ആദ്യത്തെ മനുഷ്യ ബഹിരാകാശ ദൗത്യം?", o: ["മംഗൾയാൻ", "ഗഗൻയാൻ", "ആദിത്യ-L1", "ചന്ദ്രയാൻ-3"], a: "ഗഗൻയാൻ" }, en: { q: "What is India's first human spaceflight mission?", o: ["Mangalyaan", "Gaganyaan", "Aditya-L1", "Chandrayaan-3"], a: "Gaganyaan" } },
+            { id: 19, ml: { q: "അമേരിക്കൻ ബഹിരാകാശ ഏജൻസിയായ നാസയുടെ ആസ്ഥാനം എവിടെയാണ്?", o: ["ഹൂസ്റ്റൺ", "ഫ്ലോറിഡ", "വാഷിംഗ്ടൺ ഡി.സി.", "കാലിഫോർണിയ"], a: "വാഷിംഗ്ടൺ ഡി.സി." }, en: { q: "Where is the headquarters of the American space agency NASA?", o: ["Houston", "Florida", "Washington, D.C.", "California"], a: "Washington, D.C." } },
+            { id: 20, ml: { q: "ഇന്ത്യൻ ബഹിരാകാശ പദ്ധതിയുടെ പിതാവ് എന്നറിയപ്പെടുന്നത്?", o: ["എ.പി.ജെ. അബ്ദുൾ കലാം", "വിക്രം സാരാഭായി", "സതീഷ് ധവാൻ", "ഹോമി ഭാഭ"], a: "വിക്രം സാരാഭായി" }, en: { q: "Who is known as the father of the Indian space program?", o: ["A. P. J. Abdul Kalam", "Vikram Sarabhai", "Satish Dhawan", "Homi Bhabha"], a: "Vikram Sarabhai" } },
+            { id: 21, ml: { q: "ലോകത്തിലെ ഏറ്റവും വലിയ ബഹിരാകാശ ദൂരദർശിനി?", o: ["ഹബിൾ", "കെപ്ലർ", "ജെയിംസ് വെബ്", "സ്പിറ്റ്സർ"], a: "ജെയിംസ് വെബ്" }, en: { q: "What is the world's largest space telescope?", o: ["Hubble", "Kepler", "James Webb", "Spitzer"], a: "James Webb" } },
+            { id: 22, ml: { q: "പുനരുപയോഗിക്കാവുന്ന വിക്ഷേപണ വാഹനങ്ങൾ വികസിപ്പിച്ച സ്വകാര്യ ബഹിരാകാശ കമ്പനി?", o: ["ബ്ലൂ ഒറിജിൻ", "വിർജിൻ ഗാലക്റ്റിക്", "സ്പേസ്എക്സ്", "ബോയിംഗ്"], a: "സ്പേസ്എക്സ്" }, en: { q: "Which private space company developed reusable launch vehicles?", o: ["Blue Origin", "Virgin Galactic", "SpaceX", "Boeing"], a: "SpaceX" } },
+            { id: 23, ml: { q: "ഇന്ത്യയുടെ ചൊവ്വാ ദൗത്യത്തിന്റെ പേര്?", o: ["ചന്ദ്രയാൻ", "മംഗൾയാൻ", "ശുക്രയാൻ", "ആദിത്യ"], a: "മംഗൾയാൻ" }, en: { q: "What is the name of India's Mars mission?", o: ["Chandrayaan", "Mangalyaan", "Shukrayaan", "Aditya"], a: "Mangalyaan" } },
+            { id: 24, ml: { q: "ആദ്യമായി ബഹിരാകാശത്ത് പോയ മനുഷ്യൻ?", o: ["നീൽ ആംസ്ട്രോങ്", "യൂറി ഗഗാറിൻ", "അലൻ ഷെപ്പേർഡ്", "ജോൺ ഗ്ലെൻ"], a: "യൂറി ഗഗാറിൻ" }, en: { q: "Who was the first human to go to space?", o: ["Neil Armstrong", "Yuri Gagarin", "Alan Shepard", "John Glenn"], a: "Yuri Gagarin" } },
+            { id: 25, ml: { q: "ഇന്ത്യയുടെ നാവിഗേഷൻ സംവിധാനത്തിന്റെ പേര്?", o: ["GPS", "ഗ്ലോനാസ്", "ഗലീലിയോ", "നാവിക് (NavIC)"], a: "നാവിക് (NavIC)" }, en: { q: "What is the name of India's own navigation system?", o: ["GPS", "GLONASS", "Galileo", "NavIC"], a: "NavIC" } },
+            { id: 26, ml: { q: "ഇന്ത്യയുടെ വിക്ഷേപണ വാഹനമായ PSLV-യുടെ പൂർണ്ണരൂപം?", o: ["Polar Satellite Launch Vehicle", "Primary Satellite Launch Vehicle", "Permanent Satellite Launch Vehicle", "Payload Satellite Launch Vehicle"], a: "Polar Satellite Launch Vehicle" }, en: { q: "What is the full form of India's launch vehicle, PSLV?", o: ["Polar Satellite Launch Vehicle", "Primary Satellite Launch Vehicle", "Permanent Satellite Launch Vehicle", "Payload Satellite Launch Vehicle"], a: "Polar Satellite Launch Vehicle" } },
+            { id: 27, ml: { q: "അന്താരാഷ്ട്ര ബഹിരാകാശ നിലയം (ISS) ഏത് ഭ്രമണപഥത്തിലാണ് ഭൂമിയെ ചുറ്റുന്നത്?", o: ["ഭൂസ്ഥിര ഭ്രമണപഥം (GEO)", "താഴ്ന്ന ഭൗമ ഭ്രമണപഥം (LEO)", "സൗരകേന്ദ്രീകൃത ഭ്രമണപഥം", "ദീർഘവൃത്താകൃതിയിലുള്ള ഭ്രമണപഥം"], a: "താഴ്ന്ന ഭൗമ ഭ്രമണപഥം (LEO)" }, en: { q: "In which orbit does the International Space Station (ISS) circle the Earth?", o: ["Geostationary Orbit (GEO)", "Low Earth Orbit (LEO)", "Heliocentric Orbit", "Elliptical Orbit"], a: "Low Earth Orbit (LEO)" } },
+            { id: 28, ml: { q: "ചന്ദ്രനിൽ മനുഷ്യനെ ഇറക്കാനുള്ള നാസയുടെ പുതിയ ദൗത്യ പരമ്പര?", o: ["അപ്പോളോ", "ഓറിയോൺ", "ആർടെമിസ്", "പെർസിവിയറൻസ്"], a: "ആർടെമിസ്" }, en: { q: "What is NASA's new series of missions to land humans on the Moon?", o: ["Apollo", "Orion", "Artemis", "Perseverance"], a: "Artemis" } },
+            { id: 29, ml: { q: "ഇന്ത്യയുടെ ആദ്യത്തെ സൗര ദൗത്യം?", o: ["സൂര്യയാൻ-1", "രവി-1", "ആദിത്യ-L1", "സോളാർ-1"], a: "ആദിത്യ-L1" }, en: { q: "What is India's first solar mission?", o: ["Suryayaan-1", "Ravi-1", "Aditya-L1", "Solar-1"], a: "Aditya-L1" } },
+            { id: 30, ml: { q: "ബഹിരാകാശത്ത് പോയ ആദ്യ ഇന്ത്യൻ വംശജയായ വനിത?", o: ["സുനിത വില്യംസ്", "കൽപ്പന ചൗള", "സിരിഷ ബാൻഡ്‌ല", "പെഗ്ഗി വിറ്റ്സൺ"], a: "കൽപ്പന ചൗള" }, en: { q: "Who was the first woman of Indian origin to go to space?", o: ["Sunita Williams", "Kalpana Chawla", "Sirisha Bandla", "Peggy Whitson"], a: "Kalpana Chawla" } },
+            
+            // Artificial Intelligence
+            { id: 31, ml: { q: "മനുഷ്യനെപ്പോലെ ചിന്തിക്കാനും പ്രവർത്തിക്കാനും കമ്പ്യൂട്ടറുകളെ പ്രാപ്തമാക്കുന്ന സാങ്കേതികവിദ്യ?", o: ["ബ്ലോക്ക്ചെയിൻ", "ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ്", "ക്ലൗഡ് കമ്പ്യൂട്ടിംഗ്", "വെർച്വൽ റിയാലിറ്റി"], a: "ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ്" }, en: { q: "The technology that enables computers to think and act like humans?", o: ["Blockchain", "Artificial Intelligence", "Cloud Computing", "Virtual Reality"], a: "Artificial Intelligence" } },
+            { id: 32, ml: { q: "ചാറ്റ്ജിപിടി (ChatGPT) വികസിപ്പിച്ച കമ്പനി?", o: ["ഗൂഗിൾ", "മെറ്റാ", "ഓപ്പൺഎഐ", "ആപ്പിൾ"], a: "ഓപ്പൺഎഐ" }, en: { q: "Which company developed ChatGPT?", o: ["Google", "Meta", "OpenAI", "Apple"], a: "OpenAI" } },
+            { id: 33, ml: { q: "ഡാറ്റയിൽ നിന്ന് സ്വയം പഠിക്കാനുള്ള കമ്പ്യൂട്ടറിന്റെ കഴിവിനെ എന്തു പറയുന്നു?", o: ["ഡീപ് ലേണിംഗ്", "മെഷീൻ ലേണിംഗ്", "നാച്ചുറൽ ലാംഗ്വേജ് പ്രോസസ്സിംഗ്", "ന്യൂറൽ നെറ്റ്വർക്ക്"], a: "മെഷീൻ ലേണിംഗ്" }, en: { q: "What is the ability of a computer to learn from data on its own called?", o: ["Deep Learning", "Machine Learning", "Natural Language Processing", "Neural Network"], a: "Machine Learning" } },
+            { id: 34, ml: { q: "ഗൂഗിൾ വികസിപ്പിച്ച ജനറേറ്റീവ് എ.ഐ മോഡൽ ഏതാണ്?", o: ["ലാമ (Llama)", "ക്ലോഡ് (Claude)", "ജെമിനി (Gemini)", "ജിപിടി-4 (GPT-4)"], a: "ജെമിനി (Gemini)" }, en: { q: "Which generative AI model was developed by Google?", o: ["Llama", "Claude", "Gemini", "GPT-4"], a: "Gemini" } },
+            { id: 35, ml: { q: "മനുഷ്യന്റെ തലച്ചോറിന്റെ പ്രവർത്തനത്തെ മാതൃകയാക്കിയുള്ള എ.ഐ സിസ്റ്റം?", o: ["അൽഗോരിതം", "ഡിസിഷൻ ട്രീ", "ന്യൂറൽ നെറ്റ്വർക്ക്", "ഡാറ്റാബേസ്"], a: "ന്യൂറൽ നെറ്റ്വർക്ക്" }, en: { q: "An AI system modeled on the functioning of the human brain?", o: ["Algorithm", "Decision Tree", "Neural Network", "Database"], a: "Neural Network" } },
+            { id: 36, ml: { q: "ടെക്സ്റ്റ് വിവരണങ്ങളിൽ നിന്ന് ചിത്രങ്ങൾ നിർമ്മിക്കുന്ന എ.ഐ സാങ്കേതികവിദ്യക്ക് ഉദാഹരണം?", o: ["ചാറ്റ്ജിപിടി", "മിഡ്ജേർണി", "ഗ്രാമർലി", "സിരി"], a: "മിഡ്ജേർണി" }, en: { q: "An example of AI technology that creates images from text descriptions?", o: ["ChatGPT", "Midjourney", "Grammarly", "Siri"], a: "Midjourney" } },
+            { id: 37, ml: { q: "മനുഷ്യന്റെ സംഭാഷണം മനസ്സിലാക്കാനും പ്രതികരിക്കാനും കമ്പ്യൂട്ടറുകളെ സഹായിക്കുന്ന എ.ഐ ശാഖ?", o: ["കമ്പ്യൂട്ടർ വിഷൻ", "റോബോട്ടിക്സ്", "നാച്ചുറൽ ലാംഗ്വേജ് പ്രോസസ്സിംഗ് (NLP)", "എക്സ്പെർട്ട് സിസ്റ്റംസ്"], a: "നാച്ചുറൽ ലാംഗ്വേജ് പ്രോസസ്സിംഗ് (NLP)" }, en: { q: "The branch of AI that helps computers understand and respond to human language?", o: ["Computer Vision", "Robotics", "Natural Language Processing (NLP)", "Expert Systems"], a: "Natural Language Processing (NLP)" } },
+            { id: 38, ml: { q: "ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസിന്റെ പിതാവ് എന്നറിയപ്പെടുന്നത്?", o: ["അലൻ ട്യൂറിംഗ്", "ജോൺ മക്കാർത്തി", "ജെഫ്രി ഹിന്റൺ", "യാൻ ലെകുൻ"], a: "ജോൺ മക്കാർത്തി" }, en: { q: "Who is known as the father of Artificial Intelligence?", o: ["Alan Turing", "John McCarthy", "Geoffrey Hinton", "Yann LeCun"], a: "John McCarthy" } },
+            { id: 39, ml: { q: "സ്വയം ഓടിക്കുന്ന കാറുകളിൽ (Self-driving cars) ഉപയോഗിക്കുന്ന പ്രധാന സാങ്കേതികവിദ്യ?", o: ["ജിപിഎസ്", "ബ്ലൂടൂത്ത്", "ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ്", "5ജി"], a: "ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ്" }, en: { q: "What is the main technology used in self-driving cars?", o: ["GPS", "Bluetooth", "Artificial Intelligence", "5G"], a: "Artificial Intelligence" } },
+            { id: 40, ml: { q: "മെഷീൻ ലേണിംഗിന്റെ ഒരു ഉപവിഭാഗം, വലിയ അളവിലുള്ള ഡാറ്റ ഉപയോഗിച്ച് സങ്കീർണ്ണമായ പാറ്റേണുകൾ പഠിക്കുന്നത്?", o: ["സൂപ്പർവൈസ്ഡ് ലേണിംഗ്", "റീഇൻഫോഴ്സ്മെന്റ് ലേണിംഗ്", "ഡീപ് ലേണിംഗ്", "അൺസൂപ്പർവൈസ്ഡ് ലേണിംഗ്"], a: "ഡീപ് ലേണിംഗ്" }, en: { q: "A subset of machine learning that learns complex patterns using large amounts of data?", o: ["Supervised Learning", "Reinforcement Learning", "Deep Learning", "Unsupervised Learning"], a: "Deep Learning" } },
+            // ... (60 more mixed questions)
+            { id: 41, ml: { q: "ഇന്ത്യയുടെ ആദ്യത്തെ സ്വകാര്യമായി നിർമ്മിച്ച റോക്കറ്റ്?", o: ["വിക്രം-എസ്", "കലാം-1", "അഗ്നികുൽ", "സ്കൈറൂട്ട്"], a: "വിക്രം-എസ്" }, en: { q: "What is India's first privately built rocket?", o: ["Vikram-S", "Kalam-1", "Agnikul", "Skyroot"], a: "Vikram-S" } },
+            { id: 42, ml: { q: "ഒരു ടെറാബൈറ്റ് (TB) എത്ര ജിഗാബൈറ്റിന് (GB) തുല്യമാണ്?", o: ["100 GB", "1024 GB", "1000 GB", "2048 GB"], a: "1024 GB" }, en: { q: "How many Gigabytes (GB) are equal to one Terabyte (TB)?", o: ["100 GB", "1024 GB", "1000 GB", "2048 GB"], a: "1024 GB" } },
+            { id: 43, ml: { q: "ചിത്രങ്ങളും വീഡിയോകളും തിരിച്ചറിയാൻ കമ്പ്യൂട്ടറുകളെ പഠിപ്പിക്കുന്ന എ.ഐ ശാഖ?", o: ["NLP", "കമ്പ്യൂട്ടർ വിഷൻ", "റോബോട്ടിക്സ്", "ഡാറ്റാ സയൻസ്"], a: "കമ്പ്യൂട്ടർ വിഷൻ" }, en: { q: "The branch of AI that teaches computers to recognize images and videos?", o: ["NLP", "Computer Vision", "Robotics", "Data Science"], a: "Computer Vision" } },
+            { id: 44, ml: { q: "ISRO-യുടെ വാണിജ്യ വിഭാഗം ഏതാണ്?", o: ["ആൻട്രിക്സ് കോർപ്പറേഷൻ", "ന്യൂസ്പേസ് ഇന്ത്യ ലിമിറ്റഡ് (NSIL)", "സ്പേസ് ഇന്ത്യ", "ഭാരത് സ്പേസ്"], a: "ന്യൂസ്പേസ് ഇന്ത്യ ലിമിറ്റഡ് (NSIL)" }, en: { q: "What is the commercial arm of ISRO?", o: ["Antrix Corporation", "NewSpace India Limited (NSIL)", "Space India", "Bharat Space"], a: "NewSpace India Limited (NSIL)" } },
+            { id: 45, ml: { q: "ഒരു കമ്പ്യൂട്ടർ പ്രോഗ്രാമിലെ തെറ്റുകളെ പറയുന്ന പേര്?", o: ["ബഗ്", "വൈറസ്", "ക്രാഷ്", "ഗ്ലിച്ച്"], a: "ബഗ്" }, en: { q: "What are errors in a computer program called?", o: ["Bug", "Virus", "Crash", "Glitch"], a: "Bug" } },
+            { id: 46, ml: { q: "മെറ്റാവേഴ്സ് (Metaverse) എന്ന ആശയം പ്രധാനമായും എന്തിനെ അടിസ്ഥാനമാക്കിയുള്ളതാണ്?", o: ["വെർച്വൽ റിയാലിറ്റി (VR)", "ബ്ലോക്ക്ചെയിൻ", "5ജി", "ക്ലൗഡ് കമ്പ്യൂട്ടിംഗ്"], a: "വെർച്വൽ റിയാലിറ്റി (VR)" }, en: { q: "The concept of the Metaverse is primarily based on what?", o: ["Virtual Reality (VR)", "Blockchain", "5G", "Cloud Computing"], a: "Virtual Reality (VR)" } },
+            { id: 47, ml: { q: "സൗരയൂഥം കടന്നുപോയ ആദ്യത്തെ മനുഷ്യ നിർമ്മിത പേടകം?", o: ["പയനിയർ 10", "വോയേജർ 1", "ന്യൂ ഹൊറൈസൺസ്", "കാസിനി"], a: "വോയേജർ 1" }, en: { q: "What is the first man-made spacecraft to leave the solar system?", o: ["Pioneer 10", "Voyager 1", "New Horizons", "Cassini"], a: "Voyager 1" } },
+            { id: 48, ml: { q: "ക്വാണ്ടം കമ്പ്യൂട്ടിംഗിന്റെ അടിസ്ഥാന യൂണിറ്റ്?", o: ["ബിറ്റ്", "ബൈറ്റ്", "ക്യുബിറ്റ്", "ടെറാബൈറ്റ്"], a: "ക്യുബിറ്റ്" }, en: { q: "What is the basic unit of quantum computing?", o: ["Bit", "Byte", "Qubit", "Terabyte"], a: "Qubit" } },
+            { id: 49, ml: { q: "ഇന്ത്യയുടെ 'ഗഗൻയാൻ' ദൗത്യത്തിൽ സഞ്ചാരികളെ സഹായിക്കുന്നതിനായി ISRO വികസിപ്പിച്ച റോബോട്ടിന്റെ പേര്?", o: ["മിത്ര", "വ്യോമമിത്ര", "ഗഗൻസഖി", "ആസ്ട്രോ"], a: "വ്യോമമിത്ര" }, en: { q: "What is the name of the robot developed by ISRO to assist astronauts in the 'Gaganyaan' mission?", o: ["Mitra", "Vyommitra", "Gagansakhi", "Astro"], a: "Vyommitra" } },
+            { id: 50, ml: { q: "ഒരു അൽഗോരിതം എന്നാൽ എന്താണ്?", o: ["ഒരു പ്രോഗ്രാമിംഗ് ഭാഷ", "ഒരു കൂട്ടം നിർദ്ദേശങ്ങൾ", "ഒരു ഹാർഡ്‌വെയർ ഉപകരണം", "ഒരു ഓപ്പറേറ്റിംഗ് സിസ്റ്റം"], a: "ഒരു കൂട്ടം നിർദ്ദേശങ്ങൾ" }, en: { q: "What is an algorithm?", o: ["A programming language", "A set of instructions", "A hardware device", "An operating system"], a: "A set of instructions" } }
+        ];
+
+        // --- App State ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedLang = 'ml';
+        let userAnswers = new Array(quizData.length + 1).fill(null); // Use a larger array to map by ID
+        let questions = [];
+
+        // --- DOM Elements ---
+        const languageScreen = document.getElementById('language-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionCounter = document.getElementById('question-counter');
+        const scoreCounter = document.getElementById('score-counter');
+        const progressBar = document.getElementById('progress-bar');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedback = document.getElementById('feedback');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        // --- Functions ---
+        function startQuiz(lang) {
+            selectedLang = lang;
+            // Shuffle questions for variety each time
+            questions = [...quizData].sort(() => Math.random() - 0.5);
+            languageScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // Reset feedback and styles
+            feedback.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            if (currentQuestionIndex >= questions.length) {
+                showResults();
+                return;
+            }
+
+            const currentQuestion = questions[currentQuestionIndex][selectedLang];
+            const questionData = questions[currentQuestionIndex];
+            
+            // Set language class for proper font rendering
+            questionText.className = `text-2xl font-bold text-center text-white ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            
+            questionText.textContent = currentQuestion.q;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1}/${questions.length}`;
+            scoreCounter.textContent = `Score: ${score}`;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+
+            // Shuffle options
+            const shuffledOptions = [...currentQuestion.o].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = `btn-option w-full p-4 rounded-lg text-lg font-semibold text-white transition ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+                button.onclick = () => selectAnswer(option, button);
+                optionsContainer.appendChild(button);
+            });
+
+            updateNavButtons();
+            
+            // If user has already answered this question (by using back button), show the result
+            if (userAnswers[questionData.id] !== null) {
+                showPreviousAnswer();
+            }
+        }
+        
+        function selectAnswer(selectedOption, button) {
+            const questionData = questions[currentQuestionIndex];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            // Only update score if the question hasn't been answered correctly before
+            if (userAnswers[questionData.id] !== currentQuestion.a && selectedOption === correctAnswer) {
+                 score++;
+            } else if (userAnswers[questionData.id] === currentQuestion.a && selectedOption !== correctAnswer) {
+                 // If user changes a correct answer to a wrong one, decrement score
+                 score--;
+            }
+
+            userAnswers[questionData.id] = selectedOption;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true; // Disable all options after one is selected
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+
+            if (selectedOption === correctAnswer) {
+                playCorrectSound();
+                feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                feedback.className = 'mt-4 text-center font-bold text-lg text-green-400';
+            } else {
+                playWrongSound();
+                button.classList.add('wrong');
+                feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                feedback.className = 'mt-4 text-center font-semibold text-lg text-red-400';
+            }
+            
+            scoreCounter.textContent = `Score: ${score}`;
+        }
+
+        function showPreviousAnswer() {
+            const questionData = questions[currentQuestionIndex];
+            const selectedOption = userAnswers[questionData.id];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+                if (btn.textContent === selectedOption && selectedOption !== correctAnswer) {
+                    btn.classList.add('wrong');
+                }
+            });
+
+            if (selectedOption !== correctAnswer) {
+                 feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                 feedback.className = 'mt-4 text-center font-semibold text-lg text-red-400';
+            } else {
+                 feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                 feedback.className = 'mt-4 text-center font-bold text-lg text-green-400';
+            }
+        }
+
+        function updateNavButtons() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', backBtn.disabled);
+            
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.textContent = selectedLang === 'ml' ? 'പൂർത്തിയാക്കുക' : 'Finish';
+            } else {
+                nextBtn.textContent = selectedLang === 'ml' ? 'അടുത്തത് >' : 'Next >';
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            const percentage = Math.round((score / questions.length) * 100);
+            const resultTitle = document.getElementById('result-title');
+            const finalScore = document.getElementById('final-score');
+            const resultMessage = document.getElementById('result-message');
+
+            resultTitle.className = `text-4xl font-bold mb-4 text-white ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            finalScore.className = `text-2xl mb-6 text-gray-300 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            resultMessage.className = `text-xl mb-8 text-cyan-300 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+
+            if (selectedLang === 'ml') {
+                resultTitle.textContent = 'ഫലം';
+                finalScore.textContent = `നിങ്ങളുടെ സ്കോർ: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'അടിപൊളി! നിങ്ങൾ മിടുക്കനാണ്/മിടുക്കിയാണ്.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'നന്നായിരിക്കുന്നു! ഇനിയും മെച്ചപ്പെടുത്താം.';
+                } else {
+                    resultMessage.textContent = 'സാരമില്ല, വീണ്ടും ശ്രമിക്കുക!';
+                }
+            } else {
+                resultTitle.textContent = 'Results';
+                finalScore.textContent = `Your Score: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'Excellent! You did a great job.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'Good effort! Keep practicing.';
+                } else {
+                    resultMessage.textContent = 'Don\'t worry, try again!';
+                }
+            }
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers.fill(null);
+            questions = [];
+            resultScreen.classList.add('hidden');
+            languageScreen.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
+

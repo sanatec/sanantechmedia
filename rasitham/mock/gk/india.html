@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ഇന്ത്യ ക്വിസ്</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .malayalam {
+            font-family: 'Manjari', sans-serif;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-option:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+        .correct {
+            animation: pulse-green 1s;
+            background-color: #22c55e !important; /* Green-500 */
+            color: white !important;
+            border-color: #16a34a !important; /* Green-600 */
+        }
+        .wrong {
+            animation: shake 0.5s;
+            background-color: #ef4444 !important; /* Red-500 */
+            color: white !important;
+            border-color: #dc2626 !important; /* Red-600 */
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-500 to-indigo-700 min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Language Selection Screen -->
+        <div id="language-screen" class="text-center text-white p-8 rounded-2xl shadow-2xl card">
+            <h1 class="text-4xl font-bold mb-2 malayalam">ഇന്ത്യാ ക്വിസ്</h1>
+            <h2 class="text-2xl font-bold mb-8">India Quiz</h2>
+            <p class="mb-4 malayalam">ഭാഷ തിരഞ്ഞെടുക്കുക:</p>
+            <p class="mb-8">Select Language:</p>
+            <div class="flex flex-col space-y-4">
+                <button onclick="startQuiz('ml')" class="bg-white text-indigo-600 font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-indigo-50 transition-transform transform hover:scale-105 malayalam">മലയാളം</button>
+                <button onclick="startQuiz('en')" class="bg-white text-blue-600 font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-blue-50 transition-transform transform hover:scale-105">English</button>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden p-6 bg-white/90 rounded-2xl shadow-2xl card">
+            <div id="header" class="flex justify-between items-center mb-4">
+                <div id="question-counter" class="text-lg font-semibold text-gray-700"></div>
+                <div id="score-counter" class="text-lg font-semibold text-green-600"></div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-indigo-500 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <div id="question-container" class="mb-6">
+                <p id="question-text" class="text-2xl font-bold text-center text-gray-800" style="min-height: 100px;"></p>
+            </div>
+            <div id="options-container" class="grid grid-cols-1 gap-4">
+                <!-- Options will be dynamically inserted here -->
+            </div>
+            <div id="feedback" class="mt-4 text-center font-bold text-lg" style="min-height: 30px;"></div>
+            <div class="flex justify-between mt-8">
+                <button id="back-btn" onclick="prevQuestion()" class="bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg shadow hover:bg-gray-400 transition-transform transform hover:scale-105">&lt; Back</button>
+                <button id="next-btn" onclick="nextQuestion()" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-blue-700 transition-transform transform hover:scale-105">Next &gt;</button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center p-8 bg-white/90 rounded-2xl shadow-2xl card">
+            <h2 id="result-title" class="text-4xl font-bold mb-4 text-gray-800"></h2>
+            <p id="final-score" class="text-2xl mb-6 text-gray-700"></p>
+            <p id="result-message" class="text-xl mb-8"></p>
+            <button onclick="restartQuiz()" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg hover:bg-indigo-700 transition-transform transform hover:scale-105">
+                വീണ്ടും കളിക്കാം / Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Sound Synthesis ---
+        const correctSound = new Tone.Synth({
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
+        }).toDestination();
+
+        const wrongSound = new Tone.Synth({
+            oscillator: { type: 'square' },
+            envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.2 }
+        }).toDestination();
+
+        function playCorrectSound() {
+            Tone.start();
+            correctSound.triggerAttackRelease("C5", "8n");
+        }
+
+        function playWrongSound() {
+            Tone.start();
+            wrongSound.triggerAttackRelease("C3", "8n");
+        }
+
+        // --- Quiz Data (100 Questions about India) ---
+        const quizData = [
+            { id: 1, ml: { q: "അഹിംസാ ദിനമായി ആചരിക്കുന്നത് ആരുടെ ജന്മദിനമാണ്?", o: ["നെഹ്‌റു", "ഗാന്ധിജി", "അംബേദ്കർ", "സർദാർ പട്ടേൽ"], a: "ഗാന്ധിജി" }, en: { q: "Whose birthday is celebrated as Non-Violence Day?", o: ["Nehru", "Gandhiji", "Ambedkar", "Sardar Patel"], a: "Gandhiji" } },
+            { id: 2, ml: { q: "ആധാർ കാർഡിൽ എത്ര അക്കങ്ങളുണ്ട്?", o: ["10", "12", "14", "16"], a: "12" }, en: { q: "How many digits are there in an Aadhaar card?", o: ["10", "12", "14", "16"], a: "12" } },
+            { id: 3, ml: { q: "ഇന്ത്യയിൽ വോട്ടവകാശത്തിനുള്ള കുറഞ്ഞ പ്രായം?", o: ["16", "18", "21", "25"], a: "18" }, en: { q: "What is the minimum age for voting rights in India?", o: ["16", "18", "21", "25"], a: "18" } },
+            { id: 4, ml: { q: "ലോക്‌സഭയുടെ കാലാവധി എത്ര വർഷമാണ്?", o: ["4 വർഷം", "5 വർഷം", "6 വർഷം", "7 വർഷം"], a: "5 വർഷം" }, en: { q: "What is the term of the Lok Sabha?", o: ["4 years", "5 years", "6 years", "7 years"], a: "5 years" } },
+            { id: 5, ml: { q: "പൂജ്യം കണ്ടുപിടിച്ചത് ഏത് രാജ്യക്കാരാണ്?", o: ["ചൈന", "ഗ്രീസ്", "ഈജിപ്ത്", "ഇന്ത്യ"], a: "ഇന്ത്യ" }, en: { q: "Which country invented the number zero?", o: ["China", "Greece", "Egypt", "India"], a: "India" } },
+            { id: 6, ml: { q: "നവഭാരത ശില്പി എന്നറിയപ്പെടുന്നത്?", o: ["ഗാന്ധിജി", "നെഹ്‌റു", "സർദാർ പട്ടേൽ", "അംബേദ്കർ"], a: "നെഹ്‌റു" }, en: { q: "Who is known as the 'Architect of Modern India'?", o: ["Gandhiji", "Nehru", "Sardar Patel", "Ambedkar"], a: "Nehru" } },
+            { id: 7, ml: { q: "ഇന്ത്യയുടെ പക്ഷി മനുഷ്യൻ എന്നറിയപ്പെടുന്നത്?", o: ["ജഗദീഷ് ചന്ദ്രബോസ്", "സി.വി. രാമൻ", "സലിം അലി", "ഹോമി ഭാഭ"], a: "സലിം അലി" }, en: { q: "Who is known as the 'Birdman of India'?", o: ["Jagadish Chandra Bose", "C.V. Raman", "Salim Ali", "Homi Bhabha"], a: "Salim Ali" } },
+            { id: 8, ml: { q: "മനുഷ്യ കമ്പ്യൂട്ടർ എന്നറിയപ്പെട്ട ഇന്ത്യൻ ഗണിതശാസ്ത്രജ്ഞ?", o: ["ആര്യഭടൻ", "രാമാനുജൻ", "ശകുന്തളാ ദേവി", "ഭാസ്കരൻ"], a: "ശകുന്തളാ ദേവി" }, en: { q: "Which Indian mathematician was known as the 'Human Computer'?", o: ["Aryabhata", "Ramanujan", "Shakuntala Devi", "Bhaskara"], a: "Shakuntala Devi" } },
+            { id: 9, ml: { q: "ഇന്ത്യൻ ഭരണഘടനയുടെ ശില്പി ആരാണ്?", o: ["ജവഹർലാൽ നെഹ്‌റു", "രാജേന്ദ്ര പ്രസാദ്", "ഡോ.ബി.ആർ. അംബേദ്കർ", "സർദാർ പട്ടേൽ"], a: "ഡോ.ബി.ആർ. അംബേദ്കർ" }, en: { q: "Who is the architect of the Indian Constitution?", o: ["Jawaharlal Nehru", "Rajendra Prasad", "Dr. B. R. Ambedkar", "Sardar Patel"], a: "Dr. B. R. Ambedkar" } },
+            { id: 10, ml: { q: "ലോകത്തിലെ ഏറ്റവും വലിയ ലിഖിത ഭരണഘടന ഏത് രാജ്യത്തിന്റേതാണ്?", o: ["അമേരിക്ക", "ബ്രിട്ടൻ", "ചൈന", "ഇന്ത്യ"], a: "ഇന്ത്യ" }, en: { q: "Which country has the world's largest written constitution?", o: ["USA", "Britain", "China", "India"], a: "India" } },
+            { id: 11, ml: { q: "ജനുവരി 26-ന്റെ പ്രാധാന്യം എന്ത്?", o: ["സ്വാതന്ത്ര്യ ദിനം", "ഗാന്ധി ജയന്തി", "റിപ്പബ്ലിക് ദിനം", "ശിശുദിനം"], a: "റിപ്പബ്ലിക് ദിനം" }, en: { q: "What is the significance of January 26th?", o: ["Independence Day", "Gandhi Jayanti", "Republic Day", "Children's Day"], a: "Republic Day" } },
+            { id: 12, ml: { q: "ഇന്ത്യയുടെ ദേശീയ ഗാനം ഏതാണ്?", o: ["വന്ദേ മാതരം", "ജനഗണമന", "സാരേ ജഹാം സെ അച്ഛാ", "ജയ് ഹോ"], a: "ജനഗണമന" }, en: { q: "What is the national anthem of India?", o: ["Vande Mataram", "Jana Gana Mana", "Saare Jahaan Se Achha", "Jai Ho"], a: "Jana Gana Mana" } },
+            { id: 13, ml: { q: "ഇന്ത്യയുടെ തലസ്ഥാനം ഏതാണ്?", o: ["മുംബൈ", "കൊൽക്കത്ത", "ചെന്നൈ", "ന്യൂ ഡൽഹി"], a: "ന്യൂ ഡൽഹി" }, en: { q: "What is the capital of India?", o: ["Mumbai", "Kolkata", "Chennai", "New Delhi"], a: "New Delhi" } },
+            { id: 14, ml: { q: "ഇന്ത്യയുടെ ദേശീയ മൃഗം ഏതാണ്?", o: ["സിംഹം", "കടുവ", "ആന", "പശു"], a: "കടുവ" }, en: { q: "What is the national animal of India?", o: ["Lion", "Tiger", "Elephant", "Cow"], a: "Tiger" } },
+            { id: 15, ml: { q: "ഇന്ത്യയുടെ ദേശീയ പക്ഷി ഏതാണ്?", o: ["കാക്ക", "പ്രാവ്", "മയിൽ", "തത്ത"], a: "മയിൽ" }, en: { q: "What is the national bird of India?", o: ["Crow", "Pigeon", "Peacock", "Parrot"], a: "Peacock" } },
+            { id: 16, ml: { q: "ഇന്ത്യയുടെ ദേശീയ പുഷ്പം ഏതാണ്?", o: ["റോസ്", "സൂര്യകാന്തി", "താമര", "മുല്ല"], a: "താമര" }, en: { q: "What is the national flower of India?", o: ["Rose", "Sunflower", "Lotus", "Jasmine"], a: "Lotus" } },
+            { id: 17, ml: { q: "ഇന്ത്യൻ പതാകയിലെ അശോകചക്രത്തിന് എത്ര ആരക്കാലുകളുണ്ട്?", o: ["20", "22", "24", "26"], a: "24" }, en: { q: "How many spokes are there in the Ashoka Chakra on the Indian flag?", o: ["20", "22", "24", "26"], a: "24" } },
+            { id: 18, ml: { q: "ഇന്ത്യയുടെ ആദ്യത്തെ പ്രധാനമന്ത്രി ആരായിരുന്നു?", o: ["സർദാർ പട്ടേൽ", "ജവഹർലാൽ നെഹ്‌റു", "ലാൽ ബഹദൂർ ശാസ്ത്രി", "രാജേന്ദ്ര പ്രസാദ്"], a: "ജവഹർലാൽ നെഹ്‌റു" }, en: { q: "Who was the first Prime Minister of India?", o: ["Sardar Patel", "Jawaharlal Nehru", "Lal Bahadur Shastri", "Rajendra Prasad"], a: "Jawaharlal Nehru" } },
+            { id: 19, ml: { q: "ഇന്ത്യയുടെ ആദ്യത്തെ രാഷ്ട്രപതി ആരായിരുന്നു?", o: ["എസ്. രാധാകൃഷ്ണൻ", "വി.വി. ഗിരി", "രാജേന്ദ്ര പ്രസാദ്", "സക്കീർ ഹുസൈൻ"], a: "രാജേന്ദ്ര പ്രസാദ്" }, en: { q: "Who was the first President of India?", o: ["S. Radhakrishnan", "V. V. Giri", "Rajendra Prasad", "Zakir Husain"], a: "Rajendra Prasad" } },
+            { id: 20, ml: { q: "ഇന്ത്യൻ സ്വാതന്ത്ര്യ സമരം നയിച്ച പ്രധാന നേതാവ്?", o: ["സുഭാഷ് ചന്ദ്ര ബോസ്", "ഭഗത് സിംഗ്", "മഹാത്മാ ഗാന്ധി", "ജവഹർലാൽ നെഹ്‌റു"], a: "മഹാത്മാ ഗാന്ധി" }, en: { q: "Who was the main leader of the Indian independence movement?", o: ["Subhas Chandra Bose", "Bhagat Singh", "Mahatma Gandhi", "Jawaharlal Nehru"], a: "Mahatma Gandhi" } },
+            { id: 21, ml: { q: "താജ്മഹൽ സ്ഥിതി ചെയ്യുന്നത് ഏത് നഗരത്തിലാണ്?", o: ["ഡൽഹി", "മുംബൈ", "ജയ്പൂർ", "ആഗ്ര"], a: "ആഗ്ര" }, en: { q: "In which city is the Taj Mahal located?", o: ["Delhi", "Mumbai", "Jaipur", "Agra"], a: "Agra" } },
+            { id: 22, ml: { q: "ഇന്ത്യൻ ബഹിരാകാശ ഗവേഷണ സംഘടനയുടെ പേര്?", o: ["NASA", "ESA", "ISRO", "JAXA"], a: "ISRO" }, en: { q: "What is the name of the Indian space research organization?", o: ["NASA", "ESA", "ISRO", "JAXA"], a: "ISRO" } },
+            { id: 23, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും നീളം കൂടിയ നദി?", o: ["യമുന", "ഗംഗ", "ബ്രഹ്മപുത്ര", "ഗോദാവരി"], a: "ഗംഗ" }, en: { q: "Which is the longest river in India?", o: ["Yamuna", "Ganga", "Brahmaputra", "Godavari"], a: "Ganga" } },
+            { id: 24, ml: { q: "ഇന്ത്യയുടെ മിസൈൽ മാൻ എന്നറിയപ്പെടുന്നത്?", o: ["സി.വി. രാമൻ", "എ.പി.ജെ. അബ്ദുൾ കലാം", "സത്യേന്ദ്രനാഥ് ബോസ്", "വിക്രം സാരാഭായി"], a: "എ.പി.ജെ. അബ്ദുൾ കലാം" }, en: { q: "Who is known as the 'Missile Man of India'?", o: ["C.V. Raman", "A. P. J. Abdul Kalam", "Satyendra Nath Bose", "Vikram Sarabhai"], a: "A. P. J. Abdul Kalam" } },
+            { id: 25, ml: { q: "ഇന്ത്യൻ കറൻസിയുടെ പേര്?", o: ["ഡോളർ", "യൂറോ", "രൂപ", "യെൻ"], a: "രൂപ" }, en: { q: "What is the name of the Indian currency?", o: ["Dollar", "Euro", "Rupee", "Yen"], a: "Rupee" } },
+            { id: 26, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും ഉയരം കൂടിയ കൊടുമുടി?", o: ["എവറസ്റ്റ്", "നന്ദാദേവി", "കാഞ്ചൻജംഗ", "കെ2"], a: "കാഞ്ചൻജംഗ" }, en: { q: "What is the highest peak in India?", o: ["Everest", "Nanda Devi", "Kangchenjunga", "K2"], a: "Kangchenjunga" } },
+            { id: 27, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ സംസ്ഥാനം (വിസ്തീർണ്ണം)?", o: ["മഹാരാഷ്ട്ര", "ഉത്തർപ്രദേശ്", "മധ്യപ്രദേശ്", "രാജസ്ഥാൻ"], a: "രാജസ്ഥാൻ" }, en: { q: "Which is the largest state in India (by area)?", o: ["Maharashtra", "Uttar Pradesh", "Madhya Pradesh", "Rajasthan"], a: "Rajasthan" } },
+            { id: 28, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും ചെറിയ സംസ്ഥാനം (വിസ്തീർണ്ണം)?", o: ["സിക്കിം", "ഗോവ", "ത്രിപുര", "നാഗാലാൻഡ്"], a: "ഗോവ" }, en: { q: "Which is the smallest state in India (by area)?", o: ["Sikkim", "Goa", "Tripura", "Nagaland"], a: "Goa" } },
+            { id: 29, ml: { q: "ഇന്ത്യൻ പതാക രൂപകൽപ്പന ചെയ്തത് ആര്?", o: ["രവീന്ദ്രനാഥ ടാഗോർ", "പിംഗലി വെങ്കയ്യ", "ബങ്കിം ചന്ദ്ര ചാറ്റർജി", "ഗാന്ധിജി"], a: "പിംഗലി വെങ്കയ്യ" }, en: { q: "Who designed the Indian flag?", o: ["Rabindranath Tagore", "Pingali Venkayya", "Bankim Chandra Chatterjee", "Gandhiji"], a: "Pingali Venkayya" } },
+            { id: 30, ml: { q: "ഇന്ത്യയുടെ ദേശീയ ഗീതം ഏതാണ്?", o: ["ജനഗണമന", "വന്ദേ മാതരം", "സാരേ ജഹാം സെ അച്ഛാ", "മാ തുঝে സലാം"], a: "വന്ദേ മാതരം" }, en: { q: "What is the national song of India?", o: ["Jana Gana Mana", "Vande Mataram", "Saare Jahaan Se Achha", "Maa Tujhe Salaam"], a: "Vande Mataram" } },
+            { id: 31, ml: { q: "ഇന്ത്യൻ സിനിമയുടെ പിതാവ് എന്നറിയപ്പെടുന്നത്?", o: ["സത്യജിത് റേ", "രാജ് കപൂർ", "ദാദാസാഹിബ് ഫാൽക്കെ", "ഗുരു ദത്ത്"], a: "ദാദാസാഹിബ് ഫാൽക്കെ" }, en: { q: "Who is known as the father of Indian cinema?", o: ["Satyajit Ray", "Raj Kapoor", "Dadasaheb Phalke", "Guru Dutt"], a: "Dadasaheb Phalke" } },
+            { id: 32, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ മരുഭൂമി?", o: ["സഹാറ", "ഗോബി", "താർ", "കലഹാരി"], a: "താർ" }, en: { q: "Which is the largest desert in India?", o: ["Sahara", "Gobi", "Thar", "Kalahari"], a: "Thar" } },
+            { id: 33, ml: { q: "ഇന്ത്യയിലെ ആദ്യത്തെ വനിതാ പ്രധാനമന്ത്രി?", o: ["സരോജിനി നായിഡു", "ഇന്ദിരാഗാന്ധി", "പ്രതിഭാ പാട്ടീൽ", "വിജയലക്ഷ്മി പണ്ഡിറ്റ്"], a: "ഇന്ദിരാഗാന്ധി" }, en: { q: "Who was the first woman Prime Minister of India?", o: ["Sarojini Naidu", "Indira Gandhi", "Pratibha Patil", "Vijaya Lakshmi Pandit"], a: "Indira Gandhi" } },
+            { id: 34, ml: { q: "ഇന്ത്യയുടെ ദേശീയ കലണ്ടർ ഏതാണ്?", o: ["ഗ്രിഗോറിയൻ കലണ്ടർ", "ജൂലിയൻ കലണ്ടർ", "ശക കലണ്ടർ", "വിക്രം സംവത്"], a: "ശക കലണ്ടർ" }, en: { q: "What is the national calendar of India?", o: ["Gregorian Calendar", "Julian Calendar", "Saka Calendar", "Vikram Samvat"], a: "Saka Calendar" } },
+            { id: 35, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ ശുദ്ധജല തടാകം?", o: ["ചിൽക്ക", "ദാൽ", "വൂളർ", "ലോക്തക്"], a: "വൂളർ" }, en: { q: "Which is the largest freshwater lake in India?", o: ["Chilika", "Dal", "Wular", "Loktak"], a: "Wular" } },
+            { id: 36, ml: { q: "ഇന്ത്യയുടെ ആദ്യത്തെ ഉപഗ്രഹം ഏതാണ്?", o: ["ഭാസ്കര", "രോഹിണി", "ആര്യഭട്ട", "ഇൻസാറ്റ്"], a: "ആര്യഭട്ട" }, en: { q: "What was India's first satellite?", o: ["Bhaskara", "Rohini", "Aryabhata", "INSAT"], a: "Aryabhata" } },
+            { id: 37, ml: { q: "ഇന്ത്യൻ പതാകയിലെ കുങ്കുമ നിറം എന്തിനെ സൂചിപ്പിക്കുന്നു?", o: ["സമാധാനം", "ധീരതയും ത്യാഗവും", "സത്യം", "സമൃദ്ധി"], a: "ധീരതയും ത്യാഗവും" }, en: { q: "What does the saffron color in the Indian flag represent?", o: ["Peace", "Courage and Sacrifice", "Truth", "Prosperity"], a: "Courage and Sacrifice" } },
+            { id: 38, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും ജനസംഖ്യ കൂടിയ സംസ്ഥാനം?", o: ["മഹാരാഷ്ട്ര", "ബീഹാർ", "ഉത്തർപ്രദേശ്", "പശ്ചിമ ബംഗാൾ"], a: "ഉത്തർപ്രദേശ്" }, en: { q: "Which is the most populous state in India?", o: ["Maharashtra", "Bihar", "Uttar Pradesh", "West Bengal"], a: "Uttar Pradesh" } },
+            { id: 39, ml: { q: "ഇന്ത്യയുടെ സ്വാതന്ത്ര്യ ദിനം എന്നാണ്?", o: ["ജനുവരി 26", "ഓഗസ്റ്റ് 15", "ഒക്ടോബർ 2", "നവംബർ 14"], a: "ഓഗസ്റ്റ് 15" }, en: { q: "When is India's Independence Day?", o: ["January 26", "August 15", "October 2", "November 14"], a: "August 15" } },
+            { id: 40, ml: { q: "ഇന്ത്യയുടെ ദേശീയ നദി ഏതാണ്?", o: ["യമുന", "ബ്രഹ്മപുത്ര", "ഗോദാവരി", "ഗംഗ"], a: "ഗംഗ" }, en: { q: "What is the national river of India?", o: ["Yamuna", "Brahmaputra", "Godavari", "Ganga"], a: "Ganga" } },
+            { id: 41, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും പഴക്കമുള്ള പർവതനിര?", o: ["ഹിമാലയം", "പശ്ചിമഘട്ടം", "ആരവല്ലി", "വിന്ധ്യ"], a: "ആരവല്ലി" }, en: { q: "Which is the oldest mountain range in India?", o: ["Himalayas", "Western Ghats", "Aravalli", "Vindhya"], a: "Aravalli" } },
+            { id: 42, ml: { q: "ഇന്ത്യയുടെ ആദ്യത്തെ വനിതാ രാഷ്ട്രപതി?", o: ["ഇന്ദിരാഗാന്ധി", "സരോജിനി നായിഡു", "പ്രതിഭാ പാട്ടീൽ", "ദ്രൗപതി മുർമു"], a: "പ്രതിഭാ പാട്ടീൽ" }, en: { q: "Who was the first woman President of India?", o: ["Indira Gandhi", "Sarojini Naidu", "Pratibha Patil", "Droupadi Murmu"], a: "Pratibha Patil" } },
+            { id: 43, ml: { q: "ഇന്ത്യൻ ആസൂത്രണ കമ്മീഷന് പകരമായി വന്ന സ്ഥാപനം?", o: ["ധനകാര്യ കമ്മീഷൻ", "നീതി ആയോഗ്", "ഇലക്ഷൻ കമ്മീഷൻ", "സെബി"], a: "നീതി ആയോഗ്" }, en: { q: "Which body replaced the Planning Commission of India?", o: ["Finance Commission", "NITI Aayog", "Election Commission", "SEBI"], a: "NITI Aayog" } },
+            { id: 44, ml: { q: "ഇന്ത്യയിലെ ആദ്യത്തെ സമ്പൂർണ്ണ സാക്ഷരതാ സംസ്ഥാനം?", o: ["തമിഴ്നാട്", "മഹാരാഷ്ട്ര", "കേരളം", "ഗോവ"], a: "കേരളം" }, en: { q: "Which is the first fully literate state in India?", o: ["Tamil Nadu", "Maharashtra", "Kerala", "Goa"], a: "Kerala" } },
+            { id: 45, ml: { q: "ഇന്ത്യയുടെ ഉരുക്കുമനുഷ്യൻ എന്നറിയപ്പെടുന്നത്?", o: ["ജവഹർലാൽ നെഹ്‌റു", "സർദാർ വല്ലഭായ് പട്ടേൽ", "സുഭാഷ് ചന്ദ്ര ബോസ്", "ബാലഗംഗാധര തിലകൻ"], a: "സർദാർ വല്ലഭായ് പട്ടേൽ" }, en: { q: "Who is known as the 'Iron Man of India'?", o: ["Jawaharlal Nehru", "Sardar Vallabhbhai Patel", "Subhas Chandra Bose", "Bal Gangadhar Tilak"], a: "Sardar Vallabhbhai Patel" } },
+            { id: 46, ml: { q: "ഇന്ത്യൻ റിസർവ് ബാങ്കിന്റെ ആസ്ഥാനം?", o: ["ന്യൂ ഡൽഹി", "കൊൽക്കത്ത", "ചെന്നൈ", "മുംബൈ"], a: "മുംബൈ" }, en: { q: "Where is the headquarters of the Reserve Bank of India?", o: ["New Delhi", "Kolkata", "Chennai", "Mumbai"], a: "Mumbai" } },
+            { id: 47, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ പൊതുമേഖലാ ബാങ്ക്?", o: ["പഞ്ചാബ് നാഷണൽ ബാങ്ക്", "ബാങ്ക് ഓഫ് ബറോഡ", "കാനറ ബാങ്ക്", "സ്റ്റേറ്റ് ബാങ്ക് ഓഫ് ഇന്ത്യ"], a: "സ്റ്റേറ്റ് ബാങ്ക് ഓഫ് ഇന്ത്യ" }, en: { q: "Which is the largest public sector bank in India?", o: ["Punjab National Bank", "Bank of Baroda", "Canara Bank", "State Bank of India"], a: "State Bank of India" } },
+            { id: 48, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും ഉയരം കൂടിയ അണക്കെട്ട്?", o: ["ഭാക്ര അണക്കെട്ട്", "തെഹ്രി അണക്കെട്ട്", "ഹിരാക്കുഡ് അണക്കെട്ട്", "നാഗാർജുന സാഗർ"], a: "തെഹ്രി അണക്കെട്ട്" }, en: { q: "Which is the highest dam in India?", o: ["Bhakra Dam", "Tehri Dam", "Hirakud Dam", "Nagarjuna Sagar"], a: "Tehri Dam" } },
+            { id: 49, ml: { q: "ഇന്ത്യയുടെ ദേശീയ ജലജീവി?", o: ["സ്രാവ്", "നക്ഷത്ര മത്സ്യം", "ഗംഗാ ഡോൾഫിൻ", "നീലത്തിമിംഗലം"], a: "ഗംഗാ ഡോൾഫിൻ" }, en: { q: "What is the national aquatic animal of India?", o: ["Shark", "Starfish", "Ganges River Dolphin", "Blue Whale"], a: "Ganges River Dolphin" } },
+            { id: 50, ml: { q: "ഇന്ത്യയുടെ ദേശീയ പൈതൃക മൃഗം?", o: ["സിംഹം", "കടുവ", "ആന", "ഒട്ടകം"], a: "ആന" }, en: { q: "What is the national heritage animal of India?", o: ["Lion", "Tiger", "Elephant", "Camel"], a: "Elephant" } },
+            { id: 51, ml: { q: "ഇന്ത്യൻ പാർലമെന്റ് മന്ദിരം എവിടെയാണ്?", o: ["മുംബൈ", "കൊൽക്കത്ത", "ചെന്നൈ", "ന്യൂ ഡൽഹി"], a: "ന്യൂ ഡൽഹി" }, en: { q: "Where is the Parliament House of India located?", o: ["Mumbai", "Kolkata", "Chennai", "New Delhi"], a: "New Delhi" } },
+            { id: 52, ml: { q: "ഇന്ത്യയിലെ പരമോന്നത നീതിപീഠം?", o: ["ഹൈക്കോടതി", "ജില്ലാ കോടതി", "സുപ്രീം കോടതി", "ലോക് അദാലത്ത്"], a: "സുപ്രീം കോടതി" }, en: { q: "What is the highest judicial court in India?", o: ["High Court", "District Court", "Supreme Court", "Lok Adalat"], a: "Supreme Court" } },
+            { id: 53, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ സംസ്ഥാനം (ജനസംഖ്യ)?", o: ["മഹാരാഷ്ട്ര", "ബീഹാർ", "ഉത്തർപ്രദേശ്", "രാജസ്ഥാൻ"], a: "ഉത്തർപ്രദേശ്" }, en: { q: "Which is the largest state in India (by population)?", o: ["Maharashtra", "Bihar", "Uttar Pradesh", "Rajasthan"], a: "Uttar Pradesh" } },
+            { id: 54, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ പീഠഭൂമി?", o: ["ചോട്ടാ നാഗ്പൂർ", "മാൾവ", "ഡെക്കാൻ", "ഷില്ലോംഗ്"], a: "ഡെക്കാൻ" }, en: { q: "Which is the largest plateau in India?", o: ["Chota Nagpur", "Malwa", "Deccan", "Shillong"], a: "Deccan" } },
+            { id: 55, ml: { q: "ഇന്ത്യൻ ആർമിയുടെ പരമോന്നത കമാൻഡർ?", o: ["പ്രധാനമന്ത്രി", "പ്രതിരോധ മന്ത്രി", "രാഷ്ട്രപതി", "സൈനിക മേധാവി"], a: "രാഷ്ട്രപതി" }, en: { q: "Who is the supreme commander of the Indian Armed Forces?", o: ["Prime Minister", "Defence Minister", "President", "Chief of Army Staff"], a: "President" } },
+            { id: 56, ml: { q: "ഇന്ത്യയിലെ ആദ്യത്തെ മെട്രോ റെയിൽവേ ആരംഭിച്ചത് എവിടെ?", o: ["ഡൽഹി", "മുംബൈ", "കൊൽക്കത്ത", "ചെന്നൈ"], a: "കൊൽക്കത്ത" }, en: { q: "Where was the first metro railway in India started?", o: ["Delhi", "Mumbai", "Kolkata", "Chennai"], a: "Kolkata" } },
+            { id: 57, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ തുറമുഖം?", o: ["ചെന്നൈ", "കൊൽക്കത്ത", "കൊച്ചി", "മുംബൈ"], a: "മുംബൈ" }, en: { q: "Which is the largest port in India?", o: ["Chennai", "Kolkata", "Kochi", "Mumbai"], a: "Mumbai" } },
+            { id: 58, ml: { q: "ഇന്ത്യയിലെ ആദ്യത്തെ ആണവ റിയാക്ടർ?", o: ["ധ്രുവ", "കാമിനി", "അപ്സര", "സൈറസ്"], a: "അപ്സര" }, en: { q: "What was India's first nuclear reactor?", o: ["Dhruva", "Kamini", "Apsara", "Cirus"], a: "Apsara" } },
+            { id: 59, ml: { q: "ഇന്ത്യൻ പതാകയിലെ പച്ച നിറം എന്തിനെ സൂചിപ്പിക്കുന്നു?", o: ["ധീരത", "സമാധാനം", "വിശ്വാസം, വളർച്ച", "ത്യാഗം"], a: "വിശ്വാസം, വളർച്ച" }, en: { q: "What does the green color in the Indian flag represent?", o: ["Courage", "Peace", "Faith, Growth", "Sacrifice"], a: "Faith, Growth" } },
+            { id: 60, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും നീളം കൂടിയ റെയിൽവേ പ്ലാറ്റ്ഫോം?", o: ["കൊല്ലം", "ഖരഗ്പൂർ", "ഗോരഖ്പൂർ", "ഹുബ്ബള്ളി"], a: "ഹുബ്ബള്ളി" }, en: { q: "Which is the longest railway platform in India?", o: ["Kollam", "Kharagpur", "Gorakhpur", "Hubballi"], a: "Hubballi" } },
+            { id: 61, ml: { q: "'ജയ് ഹിന്ദ്' എന്ന മുദ്രാവാക്യം സംഭാവന ചെയ്തത്?", o: ["മഹാത്മാ ഗാന്ധി", "സുഭാഷ് ചന്ദ്ര ബോസ്", "ഭഗത് സിംഗ്", "നെഹ്‌റു"], a: "സുഭാഷ് ചന്ദ്ര ബോസ്" }, en: { q: "Who gave the slogan 'Jai Hind'?", o: ["Mahatma Gandhi", "Subhas Chandra Bose", "Bhagat Singh", "Nehru"], a: "Subhas Chandra Bose" } },
+            { id: 62, ml: { q: "ഇന്ത്യയിലെ ആദ്യത്തെ ബയോസ്ഫിയർ റിസർവ്?", o: ["നന്ദാദേവി", "സുന്ദർബൻസ്", "ഗൾഫ് ഓഫ് മാന്നാർ", "നീലഗിരി"], a: "നീലഗിരി" }, en: { q: "Which is the first biosphere reserve in India?", o: ["Nanda Devi", "Sundarbans", "Gulf of Mannar", "Nilgiri"], a: "Nilgiri" } },
+            { id: 63, ml: { q: "ഇന്ത്യയുടെ ആദ്യത്തെ ബഹിരാകാശ സഞ്ചാരി?", o: ["കൽപ്പന ചൗള", "സുനിത വില്യംസ്", "രാകേഷ് ശർമ്മ", "രവിഷ് മൽഹോത്ര"], a: "രാകേഷ് ശർമ്മ" }, en: { q: "Who was the first Indian to travel to space?", o: ["Kalpana Chawla", "Sunita Williams", "Rakesh Sharma", "Ravish Malhotra"], a: "Rakesh Sharma" } },
+            { id: 64, ml: { q: "ഇന്ത്യൻ ഭരണഘടന നിലവിൽ വന്നതെന്ന്?", o: ["1947 ഓഗസ്റ്റ് 15", "1950 ജനുവരി 26", "1949 നവംബർ 26", "1952 ജനുവരി 26"], a: "1950 ജനുവരി 26" }, en: { q: "When did the Indian Constitution come into effect?", o: ["August 15, 1947", "January 26, 1950", "November 26, 1949", "January 26, 1952"], a: "January 26, 1950" } },
+            { id: 65, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ നദീദ്വീപ്?", o: ["ഭവാനി ദ്വീപ്", "മജുലി", "കുറുവാ ദ്വീപ്", "ശ്രീരംഗം"], a: "മജുലി" }, en: { q: "Which is the largest river island in India?", o: ["Bhavani Island", "Majuli", "Kuruva Island", "Srirangam"], a: "Majuli" } },
+            { id: 66, ml: { q: "ഹരിത വിപ്ലവത്തിന്റെ പിതാവ് (ഇന്ത്യയിൽ)?", o: ["വർഗീസ് കുര്യൻ", "എം.എസ്. സ്വാമിനാഥൻ", "സി. സുബ്രഹ്മണ്യം", "നോർമൻ ബോർലോഗ്"], a: "എം.എസ്. സ്വാമിനാഥൻ" }, en: { q: "Who is the father of the Green Revolution (in India)?", o: ["Verghese Kurien", "M. S. Swaminathan", "C. Subramaniam", "Norman Borlaug"], a: "M. S. Swaminathan" } },
+            { id: 67, ml: { q: "ധവള വിപ്ലവത്തിന്റെ പിതാവ്?", o: ["എം.എസ്. സ്വാമിനാഥൻ", "ഹീരാലാൽ ചൗധരി", "വർഗീസ് കുര്യൻ", "സാം പിത്രോഡ"], a: "വർഗീസ് കുര്യൻ" }, en: { q: "Who is the father of the White Revolution?", o: ["M. S. Swaminathan", "Hiralal Chaudhuri", "Verghese Kurien", "Sam Pitroda"], a: "Verghese Kurien" } },
+            { id: 68, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും നീളം കൂടിയ ദേശീയ പാത?", o: ["NH 44", "NH 27", "NH 48", "NH 52"], a: "NH 44" }, en: { q: "Which is the longest national highway in India?", o: ["NH 44", "NH 27", "NH 48", "NH 52"], a: "NH 44" } },
+            { id: 69, ml: { q: "ഇന്ത്യൻ സംസ്ഥാനങ്ങളിലെ ഗവർണറെ നിയമിക്കുന്നത് ആര്?", o: ["പ്രധാനമന്ത്രി", "മുഖ്യമന്ത്രി", "രാഷ്ട്രപതി", "സുപ്രീം കോടതി ചീഫ് ജസ്റ്റിസ്"], a: "രാഷ്ട്രപതി" }, en: { q: "Who appoints the Governor of an Indian state?", o: ["Prime Minister", "Chief Minister", "President", "Chief Justice of the Supreme Court"], a: "President" } },
+            { id: 70, ml: { q: "ഇന്ത്യൻ പോസ്റ്റൽ കോഡിലെ (പിൻ കോഡ്) അക്കങ്ങളുടെ എണ്ണം?", o: ["5", "6", "7", "8"], a: "6" }, en: { q: "How many digits are there in an Indian Postal Code (PIN Code)?", o: ["5", "6", "7", "8"], a: "6" } },
+            { id: 71, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും പഴക്കമുള്ള എണ്ണ ശുദ്ധീകരണശാല?", o: ["മഥുര", "കൊച്ചി", "മുംബൈ", "ദിഗ്ബോയ്"], a: "ദിഗ്ബോയ്" }, en: { q: "Which is the oldest oil refinery in India?", o: ["Mathura", "Kochi", "Mumbai", "Digboi"], a: "Digboi" } },
+            { id: 72, ml: { q: "ഇന്ത്യയുടെ ആദ്യത്തെ നിയമ മന്ത്രി?", o: ["സർദാർ പട്ടേൽ", "ജവഹർലാൽ നെഹ്‌റു", "ഡോ. ബി.ആർ. അംബേദ്കർ", "സി. രാജഗോപാലാചാരി"], a: "ഡോ. ബി.ആർ. അംബേദ്കർ" }, en: { q: "Who was the first Law Minister of India?", o: ["Sardar Patel", "Jawaharlal Nehru", "Dr. B. R. Ambedkar", "C. Rajagopalachari"], a: "Dr. B. R. Ambedkar" } },
+            { id: 73, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ ലൈബ്രറി?", o: ["ഡൽഹി പബ്ലിക് ലൈബ്രറി", "നാഷണൽ ലൈബ്രറി ഓഫ് ഇന്ത്യ, കൊൽക്കത്ത", "കോണെമാര പബ്ലിക് ലൈബ്രറി", "അണ്ണാ സെന്റിനറി ലൈബ്രറി"], a: "നാഷണൽ ലൈബ്രറി ഓഫ് ഇന്ത്യ, കൊൽക്കത്ത" }, en: { q: "Which is the largest library in India?", o: ["Delhi Public Library", "National Library of India, Kolkata", "Connemara Public Library", "Anna Centenary Library"], a: "National Library of India, Kolkata" } },
+            { id: 74, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ മ്യൂസിയം?", o: ["നാഷണൽ മ്യൂസിയം, ഡൽഹി", "ഇന്ത്യൻ മ്യൂസിയം, കൊൽക്കത്ത", "സലാർ ജംഗ് മ്യൂസിയം", "ഗവൺമെന്റ് മ്യൂസിയം, ചെന്നൈ"], a: "ഇന്ത്യൻ മ്യൂസിയം, കൊൽക്കത്ത" }, en: { q: "Which is the largest museum in India?", o: ["National Museum, Delhi", "Indian Museum, Kolkata", "Salar Jung Museum", "Government Museum, Chennai"], a: "Indian Museum, Kolkata" } },
+            { id: 75, ml: { q: "ഇന്ത്യയുടെ രാഷ്ട്രപിതാവ് എന്നറിയപ്പെടുന്നത്?", o: ["ജവഹർലാൽ നെഹ്‌റു", "സർദാർ പട്ടേൽ", "മഹാത്മാ ഗാന്ധി", "സുഭാഷ് ചന്ദ്ര ബോസ്"], a: "മഹാത്മാ ഗാന്ധി" }, en: { q: "Who is known as the 'Father of the Nation' of India?", o: ["Jawaharlal Nehru", "Sardar Patel", "Mahatma Gandhi", "Subhas Chandra Bose"], a: "Mahatma Gandhi" } },
+            { id: 76, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ ഗുഹാക്ഷേത്രം?", o: ["അജന്ത", "എല്ലോറ", "എലിഫന്റ", "ബദാമി"], a: "എല്ലോറ" }, en: { q: "Which is the largest cave temple in India?", o: ["Ajanta", "Ellora", "Elephanta", "Badami"], a: "Ellora" } },
+            { id: 77, ml: { q: "ഇന്ത്യൻ ദേശീയ പതാകയുടെ നീളവും വീതിയും തമ്മിലുള്ള അനുപാതം?", o: ["2:3", "3:2", "1:2", "2:1"], a: "3:2" }, en: { q: "What is the ratio of the length to the width of the Indian national flag?", o: ["2:3", "3:2", "1:2", "2:1"], a: "3:2" } },
+            { id: 78, ml: { q: "ഇന്ത്യയിലെ ആദ്യത്തെ സംസാരിക്കുന്ന സിനിമ?", o: ["രാജാ ഹരിശ്ചന്ദ്ര", "ആലം ആര", "കിസാൻ കന്യ", "ഇന്ദ്രസഭ"], a: "ആലം ആര" }, en: { q: "What was the first Indian talkie film?", o: ["Raja Harishchandra", "Alam Ara", "Kisan Kanya", "Indrasabha"], a: "Alam Ara" } },
+            { id: 79, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ കേന്ദ്രഭരണ പ്രദേശം?", o: ["ലഡാക്ക്", "ജമ്മു കശ്മീർ", "ആൻഡമാൻ നിക്കോബാർ", "ഡൽഹി"], a: "ലഡാക്ക്" }, en: { q: "Which is the largest Union Territory of India?", o: ["Ladakh", "Jammu & Kashmir", "Andaman & Nicobar", "Delhi"], a: "Ladakh" } },
+            { id: 80, ml: { q: "ഇന്ത്യയുടെ ദേശീയ മുദ്രാവാക്യം?", o: ["ജയ് ഹിന്ദ്", "വന്ദേ മാതരം", "സത്യമേവ ജയതേ", "ഇൻക്വിലാബ് സിന്ദാബാദ്"], a: "സത്യമേവ ജയതേ" }, en: { q: "What is the national motto of India?", o: ["Jai Hind", "Vande Mataram", "Satyameva Jayate", "Inquilab Zindabad"], a: "Satyameva Jayate" } },
+            { id: 81, ml: { q: "ഇന്ത്യയിലെ ആദ്യത്തെ തിരഞ്ഞെടുപ്പ് കമ്മീഷണർ?", o: ["സുകുമാർ സെൻ", "ടി.എൻ. ശേഷൻ", "കെ.വി.കെ. സുന്ദരം", "എസ്.പി. സെൻ വർമ്മ"], a: "സുകുമാർ സെൻ" }, en: { q: "Who was the first Election Commissioner of India?", o: ["Sukumar Sen", "T. N. Seshan", "K. V. K. Sundaram", "S. P. Sen Verma"], a: "Sukumar Sen" } },
+            { id: 82, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും നീളം കൂടിയ കടൽപ്പാലം?", o: ["ബാന്ദ്ര-വർളി സീ ലിങ്ക്", "മഹാത്മാ ഗാന്ധി സേതു", "അടൽ സേതു", "പമ്പൻ പാലം"], a: "അടൽ സേതു" }, en: { q: "Which is the longest sea bridge in India?", o: ["Bandra-Worli Sea Link", "Mahatma Gandhi Setu", "Atal Setu", "Pamban Bridge"], a: "Atal Setu" } },
+            { id: 83, ml: { q: "ഭാരതരത്നം നേടിയ ആദ്യ വനിത?", o: ["മദർ തെരേസ", "ഇന്ദിരാഗാന്ധി", "എം.എസ്. സുബ്ബുലക്ഷ്മി", "ലതാ മങ്കേഷ്കർ"], a: "ഇന്ദിരാഗാന്ധി" }, en: { q: "Who was the first woman to receive the Bharat Ratna?", o: ["Mother Teresa", "Indira Gandhi", "M. S. Subbulakshmi", "Lata Mangeshkar"], a: "Indira Gandhi" } },
+            { id: 84, ml: { q: "ഇന്ത്യൻ ആർമി ദിനം എന്നാണ്?", o: ["ജനുവരി 15", "ഡിസംബർ 4", "ഒക്ടോബർ 8", "ഫെബ്രുവരി 1"], a: "ജനുവരി 15" }, en: { q: "When is Indian Army Day?", o: ["January 15", "December 4", "October 8", "February 1"], a: "January 15" } },
+            { id: 85, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ ഡെൽറ്റ?", o: ["ഗോദാവരി ഡെൽറ്റ", "മഹാനദി ഡെൽറ്റ", "കാവേരി ഡെൽറ്റ", "സുന്ദർബൻ ഡെൽറ്റ"], a: "സുന്ദർബൻ ഡെൽറ്റ" }, en: { q: "Which is the largest delta in India?", o: ["Godavari Delta", "Mahanadi Delta", "Kaveri Delta", "Sundarban Delta"], a: "Sundarban Delta" } },
+            { id: 86, ml: { q: "ഇന്ത്യയിലെ ആദ്യത്തെ വനിതാ ഐ.പി.എസ് ഓഫീസർ?", o: ["അന്നാ രാജം മൽഹോത്ര", "കിരൺ ബേദി", "കഞ്ചൻ ചൗധരി", "മീരാ ബോറങ്കർ"], a: "കിരൺ ബേദി" }, en: { q: "Who was the first woman IPS officer in India?", o: ["Anna Rajam Malhotra", "Kiran Bedi", "Kanchan Chaudhary", "Meera Borwankar"], a: "Kiran Bedi" } },
+            { id: 87, ml: { q: "ഇന്ത്യയുടെ ദേശീയ വൃക്ഷം?", o: ["മാവ്", "തെങ്ങ്", "ആൽമരം", "വേപ്പ്"], a: "ആൽമരം" }, en: { q: "What is the national tree of India?", o: ["Mango Tree", "Coconut Tree", "Banyan Tree", "Neem Tree"], a: "Banyan Tree" } },
+            { id: 88, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ പ്ലാനറ്റോറിയം?", o: ["നെഹ്‌റു പ്ലാനറ്റോറിയം, ഡൽഹി", "ബിർള പ്ലാനറ്റോറിയം, കൊൽക്കത്ത", "ബിർള പ്ലാനറ്റോറിയം, ഹൈദരാബാദ്", "സർദാർ പട്ടേൽ പ്ലാനറ്റോറിയം"], a: "ബിർള പ്ലാനറ്റോറിയം, കൊൽക്കത്ത" }, en: { q: "Which is the largest planetarium in India?", o: ["Nehru Planetarium, Delhi", "Birla Planetarium, Kolkata", "Birla Planetarium, Hyderabad", "Sardar Patel Planetarium"], a: "Birla Planetarium, Kolkata" } },
+            { id: 89, ml: { q: "ഇന്ത്യയിലെ ആദ്യത്തെ ആണവ നിലയം എവിടെയാണ് സ്ഥാപിച്ചത്?", o: ["കൽപ്പാക്കം", "താരാപ്പൂർ", "കോട്ട", "നറോറ"], a: "താരാപ്പൂർ" }, en: { q: "Where was the first nuclear power plant in India established?", o: ["Kalpakkam", "Tarapur", "Kota", "Narora"], a: "Tarapur" } },
+            { id: 90, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും ഉയരത്തിലുള്ള വെള്ളച്ചാട്ടം?", o: ["ജോഗ് വെള്ളച്ചാട്ടം", "കുഞ്ചിക്കൽ വെള്ളച്ചാട്ടം", "ദൂത്സാഗർ വെള്ളച്ചാട്ടം", "അതിരപ്പിള്ളി"], a: "കുഞ്ചിക്കൽ വെള്ളച്ചാട്ടം" }, en: { q: "Which is the highest waterfall in India?", o: ["Jog Falls", "Kunchikal Falls", "Dudhsagar Falls", "Athirappilly"], a: "Kunchikal Falls" } },
+            { id: 91, ml: { q: "ഇന്ത്യയുടെ ദേശീയ കലണ്ടറിലെ ആദ്യ മാസം?", o: ["ഫാൽഗുനം", "ചൈത്രം", "വൈശാഖം", "ജ്യേഷ്ഠം"], a: "ചൈത്രം" }, en: { q: "What is the first month of the Indian national calendar?", o: ["Phalguna", "Chaitra", "Vaisakha", "Jyeshtha"], a: "Chaitra" } },
+            { id: 92, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും നീളം കൂടിയ അണക്കെട്ട്?", o: ["തെഹ്രി അണക്കെട്ട്", "ഭാക്ര നങ്കൽ", "ഹിരാക്കുഡ് അണക്കെട്ട്", "സർദാർ സരോവർ"], a: "ഹിരാക്കുഡ് അണക്കെട്ട്" }, en: { q: "Which is the longest dam in India?", o: ["Tehri Dam", "Bhakra Nangal", "Hirakud Dam", "Sardar Sarovar"], a: "Hirakud Dam" } },
+            { id: 93, ml: { q: "ഇന്ത്യയുടെ ആദ്യത്തെ പ്രതിരോധ മന്ത്രി?", o: ["സർദാർ പട്ടേൽ", "ബൽദേവ് സിംഗ്", "ജോൺ മത്തായി", "സി. രാജഗോപാലാചാരി"], a: "ബൽദേവ് സിംഗ്" }, en: { q: "Who was the first Defence Minister of India?", o: ["Sardar Patel", "Baldev Singh", "John Matthai", "C. Rajagopalachari"], a: "Baldev Singh" } },
+            { id: 94, ml: { q: "ഇന്ത്യയിലെ ആദ്യത്തെ സൂപ്പർ കമ്പ്യൂട്ടർ?", o: ["PARAM 8000", "Anupam", "SAGA-220", "EKA"], a: "PARAM 8000" }, en: { q: "What was the first supercomputer of India?", o: ["PARAM 8000", "Anupam", "SAGA-220", "EKA"], a: "PARAM 8000" } },
+            { id: 95, ml: { q: "ഇന്ത്യയുടെ ദേശീയ പച്ചക്കറി ഏതാണ്?", o: ["തക്കാളി", "ഉരുളക്കിഴങ്ങ്", "മത്തങ്ങ", "വെണ്ടയ്ക്ക"], a: "മത്തങ്ങ" }, en: { q: "What is the national vegetable of India?", o: ["Tomato", "Potato", "Pumpkin", "Okra"], a: "Pumpkin" } },
+            { id: 96, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ ഉപ്പുജല തടാകം?", o: ["സാംഭാർ തടാകം", "ചിൽക്ക തടാകം", "പുലിക്കാട്ട് തടാകം", "വൂളർ തടാകം"], a: "ചിൽക്ക തടാകം" }, en: { q: "Which is the largest saltwater lake in India?", o: ["Sambhar Lake", "Chilika Lake", "Pulicat Lake", "Wular Lake"], a: "Chilika Lake" } },
+            { id: 97, ml: { q: "ഇന്ത്യൻ നാവികസേനാ ദിനം എന്നാണ്?", o: ["ജനുവരി 15", "ഒക്ടോബർ 8", "ഡിസംബർ 4", "ജൂലൈ 26"], a: "ഡിസംബർ 4" }, en: { q: "When is Indian Navy Day?", o: ["January 15", "October 8", "December 4", "July 26"], a: "December 4" } },
+            { id: 98, ml: { q: "ഇന്ത്യയിലെ ആദ്യത്തെ വനിതാ മുഖ്യമന്ത്രി?", o: ["ജയലളിത", "സുചേതാ കൃപലാനി", "മായവതി", "വസുന്ധര രാജെ"], a: "സുചേതാ കൃപലാനി" }, en: { q: "Who was the first woman Chief Minister in India?", o: ["Jayalalithaa", "Sucheta Kripalani", "Mayawati", "Vasundhara Raje"], a: "Sucheta Kripalani" } },
+            { id: 99, ml: { q: "ഇന്ത്യൻ വ്യോമസേനാ ദിനം എന്നാണ്?", o: ["ജനുവരി 15", "ഒക്ടോബർ 8", "ഡിസംബർ 4", "മാർച്ച് 23"], a: "ഒക്ടോബർ 8" }, en: { q: "When is Indian Air Force Day?", o: ["January 15", "October 8", "December 4", "March 23"], a: "October 8" } },
+            { id: 100, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും പഴക്കമുള്ള രാഷ്ട്രീയ പാർട്ടി?", o: ["ബി.ജെ.പി", "സി.പി.ഐ", "ഇന്ത്യൻ നാഷണൽ കോൺഗ്രസ്", "ഡി.എം.കെ"], a: "ഇന്ത്യൻ നാഷണൽ കോൺഗ്രസ്" }, en: { q: "Which is the oldest political party in India?", o: ["BJP", "CPI", "Indian National Congress", "DMK"], a: "Indian National Congress" } }
+        ];
+
+        // --- App State ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedLang = 'ml';
+        let userAnswers = new Array(quizData.length + 1).fill(null); // Use a larger array to map by ID
+        let questions = [];
+
+        // --- DOM Elements ---
+        const languageScreen = document.getElementById('language-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionCounter = document.getElementById('question-counter');
+        const scoreCounter = document.getElementById('score-counter');
+        const progressBar = document.getElementById('progress-bar');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedback = document.getElementById('feedback');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        // --- Functions ---
+        function startQuiz(lang) {
+            selectedLang = lang;
+            // Shuffle questions for variety each time
+            questions = [...quizData].sort(() => Math.random() - 0.5);
+            languageScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // Reset feedback and styles
+            feedback.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            if (currentQuestionIndex >= questions.length) {
+                showResults();
+                return;
+            }
+
+            const currentQuestion = questions[currentQuestionIndex][selectedLang];
+            const questionData = questions[currentQuestionIndex];
+            
+            // Set language class for proper font rendering
+            questionText.className = `text-2xl font-bold text-center text-gray-800 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            
+            questionText.textContent = currentQuestion.q;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1}/${questions.length}`;
+            scoreCounter.textContent = `Score: ${score}`;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+
+            // Shuffle options
+            const shuffledOptions = [...currentQuestion.o].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = `btn-option w-full p-4 rounded-lg border-2 border-gray-300 text-lg font-semibold text-gray-700 bg-white hover:bg-blue-100 hover:border-blue-400 transition ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+                button.onclick = () => selectAnswer(option, button);
+                optionsContainer.appendChild(button);
+            });
+
+            updateNavButtons();
+            
+            // If user has already answered this question (by using back button), show the result
+            if (userAnswers[questionData.id] !== null) {
+                showPreviousAnswer();
+            }
+        }
+        
+        function selectAnswer(selectedOption, button) {
+            const questionData = questions[currentQuestionIndex];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            // Only update score if the question hasn't been answered correctly before
+            if (userAnswers[questionData.id] !== currentQuestion.a && selectedOption === correctAnswer) {
+                 score++;
+            } else if (userAnswers[questionData.id] === currentQuestion.a && selectedOption !== correctAnswer) {
+                 // If user changes a correct answer to a wrong one, decrement score
+                 score--;
+            }
+
+            userAnswers[questionData.id] = selectedOption;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true; // Disable all options after one is selected
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+
+            if (selectedOption === correctAnswer) {
+                playCorrectSound();
+                feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                feedback.className = 'mt-4 text-center font-bold text-lg text-green-600';
+            } else {
+                playWrongSound();
+                button.classList.add('wrong');
+                feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                feedback.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+            }
+            
+            scoreCounter.textContent = `Score: ${score}`;
+        }
+
+        function showPreviousAnswer() {
+            const questionData = questions[currentQuestionIndex];
+            const selectedOption = userAnswers[questionData.id];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+                if (btn.textContent === selectedOption && selectedOption !== correctAnswer) {
+                    btn.classList.add('wrong');
+                }
+            });
+
+            if (selectedOption !== correctAnswer) {
+                 feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                 feedback.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+            } else {
+                 feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                 feedback.className = 'mt-4 text-center font-bold text-lg text-green-600';
+            }
+        }
+
+        function updateNavButtons() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', backBtn.disabled);
+            
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.textContent = selectedLang === 'ml' ? 'പൂർത്തിയാക്കുക' : 'Finish';
+            } else {
+                nextBtn.textContent = selectedLang === 'ml' ? 'അടുത്തത് >' : 'Next >';
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            const percentage = Math.round((score / questions.length) * 100);
+            const resultTitle = document.getElementById('result-title');
+            const finalScore = document.getElementById('final-score');
+            const resultMessage = document.getElementById('result-message');
+
+            resultTitle.className = `text-4xl font-bold mb-4 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            finalScore.className = `text-2xl mb-6 text-gray-700 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            resultMessage.className = `text-xl mb-8 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+
+            if (selectedLang === 'ml') {
+                resultTitle.textContent = 'ഫലം';
+                finalScore.textContent = `നിങ്ങളുടെ സ്കോർ: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'അടിപൊളി! നിങ്ങൾ മിടുക്കനാണ്/മിടുക്കിയാണ്.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'നന്നായിരിക്കുന്നു! ഇനിയും മെച്ചപ്പെടുത്താം.';
+                } else {
+                    resultMessage.textContent = 'സാരമില്ല, വീണ്ടും ശ്രമിക്കുക!';
+                }
+            } else {
+                resultTitle.textContent = 'Results';
+                finalScore.textContent = `Your Score: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'Excellent! You did a great job.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'Good effort! Keep practicing.';
+                } else {
+                    resultMessage.textContent = 'Don\'t worry, try again!';
+                }
+            }
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers.fill(null);
+            questions = [];
+            resultScreen.classList.add('hidden');
+            languageScreen.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
+

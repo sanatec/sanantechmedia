@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>കായികം ക്വിസ്</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .malayalam {
+            font-family: 'Manjari', sans-serif;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-option:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+        .correct {
+            animation: pulse-green 1s;
+            background-color: #22c55e !important; /* Green-500 */
+            color: white !important;
+            border-color: #16a34a !important; /* Green-600 */
+        }
+        .wrong {
+            animation: shake 0.5s;
+            background-color: #ef4444 !important; /* Red-500 */
+            color: white !important;
+            border-color: #dc2626 !important; /* Red-600 */
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-orange-500 to-red-600 min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Language Selection Screen -->
+        <div id="language-screen" class="text-center text-white p-8 rounded-2xl shadow-2xl card">
+            <h1 class="text-4xl font-bold mb-2 malayalam">കായികം ക്വിസ്</h1>
+            <h2 class="text-2xl font-bold mb-8">Sports Quiz</h2>
+            <p class="mb-4 malayalam">ഭാഷ തിരഞ്ഞെടുക്കുക:</p>
+            <p class="mb-8">Select Language:</p>
+            <div class="flex flex-col space-y-4">
+                <button onclick="startQuiz('ml')" class="bg-white text-red-600 font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-red-50 transition-transform transform hover:scale-105 malayalam">മലയാളം</button>
+                <button onclick="startQuiz('en')" class="bg-white text-orange-600 font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-orange-50 transition-transform transform hover:scale-105">English</button>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden p-6 bg-white/90 rounded-2xl shadow-2xl card">
+            <div id="header" class="flex justify-between items-center mb-4">
+                <div id="question-counter" class="text-lg font-semibold text-gray-700"></div>
+                <div id="score-counter" class="text-lg font-semibold text-green-600"></div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-orange-500 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <div id="question-container" class="mb-6">
+                <p id="question-text" class="text-2xl font-bold text-center text-gray-800" style="min-height: 100px;"></p>
+            </div>
+            <div id="options-container" class="grid grid-cols-1 gap-4">
+                <!-- Options will be dynamically inserted here -->
+            </div>
+            <div id="feedback" class="mt-4 text-center font-bold text-lg" style="min-height: 30px;"></div>
+            <div class="flex justify-between mt-8">
+                <button id="back-btn" onclick="prevQuestion()" class="bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg shadow hover:bg-gray-400 transition-transform transform hover:scale-105">&lt; Back</button>
+                <button id="next-btn" onclick="nextQuestion()" class="bg-red-500 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-red-600 transition-transform transform hover:scale-105">Next &gt;</button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center p-8 bg-white/90 rounded-2xl shadow-2xl card">
+            <h2 id="result-title" class="text-4xl font-bold mb-4 text-gray-800"></h2>
+            <p id="final-score" class="text-2xl mb-6 text-gray-700"></p>
+            <p id="result-message" class="text-xl mb-8"></p>
+            <button onclick="restartQuiz()" class="bg-orange-600 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg hover:bg-orange-700 transition-transform transform hover:scale-105">
+                വീണ്ടും കളിക്കാം / Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Sound Synthesis ---
+        const correctSound = new Tone.Synth({
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
+        }).toDestination();
+
+        const wrongSound = new Tone.Synth({
+            oscillator: { type: 'square' },
+            envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.2 }
+        }).toDestination();
+
+        function playCorrectSound() {
+            Tone.start();
+            correctSound.triggerAttackRelease("C5", "8n");
+        }
+
+        function playWrongSound() {
+            Tone.start();
+            wrongSound.triggerAttackRelease("C3", "8n");
+        }
+
+        // --- Quiz Data (100 Questions about Sports) ---
+        const quizData = [
+            { id: 1, ml: { q: "ഒരു ഫുട്ബോൾ കളിയുടെ സമയദൈർഘ്യം എത്രയാണ്?", o: ["80 മിനിട്ട്", "90 മിനിട്ട്", "100 മിനിട്ട്", "120 മിനിട്ട്"], a: "90 മിനിട്ട്" }, en: { q: "What is the duration of a football match?", o: ["80 minutes", "90 minutes", "100 minutes", "120 minutes"], a: "90 minutes" } },
+            { id: 2, ml: { q: "ഇന്ത്യൻ സൂപ്പർ ലീഗിൽ കേരളത്തെ പ്രതിനിധീകരിക്കുന്ന ഫുട്ബോൾ ക്ലബ്?", o: ["ഗോകുലം കേരള എഫ്.സി", "എഫ്.സി കൊച്ചിൻ", "കേരള ബ്ലാസ്റ്റേഴ്സ്", "വൈവ കേരള"], a: "കേരള ബ്ലാസ്റ്റേഴ്സ്" }, en: { q: "Which football club represents Kerala in the Indian Super League?", o: ["Gokulam Kerala FC", "FC Cochin", "Kerala Blasters", "Viva Kerala"], a: "Kerala Blasters" } },
+            { id: 3, ml: { q: "2022-ലെ ലോകകപ്പ് ഫുട്ബോൾ നടന്ന രാജ്യം?", o: ["ബ്രസീൽ", "ഫ്രാൻസ്", "ഖത്തർ", "അർജന്റീന"], a: "ഖത്തർ" }, en: { q: "Which country hosted the 2022 FIFA World Cup?", o: ["Brazil", "France", "Qatar", "Argentina"], a: "Qatar" } },
+            { id: 4, ml: { q: "എത്ര വർഷം കൂടുമ്പോഴാണ് ലോകകപ്പ് ഫുട്ബോൾ നടക്കുന്നത്?", o: ["2", "3", "4", "5"], a: "4" }, en: { q: "How many years apart is the FIFA World Cup held?", o: ["2", "3", "4", "5"], a: "4" } },
+            { id: 5, ml: { q: "ഫുട്ബോൾ കളിയിൽ ഒരു ടീമിൽ എത്ര കളിക്കാരാണ് ഉള്ളത്?", o: ["9", "10", "11", "12"], a: "11" }, en: { q: "How many players are there in a football team?", o: ["9", "10", "11", "12"], a: "11" } },
+            { id: 6, ml: { q: "സന്തോഷ് ട്രോഫി ഏത് കളിയുമായി ബന്ധപ്പെട്ടതാണ്?", o: ["ക്രിക്കറ്റ്", "ഹോക്കി", "ഫുട്ബോൾ", "കബഡി"], a: "ഫുട്ബോൾ" }, en: { q: "Santosh Trophy is associated with which sport?", o: ["Cricket", "Hockey", "Football", "Kabaddi"], a: "Football" } },
+            { id: 7, ml: { q: "കോർണർ കിക്ക് ഏത് കളിയുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", o: ["വോളിബോൾ", "ഫുട്ബോൾ", "ബാസ്കറ്റ്ബോൾ", "ഹാൻഡ്ബോൾ"], a: "ഫുട്ബോൾ" }, en: { q: "A corner kick is associated with which sport?", o: ["Volleyball", "Football", "Basketball", "Handball"], a: "Football" } },
+            { id: 8, ml: { q: "സോക്കർ എന്ന പേരിൽ അറിയപ്പെടുന്നത്?", o: ["ഹോക്കി", "റഗ്ബി", "ഫുട്ബോൾ", "ബേസ്ബോൾ"], a: "ഫുട്ബോൾ" }, en: { q: "Which sport is also known as Soccer?", o: ["Hockey", "Rugby", "Football", "Baseball"], a: "Football" } },
+            { id: 9, ml: { q: "പയ്യോളി എക്സ്പ്രസ് എന്നറിയപ്പെടുന്ന കായികതാരം?", o: ["ഷൈനി വിൽസൺ", "കെ.എം. ബീനാമോൾ", "പി.ടി. ഉഷ", "അഞ്ജു ബോബി ജോർജ്"], a: "പി.ടി. ഉഷ" }, en: { q: "Which athlete is known as the 'Payyoli Express'?", o: ["Shiny Wilson", "K. M. Beenamol", "P. T. Usha", "Anju Bobby George"], a: "P. T. Usha" } },
+            { id: 10, ml: { q: "ലോകത്തിലെ ഏറ്റവും പഴക്കം ചെന്ന കായികമേള?", o: ["കോമൺവെൽത്ത് ഗെയിംസ്", "ഏഷ്യൻ ഗെയിംസ്", "ഒളിമ്പിക്സ്", "ലോകകപ്പ് ഫുട്ബോൾ"], a: "ഒളിമ്പിക്സ്" }, en: { q: "What is the oldest sporting event in the world?", o: ["Commonwealth Games", "Asian Games", "Olympics", "FIFA World Cup"], a: "Olympics" } },
+            { id: 11, ml: { q: "ലോകത്തിൽ ഏറ്റവും പ്രചാരമുള്ള കായികയിനം?", o: ["ക്രിക്കറ്റ്", "ഫുട്ബോൾ", "ബാസ്കറ്റ്ബോൾ", "ടെന്നീസ്"], a: "ഫുട്ബോൾ" }, en: { q: "What is the most popular sport in the world?", o: ["Cricket", "Football", "Basketball", "Tennis"], a: "Football" } },
+            { id: 12, ml: { q: "കബഡിയുടെ ജന്മനാട്?", o: ["ചൈന", "ജപ്പാൻ", "ഇന്ത്യ", "പാകിസ്ഥാൻ"], a: "ഇന്ത്യ" }, en: { q: "What is the birthplace of Kabaddi?", o: ["China", "Japan", "India", "Pakistan"], a: "India" } },
+            { id: 13, ml: { q: "ഒരു ഷട്ടിൽ കോക്കിലെ തൂവലുകളുടെ എണ്ണം?", o: ["14", "15", "16", "17"], a: "16" }, en: { q: "What is the number of feathers in a shuttlecock?", o: ["14", "15", "16", "17"], a: "16" } },
+            { id: 14, ml: { q: "ജിമ്മി ജോർജ്ജ് ഏത് കായിക ഇനത്തിലാണ് പ്രശസ്തനായത്?", o: ["ഫുട്ബോൾ", "ബാസ്കറ്റ്ബോൾ", "വോളിബോൾ", "അത്‌ലറ്റിക്സ്"], a: "വോളിബോൾ" }, en: { q: "In which sport did Jimmy George become famous?", o: ["Football", "Basketball", "Volleyball", "Athletics"], a: "Volleyball" } },
+            { id: 15, ml: { q: "ദേശീയ കായികദിനം എന്നാണ്?", o: ["ജൂലൈ 29", "ആഗസ്റ്റ് 29", "സെപ്റ്റംബർ 29", "ഒക്ടോബർ 29"], a: "ആഗസ്റ്റ് 29" }, en: { q: "When is National Sports Day (India)?", o: ["July 29", "August 29", "September 29", "October 29"], a: "August 29" } },
+            { id: 16, ml: { q: "ഇന്ത്യൻ ഫുട്ബോളിലെ കറുത്ത മുത്ത് എന്നറിയപ്പെടുന്നത്?", o: ["സുനിൽ ഛേത്രി", "ബൈചുങ് ബൂട്ടിയ", "ഐ.എം. വിജയൻ", "പി.കെ. ബാനർജി"], a: "ഐ.എം. വിജയൻ" }, en: { q: "Who is known as the 'Black Pearl of Indian Football'?", o: ["Sunil Chhetri", "Bhaichung Bhutia", "I. M. Vijayan", "P. K. Banerjee"], a: "I. M. Vijayan" } },
+            { id: 17, ml: { q: "എല്ലാ ലോകകപ്പ് ഫുട്ബോളിലും കളിച്ച ടീം?", o: ["ജർമ്മനി", "അർജന്റീന", "ഇറ്റലി", "ബ്രസീൽ"], a: "ബ്രസീൽ" }, en: { q: "Which team has played in every FIFA World Cup?", o: ["Germany", "Argentina", "Italy", "Brazil"], a: "Brazil" } },
+            { id: 18, ml: { q: "ഫിഫ (FIFA) എന്നത് ഏത് കളിയുമായി ബന്ധപ്പെട്ട സംഘടനയാണ്?", o: ["ക്രിക്കറ്റ്", "ഹോക്കി", "ഫുട്ബോൾ", "ചെസ്സ്"], a: "ഫുട്ബോൾ" }, en: { q: "FIFA is the governing body of which sport?", o: ["Cricket", "Hockey", "Football", "Chess"], a: "Football" } },
+            { id: 19, ml: { q: "സംസ്ഥാന കായിക ദിനം (കേരളം) എന്നാണ്?", o: ["ഒക്ടോബർ 13", "നവംബർ 14", "ഡിസംബർ 1", "സെപ്റ്റംബർ 5"], a: "ഒക്ടോബർ 13" }, en: { q: "When is the State Sports Day (Kerala)?", o: ["October 13", "November 14", "December 1", "September 5"], a: "October 13" } },
+            { id: 20, ml: { q: "ഒരു ക്രിക്കറ്റ് ടീമിൽ എത്ര കളിക്കാർ ഉണ്ട്?", o: ["9", "10", "11", "13"], a: "11" }, en: { q: "How many players are in a cricket team?", o: ["9", "10", "11", "13"], a: "11" } },
+            { id: 21, ml: { q: "ഇന്ത്യയുടെ ദേശീയ കായിക വിനോദം (ഔദ്യോഗികമല്ലെങ്കിലും)?", o: ["ക്രിക്കറ്റ്", "കബഡി", "ഹോക്കി", "ഫുട്ബോൾ"], a: "ഹോക്കി" }, en: { q: "What is considered the national sport of India (unofficially)?", o: ["Cricket", "Kabaddi", "Hockey", "Football"], a: "Hockey" } },
+            { id: 22, ml: { q: "ഒളിമ്പിക്സ് വളയങ്ങളിലെ നിറങ്ങളുടെ എണ്ണം?", o: ["4", "5", "6", "7"], a: "5" }, en: { q: "How many colors are there in the Olympic rings?", o: ["4", "5", "6", "7"], a: "5" } },
+            { id: 23, ml: { q: "ചെസ്സിൽ എത്ര കളങ്ങൾ ഉണ്ട്?", o: ["36", "49", "64", "81"], a: "64" }, en: { q: "How many squares are on a chessboard?", o: ["36", "49", "64", "81"], a: "64" } },
+            { id: 24, ml: { q: "'ഫ്ലയിംഗ് സിഖ്' എന്നറിയപ്പെടുന്ന ഇന്ത്യൻ അത്‌ലറ്റ്?", o: ["കപിൽ ദേവ്", "പി.ടി. ഉഷ", "മിൽഖാ സിംഗ്", "ധ്യാൻ ചന്ദ്"], a: "മിൽഖാ സിംഗ്" }, en: { q: "Which Indian athlete is known as 'The Flying Sikh'?", o: ["Kapil Dev", "P. T. Usha", "Milkha Singh", "Dhyan Chand"], a: "Milkha Singh" } },
+            { id: 25, ml: { q: "ഐ.പി.എൽ (IPL) ഏത് കളിയുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", o: ["ഫുട്ബോൾ", "ഹോക്കി", "കബഡി", "ക്രിക്കറ്റ്"], a: "ക്രിക്കറ്റ്" }, en: { q: "IPL (Indian Premier League) is associated with which sport?", o: ["Football", "Hockey", "Kabaddi", "Cricket"], a: "Cricket" } },
+            { id: 26, ml: { q: "ഒളിമ്പിക്സിൽ വ്യക്തിഗത സ്വർണം നേടിയ ആദ്യ ഇന്ത്യക്കാരൻ?", o: ["നീരജ് ചോപ്ര", "അഭിനവ് ബിന്ദ്ര", "പി.വി. സിന്ധു", "സുശീൽ കുമാർ"], a: "അഭിനവ് ബിന്ദ്ര" }, en: { q: "Who was the first Indian to win an individual Olympic gold medal?", o: ["Neeraj Chopra", "Abhinav Bindra", "P. V. Sindhu", "Sushil Kumar"], a: "Abhinav Bindra" } },
+            { id: 27, ml: { q: "ഒരു ഏകദിന ക്രിക്കറ്റ് മത്സരത്തിൽ എത്ര ഓവറുകൾ ഉണ്ട്?", o: ["20", "40", "50", "60"], a: "50" }, en: { q: "How many overs are there in a One Day International (ODI) cricket match?", o: ["20", "40", "50", "60"], a: "50" } },
+            { id: 28, ml: { q: "ലയണൽ മെസ്സി ഏത് രാജ്യത്തെ ഫുട്ബോൾ കളിക്കാരനാണ്?", o: ["ബ്രസീൽ", "പോർച്ചുഗൽ", "അർജന്റീന", "സ്പെയിൻ"], a: "അർജന്റീന" }, en: { q: "Lionel Messi is a football player from which country?", o: ["Brazil", "Portugal", "Argentina", "Spain"], a: "Argentina" } },
+            { id: 29, ml: { q: "വിംബിൾഡൺ ടൂർണമെന്റ് ഏത് കായിക ഇനവുമായി ബന്ധപ്പെട്ടതാണ്?", o: ["ഫുട്ബോൾ", "ക്രിക്കറ്റ്", "ബാഡ്മിന്റൺ", "ടെന്നീസ്"], a: "ടെന്നീസ്" }, en: { q: "The Wimbledon tournament is associated with which sport?", o: ["Football", "Cricket", "Badminton", "Tennis"], a: "Tennis" } },
+            { id: 30, ml: { q: "ഹോക്കി മാന്ത്രികൻ എന്നറിയപ്പെടുന്നത് ആര്?", o: ["സച്ചിൻ ടെണ്ടുൽക്കർ", "ധ്യാൻ ചന്ദ്", "ബൽബീർ സിംഗ്", "പി.ആർ. ശ്രീജേഷ്"], a: "ധ്യാൻ ചന്ദ്" }, en: { q: "Who is known as 'The Wizard of Hockey'?", o: ["Sachin Tendulkar", "Dhyan Chand", "Balbir Singh", "P. R. Sreejesh"], a: "Dhyan Chand" } },
+            { id: 31, ml: { q: "ഒരു മാരത്തൺ ഓട്ടത്തിന്റെ ദൂരം എത്രയാണ്?", o: ["21.1 കി.മീ", "35.5 കി.മീ", "42.2 കി.മീ", "50 കി.മീ"], a: "42.2 കി.മീ" }, en: { q: "What is the distance of a marathon race?", o: ["21.1 km", "35.5 km", "42.2 km", "50 km"], a: "42.2 km" } },
+            { id: 32, ml: { q: "സച്ചിൻ ടെണ്ടുൽക്കറുടെ ആത്മകഥയുടെ പേര്?", o: ["ദി ടെസ്റ്റ് ഓഫ് മൈ ലൈഫ്", "പ്ലേയിംഗ് ഇറ്റ് മൈ വേ", "സണ്ണി ഡേയ്സ്", "281 ആൻഡ് ബിയോണ്ട്"], a: "പ്ലേയിംഗ് ഇറ്റ് മൈ വേ" }, en: { q: "What is the name of Sachin Tendulkar's autobiography?", o: ["The Test of My Life", "Playing It My Way", "Sunny Days", "281 and Beyond"], a: "Playing It My Way" } },
+            { id: 33, ml: { q: "ക്രിക്കറ്റിൽ 'എൽ.ബി.ഡബ്ല്യു' (LBW) എന്നതിന്റെ പൂർണ്ണരൂപം?", o: ["ലെഗ് ബിഫോർ വിക്കറ്റ്", "ലെഗ് ബൗൾഡ് വൈഡ്", "ലോ ബൗൺസ് വിക്കറ്റ്", "ലെഗ് ബൈഡ് വിക്കറ്റ്"], a: "ലെഗ് ബിഫോർ വിക്കറ്റ്" }, en: { q: "What does 'LBW' stand for in cricket?", o: ["Leg Before Wicket", "Leg Bowled Wide", "Low Bounce Wicket", "Leg Bye Wicket"], a: "Leg Before Wicket" } },
+            { id: 34, ml: { q: "ആധുനിക ഒളിമ്പിക്സിന്റെ പിതാവ് എന്നറിയപ്പെടുന്നത്?", o: ["വില്യം മോർഗൻ", "പിയറി ഡി കുബർട്ടിൻ", "ജയിംസ് നൈസ്മിത്ത്", "ഹെറോഡോട്ടസ്"], a: "പിയറി ഡി കുബർട്ടിൻ" }, en: { q: "Who is known as the father of the modern Olympics?", o: ["William Morgan", "Pierre de Coubertin", "James Naismith", "Herodotus"], a: "Pierre de Coubertin" } },
+            { id: 35, ml: { q: "2023-ലെ ഏകദിന ക്രിക്കറ്റ് ലോകകപ്പ് നേടിയ രാജ്യം?", o: ["ഇന്ത്യ", "ഇംഗ്ലണ്ട്", "ന്യൂസിലാൻഡ്", "ഓസ്‌ട്രേലിയ"], a: "ഓസ്‌ട്രേലിയ" }, en: { q: "Which country won the 2023 ODI Cricket World Cup?", o: ["India", "England", "New Zealand", "Australia"], a: "Australia" } },
+            { id: 36, ml: { q: "ഒരു ബാസ്കറ്റ്ബോൾ ടീമിൽ എത്ര കളിക്കാർ കോർട്ടിൽ ഉണ്ടാകും?", o: ["5", "6", "7", "11"], a: "5" }, en: { q: "How many players are on the court in a basketball team?", o: ["5", "6", "7", "11"], a: "5" } },
+            { id: 37, ml: { q: "ഡ്യൂറൻഡ് കപ്പ് ഏത് കളിയുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", o: ["ക്രിക്കറ്റ്", "ഹോക്കി", "ഫുട്ബോൾ", "ടെന്നീസ്"], a: "ഫുട്ബോൾ" }, en: { q: "The Durand Cup is associated with which sport?", o: ["Cricket", "Hockey", "Football", "Tennis"], a: "Football" } },
+            { id: 38, ml: { q: "ലോക ചെസ്സ് ചാമ്പ്യനായ ആദ്യ ഇന്ത്യക്കാരൻ?", o: ["പ്രഗ്നാനന്ദ", "വിശ്വനാഥൻ ആനന്ദ്", "ഗുകേഷ് ഡി", "പെണ്ട്യാല ഹരികൃഷ്ണ"], a: "വിശ്വനാഥൻ ആനന്ദ്" }, en: { q: "Who was the first Indian to become World Chess Champion?", o: ["Praggnanandhaa", "Viswanathan Anand", "Gukesh D", "Pentala Harikrishna"], a: "Viswanathan Anand" } },
+            { id: 39, ml: { q: "ബോക്സിംഗിൽ 'നോക്കൗട്ട്' എന്ന പദം ഉപയോഗിക്കുന്നു. ശരിയോ തെറ്റോ?", o: ["ശരി", "തെറ്റ്"], a: "ശരി" }, en: { q: "The term 'knockout' is used in boxing. True or False?", o: ["True", "False"], a: "True" } },
+            { id: 40, ml: { q: "ക്രിസ്റ്റ്യാനോ റൊണാൾഡോ ഏത് രാജ്യത്തിന് വേണ്ടിയാണ് കളിക്കുന്നത്?", o: ["സ്പെയിൻ", "ബ്രസീൽ", "അർജന്റീന", "പോർച്ചുഗൽ"], a: "പോർച്ചുഗൽ" }, en: { q: "For which country does Cristiano Ronaldo play?", o: ["Spain", "Brazil", "Argentina", "Portugal"], a: "Portugal" } },
+            { id: 41, ml: { q: "ഏഷ്യൻ ഗെയിംസിൽ സ്വർണം നേടിയ ആദ്യ ഇന്ത്യൻ വനിത?", o: ["പി.ടി. ഉഷ", "കമൽജിത് സന്ധു", "കർണം മല്ലേശ്വരി", "മേരി കോം"], a: "കമൽജിത് സന്ധു" }, en: { q: "Who was the first Indian woman to win a gold medal at the Asian Games?", o: ["P. T. Usha", "Kamaljeet Sandhu", "Karnam Malleswari", "Mary Kom"], a: "Kamaljeet Sandhu" } },
+            { id: 42, ml: { q: "ഒരു വോളിബോൾ ടീമിൽ എത്ര കളിക്കാരുണ്ട്?", o: ["5", "6", "7", "8"], a: "6" }, en: { q: "How many players are in a volleyball team?", o: ["5", "6", "7", "8"], a: "6" } },
+            { id: 43, ml: { q: "ഇന്ത്യ ആദ്യമായി ക്രിക്കറ്റ് ലോകകപ്പ് നേടിയ വർഷം?", o: ["1975", "1983", "2007", "2011"], a: "1983" }, en: { q: "In which year did India win its first Cricket World Cup?", o: ["1975", "1983", "2007", "2011"], a: "1983" } },
+            { id: 44, ml: { q: "'ഗ്രാൻഡ് സ്ലാം' എന്ന പദം ഏത് കളിയുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", o: ["ഗോൾഫ്", "ബ്രിഡ്ജ്", "ബേസ്ബോൾ", "ടെന്നീസ്"], a: "ടെന്നീസ്" }, en: { q: "The term 'Grand Slam' is associated with which sport?", o: ["Golf", "Bridge", "Baseball", "Tennis"], a: "Tennis" } },
+            { id: 45, ml: { q: "ഉസൈൻ ബോൾട്ട് ഏത് കായിക ഇനത്തിലാണ് പ്രശസ്തൻ?", o: ["നീന്തൽ", "സ്പ്രിന്റ് (ഓട്ടം)", "ലോംഗ് ജമ്പ്", "ഹൈ ജമ്പ്"], a: "സ്പ്രിന്റ് (ഓട്ടം)" }, en: { q: "In which sport is Usain Bolt famous?", o: ["Swimming", "Sprinting (Running)", "Long Jump", "High Jump"], a: "Sprinting (Running)" } },
+            { id: 46, ml: { q: "ആഷസ് (The Ashes) പരമ്പര ഏതൊക്കെ രാജ്യങ്ങൾ തമ്മിലാണ് നടക്കുന്നത്?", o: ["ഇന്ത്യ - പാകിസ്ഥാൻ", "ഇംഗ്ലണ്ട് - ഓസ്‌ട്രേലിയ", "ദക്ഷിണാഫ്രിക്ക - ന്യൂസിലാൻഡ്", "ഇന്ത്യ - ഇംഗ്ലണ്ട്"], a: "ഇംഗ്ലണ്ട് - ഓസ്‌ട്രേലിയ" }, en: { q: "The Ashes series is played between which two countries?", o: ["India - Pakistan", "England - Australia", "South Africa - New Zealand", "India - England"], a: "England - Australia" } },
+            { id: 47, ml: { q: "അഞ്ജു ബോബി ജോർജ് ഏത് ഇനത്തിലാണ് പ്രശസ്തയായത്?", o: ["ഡിസ്കസ് ത്രോ", "ഹൈ ജമ്പ്", "ലോംഗ് ജമ്പ്", "ഷോട്ട് പുട്ട്"], a: "ലോംഗ് ജമ്പ്" }, en: { q: "In which event did Anju Bobby George become famous?", o: ["Discus Throw", "High Jump", "Long Jump", "Shot Put"], a: "Long Jump" } },
+            { id: 48, ml: { q: "പ്രോ കബഡി ലീഗ് (PKL) ഏത് രാജ്യത്താണ് നടക്കുന്നത്?", o: ["ബംഗ്ലാദേശ്", "പാകിസ്ഥാൻ", "ഇന്ത്യ", "ശ്രീലങ്ക"], a: "ഇന്ത്യ" }, en: { q: "In which country is the Pro Kabaddi League (PKL) held?", o: ["Bangladesh", "Pakistan", "India", "Sri Lanka"], a: "India" } },
+            { id: 49, ml: { q: "ഒളിമ്പിക്സ് ചിഹ്നത്തിലെ നീല വളയം ഏത് ഭൂഖണ്ഡത്തെ പ്രതിനിധീകരിക്കുന്നു?", o: ["ഏഷ്യ", "ആഫ്രിക്ക", "യൂറോപ്പ്", "ഓഷ്യാനിയ"], a: "യൂറോപ്പ്" }, en: { q: "Which continent does the blue ring in the Olympic symbol represent?", o: ["Asia", "Africa", "Europe", "Oceania"], a: "Europe" } },
+            { id: 50, ml: { q: "ഇന്ത്യൻ ക്രിക്കറ്റ് ടീമിന്റെ ആദ്യ ക്യാപ്റ്റൻ ആരായിരുന്നു?", o: ["കപിൽ ദേവ്", "സുനിൽ ഗവാസ്കർ", "സി.കെ. നായിഡു", "ലാലാ അമർനാഥ്"], a: "സി.കെ. നായിഡു" }, en: { q: "Who was the first captain of the Indian cricket team?", o: ["Kapil Dev", "Sunil Gavaskar", "C. K. Nayudu", "Lala Amarnath"], a: "C. K. Nayudu" } },
+            { id: 51, ml: { q: "ഒരു ഹോക്കി മത്സരത്തിന്റെ സമയദൈർഘ്യം?", o: ["60 മിനിട്ട്", "70 മിനിട്ട്", "80 മിനിട്ട്", "90 മിനിട്ട്"], a: "60 മിനിട്ട്" }, en: { q: "What is the duration of a hockey match?", o: ["60 minutes", "70 minutes", "80 minutes", "90 minutes"], a: "60 minutes" } },
+            { id: 52, ml: { q: "ഫോർമുല 1 (F1) എന്തുതരം മത്സരമാണ്?", o: ["ബൈക്ക് റേസിംഗ്", "സൈക്കിൾ റേസിംഗ്", "കാർ റേസിംഗ്", "കുതിരയോട്ടം"], a: "കാർ റേസിംഗ്" }, en: { q: "What type of competition is Formula 1 (F1)?", o: ["Bike Racing", "Cycle Racing", "Car Racing", "Horse Racing"], a: "Car Racing" } },
+            { id: 53, ml: { q: "രഞ്ജി ട്രോഫി ഏത് കളിയുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", o: ["ഫുട്ബോൾ", "ഹോക്കി", "ക്രിക്കറ്റ്", "കബഡി"], a: "ക്രിക്കറ്റ്" }, en: { q: "The Ranji Trophy is associated with which sport?", o: ["Football", "Hockey", "Cricket", "Kabaddi"], a: "Cricket" } },
+            { id: 54, ml: { q: "ലോക അത്‌ലറ്റിക്സ് ചാമ്പ്യൻഷിപ്പിൽ മെഡൽ നേടിയ ആദ്യ ഇന്ത്യൻ താരം?", o: ["പി.ടി. ഉഷ", "അഞ്ജു ബോബി ജോർജ്", "നീരജ് ചോപ്ര", "മിൽഖാ സിംഗ്"], a: "അഞ്ജു ബോബി ജോർജ്" }, en: { q: "Who was the first Indian athlete to win a medal at the World Athletics Championships?", o: ["P. T. Usha", "Anju Bobby George", "Neeraj Chopra", "Milkha Singh"], a: "Anju Bobby George" } },
+            { id: 55, ml: { q: "ബാഡ്മിന്റണിൽ ഉപയോഗിക്കുന്ന റാക്കറ്റിന് തൂവലുകൾ ഉണ്ടോ?", o: ["ഉണ്ട്", "ഇല്ല"], a: "ഇല്ല" }, en: { q: "Does the racquet used in badminton have feathers?", o: ["Yes", "No"], a: "No" } },
+            { id: 56, ml: { q: "ഏറ്റവും കൂടുതൽ തവണ ഫിഫ ലോകകപ്പ് നേടിയ രാജ്യം?", o: ["ജർമ്മനി", "അർജന്റീന", "ഇറ്റലി", "ബ്രസീൽ"], a: "ബ്രസീൽ" }, en: { q: "Which country has won the most FIFA World Cups?", o: ["Germany", "Argentina", "Italy", "Brazil"], a: "Brazil" } },
+            { id: 57, ml: { q: "ഒളിമ്പിക്സിൽ പങ്കെടുത്ത ആദ്യ മലയാളി വനിത?", o: ["ഷൈനി വിൽസൺ", "പി.ടി. ഉഷ", "എം.ഡി. വത്സമ്മ", "അഞ്ജു ബോബി ജോർജ്"], a: "പി.ടി. ഉഷ" }, en: { q: "Who was the first Malayali woman to participate in the Olympics?", o: ["Shiny Wilson", "P. T. Usha", "M. D. Valsamma", "Anju Bobby George"], a: "P. T. Usha" } },
+            { id: 58, ml: { q: "ഒരു ചെസ്സ് കളിയിൽ രാജാവിനെ വെട്ടിയാൽ കളി തീരുമോ?", o: ["തീരും", "ഇല്ല, ചെക്ക്മേറ്റ് ആകണം"], a: "ഇല്ല, ചെക്ക്മേറ്റ് ആകണം" }, en: { q: "Does capturing the king end a game of chess?", o: ["Yes", "No, it must be a checkmate"], a: "No, it must be a checkmate" } },
+            { id: 59, ml: { q: "സാനിയ മിർസ ഏത് കായിക ഇനത്തിലാണ് പ്രശസ്തയായത്?", o: ["ബാഡ്മിന്റൺ", "ടേബിൾ ടെന്നീസ്", "ടെന്നീസ്", "സ്ക്വാഷ്"], a: "ടെന്നീസ്" }, en: { q: "In which sport did Sania Mirza become famous?", o: ["Badminton", "Table Tennis", "Tennis", "Squash"], a: "Tennis" } },
+            { id: 60, ml: { q: "ഇന്ത്യയിലെ ഏറ്റവും വലിയ ക്രിക്കറ്റ് സ്റ്റേഡിയം?", o: ["ഈഡൻ ഗാർഡൻസ്, കൊൽക്കത്ത", "വാങ്കഡെ സ്റ്റേഡിയം, മുംബൈ", "നരേന്ദ്ര മോദി സ്റ്റേഡിയം, അഹമ്മദാബാദ്", "ചিন্নസ്വാമി സ്റ്റേഡിയം, ബാംഗ്ലൂർ"], a: "നരേന്ദ്ര മോദി സ്റ്റേഡിയം, അഹമ്മദാബാദ്" }, en: { q: "What is the largest cricket stadium in India?", o: ["Eden Gardens, Kolkata", "Wankhede Stadium, Mumbai", "Narendra Modi Stadium, Ahmedabad", "Chinnaswamy Stadium, Bangalore"], a: "Narendra Modi Stadium, Ahmedabad" } },
+            { id: 61, ml: { q: "ഗുസ്തി ഏത് രാജ്യത്തിന്റെ ദേശീയ കായിക വിനോദമാണ്?", o: ["ഇറാൻ", "തുർക്കി", "ഇന്ത്യ", "പാകിസ്ഥാൻ"], a: "ഇറാൻ" }, en: { q: "Wrestling is the national sport of which country?", o: ["Iran", "Turkey", "India", "Pakistan"], a: "Iran" } },
+            { id: 62, ml: { q: "ആദ്യത്തെ ട്വന്റി20 ക്രിക്കറ്റ് ലോകകപ്പ് നടന്ന വർഷം?", o: ["2005", "2007", "2009", "2011"], a: "2007" }, en: { q: "In which year was the first T20 Cricket World Cup held?", o: ["2005", "2007", "2009", "2011"], a: "2007" } },
+            { id: 63, ml: { q: "നീന്തലിൽ 'ബട്ടർഫ്ലൈ സ്ട്രോക്ക്' എന്നൊരു ശൈലിയുണ്ട്. ശരിയോ തെറ്റോ?", o: ["ശരി", "തെറ്റ്"], a: "ശരി" }, en: { q: "There is a style called 'Butterfly Stroke' in swimming. True or False?", o: ["True", "False"], a: "True" } },
+            { id: 64, ml: { q: "ഇന്ത്യൻ ക്രിക്കറ്റ് കൺട്രോൾ ബോർഡിന്റെ (BCCI) ആസ്ഥാനം?", o: ["ഡൽഹി", "കൊൽക്കത്ത", "ചെന്നൈ", "മുംബൈ"], a: "മുംബൈ" }, en: { q: "Where is the headquarters of the Board of Control for Cricket in India (BCCI)?", o: ["Delhi", "Kolkata", "Chennai", "Mumbai"], a: "Mumbai" } },
+            { id: 65, ml: { q: "ഒളിമ്പിക്സ് മെഡൽ നേടിയ ആദ്യ ഇന്ത്യൻ വനിത?", o: ["പി.വി. സിന്ധു", "സൈന നെഹ്‌വാൾ", "കർണം മല്ലേശ്വരി", "സാക്ഷി മാലിക്"], a: "കർണം മല്ലേശ്വരി" }, en: { q: "Who was the first Indian woman to win an Olympic medal?", o: ["P. V. Sindhu", "Saina Nehwal", "Karnam Malleswari", "Sakshi Malik"], a: "Karnam Malleswari" } },
+            { id: 66, ml: { q: "ഫ്രഞ്ച് ഓപ്പൺ ടെന്നീസ് ടൂർണമെന്റ് നടക്കുന്നത് ഏത് തരം കോർട്ടിലാണ്?", o: ["പുൽമൈതാനം (ഗ്രാസ്)", "ഹാർഡ് കോർട്ട്", "കളിമൺ കോർട്ട് (ക്ലേ)", "കാർപെറ്റ് കോർട്ട്"], a: "കളിമൺ കോർട്ട് (ക്ലേ)" }, en: { q: "The French Open tennis tournament is played on which type of court?", o: ["Grass Court", "Hard Court", "Clay Court", "Carpet Court"], a: "Clay Court" } },
+            { id: 67, ml: { q: "കേരളത്തിൽ നിന്നുള്ള ഇന്ത്യൻ ഹോക്കി ടീം ഗോൾകീപ്പർ?", o: ["മാനുവൽ ഫ്രെഡറിക്", "പി.ആർ. ശ്രീജേഷ്", "ടി.പി. പത്മനാഭൻ", "സേതുമാധവൻ"], a: "പി.ആർ. ശ്രീജേഷ്" }, en: { q: "Who is the goalkeeper of the Indian hockey team from Kerala?", o: ["Manuel Fredericks", "P. R. Sreejesh", "T. P. Padmanabhan", "Sethumadhavan"], a: "P. R. Sreejesh" } },
+            { id: 68, ml: { q: "ഏകദിന ക്രിക്കറ്റിൽ ഇരട്ട സെഞ്ച്വറി നേടിയ ആദ്യ താരം?", o: ["വിരേന്ദർ സെവാഗ്", "രോഹിത് ശർമ്മ", "സച്ചിൻ ടെണ്ടുൽക്കർ", "ക്രിസ് ഗെയ്ൽ"], a: "സച്ചിൻ ടെണ്ടുൽക്കർ" }, en: { q: "Who was the first player to score a double century in ODI cricket?", o: ["Virender Sehwag", "Rohit Sharma", "Sachin Tendulkar", "Chris Gayle"], a: "Sachin Tendulkar" } },
+            { id: 69, ml: { q: "ഒരു ബേസ്ബോൾ ടീമിൽ എത്ര കളിക്കാരുണ്ട്?", o: ["7", "9", "11", "15"], a: "9" }, en: { q: "How many players are in a baseball team?", o: ["7", "9", "11", "15"], a: "9" } },
+            { id: 70, ml: { q: "2024-ലെ ഒളിമ്പിക്സ് നടക്കുന്നത് എവിടെയാണ്?", o: ["ലണ്ടൻ", "ടോക്കിയോ", "ലോസ് ഏഞ്ചൽസ്", "പാരിസ്"], a: "പാരിസ്" }, en: { q: "Where are the 2024 Olympics being held?", o: ["London", "Tokyo", "Los Angeles", "Paris"], a: "Paris" } },
+            { id: 71, ml: { q: "താഴെ പറയുന്നവയിൽ ഒരു ഇൻഡോർ ഗെയിം ഏതാണ്?", o: ["ഫുട്ബോൾ", "ക്രിക്കറ്റ്", "ചെസ്സ്", "ഹോക്കി"], a: "ചെസ്സ്" }, en: { q: "Which of the following is an indoor game?", o: ["Football", "Cricket", "Chess", "Hockey"], a: "Chess" } },
+            { id: 72, ml: { q: "മൈക്കിൾ ജോർദാൻ ഏത് കായിക ഇനവുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", o: ["ബേസ്ബോൾ", "അമേരിക്കൻ ഫുട്ബോൾ", "ബാസ്കറ്റ്ബോൾ", "ഐസ് ഹോക്കി"], a: "ബാസ്കറ്റ്ബോൾ" }, en: { q: "Michael Jordan is associated with which sport?", o: ["Baseball", "American Football", "Basketball", "Ice Hockey"], a: "Basketball" } },
+            { id: 73, ml: { q: "ഇന്ത്യയിൽ ആദ്യമായി ഫോർമുല 1 മത്സരം നടന്ന സ്ഥലം?", o: ["ചെന്നൈ", "മുംബൈ", "ഡൽഹി", "ബുദ്ധ് ഇന്റർനാഷണൽ സർക്യൂട്ട്"], a: "ബുദ്ധ് ഇന്റർനാഷണൽ സർക്യൂട്ട്" }, en: { q: "Where was the first Formula 1 race held in India?", o: ["Chennai", "Mumbai", "Delhi", "Buddh International Circuit"], a: "Buddh International Circuit" } },
+            { id: 74, ml: { q: "കോമൺവെൽത്ത് ഗെയിംസ് എത്ര വർഷം കൂടുമ്പോഴാണ് നടക്കുന്നത്?", o: ["2", "3", "4", "5"], a: "4" }, en: { q: "How many years apart are the Commonwealth Games held?", o: ["2", "3", "4", "5"], a: "4" } },
+            { id: 75, ml: { q: "ഗുഗ്ലി (Googly) എന്ന പദം ഏത് കളിയിലാണ് ഉപയോഗിക്കുന്നത്?", o: ["ക്രിക്കറ്റ്", "ടെന്നീസ്", "ബാഡ്മിന്റൺ", "ഹോക്കി"], a: "ക്രിക്കറ്റ്" }, en: { q: "The term 'Googly' is used in which sport?", o: ["Cricket", "Tennis", "Badminton", "Hockey"], a: "Cricket" } },
+            { id: 76, ml: { q: "മേരി കോം ഏത് കായിക ഇനത്തിലാണ് പ്രശസ്ത?", o: ["ഗുസ്തി", "ഭാരോദ്വഹനം", "ബോക്സിംഗ്", "ജൂഡോ"], a: "ബോക്സിംഗ്" }, en: { q: "In which sport is Mary Kom famous?", o: ["Wrestling", "Weightlifting", "Boxing", "Judo"], a: "Boxing" } },
+            { id: 77, ml: { q: "ഒരു കബഡി മത്സരത്തിന്റെ സമയദൈർഘ്യം?", o: ["30 മിനിട്ട്", "40 മിനിട്ട്", "50 മിനിട്ട്", "60 മിനിട്ട്"], a: "40 മിനിട്ട്" }, en: { q: "What is the duration of a Kabaddi match?", o: ["30 minutes", "40 minutes", "50 minutes", "60 minutes"], a: "40 minutes" } },
+            { id: 78, ml: { q: "ടൈഗർ വുഡ്സ് ഏത് കളിയിലെ ഇതിഹാസമാണ്?", o: ["ടെന്നീസ്", "ബേസ്ബോൾ", "ഗോൾഫ്", "പോളോ"], a: "ഗോൾഫ്" }, en: { q: "Tiger Woods is a legend in which sport?", o: ["Tennis", "Baseball", "Golf", "Polo"], a: "Golf" } },
+            { id: 79, ml: { q: "ഒളിമ്പിക്സിൽ അത്‌ലറ്റിക്സിൽ സ്വർണ്ണം നേടിയ ആദ്യ ഇന്ത്യക്കാരൻ?", o: ["അഭിനവ് ബിന്ദ്ര", "മിൽഖാ സിംഗ്", "പി.ടി. ഉഷ", "നീരജ് ചോപ്ര"], a: "നീരജ് ചോപ്ര" }, en: { q: "Who is the first Indian to win a gold medal in athletics at the Olympics?", o: ["Abhinav Bindra", "Milkha Singh", "P. T. Usha", "Neeraj Chopra"], a: "Neeraj Chopra" } },
+            { id: 80, ml: { q: "റൈഡർ കപ്പ് ഏത് കളിയുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", o: ["ടെന്നീസ്", "ഗോൾഫ്", "പോളോ", "ബില്യാർഡ്സ്"], a: "ഗോൾഫ്" }, en: { q: "The Ryder Cup is associated with which sport?", o: ["Tennis", "Golf", "Polo", "Billiards"], a: "Golf" } },
+            { id: 81, ml: { q: "ഏറ്റവും കൂടുതൽ ഗ്രാൻഡ് സ്ലാം കിരീടങ്ങൾ നേടിയ പുരുഷ താരം?", o: ["റോജർ ഫെഡറർ", "റാഫേൽ നദാൽ", "പീറ്റ് സാംപ്രാസ്", "നോവാക് ജോക്കോവിച്ച്"], a: "നോവാക് ജോക്കോവിച്ച്" }, en: { q: "Which male player has won the most Grand Slam titles?", o: ["Roger Federer", "Rafael Nadal", "Pete Sampras", "Novak Djokovic"], a: "Novak Djokovic" } },
+            { id: 82, ml: { q: "ആദ്യത്തെ ഏഷ്യൻ ഗെയിംസ് നടന്നത് എവിടെ?", o: ["ജക്കാർത്ത", "ബെയ്ജിംഗ്", "ന്യൂ ഡൽഹി", "ടോക്കിയോ"], a: "ന്യൂ ഡൽഹി" }, en: { q: "Where were the first Asian Games held?", o: ["Jakarta", "Beijing", "New Delhi", "Tokyo"], a: "New Delhi" } },
+            { id: 83, ml: { q: "ഒരു ഫീൽഡ് ഹോക്കി ടീമിൽ എത്ര കളിക്കാർ ഉണ്ട്?", o: ["9", "10", "11", "12"], a: "11" }, en: { q: "How many players are in a field hockey team?", o: ["9", "10", "11", "12"], a: "11" } },
+            { id: 84, ml: { q: "ഡേവിസ് കപ്പ് ഏത് കായിക ഇനവുമായി ബന്ധപ്പെട്ടതാണ്?", o: ["ബാഡ്മിന്റൺ", "ടെന്നീസ്", "ടേബിൾ ടെന്നീസ്", "സ്ക്വാഷ്"], a: "ടെന്നീസ്" }, en: { q: "The Davis Cup is associated with which sport?", o: ["Badminton", "Tennis", "Table Tennis", "Squash"], a: "Tennis" } },
+            { id: 85, ml: { q: "ഇന്ത്യൻ വോളിബോൾ ടീമിന്റെ ക്യാപ്റ്റനായ മലയാളി?", o: ["ജിമ്മി ജോർജ്ജ്", "ടോം ജോസഫ്", "കെ. ഉദയകുമാർ", "ഇവരിൽ ആരുമല്ല"], a: "ജിമ്മി ജോർജ്ജ്" }, en: { q: "Who was the Malayali who captained the Indian volleyball team?", o: ["Jimmy George", "Tom Joseph", "K. Udayakumar", "None of these"], a: "Jimmy George" } },
+            { id: 86, ml: { q: "ബുള്ളി (Bully) എന്ന പദം ഏത് കളിയിലാണ് ഉപയോഗിക്കുന്നത്?", o: ["ക്രിക്കറ്റ്", "ഫുട്ബോൾ", "ഹോക്കി", "ബേസ്ബോൾ"], a: "ഹോക്കി" }, en: { q: "The term 'Bully' is used in which sport?", o: ["Cricket", "Football", "Hockey", "Baseball"], a: "Hockey" } },
+            { id: 87, ml: { q: "ലോകത്തിലെ ഏറ്റവും വേഗതയേറിയ മനുഷ്യൻ എന്നറിയപ്പെടുന്നത്?", o: ["കാൾ ലൂയിസ്", "മൈക്കിൾ ജോൺസൺ", "ഉസൈൻ ബോൾട്ട്", "ടൈസൺ ഗേ"], a: "ഉസൈൻ ബോൾട്ട്" }, en: { q: "Who is known as the fastest man in the world?", o: ["Carl Lewis", "Michael Johnson", "Usain Bolt", "Tyson Gay"], a: "Usain Bolt" } },
+            { id: 88, ml: { q: "തോമസ് കപ്പ് ഏത് കളിയുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", o: ["ടെന്നീസ്", "ടേബിൾ ടെന്നീസ്", "ബാഡ്മിന്റൺ", "സ്ക്വാഷ്"], a: "ബാഡ്മിന്റൺ" }, en: { q: "The Thomas Cup is associated with which sport?", o: ["Tennis", "Table Tennis", "Badminton", "Squash"], a: "Badminton" } },
+            { id: 89, ml: { q: "2011-ൽ ഇന്ത്യ ക്രിക്കറ്റ് ലോകകപ്പ് നേടിയപ്പോൾ ക്യാപ്റ്റൻ ആരായിരുന്നു?", o: ["സച്ചിൻ ടെണ്ടുൽക്കർ", "വിരാട് കോഹ്ലി", "എം.എസ്. ധോണി", "യുവരാജ് സിംഗ്"], a: "എം.എസ്. ധോണി" }, en: { q: "Who was the captain when India won the Cricket World Cup in 2011?", o: ["Sachin Tendulkar", "Virat Kohli", "M. S. Dhoni", "Yuvraj Singh"], a: "M. S. Dhoni" } },
+            { id: 90, ml: { q: "'ചെക്ക്മേറ്റ്' എന്ന പദം ഏത് കളിയിലാണ് ഉപയോഗിക്കുന്നത്?", o: ["കബഡി", "ചെസ്സ്", "കാരംസ്", "ബ്രിഡ്ജ്"], a: "ചെസ്സ്" }, en: { q: "The term 'checkmate' is used in which game?", o: ["Kabaddi", "Chess", "Carroms", "Bridge"], a: "Chess" } },
+            { id: 91, ml: { q: "ഫുട്ബോൾ ഇതിഹാസം പെലെ ഏത് രാജ്യക്കാരനായിരുന്നു?", o: ["അർജന്റീന", "പോർച്ചുഗൽ", "ബ്രസീൽ", "ഫ്രാൻസ്"], a: "ബ്രസീൽ" }, en: { q: "Football legend Pelé was from which country?", o: ["Argentina", "Portugal", "Brazil", "France"], a: "Brazil" } },
+            { id: 92, ml: { q: "ഒളിമ്പിക്സ് ആദ്യമായി നടന്നത് ഏത് രാജ്യത്താണ്?", o: ["ഇറ്റലി", "റോം", "ഇംഗ്ലണ്ട്", "ഗ്രീസ്"], a: "ഗ്രീസ്" }, en: { q: "In which country were the first Olympics held?", o: ["Italy", "Rome", "England", "Greece"], a: "Greece" } },
+            { id: 93, ml: { q: "സൈന നെഹ്‌വാൾ ഏത് കായിക ഇനത്തിലാണ് പ്രശസ്ത?", o: ["ടെന്നീസ്", "ബാഡ്മിന്റൺ", "ടേബിൾ ടെന്നീസ്", "സ്ക്വാഷ്"], a: "ബാഡ്മിന്റൺ" }, en: { q: "In which sport is Saina Nehwal famous?", o: ["Tennis", "Badminton", "Table Tennis", "Squash"], a: "Badminton" } },
+            { id: 94, ml: { q: "ഒരു ട്വന്റി20 ക്രിക്കറ്റ് മത്സരത്തിൽ ഒരു ബൗളർക്ക് പരമാവധി എത്ര ഓവറുകൾ എറിയാം?", o: ["2", "3", "4", "5"], a: "4" }, en: { q: "What is the maximum number of overs a bowler can bowl in a T20 cricket match?", o: ["2", "3", "4", "5"], a: "4" } },
+            { id: 95, ml: { q: "ഇന്ത്യൻ പ്രീമിയർ ലീഗിൽ (IPL) ഏറ്റവും കൂടുതൽ കിരീടങ്ങൾ നേടിയ ടീം?", o: ["ചെന്നൈ സൂപ്പർ കിംഗ്സ്", "മുംബൈ ഇന്ത്യൻസ്", "കൊൽക്കത്ത നൈറ്റ് റൈഡേഴ്സ്", "റോയൽ ചലഞ്ചേഴ്സ് ബാംഗ്ലൂർ"], a: "മുംബൈ ഇന്ത്യൻസ്" }, en: { q: "Which team has won the most titles in the Indian Premier League (IPL)?", o: ["Chennai Super Kings", "Mumbai Indians", "Kolkata Knight Riders", "Royal Challengers Bangalore"], a: "Mumbai Indians" } },
+            { id: 96, ml: { q: "ലോകകപ്പ് ഫുട്ബോളിൽ ഗോൾഡൻ ബൂട്ട് നൽകുന്നത് എന്തിനാണ്?", o: ["മികച്ച കളിക്കാരന്", "ഏറ്റവും കൂടുതൽ ഗോൾ നേടുന്നയാൾക്ക്", "മികച്ച ഗോൾകീപ്പർക്ക്", "മികച്ച യുവതാരത്തിന്"], a: "ഏറ്റവും കൂടുതൽ ഗോൾ നേടുന്നയാൾക്ക്" }, en: { q: "Why is the Golden Boot awarded in the FIFA World Cup?", o: ["For the best player", "For the top goalscorer", "For the best goalkeeper", "For the best young player"], a: "For the top goalscorer" } },
+            { id: 97, ml: { q: "ഖേൽ രത്‌ന അവാർഡ് ഏത് മേഖലയുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", o: ["സാഹിത്യം", "സിനിമ", "ശാസ്ത്രം", "കായികം"], a: "കായികം" }, en: { q: "The Khel Ratna Award is associated with which field?", o: ["Literature", "Cinema", "Science", "Sports"], a: "Sports" } },
+            { id: 98, ml: { q: "മൈക്കിൾ ഷൂമാക്കർ ഏത് കായികരംഗത്തെ ഇതിഹാസമാണ്?", o: ["ടെന്നീസ്", "ഗോൾഫ്", "ഫോർമുല 1", "മോട്ടോജിപി"], a: "ഫോർമുല 1" }, en: { q: "Michael Schumacher is a legend of which sport?", o: ["Tennis", "Golf", "Formula 1", "MotoGP"], a: "Formula 1" } },
+            { id: 99, ml: { q: "ആദ്യത്തെ ആഫ്രോ-ഏഷ്യൻ ഗെയിംസ് നടന്ന നഗരം?", o: ["ഡൽഹി", "ഹൈദരാബാദ്", "കൊളംബോ", "ദോഹ"], a: "ഹൈദരാബാദ്" }, en: { q: "Which city hosted the first Afro-Asian Games?", o: ["Delhi", "Hyderabad", "Colombo", "Doha"], a: "Hyderabad" } },
+            { id: 100, ml: { q: "ഒരു ഫുട്ബോൾ ലോകകപ്പിൽ ഏറ്റവും കൂടുതൽ ഗോൾ നേടിയ താരം?", o: ["മിറോസ്ലാവ് ക്ലോസെ", "റൊണാൾഡോ (ബ്രസീൽ)", "ഗെർഡ് മുള്ളർ", "ജസ്റ്റ് ഫോണ്ടെയ്ൻ"], a: "ജസ്റ്റ് ഫോണ്ടെയ്ൻ" }, en: { q: "Who holds the record for the most goals scored in a single FIFA World Cup?", o: ["Miroslav Klose", "Ronaldo (Brazil)", "Gerd Müller", "Just Fontaine"], a: "Just Fontaine" } }
+        ];
+
+        // --- App State ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedLang = 'ml';
+        let userAnswers = new Array(quizData.length + 1).fill(null); // Use a larger array to map by ID
+        let questions = [];
+
+        // --- DOM Elements ---
+        const languageScreen = document.getElementById('language-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionCounter = document.getElementById('question-counter');
+        const scoreCounter = document.getElementById('score-counter');
+        const progressBar = document.getElementById('progress-bar');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedback = document.getElementById('feedback');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        // --- Functions ---
+        function startQuiz(lang) {
+            selectedLang = lang;
+            // Shuffle questions for variety each time
+            questions = [...quizData].sort(() => Math.random() - 0.5);
+            languageScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // Reset feedback and styles
+            feedback.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            if (currentQuestionIndex >= questions.length) {
+                showResults();
+                return;
+            }
+
+            const currentQuestion = questions[currentQuestionIndex][selectedLang];
+            const questionData = questions[currentQuestionIndex];
+            
+            // Set language class for proper font rendering
+            questionText.className = `text-2xl font-bold text-center text-gray-800 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            
+            questionText.textContent = currentQuestion.q;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1}/${questions.length}`;
+            scoreCounter.textContent = `Score: ${score}`;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+
+            // Shuffle options
+            const shuffledOptions = [...currentQuestion.o].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = `btn-option w-full p-4 rounded-lg border-2 border-gray-300 text-lg font-semibold text-gray-700 bg-white hover:bg-orange-100 hover:border-orange-400 transition ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+                button.onclick = () => selectAnswer(option, button);
+                optionsContainer.appendChild(button);
+            });
+
+            updateNavButtons();
+            
+            // If user has already answered this question (by using back button), show the result
+            if (userAnswers[questionData.id] !== null) {
+                showPreviousAnswer();
+            }
+        }
+        
+        function selectAnswer(selectedOption, button) {
+            const questionData = questions[currentQuestionIndex];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            // Only update score if the question hasn't been answered correctly before
+            if (userAnswers[questionData.id] !== currentQuestion.a && selectedOption === correctAnswer) {
+                 score++;
+            } else if (userAnswers[questionData.id] === currentQuestion.a && selectedOption !== correctAnswer) {
+                 // If user changes a correct answer to a wrong one, decrement score
+                 score--;
+            }
+
+            userAnswers[questionData.id] = selectedOption;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true; // Disable all options after one is selected
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+
+            if (selectedOption === correctAnswer) {
+                playCorrectSound();
+                feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                feedback.className = 'mt-4 text-center font-bold text-lg text-green-600';
+            } else {
+                playWrongSound();
+                button.classList.add('wrong');
+                feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                feedback.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+            }
+            
+            scoreCounter.textContent = `Score: ${score}`;
+        }
+
+        function showPreviousAnswer() {
+            const questionData = questions[currentQuestionIndex];
+            const selectedOption = userAnswers[questionData.id];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+                if (btn.textContent === selectedOption && selectedOption !== correctAnswer) {
+                    btn.classList.add('wrong');
+                }
+            });
+
+            if (selectedOption !== correctAnswer) {
+                 feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                 feedback.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+            } else {
+                 feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                 feedback.className = 'mt-4 text-center font-bold text-lg text-green-600';
+            }
+        }
+
+        function updateNavButtons() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', backBtn.disabled);
+            
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.textContent = selectedLang === 'ml' ? 'പൂർത്തിയാക്കുക' : 'Finish';
+            } else {
+                nextBtn.textContent = selectedLang === 'ml' ? 'അടുത്തത് >' : 'Next >';
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            const percentage = Math.round((score / questions.length) * 100);
+            const resultTitle = document.getElementById('result-title');
+            const finalScore = document.getElementById('final-score');
+            const resultMessage = document.getElementById('result-message');
+
+            resultTitle.className = `text-4xl font-bold mb-4 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            finalScore.className = `text-2xl mb-6 text-gray-700 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            resultMessage.className = `text-xl mb-8 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+
+            if (selectedLang === 'ml') {
+                resultTitle.textContent = 'ഫലം';
+                finalScore.textContent = `നിങ്ങളുടെ സ്കോർ: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'അടിപൊളി! നിങ്ങൾ മിടുക്കനാണ്/മിടുക്കിയാണ്.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'നന്നായിരിക്കുന്നു! ഇനിയും മെച്ചപ്പെടുത്താം.';
+                } else {
+                    resultMessage.textContent = 'സാരമില്ല, വീണ്ടും ശ്രമിക്കുക!';
+                }
+            } else {
+                resultTitle.textContent = 'Results';
+                finalScore.textContent = `Your Score: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'Excellent! You did a great job.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'Good effort! Keep practicing.';
+                } else {
+                    resultMessage.textContent = 'Don\'t worry, try again!';
+                }
+            }
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers.fill(null);
+            questions = [];
+            resultScreen.classList.add('hidden');
+            languageScreen.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>സയൻസ് ക്വിസ്</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .malayalam {
+            font-family: 'Manjari', sans-serif;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-option:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+        .correct {
+            animation: pulse-green 1s;
+            background-color: #22c55e !important;
+            color: white !important;
+            border-color: #16a34a !important;
+        }
+        .wrong {
+            animation: shake 0.5s;
+            background-color: #ef4444 !important;
+            color: white !important;
+            border-color: #dc2626 !important;
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-400 to-purple-600 min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Language Selection Screen -->
+        <div id="language-screen" class="text-center text-white p-8 rounded-2xl shadow-2xl card">
+            <h1 class="text-4xl font-bold mb-2">സയൻസ് ക്വിസ്</h1>
+            <h2 class="text-2xl font-bold mb-8">Science Quiz</h2>
+            <p class="mb-4 malayalam">ഭാഷ തിരഞ്ഞെടുക്കുക:</p>
+            <p class="mb-8">Select Language:</p>
+            <div class="flex flex-col space-y-4">
+                <button onclick="startQuiz('ml')" class="bg-white text-purple-600 font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-purple-100 transition-transform transform hover:scale-105 malayalam">മലയാളം</button>
+                <button onclick="startQuiz('en')" class="bg-white text-blue-600 font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-blue-100 transition-transform transform hover:scale-105">English</button>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden p-6 bg-white/90 rounded-2xl shadow-2xl card">
+            <div id="header" class="flex justify-between items-center mb-4">
+                <div id="question-counter" class="text-lg font-semibold text-gray-700"></div>
+                <div id="score-counter" class="text-lg font-semibold text-green-600"></div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-blue-500 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <div id="question-container" class="mb-6">
+                <p id="question-text" class="text-2xl font-bold text-center text-gray-800" style="min-height: 100px;"></p>
+            </div>
+            <div id="options-container" class="grid grid-cols-1 gap-4">
+                <!-- Options will be dynamically inserted here -->
+            </div>
+            <div id="feedback" class="mt-4 text-center font-bold text-lg" style="min-height: 30px;"></div>
+            <div class="flex justify-between mt-8">
+                <button id="back-btn" onclick="prevQuestion()" class="bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg shadow hover:bg-gray-400 transition-transform transform hover:scale-105">&lt; Back</button>
+                <button id="next-btn" onclick="nextQuestion()" class="bg-blue-500 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-blue-600 transition-transform transform hover:scale-105">Next &gt;</button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center p-8 bg-white/90 rounded-2xl shadow-2xl card">
+            <h2 id="result-title" class="text-4xl font-bold mb-4 text-gray-800"></h2>
+            <p id="final-score" class="text-2xl mb-6 text-gray-700"></p>
+            <p id="result-message" class="text-xl mb-8"></p>
+            <button onclick="restartQuiz()" class="bg-purple-600 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg hover:bg-purple-700 transition-transform transform hover:scale-105">
+                വീണ്ടും കളിക്കാം / Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Sound Synthesis ---
+        const correctSound = new Tone.Synth({
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
+        }).toDestination();
+
+        const wrongSound = new Tone.Synth({
+            oscillator: { type: 'square' },
+            envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.2 }
+        }).toDestination();
+
+        function playCorrectSound() {
+            Tone.start();
+            correctSound.triggerAttackRelease("C5", "8n");
+        }
+
+        function playWrongSound() {
+            Tone.start();
+            wrongSound.triggerAttackRelease("C3", "8n");
+        }
+
+        // --- Quiz Data (100 Questions) ---
+        const quizData = [
+            { id: 1, ml: { q: "സൗരയൂഥത്തിലെ ഏറ്റവും വലിയ ഗ്രഹം?", o: ["ചൊവ്വ", "വ്യാഴം", "ശനി", "ഭൂമി"], a: "വ്യാഴം" }, en: { q: "What is the largest planet in the solar system?", o: ["Mars", "Jupiter", "Saturn", "Earth"], a: "Jupiter" } },
+            { id: 2, ml: { q: "സൗരയൂഥത്തിലെ ഏറ്റവും ചെറിയ ഗ്രഹം?", o: ["ബുധൻ", "ശുക്രൻ", "യുറാനസ്", "നെപ്റ്റ്യൂൺ"], a: "ബുധൻ" }, en: { q: "What is the smallest planet in the solar system?", o: ["Mercury", "Venus", "Uranus", "Neptune"], a: "Mercury" } },
+            { id: 3, ml: { q: "കരയിലെ ഏറ്റവും വലിയ ജീവി?", o: ["സിംഹം", "കരടി", "ആന", "ജിറാഫ്"], a: "ആന" }, en: { q: "What is the largest land animal?", o: ["Lion", "Bear", "Elephant", "Giraffe"], a: "Elephant" } },
+            { id: 4, ml: { q: "കരയിലും കടലിലുമുള്ള ജീവികളിൽ ഏറ്റവും വലുത്?", o: ["സ്രാവ്", "നീലത്തിമിംഗലം", "ഹിപ്പൊപ്പൊട്ടാമസ്", "ഡോൾഫിൻ"], a: "നീലത്തിമിംഗലം" }, en: { q: "What is the largest animal on land and sea?", o: ["Shark", "Blue Whale", "Hippopotamus", "Dolphin"], a: "Blue Whale" } },
+            { id: 5, ml: { q: "തിമിരം ഏത് ശരീര അവയവത്തെ ബാധിക്കുന്ന രോഗമാണ്?", o: ["ചെവി", "ഹൃദയം", "കണ്ണുകൾ", "ശ്വാസകോശം"], a: "കണ്ണുകൾ" }, en: { q: "Cataract is a disease that affects which body part?", o: ["Ear", "Heart", "Eyes", "Lungs"], a: "Eyes" } },
+            { id: 6, ml: { q: "ലോക ആരോഗ്യദിനം എന്നാണ്?", o: ["ഏപ്രിൽ 7", "മെയ് 1", "ജൂൺ 5", "ജൂലൈ 11"], a: "ഏപ്രിൽ 7" }, en: { q: "When is World Health Day?", o: ["April 7", "May 1", "June 5", "July 11"], a: "April 7" } },
+            { id: 7, ml: { q: "കുഞ്ഞുങ്ങളെ ശരീരത്തിലുള്ള സഞ്ചിയിൽ സൂക്ഷിച്ചു വളർത്തുന്ന മൃഗം?", o: ["കരടി", "കങ്കാരു", "മുയൽ", "പൂച്ച"], a: "കങ്കാരു" }, en: { q: "Which animal carries its young in a pouch?", o: ["Bear", "Kangaroo", "Rabbit", "Cat"], a: "Kangaroo" } },
+            { id: 8, ml: { q: "കറുത്ത പൊന്ന് എന്ന് വിശേഷിപ്പിക്കുന്നത് ഏത് വിളയാണ്?", o: ["ഏലം", "ഗ്രാമ്പൂ", "കുരുമുളക്", "കാപ്പി"], a: "കുരുമുളക്" }, en: { q: "Which crop is known as 'Black Gold'?", o: ["Cardamom", "Clove", "Black Pepper", "Coffee"], a: "Black Pepper" } },
+            { id: 9, ml: { q: "പ്രകൃതിയുടെ തോട്ടി എന്നറിയപ്പെടുന്ന പക്ഷി?", o: ["പ്രാവ്", "മയിൽ", "തത്ത", "കാക്ക"], a: "കാക്ക" }, en: { q: "Which bird is known as 'nature's scavenger'?", o: ["Pigeon", "Peacock", "Parrot", "Crow"], a: "Crow" } },
+            { id: 10, ml: { q: "ലോക പരിസ്ഥിതി ദിനം എന്നാണ്?", o: ["ജൂൺ 5", "ഏപ്രിൽ 22", "സെപ്റ്റംബർ 16", "ഒക്ടോബർ 4"], a: "ജൂൺ 5" }, en: { q: "When is World Environment Day?", o: ["June 5", "April 22", "September 16", "October 4"], a: "June 5" } },
+            { id: 11, ml: { q: "പ്രസവിക്കുന്ന പാമ്പ്?", o: ["മൂർഖൻ", "രാജവെമ്പാല", "അണലി", "ചേര"], a: "അണലി" }, en: { q: "Which snake gives birth to live young?", o: ["Cobra", "King Cobra", "Viper", "Rat Snake"], a: "Viper" } },
+            { id: 12, ml: { q: "2022-ലെ പരിസ്ഥിതി ദിന മുദ്രാവാക്യം?", o: ["ഒരേ ഒരു ഭൂമി", "പരിസ്ഥിതിയെ സംരക്ഷിക്കൂ", "പ്ലാസ്റ്റിക് ഒഴിവാക്കൂ", "മരം നടൂ"], a: "ഒരേ ഒരു ഭൂമി" }, en: { q: "What was the slogan for Environment Day 2022?", o: ["Only One Earth", "Save the Environment", "Avoid Plastic", "Plant Trees"], a: "Only One Earth" } },
+            { id: 13, ml: { q: "പ്രകൃതിയുടെ കലപ്പ എന്നറിയപ്പെടുന്നത്?", o: ["തേനീച്ച", "മണ്ണിര", "ചിത്രശലഭം", "തുമ്പി"], a: "മണ്ണിര" }, en: { q: "What is known as 'nature's plough'?", o: ["Honeybee", "Earthworm", "Butterfly", "Dragonfly"], a: "Earthworm" } },
+            { id: 14, ml: { q: "മഞ്ഞ ലോഹം എന്നറിയപ്പെടുന്നത്?", o: ["വെള്ളി", "ചെമ്പ്", "സ്വർണ്ണം", "ഇരുമ്പ്"], a: "സ്വർണ്ണം" }, en: { q: "What is known as the 'yellow metal'?", o: ["Silver", "Copper", "Gold", "Iron"], a: "Gold" } },
+            { id: 15, ml: { q: "ആഹാരമായി ഉപയോഗിക്കുന്ന പുഷ്‌പം?", o: ["റോസ്", "ചെമ്പരത്തി", "കോളിഫ്‌ളവർ", "സൂര്യകാന്തി"], a: "കോളിഫ്‌ളവർ" }, en: { q: "Which flower is used as food?", o: ["Rose", "Hibiscus", "Cauliflower", "Sunflower"], a: "Cauliflower" } },
+            { id: 16, ml: { q: "പാവപ്പെട്ടവന്റെ തടി എന്നറിയപ്പെടുന്നത്?", o: ["തേക്ക്", "ഈട്ടി", "പ്ലാവ്", "മുള"], a: "മുള" }, en: { q: "What is known as 'poor man's timber'?", o: ["Teak", "Rosewood", "Jackfruit tree", "Bamboo"], a: "Bamboo" } },
+            { id: 17, ml: { q: "ഏത് വൃക്ഷത്തെയാണ് നാം കല്പവൃക്ഷം എന്ന് വിളിക്കുന്നത്?", o: ["മാവ്", "പ്ലാവ്", "തെങ്ങ്", "ആൽമരം"], a: "തെങ്ങ്" }, en: { q: "Which tree is called 'Kalpavriksha' (the divine tree)?", o: ["Mango Tree", "Jackfruit Tree", "Coconut Tree", "Banyan Tree"], a: "Coconut Tree" } },
+            { id: 18, ml: { q: "നവര ഏത് കാർഷിക വിളയുമായി ബന്ധപ്പെട്ട പേരാണ്?", o: ["ഗോതമ്പ്", "നെല്ല്", "കരിമ്പ്", "ചോളം"], a: "നെല്ല്" }, en: { q: "Navara is a variety of which crop?", o: ["Wheat", "Paddy (Rice)", "Sugarcane", "Corn"], a: "Paddy (Rice)" } },
+            { id: 19, ml: { q: "മൗസ് ഏത് ഉപകരണവുമായി ബന്ധപ്പെട്ടതാണ്?", o: ["ടെലിവിഷൻ", "കമ്പ്യൂട്ടർ", "റേഡിയോ", "മൊബൈൽ ഫോൺ"], a: "കമ്പ്യൂട്ടർ" }, en: { q: "A 'mouse' is related to which device?", o: ["Television", "Computer", "Radio", "Mobile Phone"], a: "Computer" } },
+            { id: 20, ml: { q: "എടയ്ക്കൽ ഗുഹ ഏത് ജില്ലയിലാണ് സ്ഥിതിചെയ്യുന്നത്?", o: ["ഇടുക്കി", "കോഴിക്കോട്", "വയനാട്", "പാലക്കാട്"], a: "വയനാട്" }, en: { q: "In which district are the Edakkal Caves located?", o: ["Idukki", "Kozhikode", "Wayanad", "Palakkad"], a: "Wayanad" } },
+            { id: 21, ml: { q: "ലോക ഭക്ഷ്യ ദിനമായി ആചരിക്കുന്നത് എന്നാണ്?", o: ["ഒക്ടോബർ 16", "നവംബർ 14", "ഡിസംബർ 10", "ജനുവരി 26"], a: "ഒക്ടോബർ 16" }, en: { q: "When is World Food Day observed?", o: ["October 16", "November 14", "December 10", "January 26"], a: "October 16" } },
+            { id: 22, ml: { q: "ഔഷധ സസ്യങ്ങളുടെ മാതാവ് എന്നറിയപ്പെടുന്നത്?", o: ["കറ്റാർവാഴ", "തുളസി", "ആര്യവേപ്പ്", "മഞ്ഞൾ"], a: "തുളസി" }, en: { q: "What is known as the 'mother of medicinal plants'?", o: ["Aloe Vera", "Tulsi (Holy Basil)", "Neem", "Turmeric"], a: "Tulsi (Holy Basil)" } },
+            { id: 23, ml: { q: "പകൽ കാണുന്ന നക്ഷത്രം ഏത്?", o: ["ചന്ദ്രൻ", "സിറിയസ്", "സൂര്യൻ", "ധ്രുവനക്ഷത്രം"], a: "സൂര്യൻ" }, en: { q: "Which star is visible during the day?", o: ["Moon", "Sirius", "Sun", "Pole Star"], a: "Sun" } },
+            { id: 24, ml: { q: "കണ്ണടയ്‌ക്കാതെ ഉറങ്ങുന്ന ജീവി?", o: ["പൂച്ച", "മൂങ്ങ", "മത്സ്യം", "വവ്വാൽ"], a: "മത്സ്യം" }, en: { q: "Which creature sleeps without closing its eyes?", o: ["Cat", "Owl", "Fish", "Bat"], a: "Fish" } },
+            { id: 25, ml: { q: "നീലസ്വർണ്ണം എന്നറിയപ്പെടുന്നത്?", o: ["പെട്രോൾ", "മണ്ണെണ്ണ", "ജലം", "ഡീസൽ"], a: "ജലം" }, en: { q: "What is known as 'Blue Gold'?", o: ["Petrol", "Kerosene", "Water", "Diesel"], a: "Water" } },
+            { id: 26, ml: { q: "നീലഗ്രഹം എന്നറിയപ്പെടുന്നത്?", o: ["ചൊവ്വ", "ഭൂമി", "വ്യാഴം", "ശനി"], a: "ഭൂമി" }, en: { q: "Which planet is known as the 'Blue Planet'?", o: ["Mars", "Earth", "Jupiter", "Saturn"], a: "Earth" } },
+            { id: 27, ml: { q: "മഞ്ഞപ്പിത്തം ബാധിക്കുന്ന ശരീര അവയവം ഏത്?", o: ["ഹൃദയം", "കരൾ", "വൃക്ക", "തലച്ചോറ്"], a: "കരൾ" }, en: { q: "Jaundice affects which body organ?", o: ["Heart", "Liver", "Kidney", "Brain"], a: "Liver" } },
+            { id: 28, ml: { q: "ഏത് ലോഹത്തിന്റെ പരിശുദ്ധിയെ സൂചിപ്പിക്കുന്ന സംഖ്യയാണ് 916?", o: ["വെള്ളി", "പ്ലാറ്റിനം", "സ്വർണ്ണം", "ചെമ്പ്"], a: "സ്വർണ്ണം" }, en: { q: "916 indicates the purity of which metal?", o: ["Silver", "Platinum", "Gold", "Copper"], a: "Gold" } },
+            { id: 29, ml: { q: "മഴവില്ലിന് എത്ര നിറങ്ങളാണ് ഉള്ളത്?", o: ["5", "8", "7", "9"], a: "7" }, en: { q: "How many colors are in a rainbow?", o: ["5", "8", "7", "9"], a: "7" } },
+            { id: 30, ml: { q: "തിമിംഗലത്തിന്റെ ശരീരത്തിൽ നിന്നും ലഭിക്കുന്ന സുഗന്ധ വസ്‌തു?", o: ["കസ്തൂരി", "ചന്ദനം", "അംബർ ഗ്രീസ്", "കർപ്പൂരം"], a: "അംബർ ഗ്രീസ്" }, en: { q: "What is the fragrant substance obtained from whales?", o: ["Musk", "Sandalwood", "Ambergris", "Camphor"], a: "Ambergris" } },
+            { id: 31, ml: { q: "മരുഭൂമിയിലെ കപ്പൽ എന്നറിയപ്പെടുന്നത്?", o: ["കുതിര", "കഴുത", "ഒട്ടകം", "യാക്ക്"], a: "ഒട്ടകം" }, en: { q: "Which animal is known as the 'ship of the desert'?", o: ["Horse", "Donkey", "Camel", "Yak"], a: "Camel" } },
+            { id: 32, ml: { q: "ശരീരത്തിലെ ഏറ്റവും വലിയ അവയവം?", o: ["കരൾ", "ഹൃദയം", "ത്വക്ക്", "തലച്ചോറ്"], a: "ത്വക്ക്" }, en: { q: "What is the largest organ in the human body?", o: ["Liver", "Heart", "Skin", "Brain"], a: "Skin" } },
+            { id: 33, ml: { q: "മലേറിയ എന്ന രോഗം പരത്തുന്ന ജീവി?", o: ["ഈച്ച", "കൊതുക്", "പാറ്റ", "എലി"], a: "കൊതുക്" }, en: { q: "Which creature spreads the disease Malaria?", o: ["Fly", "Mosquito", "Cockroach", "Rat"], a: "Mosquito" } },
+            { id: 34, ml: { q: "ഡെങ്കിപ്പനി പടർത്തുന്ന കൊതുക്?", o: ["അനോഫിലിസ്", "ക്യൂലക്സ്", "ഈഡിസ് ഈജിപ്തി", "മാൻസോണിയ"], a: "ഈഡിസ് ഈജിപ്തി" }, en: { q: "Which mosquito spreads Dengue fever?", o: ["Anopheles", "Culex", "Aedes aegypti", "Mansonia"], a: "Aedes aegypti" } },
+            { id: 35, ml: { q: "ഡ്രൈ ഡേ എന്ന പ്രവർത്തനം ഏതുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു?", o: ["ജല സംരക്ഷണം", "കൊതുക് നിവാരണം", "വായു മലിനീകരണം", "വനവൽക്കരണം"], a: "കൊതുക് നിവാരണം" }, en: { q: "The 'Dry Day' activity is related to what?", o: ["Water conservation", "Mosquito control", "Air pollution", "Afforestation"], a: "Mosquito control" } },
+            { id: 36, ml: { q: "ചാന്ദ്ര ദിനമായി ആചരിക്കുന്നതെന്ന്?", o: ["ജൂൺ 21", "ജൂലായ് 21", "ഓഗസ്റ്റ് 15", "സെപ്റ്റംബർ 5"], a: "ജൂലായ് 21" }, en: { q: "When is Moon Day celebrated?", o: ["June 21", "July 21", "August 15", "September 5"], a: "July 21" } },
+            { id: 37, ml: { q: "വിരൽ ഇല്ലെങ്കിലും നഖമുള്ള ജീവി?", o: ["പാമ്പ്", "മത്സ്യം", "ആന", "ഒച്ച്"], a: "ആന" }, en: { q: "Which animal has nails but no fingers?", o: ["Snake", "Fish", "Elephant", "Snail"], a: "Elephant" } },
+            { id: 38, ml: { q: "രാത്രിയിൽ വിടരുന്ന പൂക്കളുടെ നിറം?", o: ["ചുവപ്പ്", "മഞ്ഞ", "വെള്ള", "നീല"], a: "വെള്ള" }, en: { q: "What is the common color of flowers that bloom at night?", o: ["Red", "Yellow", "White", "Blue"], a: "White" } },
+            { id: 39, ml: { q: "സ്വർഗീയ ഫലം എന്നറിയപ്പെടുന്നത്?", o: ["മാമ്പഴം", "ചക്ക", "കൈതച്ചക്ക", "വാഴപ്പഴം"], a: "കൈതച്ചക്ക" }, en: { q: "Which fruit is known as the 'heavenly fruit'?", o: ["Mango", "Jackfruit", "Pineapple", "Banana"], a: "Pineapple" } },
+            { id: 40, ml: { q: "മനുഷ്യനെ ആദ്യമായി ചന്ദ്രനിൽ എത്തിച്ച രാജ്യം?", o: ["റഷ്യ", "ചൈന", "ഇന്ത്യ", "അമേരിക്ക"], a: "അമേരിക്ക" }, en: { q: "Which country first landed a man on the Moon?", o: ["Russia", "China", "India", "USA"], a: "USA" } },
+            { id: 41, ml: { q: "പുല്ല് വർഗ്ഗത്തിൽ പെട്ട ഏറ്റവും വലിയ സസ്യം?", o: ["നെല്ല്", "ഗോതമ്പ്", "മുള", "കരിമ്പ്"], a: "മുള" }, en: { q: "What is the largest plant in the grass family?", o: ["Paddy", "Wheat", "Bamboo", "Sugarcane"], a: "Bamboo" } },
+            { id: 42, ml: { q: "പുകയിലയിൽ അടങ്ങിയിരിക്കുന്ന വിഷവസ്‌തു?", o: ["കഫീൻ", "നിക്കോട്ടിൻ", "മോർഫിൻ", "കൊക്കെയ്ൻ"], a: "നിക്കോട്ടിൻ" }, en: { q: "What toxic substance is found in tobacco?", o: ["Caffeine", "Nicotine", "Morphine", "Cocaine"], a: "Nicotine" } },
+            { id: 43, ml: { q: "ഏറ്റവും കൂടുതൽ വാരിയെല്ലുകൾ ഉള്ള ജീവി?", o: ["മനുഷ്യൻ", "ആന", "പാമ്പ്", "തിമിംഗലം"], a: "പാമ്പ്" }, en: { q: "Which animal has the most ribs?", o: ["Human", "Elephant", "Snake", "Whale"], a: "Snake" } },
+            { id: 44, ml: { q: "ലോക മണ്ണ് ദിനം?", o: ["ഒക്ടോബർ 5", "നവംബർ 5", "ഡിസംബർ 5", "ജനുവരി 5"], a: "ഡിസംബർ 5" }, en: { q: "When is World Soil Day?", o: ["October 5", "November 5", "December 5", "January 5"], a: "December 5" } },
+            { id: 45, ml: { q: "കാട്ടിലെ തോട്ടി എന്നറിയപ്പെടുന്ന മൃഗം?", o: ["കടുവ", "സിംഹം", "കഴുതപ്പുലി", "ചെന്നായ"], a: "കഴുതപ്പുലി" }, en: { q: "Which animal is known as the scavenger of the forest?", o: ["Tiger", "Lion", "Hyena", "Wolf"], a: "Hyena" } },
+            { id: 46, ml: { q: "സസ്യങ്ങളെക്കുറിച്ചുള്ള റെഡ് ഡാറ്റ ബുക്ക് തയാറാക്കുന്ന ആദ്യ ഇന്ത്യൻ സംസ്ഥാനം?", o: ["തമിഴ്നാട്", "കർണാടക", "കേരളം", "ആന്ധ്രാപ്രദേശ്"], a: "കേരളം" }, en: { q: "Which is the first Indian state to prepare a Red Data Book for plants?", o: ["Tamil Nadu", "Karnataka", "Kerala", "Andhra Pradesh"], a: "Kerala" } },
+            { id: 47, ml: { q: "ഇന്ത്യയുടെ ബഹിരാകാശ ഗവേഷണ സംഘടന?", o: ["NASA", "ESA", "ISRO", "Roscosmos"], a: "ISRO" }, en: { q: "What is India's space research organization?", o: ["NASA", "ESA", "ISRO", "Roscosmos"], a: "ISRO" } },
+            { id: 48, ml: { q: "ISRO യുടെ ആസ്ഥാനം?", o: ["ചെന്നൈ", "മുംബൈ", "ഡൽഹി", "ബംഗളൂരു"], a: "ബംഗളൂരു" }, en: { q: "Where is the headquarters of ISRO?", o: ["Chennai", "Mumbai", "Delhi", "Bengaluru"], a: "Bengaluru" } },
+            { id: 49, ml: { q: "ഇന്ത്യയുടെ ആദ്യ ബഹിരാകാശ സഞ്ചാരി?", o: ["കൽപ്പന ചൗള", "സുനിത വില്യംസ്", "രാകേശ് ശർമ്മ", "രവിഷ് മൽഹോത്ര"], a: "രാകേശ് ശർമ്മ" }, en: { q: "Who was India's first astronaut?", o: ["Kalpana Chawla", "Sunita Williams", "Rakesh Sharma", "Ravish Malhotra"], a: "Rakesh Sharma" } },
+            { id: 50, ml: { q: "ഇന്ത്യയുടെ ആദ്യ കൃത്രിമ ഉപഗ്രഹം?", o: ["ഭാസ്കര", "രോഹിണി", "ആര്യഭട്ട", "ഇൻസാറ്റ്"], a: "ആര്യഭട്ട" }, en: { q: "What was India's first artificial satellite?", o: ["Bhaskara", "Rohini", "Aryabhata", "INSAT"], a: "Aryabhata" } },
+            { id: 51, ml: { q: "ഇന്ത്യയുടെ പ്രഥമ ചാന്ദ്ര ദൗത്യം?", o: ["ചന്ദ്രയാൻ 1", "ചന്ദ്രയാൻ 2", "മംഗൾയാൻ", "ഗഗൻയാൻ"], a: "ചന്ദ്രയാൻ 1" }, en: { q: "What was India's first lunar mission?", o: ["Chandrayaan 1", "Chandrayaan 2", "Mangalyaan", "Gaganyaan"], a: "Chandrayaan 1" } },
+            { id: 52, ml: { q: "ഇന്ത്യയുടെ പ്രഥമ ചൊവ്വാ ദൗത്യം?", o: ["ചന്ദ്രയാൻ 1", "ചന്ദ്രയാൻ 2", "മംഗൾയാൻ", "ആദിത്യ"], a: "മംഗൾയാൻ" }, en: { q: "What was India's first Mars mission?", o: ["Chandrayaan 1", "Chandrayaan 2", "Mangalyaan", "Aditya"], a: "Mangalyaan" } },
+            { id: 53, ml: { q: "ഇന്ത്യയുടെ ആദ്യ സൗര പര്യവേഷണ ദൗത്യം?", o: ["മംഗൾയാൻ", "ഗഗൻയാൻ", "ആദിത്യ L1", "ചന്ദ്രയാൻ 3"], a: "ആദിത്യ L1" }, en: { q: "What is India's first solar exploration mission?", o: ["Mangalyaan", "Gaganyaan", "Aditya L1", "Chandrayaan 3"], a: "Aditya L1" } },
+            { id: 54, ml: { q: "മനുഷ്യനെ ബഹിരാകാശത്ത് എത്തിക്കാനുള്ള ഇന്ത്യയുടെ പദ്ധതി?", o: ["മംഗൾയാൻ", "ഗഗൻയാൻ", "ആദിത്യ L1", "ചന്ദ്രയാൻ 3"], a: "ഗഗൻയാൻ" }, en: { q: "What is India's project to send humans to space?", o: ["Mangalyaan", "Gaganyaan", "Aditya L1", "Chandrayaan 3"], a: "Gaganyaan" } },
+            { id: 55, ml: { q: "ഏറ്റവും നീളം കൂടിയ വിരലുള്ള പക്ഷി?", o: ["കൊക്ക്", "താമരക്കോഴി", "മയിൽ", "ഒട്ടകപ്പക്ഷി"], a: "താമരക്കോഴി" }, en: { q: "Which bird has the longest toes?", o: ["Stork", "Jacana", "Peacock", "Ostrich"], a: "Jacana" } },
+            { id: 56, ml: { q: "കോഴിമുട്ട വിരിയുവാൻ എത്ര ദിവസം വേണം?", o: ["15", "21", "28", "30"], a: "21" }, en: { q: "How many days does it take for a chicken egg to hatch?", o: ["15", "21", "28", "30"], a: "21" } },
+            { id: 57, ml: { q: "മണ്ണിൽ കൂടുണ്ടാക്കുന്ന പക്ഷി ഏതാണ്?", o: ["കാക്ക", "പ്രാവ്", "പൊന്മാൻ", "കുരുവി"], a: "പൊന്മാൻ" }, en: { q: "Which bird makes its nest in the ground/burrows?", o: ["Crow", "Pigeon", "Kingfisher", "Sparrow"], a: "Kingfisher" } },
+            { id: 58, ml: { q: "ഏറ്റവും വലിയ പക്ഷി?", o: ["കഴുകൻ", "ഒട്ടകപക്ഷി", "ഹംസം", "പെൻഗ്വിൻ"], a: "ഒട്ടകപക്ഷി" }, en: { q: "What is the largest bird?", o: ["Eagle", "Ostrich", "Swan", "Penguin"], a: "Ostrich" } },
+            { id: 59, ml: { q: "അടയിരിപ്പുകാലം കൂടിന്റെ വായ്ഭാഗം അടയ്ക്കുന്ന പക്ഷി ഏത്?", o: ["തത്ത", "മരംകൊത്തി", "മലമുഴക്കി വേഴാമ്പൽ", "മൂങ്ങ"], a: "മലമുഴക്കി വേഴാമ്പൽ" }, en: { q: "Which bird seals the entrance of its nest during incubation?", o: ["Parrot", "Woodpecker", "Great Hornbill", "Owl"], a: "Great Hornbill" } },
+            { id: 60, ml: { q: "നമ്മുടെ സംസ്ഥാന പക്ഷി ഏത്?", o: ["മയിൽ", "പ്രാവ്", "മലമുഴക്കി വേഴാമ്പൽ", "കാക്ക"], a: "മലമുഴക്കി വേഴാമ്പൽ" }, en: { q: "What is our state bird (Kerala)?", o: ["Peacock", "Pigeon", "Great Hornbill", "Crow"], a: "Great Hornbill" } },
+            { id: 61, ml: { q: "ശബ്ദം ഉണ്ടാക്കാൻ കഴിവുള്ള ഒരേയൊരു മത്സ്യം?", o: ["സ്രാവ്", "ഡോൾഫിൻ", "തിമിംഗലം", "നീരാളി"], a: "ഡോൾഫിൻ" }, en: { q: "The only fish that can make sound?", o: ["Shark", "Dolphin", "Whale", "Octopus"], a: "Dolphin" } },
+            { id: 62, ml: { q: "ലോകത്തിലെ ഏറ്റവും വേഗതയേറിയ മൃഗം?", o: ["സിംഹം", "കടുവ", "ചീറ്റപ്പുലി", "മാൻ"], a: "ചീറ്റപ്പുലി" }, en: { q: "What is the fastest animal in the world?", o: ["Lion", "Tiger", "Cheetah", "Deer"], a: "Cheetah" } },
+            { id: 63, ml: { q: "സസ്യങ്ങൾ ആഹാരം നിർമ്മിക്കുന്ന പ്രക്രിയ?", o: ["ശ്വസനം", "ബാഷ്പീകരണം", "പ്രകാശസംശ്ലേഷണം", "പരാഗണം"], a: "പ്രകാശസംശ്ലേഷണം" }, en: { q: "The process by which plants make food?", o: ["Respiration", "Evaporation", "Photosynthesis", "Pollination"], a: "Photosynthesis" } },
+            { id: 64, ml: { q: "മനുഷ്യ ശരീരത്തിലെ ഏറ്റവും കടുപ്പമുള്ള ഭാഗം?", o: ["എല്ല്", "നഖം", "തലയോട്ടി", "പല്ലിന്റെ ഇനാമൽ"], a: "പല്ലിന്റെ ഇനാമൽ" }, en: { q: "What is the hardest part of the human body?", o: ["Bone", "Nail", "Skull", "Tooth enamel"], a: "Tooth enamel" } },
+            { id: 65, ml: { q: "മഴവില്ലിന് കാരണമാകുന്ന പ്രകാശ പ്രതിഭാസം?", o: ["പ്രതിഫലനം", "അപവർത്തനം", "പ്രകീർണ്ണനം", "വിസരണം"], a: "പ്രകീർണ്ണനം" }, en: { q: "The light phenomenon that causes a rainbow?", o: ["Reflection", "Refraction", "Dispersion", "Scattering"], a: "Dispersion" } },
+            { id: 66, ml: { q: "തേനീച്ചയുടെ കൂട്ടിൽ എത്ര തരം ഈച്ചകളുണ്ട്?", o: ["ഒന്ന്", "രണ്ട്", "മൂന്ന്", "നാല്"], a: "മൂന്ന്" }, en: { q: "How many types of bees are there in a beehive?", o: ["One", "Two", "Three", "Four"], a: "Three" } },
+            { id: 67, ml: { q: "ഭൂമിയോട് ഏറ്റവും അടുത്തുള്ള നക്ഷത്രം?", o: ["സിറിയസ്", "ആൽഫ സെന്റൗറി", "സൂര്യൻ", "ധ്രുവൻ"], a: "സൂര്യൻ" }, en: { q: "The closest star to Earth?", o: ["Sirius", "Alpha Centauri", "Sun", "Polaris"], a: "Sun" } },
+            { id: 68, ml: { q: "ഏറ്റവും കൂടുതൽ ആയുസ്സുള്ള ജീവി?", o: ["ആന", "തിമിംഗലം", "ആമ", "പാമ്പ്"], a: "ആമ" }, en: { q: "Which animal has the longest lifespan?", o: ["Elephant", "Whale", "Tortoise", "Snake"], a: "Tortoise" } },
+            { id: 69, ml: { q: "വെള്ളത്തിൽ ലയിക്കുന്ന വിറ്റാമിൻ ഏത്?", o: ["വിറ്റാമിൻ എ", "വിറ്റാമിൻ ഡി", "വിറ്റാമിൻ സി", "വിറ്റാമിൻ കെ"], a: "വിറ്റാമിൻ സി" }, en: { q: "Which vitamin is soluble in water?", o: ["Vitamin A", "Vitamin D", "Vitamin C", "Vitamin K"], a: "Vitamin C" } },
+            { id: 70, ml: { q: "പറക്കുന്ന സസ്തനി?", o: ["പരുന്ത്", "മൂങ്ങ", "വവ്വാൽ", "പ്രാവ്"], a: "വവ്വാൽ" }, en: { q: "The flying mammal?", o: ["Eagle", "Owl", "Bat", "Pigeon"], a: "Bat" } },
+            { id: 71, ml: { q: "ഓക്സിജൻ കണ്ടുപിടിച്ചത് ആര്?", o: ["ഐസക് ന്യൂട്ടൺ", "ആൽബർട്ട് ഐൻസ്റ്റീൻ", "ജോസഫ് പ്രീസ്റ്റ്ലി", "ലാവോസിയർ"], a: "ജോസഫ് പ്രീസ്റ്റ്ലി" }, en: { q: "Who discovered Oxygen?", o: ["Isaac Newton", "Albert Einstein", "Joseph Priestley", "Lavoisier"], a: "Joseph Priestley" } },
+            { id: 72, ml: { q: "നമ്മുടെ ദേശീയ പുഷ്പം?", o: ["റോസ്", "ചെമ്പരത്തി", "താമര", "മുല്ല"], a: "താമര" }, en: { q: "What is our national flower?", o: ["Rose", "Hibiscus", "Lotus", "Jasmine"], a: "Lotus" } },
+            { id: 73, ml: { q: "ഒരു ഗ്രാമിന് ഏറ്റവും കൂടുതൽ ഊർജ്ജം നൽകുന്ന ആഹാര ഘടകം?", o: ["പ്രോട്ടീൻ", "കാർബോഹൈഡ്രേറ്റ്", "കൊഴുപ്പ്", "വിറ്റാമിൻ"], a: "കൊഴുപ്പ്" }, en: { q: "Which food component gives the most energy per gram?", o: ["Protein", "Carbohydrate", "Fat", "Vitamin"], a: "Fat" } },
+            { id: 74, ml: { q: "ശബ്ദത്തിന്റെ വേഗത ഏറ്റവും കൂടുതൽ ഏതിലാണ്?", o: ["ഖരം", "ദ്രാവകം", "വാതകം", "ശൂന്യത"], a: "ഖരം" }, en: { q: "In which state of matter is the speed of sound fastest?", o: ["Solid", "Liquid", "Gas", "Vacuum"], a: "Solid" } },
+            { id: 75, ml: { q: "ഗുരുത്വാകർഷണ നിയമം ആവിഷ്കരിച്ചത് ആര്?", o: ["ഗലീലിയോ", "ഐസക് ന്യൂട്ടൺ", "കെപ്ലർ", "കോപ്പർനിക്കസ്"], a: "ഐസക് ന്യൂട്ടൺ" }, en: { q: "Who formulated the law of gravitation?", o: ["Galileo", "Isaac Newton", "Kepler", "Copernicus"], a: "Isaac Newton" } },
+            { id: 76, ml: { q: "ഇലകൾക്ക് പച്ച നിറം നൽകുന്ന വർണ്ണകം?", o: ["കരോട്ടിൻ", "സാന്തോഫിൽ", "ഹരിതകം", "ആന്തോസയാനിൻ"], a: "ഹരിതകം" }, en: { q: "The pigment that gives leaves their green color?", o: ["Carotene", "Xanthophyll", "Chlorophyll", "Anthocyanin"], a: "Chlorophyll" } },
+            { id: 77, ml: { q: "വൈദ്യുതിയുടെ ഏറ്റവും നല്ല ചാലകം ഏത്?", o: ["സ്വർണ്ണം", "ചെമ്പ്", "വെള്ളി", "അലുമിനിയം"], a: "വെള്ളി" }, en: { q: "What is the best conductor of electricity?", o: ["Gold", "Copper", "Silver", "Aluminum"], a: "Silver" } },
+            { id: 78, ml: { q: "ചുവന്ന ഗ്രഹം എന്നറിയപ്പെടുന്നത്?", o: ["ബുധൻ", "ശുക്രൻ", "ചൊവ്വ", "വ്യാഴം"], a: "ചൊവ്വ" }, en: { q: "Which planet is known as the Red Planet?", o: ["Mercury", "Venus", "Mars", "Jupiter"], a: "Mars" } },
+            { id: 79, ml: { q: "മനുഷ്യ ശരീരത്തിലെ ആകെ അസ്ഥികളുടെ എണ്ണം?", o: ["200", "206", "300", "306"], a: "206" }, en: { q: "Total number of bones in the human body?", o: ["200", "206", "300", "306"], a: "206" } },
+            { id: 80, ml: { q: "രക്തത്തിന് ചുവപ്പ് നിറം നൽകുന്ന പദാർത്ഥം?", o: ["പ്ലാസ്മ", "ഹീമോഗ്ലോബിൻ", "മെലാനിൻ", "ബിലിറൂബിൻ"], a: "ഹീമോഗ്ലോബിൻ" }, en: { q: "The substance that gives blood its red color?", o: ["Plasma", "Hemoglobin", "Melanin", "Bilirubin"], a: "Hemoglobin" } },
+            { id: 81, ml: { q: "പാൽ തൈരാകാൻ സഹായിക്കുന്ന ബാക്ടീരിയ?", o: ["ഇ. കോളി", "ലാക്ടോബാസിലസ്", "സ്റ്റാഫിലോകോക്കസ്", "റൈസോബിയം"], a: "ലാക്ടോബാസിലസ്" }, en: { q: "The bacteria that helps turn milk into curd?", o: ["E. coli", "Lactobacillus", "Staphylococcus", "Rhizobium"], a: "Lactobacillus" } },
+            { id: 82, ml: { q: "ടെലിഫോൺ കണ്ടുപിടിച്ചത് ആര്?", o: ["തോമസ് എഡിസൺ", "മാർക്കോണി", "അലക്സാണ്ടർ ഗ്രഹാം ബെൽ", "ജോൺ ബേർഡ്"], a: "അലക്സാണ്ടർ ഗ്രഹാം ബെൽ" }, en: { q: "Who invented the telephone?", o: ["Thomas Edison", "Marconi", "Alexander Graham Bell", "John Baird"], a: "Alexander Graham Bell" } },
+            { id: 83, ml: { q: "സൂര്യപ്രകാശത്തിൽ നിന്നും ലഭിക്കുന്ന വിറ്റാമിൻ?", o: ["വിറ്റാമിൻ എ", "വിറ്റാമിൻ ബി", "വിറ്റാമിൻ സി", "വിറ്റാമിൻ ഡി"], a: "വിറ്റാമിൻ ഡി" }, en: { q: "Which vitamin is obtained from sunlight?", o: ["Vitamin A", "Vitamin B", "Vitamin C", "Vitamin D"], a: "Vitamin D" } },
+            { id: 84, ml: { q: "ഏറ്റവും ലഘുവായ മൂലകം?", o: ["ഹീലിയം", "ഓക്സിജൻ", "ഹൈഡ്രജൻ", "നൈട്രജൻ"], a: "ഹൈഡ്രജൻ" }, en: { q: "What is the lightest element?", o: ["Helium", "Oxygen", "Hydrogen", "Nitrogen"], a: "Hydrogen" } },
+            { id: 85, ml: { q: "ഭൂമിയുടെ ഒരേയൊരു പ്രകൃതിദത്ത ഉപഗ്രഹം?", o: ["ചൊവ്വ", "ചന്ദ്രൻ", "ടൈറ്റാൻ", "യൂറോപ്പ"], a: "ചന്ദ്രൻ" }, en: { q: "What is the Earth's only natural satellite?", o: ["Mars", "Moon", "Titan", "Europa"], a: "Moon" } },
+            { id: 86, ml: { q: "കൊതുകിന്റെ മുട്ട വിരിയാൻ എടുക്കുന്ന സമയം?", o: ["1 ദിവസം", "2-3 ദിവസം", "1 ആഴ്ച", "2 ആഴ്ച"], a: "2-3 ദിവസം" }, en: { q: "How long does it take for a mosquito egg to hatch?", o: ["1 day", "2-3 days", "1 week", "2 weeks"], a: "2-3 days" } },
+            { id: 87, ml: { q: "നമ്മുടെ ദേശീയ മൃഗം?", o: ["സിംഹം", "ആന", "കടുവ", "പശു"], a: "കടുവ" }, en: { q: "What is our national animal?", o: ["Lion", "Elephant", "Tiger", "Cow"], a: "Tiger" } },
+            { id: 88, ml: { q: "ഒരു സാധാരണ മനുഷ്യന്റെ ശരീര ഊഷ്മാവ്?", o: ["35°C", "37°C", "40°C", "98.6°C"], a: "37°C" }, en: { q: "What is the normal body temperature of a human?", o: ["35°C", "37°C", "40°C", "98.6°C"], a: "37°C" } },
+            { id: 89, ml: { q: "പ്രാണികളെ പിടിക്കുന്ന സസ്യം?", o: ["റോസ്", "താമര", "നെപ്പന്തസ്", "കള്ളിമുൾച്ചെടി"], a: "നെപ്പന്തസ്" }, en: { q: "A plant that traps insects?", o: ["Rose", "Lotus", "Pitcher Plant", "Cactus"], a: "Pitcher Plant" } },
+            { id: 90, ml: { q: "നമ്മുടെ സൗരയൂഥം ഉൾപ്പെടുന്ന ഗാലക്സി?", o: ["ആൻഡ്രോമിഡ", "ക്ഷീരപഥം", "ട്രയാംഗുലം", "സോംബ്രെറോ"], a: "ക്ഷീരപഥം" }, en: { q: "The galaxy that contains our Solar System?", o: ["Andromeda", "Milky Way", "Triangulum", "Sombrero"], a: "Milky Way" } },
+            { id: 91, ml: { q: "തലയിൽ ഹൃദയമുള്ള ജീവി?", o: ["ഞണ്ട്", "ചെമ്മീൻ", "നീരാളി", "മത്സ്യം"], a: "ചെമ്മീൻ" }, en: { q: "Which creature has its heart in its head?", o: ["Crab", "Shrimp", "Octopus", "Fish"], a: "Shrimp" } },
+            { id: 92, ml: { q: "പേപ്പർ കണ്ടുപിടിച്ച രാജ്യം?", o: ["ഇന്ത്യ", "ഈജിപ്ത്", "ചൈന", "ഗ്രീസ്"], a: "ചൈന" }, en: { q: "Which country invented paper?", o: ["India", "Egypt", "China", "Greece"], a: "China" } },
+            { id: 93, ml: { q: "ഏറ്റവും വലിയ മുട്ടയിടുന്ന പക്ഷി?", o: ["കോഴി", "താറാവ്", "ഒട്ടകപ്പക്ഷി", "കഴുകൻ"], a: "ഒട്ടകപ്പക്ഷി" }, en: { q: "Which bird lays the largest egg?", o: ["Hen", "Duck", "Ostrich", "Eagle"], a: "Ostrich" } },
+            { id: 94, ml: { q: "കമ്പ്യൂട്ടറിന്റെ തലച്ചോറ് എന്നറിയപ്പെടുന്നത്?", o: ["മൗസ്", "കീബോർഡ്", "മോണിറ്റർ", "സി.പി.യു"], a: "സി.പി.യു" }, en: { q: "What is known as the brain of the computer?", o: ["Mouse", "Keyboard", "Monitor", "CPU"], a: "CPU" } },
+            { id: 95, ml: { q: "വെള്ളത്തിനടിയിൽ ശബ്ദം രേഖപ്പെടുത്താൻ ഉപയോഗിക്കുന്ന ഉപകരണം?", o: ["മൈക്രോഫോൺ", "ഹൈഡ്രോഫോൺ", "ടെലിസ്കോപ്പ്", "ബാരോമീറ്റർ"], a: "ഹൈഡ്രോഫോൺ" }, en: { q: "The instrument used to record sound under water?", o: ["Microphone", "Hydrophone", "Telescope", "Barometer"], a: "Hydrophone" } },
+            { id: 96, ml: { q: "പാറ്റയുടെ രക്തത്തിന്റെ നിറം?", o: ["ചുവപ്പ്", "നീല", "പച്ച", "നിറമില്ല"], a: "നിറമില്ല" }, en: { q: "What is the color of a cockroach's blood?", o: ["Red", "Blue", "Green", "Colorless"], a: "Colorless" } },
+            { id: 97, ml: { q: "ലോക ജലദിനം?", o: ["ഫെബ്രുവരി 28", "മാർച്ച് 22", "ഏപ്രിൽ 22", "ജൂൺ 5"], a: "മാർച്ച് 22" }, en: { q: "When is World Water Day?", o: ["February 28", "March 22", "April 22", "June 5"], a: "March 22" } },
+            { id: 98, ml: { q: "എട്ടുകാലിക്ക് എത്ര കാലുകളുണ്ട്?", o: ["6", "8", "10", "12"], a: "8" }, en: { q: "How many legs does a spider have?", o: ["6", "8", "10", "12"], a: "8" } },
+            { id: 99, ml: { q: "നമ്മുടെ ദേശീയ പക്ഷി?", o: ["പ്രാവ്", "തത്ത", "കാക്ക", "മയിൽ"], a: "മയിൽ" }, en: { q: "What is our national bird?", o: ["Pigeon", "Parrot", "Crow", "Peacock"], a: "Peacock" } },
+            { id: 100, ml: { q: "ഭൂകമ്പത്തിന്റെ തീവ്രത അളക്കുന്ന ഉപകരണം?", o: ["ബാരോമീറ്റർ", "തെർമോമീറ്റർ", "സീസ്‌മോഗ്രാഫ്", "അമ്മീറ്റർ"], a: "സീസ്‌മോഗ്രാഫ്" }, en: { q: "The instrument used to measure the intensity of an earthquake?", o: ["Barometer", "Thermometer", "Seismograph", "Ammeter"], a: "Seismograph" } }
+        ];
+
+        // --- App State ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedLang = 'ml';
+        let userAnswers = new Array(quizData.length + 1).fill(null); // Use a larger array to map by ID
+        let questions = [];
+
+        // --- DOM Elements ---
+        const languageScreen = document.getElementById('language-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionCounter = document.getElementById('question-counter');
+        const scoreCounter = document.getElementById('score-counter');
+        const progressBar = document.getElementById('progress-bar');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedback = document.getElementById('feedback');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        // --- Functions ---
+        function startQuiz(lang) {
+            selectedLang = lang;
+            // Shuffle questions for variety each time
+            questions = [...quizData].sort(() => Math.random() - 0.5);
+            languageScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // Reset feedback and styles
+            feedback.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            if (currentQuestionIndex >= questions.length) {
+                showResults();
+                return;
+            }
+
+            const currentQuestion = questions[currentQuestionIndex][selectedLang];
+            const questionData = questions[currentQuestionIndex];
+            
+            // Set language class for proper font rendering
+            questionText.className = `text-2xl font-bold text-center text-gray-800 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            
+            questionText.textContent = currentQuestion.q;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1}/${questions.length}`;
+            scoreCounter.textContent = `Score: ${score}`;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+
+            // Shuffle options
+            const shuffledOptions = [...currentQuestion.o].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = `btn-option w-full p-4 rounded-lg border-2 border-gray-300 text-lg font-semibold text-gray-700 bg-white hover:bg-blue-100 hover:border-blue-400 transition ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+                button.onclick = () => selectAnswer(option, button);
+                optionsContainer.appendChild(button);
+            });
+
+            updateNavButtons();
+            
+            // If user has already answered this question (by using back button), show the result
+            if (userAnswers[questionData.id] !== null) {
+                showPreviousAnswer();
+            }
+        }
+        
+        function selectAnswer(selectedOption, button) {
+            const questionData = questions[currentQuestionIndex];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            // Only update score if the question hasn't been answered correctly before
+            if (userAnswers[questionData.id] !== currentQuestion.a && selectedOption === correctAnswer) {
+                 score++;
+            } else if (userAnswers[questionData.id] === currentQuestion.a && selectedOption !== correctAnswer) {
+                 // If user changes a correct answer to a wrong one, decrement score
+                 score--;
+            }
+
+            userAnswers[questionData.id] = selectedOption;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true; // Disable all options after one is selected
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+
+            if (selectedOption === correctAnswer) {
+                playCorrectSound();
+                feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                feedback.className = 'mt-4 text-center font-bold text-lg text-green-600';
+            } else {
+                playWrongSound();
+                button.classList.add('wrong');
+                feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                feedback.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+            }
+            
+            scoreCounter.textContent = `Score: ${score}`;
+        }
+
+        function showPreviousAnswer() {
+            const questionData = questions[currentQuestionIndex];
+            const selectedOption = userAnswers[questionData.id];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+                if (btn.textContent === selectedOption && selectedOption !== correctAnswer) {
+                    btn.classList.add('wrong');
+                }
+            });
+
+            if (selectedOption !== correctAnswer) {
+                 feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                 feedback.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+            } else {
+                 feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                 feedback.className = 'mt-4 text-center font-bold text-lg text-green-600';
+            }
+        }
+
+        function updateNavButtons() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', backBtn.disabled);
+            
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.textContent = selectedLang === 'ml' ? 'പൂർത്തിയാക്കുക' : 'Finish';
+            } else {
+                nextBtn.textContent = selectedLang === 'ml' ? 'അടുത്തത് >' : 'Next >';
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            const percentage = Math.round((score / questions.length) * 100);
+            const resultTitle = document.getElementById('result-title');
+            const finalScore = document.getElementById('final-score');
+            const resultMessage = document.getElementById('result-message');
+
+            resultTitle.className = `text-4xl font-bold mb-4 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            finalScore.className = `text-2xl mb-6 text-gray-700 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            resultMessage.className = `text-xl mb-8 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+
+            if (selectedLang === 'ml') {
+                resultTitle.textContent = 'ഫലം';
+                finalScore.textContent = `നിങ്ങളുടെ സ്കോർ: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'അടിപൊളി! നിങ്ങൾ മിടുക്കനാണ്/മിടുക്കിയാണ്.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'നന്നായിരിക്കുന്നു! ഇനിയും മെച്ചപ്പെടുത്താം.';
+                } else {
+                    resultMessage.textContent = 'സാരമില്ല, വീണ്ടും ശ്രമിക്കുക!';
+                }
+            } else {
+                resultTitle.textContent = 'Results';
+                finalScore.textContent = `Your Score: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'Excellent! You did a great job.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'Good effort! Keep practicing.';
+                } else {
+                    resultMessage.textContent = 'Don\'t worry, try again!';
+                }
+            }
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers.fill(null);
+            questions = [];
+            resultScreen.classList.add('hidden');
+            languageScreen.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
+

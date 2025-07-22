@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ആനുകാലികം ക്വിസ്</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .malayalam {
+            font-family: 'Manjari', sans-serif;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-option:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+        .correct {
+            animation: pulse-green 1s;
+            background-color: #22c55e !important; /* Green-500 */
+            color: white !important;
+            border-color: #16a34a !important; /* Green-600 */
+        }
+        .wrong {
+            animation: shake 0.5s;
+            background-color: #ef4444 !important; /* Red-500 */
+            color: white !important;
+            border-color: #dc2626 !important; /* Red-600 */
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-cyan-400 to-teal-600 min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Language Selection Screen -->
+        <div id="language-screen" class="text-center text-white p-8 rounded-2xl shadow-2xl card">
+            <h1 class="text-4xl font-bold mb-2 malayalam">ആനുകാലികം ക്വിസ്</h1>
+            <h2 class="text-2xl font-bold mb-8">Current Affairs Quiz</h2>
+            <p class="mb-4 malayalam">ഭാഷ തിരഞ്ഞെടുക്കുക:</p>
+            <p class="mb-8">Select Language:</p>
+            <div class="flex flex-col space-y-4">
+                <button onclick="startQuiz('ml')" class="bg-white text-teal-600 font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-teal-50 transition-transform transform hover:scale-105 malayalam">മലയാളം</button>
+                <button onclick="startQuiz('en')" class="bg-white text-cyan-600 font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-cyan-50 transition-transform transform hover:scale-105">English</button>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden p-6 bg-white/90 rounded-2xl shadow-2xl card">
+            <div id="header" class="flex justify-between items-center mb-4">
+                <div id="question-counter" class="text-lg font-semibold text-gray-700"></div>
+                <div id="score-counter" class="text-lg font-semibold text-green-600"></div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-cyan-500 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <div id="question-container" class="mb-6">
+                <p id="question-text" class="text-2xl font-bold text-center text-gray-800" style="min-height: 100px;"></p>
+            </div>
+            <div id="options-container" class="grid grid-cols-1 gap-4">
+                <!-- Options will be dynamically inserted here -->
+            </div>
+            <div id="feedback" class="mt-4 text-center font-bold text-lg" style="min-height: 30px;"></div>
+            <div class="flex justify-between mt-8">
+                <button id="back-btn" onclick="prevQuestion()" class="bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg shadow hover:bg-gray-400 transition-transform transform hover:scale-105">&lt; Back</button>
+                <button id="next-btn" onclick="nextQuestion()" class="bg-teal-500 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-teal-600 transition-transform transform hover:scale-105">Next &gt;</button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center p-8 bg-white/90 rounded-2xl shadow-2xl card">
+            <h2 id="result-title" class="text-4xl font-bold mb-4 text-gray-800"></h2>
+            <p id="final-score" class="text-2xl mb-6 text-gray-700"></p>
+            <p id="result-message" class="text-xl mb-8"></p>
+            <button onclick="restartQuiz()" class="bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg hover:bg-cyan-700 transition-transform transform hover:scale-105">
+                വീണ്ടും കളിക്കാം / Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Sound Synthesis ---
+        const correctSound = new Tone.Synth({
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
+        }).toDestination();
+
+        const wrongSound = new Tone.Synth({
+            oscillator: { type: 'square' },
+            envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.2 }
+        }).toDestination();
+
+        function playCorrectSound() {
+            Tone.start();
+            correctSound.triggerAttackRelease("C5", "8n");
+        }
+
+        function playWrongSound() {
+            Tone.start();
+            wrongSound.triggerAttackRelease("C3", "8n");
+        }
+
+        // --- Quiz Data (100 Questions about Current Affairs 2024-25) ---
+        const quizData = [
+            // Kerala Current Affairs
+            { id: 1, ml: { q: "കേരളത്തിലെ എല്ലാ വീടുകളിലും അതിവേഗ ഇന്റർനെറ്റ് എത്തിക്കാൻ ലക്ഷ്യമിടുന്ന സർക്കാർ പദ്ധതി?", o: ["കെ-നെറ്റ്", "കെ-ഫോൺ", "ഡിജിറ്റൽ കേരളം", "ഇ-കേരളം"], a: "കെ-ഫോൺ" }, en: { q: "What is the Kerala government project aimed at providing high-speed internet to all households?", o: ["K-Net", "K-FON", "Digital Kerala", "E-Kerala"], a: "K-FON" } },
+            { id: 2, ml: { q: "2024-ലെ കേരള സംസ്ഥാന ചലച്ചിത്ര പുരസ്കാരത്തിൽ മികച്ച നടനായി തിരഞ്ഞെടുക്കപ്പെട്ടത്?", o: ["മമ്മൂട്ടി", "ഫഹദ് ഫാസിൽ", "പൃഥ്വിരാജ് സുകുമാരൻ", "ടൊവിനോ തോമസ്"], a: "മമ്മൂട്ടി" }, en: { q: "Who was selected as the Best Actor at the Kerala State Film Awards 2024?", o: ["Mammootty", "Fahadh Faasil", "Prithviraj Sukumaran", "Tovino Thomas"], a: "Mammootty" } },
+            { id: 3, ml: { q: "കേരള സർക്കാർ 2025-ഓടെ പൂർണ്ണമായും ഡിജിറ്റൽ സാക്ഷരത കൈവരിക്കാൻ ആരംഭിച്ച പദ്ധതി?", o: ["ഡിജി-കേരളം", "ഇ-സാക്ഷരത", "ഡിജിറ്റൽ ഇന്ത്യ കേരള", "ഡിജിറ്റൽ സാക്ഷരതാ മിഷൻ"], a: "ഡിജിറ്റൽ സാക്ഷരതാ മിഷൻ" }, en: { q: "Which mission was launched by the Kerala government to achieve complete digital literacy by 2025?", o: ["Digi-Kerala", "E-Saksharatha", "Digital India Kerala", "Digital Literacy Mission"], a: "Digital Literacy Mission" } },
+            { id: 4, ml: { q: "2024-ലെ എഴുത്തച്ഛൻ പുരസ്കാരം നേടിയ സാഹിത്യകാരൻ?", o: ["സേതു", "എം. മുകുന്ദൻ", "സക്കറിയ", "പോൾ സക്കറിയ"], a: "പോൾ സക്കറിയ" }, en: { q: "Which writer won the Ezhuthachan Puraskaram in 2024?", o: ["Sethu", "M. Mukundan", "Zacharia", "Paul Zacharia"], a: "Paul Zacharia" } },
+            { id: 5, ml: { q: "കൊച്ചി വാട്ടർ മെട്രോ പദ്ധതിയുടെ രണ്ടാം ഘട്ടം 2025-ൽ ഏതൊക്കെ പുതിയ റൂട്ടുകളാണ് ബന്ധിപ്പിക്കുന്നത്?", o: ["വൈപ്പിൻ-കാക്കനാട്", "ഫോർട്ട് കൊച്ചി-മട്ടാഞ്ചേരി", "എറണാകുളം-തേവര", "ഇവയെല്ലാം"], a: "ഇവയെല്ലാം" }, en: { q: "Which new routes does the second phase of the Kochi Water Metro project, launched in 2025, connect?", o: ["Vypin-Kakkanad", "Fort Kochi-Mattancherry", "Ernakulam-Thevara", "All of the above"], a: "All of the above" } },
+            { id: 6, ml: { q: "കേരളത്തിലെ ആദ്യ ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ് (AI) സ്കൂൾ 2024-ൽ ആരംഭിച്ചത് എവിടെ?", o: ["കൊച്ചി", "കോഴിക്കോട്", "തിരുവനന്തപുരം", "തൃശൂർ"], a: "തിരുവനന്തപുരം" }, en: { q: "Where was Kerala's first Artificial Intelligence (AI) school launched in 2024?", o: ["Kochi", "Kozhikode", "Thiruvananthapuram", "Thrissur"], a: "Thiruvananthapuram" } },
+            { id: 7, ml: { q: "2024-ലെ വയലാർ അവാർഡ് നേടിയ കൃതി?", o: ["മീശ", "ആടുജീവിതം", "ജലം കൊണ്ടുള്ള മുറിവുകൾ", "മനുഷ്യന് ഒരു ആമുഖം"], a: "ജലം കൊണ്ടുള്ള മുറിവുകൾ" }, en: { q: "Which work won the Vayalar Award in 2024?", o: ["Meesha", "Aadujeevitham", "Jalam Kondulla Murivukal", "Manushyanu Oru Aamukham"], a: "Jalam Kondulla Murivukal" } },
+            { id: 8, ml: { q: "വിഴിഞ്ഞം അന്താരാഷ്ട്ര തുറമുഖത്ത് ആദ്യമായി കപ്പൽ എത്തിയ ചരിത്രപരമായ തീയതി?", o: ["2023 ഒക്ടോബർ 15", "2024 ജനുവരി 1", "2024 ഒക്ടോബർ 15", "2025 ജനുവരി 26"], a: "2024 ഒക്ടോബർ 15" }, en: { q: "What was the historic date when the first ship arrived at the Vizhinjam International Port?", o: ["October 15, 2023", "January 1, 2024", "October 15, 2024", "January 26, 2025"], a: "October 15, 2024" } },
+            { id: 9, ml: { q: "സ്ത്രീ സുരക്ഷയ്ക്കായി കേരള പോലീസ് 2024-ൽ ആരംഭിച്ച മൊബൈൽ ആപ്ലിക്കേഷൻ?", o: ["നിർഭയ", "പോൽ-ആപ്പ്", "കവചം", "രക്ഷ"], a: "കവചം" }, en: { q: "What is the mobile application launched by Kerala Police in 2024 for women's safety?", o: ["Nirbhaya", "Pol-App", "Kavacham", "Raksha"], a: "Kavacham" } },
+            { id: 10, ml: { q: "2025-ലെ കേരള ബജറ്റിൽ ഏറ്റവും കൂടുതൽ ഊന്നൽ നൽകിയ മേഖല?", o: ["വിനോദസഞ്ചാരം", "കൃഷി", "വിവരസാങ്കേതികവിദ്യ", "ആരോഗ്യം"], a: "വിവരസാങ്കേതികവിദ്യ" }, en: { q: "Which sector received the most emphasis in the Kerala Budget for 2025?", o: ["Tourism", "Agriculture", "Information Technology", "Health"], a: "Information Technology" } },
+            { id: 11, ml: { q: "യുവ കണ്ടുപിടുത്തക്കാരെ പ്രോത്സാഹിപ്പിക്കുന്നതിനായി K-DISC 2024-ൽ ആരംഭിച്ച പരിപാടി?", o: ["യംഗ് ഇന്നൊവേറ്റേഴ്സ് പ്രോഗ്രാം", "സ്റ്റാർട്ടപ്പ് കേരള", "ടെക്-ഫെസ്റ്റ്", "ഇൻവെൻറ് കേരള"], a: "യംഗ് ഇന്നൊവേറ്റേഴ്സ് പ്രോഗ്രാം" }, en: { q: "What program did K-DISC launch in 2024 to encourage young innovators?", o: ["Young Innovators Programme", "Startup Kerala", "Tech-Fest", "Invent Kerala"], a: "Young Innovators Programme" } },
+            { id: 12, ml: { q: "2025-ലെ കേരളത്തിന്റെ പുതിയ ടൂറിസം പ്രചാരണത്തിന്റെ മുദ്രാവാക്യം?", o: ["ദൈവത്തിന്റെ സ്വന്തം നാട്", "കേരളം: അനുഭവങ്ങളുടെ ലോകം", "ഹരിത കേരളം", "കേരളത്തിലേക്ക് സ്വാഗതം"], a: "കേരളം: അനുഭവങ്ങളുടെ ലോകം" }, en: { q: "What is the slogan for Kerala's new tourism campaign in 2025?", o: ["God's Own Country", "Kerala: A World of Experiences", "Green Kerala", "Welcome to Kerala"], a: "Kerala: A World of Experiences" } },
+            { id: 13, ml: { q: "2024-ലെ സ്വാതി സംഗീത പുരസ്കാരം നേടിയത്?", o: ["കെ.എസ്. ചിത്ര", "പി. ജയചന്ദ്രൻ", "എം. ജയചന്ദ്രൻ", "ഉണ്ണി മേനോൻ"], a: "പി. ജയചന്ദ്രൻ" }, en: { q: "Who won the Swathi Sangeetha Puraskaram in 2024?", o: ["K. S. Chithra", "P. Jayachandran", "M. Jayachandran", "Unni Menon"], a: "P. Jayachandran" } },
+            { id: 14, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ് ഡാറ്റാ സെന്റർ എവിടെയാണ് സ്ഥാപിക്കുന്നത്?", o: ["ടെക്നോപാർക്ക്, തിരുവനന്തപുരം", "ഇൻഫോപാർക്ക്, കൊച്ചി", "സൈബർപാർക്ക്, കോഴിക്കോട്", "കിൻഫ്ര പാർക്ക്, കളമശ്ശേരി"], a: "ഇൻഫോപാർക്ക്, കൊച്ചി" }, en: { q: "Where is Kerala's first Artificial Intelligence Data Center being established?", o: ["Technopark, Trivandrum", "Infopark, Kochi", "Cyberpark, Kozhikode", "Kinfra Park, Kalamassery"], a: "Infopark, Kochi" } },
+            { id: 15, ml: { q: "2024-ൽ കേരളത്തിൽ പ്രഖ്യാപിച്ച പുതിയ വന്യജീവി സങ്കേതം ഏതാണ്?", o: ["കരിമ്പുഴ", "മലബാർ", "കക്കയം", "ഇടമലയാർ"], a: "കരിമ്പുഴ" }, en: { q: "Which new wildlife sanctuary was declared in Kerala in 2024?", o: ["Karimpuzha", "Malabar", "Kakkayam", "Idamalayar"], a: "Karimpuzha" } },
+            { id: 16, ml: { q: "2024-ലെ നീതി ആയോഗിന്റെ ആരോഗ്യ സൂചികയിൽ കേരളത്തിന്റെ സ്ഥാനം?", o: ["ഒന്നാം", "രണ്ടാം", "മൂന്നാം", "നാലാം"], a: "ഒന്നാം" }, en: { q: "What was Kerala's rank in NITI Aayog's Health Index for 2024?", o: ["First", "Second", "Third", "Fourth"], a: "First" } },
+            { id: 17, ml: { q: "2025-ലെ കേരള സ്റ്റാർട്ടപ്പ് മിഷന്റെ പ്രധാന പരിപാടിയായ 'ഹഡിൽ ഗ്ലോബൽ' എവിടെയാണ് നടന്നത്?", o: ["തിരുവനന്തപുരം", "കൊച്ചി", "കോഴിക്കോട്", "കണ്ണൂർ"], a: "കൊച്ചി" }, en: { q: "Where was 'Huddle Global', the flagship event of the Kerala Startup Mission, held in 2025?", o: ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kannur"], a: "Kochi" } },
+            { id: 18, ml: { q: "ലൈഫ് മിഷൻ പദ്ധതി പ്രകാരം 2025-ഓടെ കേരള സർക്കാർ ലക്ഷ്യമിടുന്ന വീടുകളുടെ എണ്ണം?", o: ["3 ലക്ഷം", "4 ലക്ഷം", "5 ലക്ഷം", "6 ലക്ഷം"], a: "5 ലക്ഷം" }, en: { q: "What is the number of houses the Kerala government aims to build by 2025 under the LIFE Mission project?", o: ["3 Lakh", "4 Lakh", "5 Lakh", "6 Lakh"], a: "5 Lakh" } },
+            { id: 19, ml: { q: "2024-ലെ ഒ.എൻ.വി. സാഹിത്യ പുരസ്കാരം നേടിയത്?", o: ["പ്രഭാവർമ്മ", "അനിത തമ്പി", "കെ. സച്ചിദാനന്ദൻ", "റഫീക്ക് അഹമ്മദ്"], a: "പ്രഭാവർമ്മ" }, en: { q: "Who won the O.N.V. Literary Award in 2024?", o: ["Prabha Varma", "Anitha Thampi", "K. Satchidanandan", "Rafeeq Ahamed"], a: "Prabha Varma" } },
+            { id: 20, ml: { q: "കേരള സർക്കാർ ആരംഭിച്ച 'നവ കേരള സദസ് 2.0' ന്റെ പ്രധാന ലക്ഷ്യം?", o: ["വ്യവസായ വികസനം", "വിദ്യാഭ്യാസ പുരോഗതി", "സുസ്ഥിര വികസനം", "ആരോഗ്യ സംരക്ഷണം"], a: "സുസ്ഥിര വികസനം" }, en: { q: "What is the main objective of 'Nava Kerala Sadas 2.0' launched by the Kerala Government?", o: ["Industrial Development", "Educational Advancement", "Sustainable Development", "Healthcare"], a: "Sustainable Development" } },
+            { id: 21, ml: { q: "2024-ലെ മികച്ച സിനിമയ്ക്കുള്ള കേരള സംസ്ഥാന പുരസ്കാരം നേടിയ ചിത്രം?", o: ["നൻപകൽ നേരത്ത് മയക്കം", "ന്നാ താൻ കേസ് കൊട്", "റോഷാക്ക്", "അറിയിപ്പ്"], a: "നൻപകൽ നേരത്ത് മയക്കം" }, en: { q: "Which film won the Kerala State Award for Best Film in 2024?", o: ["Nanpakal Nerathu Mayakkam", "Nna Thaan Case Kodu", "Rorschach", "Ariyippu"], a: "Nanpakal Nerathu Mayakkam" } },
+            { id: 22, ml: { q: "കേരളത്തിലെ ആദ്യത്തെ സമ്പൂർണ്ണ വൈ-ഫൈ നഗരസഭയായി 2024-ൽ പ്രഖ്യാപിച്ചത്?", o: ["കൊച്ചി", "തിരുവനന്തപുരം", "മലപ്പുറം", "തൃശൂർ"], a: "മലപ്പുറം" }, en: { q: "Which municipality was declared as the first fully Wi-Fi enabled municipality in Kerala in 2024?", o: ["Kochi", "Thiruvananthapuram", "Malappuram", "Thrissur"], a: "Malappuram" } },
+            { id: 23, ml: { q: "2025-ൽ കേരള സർക്കാർ നടപ്പിലാക്കുന്ന പുതിയ മാലിന്യ സംസ്കരണ പദ്ധതിയുടെ പേര്?", o: ["ശുചിത്വ മിഷൻ 2.0", "മാലിന്യമുക്ത കേരളം", "ഹരിതമിത്രം", "സീറോ-വേസ്റ്റ് കേരള"], a: "മാലിന്യമുക്ത കേരളം" }, en: { q: "What is the name of the new waste management project being implemented by the Kerala government in 2025?", o: ["Suchitwa Mission 2.0", "Malinyamukta Keralam", "Harithamithram", "Zero-Waste Kerala"], a: "Malinyamukta Keralam" } },
+            { id: 24, ml: { q: "കേരളത്തിലെ രണ്ടാമത്തെ വന്ദേ ഭാരത് എക്സ്പ്രസ് 2024-ൽ സർവീസ് ആരംഭിച്ചത് ഏത് റൂട്ടിലാണ്?", o: ["തിരുവനന്തപുരം - കണ്ണൂർ", "തിരുവനന്തപുരം - കാസർഗോഡ്", "എറണാകുളം - ബാംഗ്ലൂർ", "കാസർഗോഡ് - തിരുവനന്തപുരം"], a: "കാസർഗോഡ് - തിരുവനന്തപുരം" }, en: { q: "On which route did the second Vande Bharat Express in Kerala start its service in 2024?", o: ["Thiruvananthapuram - Kannur", "Thiruvananthapuram - Kasaragod", "Ernakulam - Bangalore", "Kasaragod - Thiruvananthapuram"], a: "Kasaragod - Thiruvananthapuram" } },
+            { id: 25, ml: { q: "2024-ലെ വള്ളത്തോൾ പുരസ്കാരം നേടിയത്?", o: ["സി. രാധാകൃഷ്ണൻ", "സക്കറിയ", "പ്രൊഫ. എം.കെ. സാനു", "ടി. പത്മനാഭൻ"], a: "പ്രൊഫ. എം.കെ. സാനു" }, en: { q: "Who won the Vallathol Award in 2024?", o: ["C. Radhakrishnan", "Zacharia", "Prof. M. K. Sanu", "T. Padmanabhan"], a: "Prof. M. K. Sanu" } },
+            
+            // India Current Affairs
+            { id: 26, ml: { q: "2024-ലെ ഇന്ത്യൻ പൊതു തിരഞ്ഞെടുപ്പിൽ അധികാരത്തിൽ വന്ന സഖ്യം ഏതാണ്?", o: ["യു.പി.എ", "എൻ.ഡി.എ", "ഇന്ത്യാ സഖ്യം", "മൂന്നാം മുന്നണി"], a: "എൻ.ഡി.എ" }, en: { q: "Which alliance came to power in the 2024 Indian General Election?", o: ["UPA", "NDA", "INDIA Alliance", "Third Front"], a: "NDA" } },
+            { id: 27, ml: { q: "ഇന്ത്യയുടെ തദ്ദേശീയ ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ് (AI) വികസനം പ്രോത്സാഹിപ്പിക്കാൻ 2024-ൽ ആരംഭിച്ച സർക്കാർ ദൗത്യം?", o: ["ഡിജിറ്റൽ ഇന്ത്യ", "ഇന്ത്യ എ.ഐ മിഷൻ", "എ.ഐ ഫോർ ഓൾ", "ഭാരത് എ.ഐ"], a: "ഇന്ത്യ എ.ഐ മിഷൻ" }, en: { q: "What is the government mission launched in 2024 to promote India's domestic Artificial Intelligence (AI) development?", o: ["Digital India", "IndiaAI Mission", "AI for All", "Bharat AI"], a: "IndiaAI Mission" } },
+            { id: 28, ml: { q: "2025-ലെ ഇന്ത്യൻ റിപ്പബ്ലിക് ദിന പരേഡിലെ മുഖ്യാതിഥി ആരായിരുന്നു?", o: ["യു.എസ്. പ്രസിഡന്റ്", "ഫ്രഞ്ച് പ്രസിഡന്റ്", "ബ്രിട്ടീഷ് പ്രധാനമന്ത്രി", "ജപ്പാൻ പ്രധാനമന്ത്രി"], a: "ബ്രിട്ടീഷ് പ്രധാനമന്ത്രി" }, en: { q: "Who was the chief guest at the Indian Republic Day parade in 2025?", o: ["US President", "French President", "British Prime Minister", "Japanese Prime Minister"], a: "British Prime Minister" } },
+            { id: 29, ml: { q: "2024-ലെ 58-ാമത് ജ്ഞാനപീഠ പുരസ്കാരം നേടിയത് ആരെല്ലാം?", o: ["അമിതാവ് ഘോഷ്", "ദാമോദർ മൗസോ", "ഗുൽസാർ, ജഗദ്ഗുരു രാംഭദ്രാചാര്യ", "നീലമണി ഫൂക്കൻ"], a: "ഗുൽസാർ, ജഗദ്ഗുരു രാംഭദ്രാചാര്യ" }, en: { q: "Who were the recipients of the 58th Jnanpith Award announced in 2024?", o: ["Amitav Ghosh", "Damodar Mauzo", "Gulzar and Jagadguru Rambhadracharya", "Nilmani Phookan"], a: "Gulzar and Jagadguru Rambhadracharya" } },
+            { id: 30, ml: { q: "ഇന്ത്യയുടെ ആദ്യത്തെ മനുഷ്യ ബഹിരാകാശ ദൗത്യമായ 'ഗഗൻയാൻ' വിക്ഷേപിക്കാൻ നിശ്ചയിച്ചിരിക്കുന്ന വർഷം?", o: ["2024", "2025", "2026", "2027"], a: "2025" }, en: { q: "In which year is India's first human spaceflight mission, 'Gaganyaan', scheduled for launch?", o: ["2024", "2025", "2026", "2027"], a: "2025" } },
+            { id: 31, ml: { q: "2024-ൽ ഭാരതരത്നം നൽകി ആദരിച്ച മുൻ ബീഹാർ മുഖ്യമന്ത്രി?", o: ["ലാലു പ്രസാദ് യാദവ്", "നിതീഷ് കുമാർ", "കർപ്പൂരി ഠാക്കൂർ", "റബ്രി ദേവി"], a: "കർപ്പൂരി ഠാക്കൂർ" }, en: { q: "Which former Bihar Chief Minister was posthumously awarded the Bharat Ratna in 2024?", o: ["Lalu Prasad Yadav", "Nitish Kumar", "Karpoori Thakur", "Rabri Devi"], a: "Karpoori Thakur" } },
+            { id: 32, ml: { q: "ഇന്ത്യയിൽ സെമികണ്ടക്ടർ നിർമ്മാണം പ്രോത്സാഹിപ്പിക്കുന്നതിനുള്ള സർക്കാർ പദ്ധതി?", o: ["മേക്ക് ഇൻ ഇന്ത്യ", "ഇന്ത്യ സെമികണ്ടക്ടർ മിഷൻ", "ഡിജിറ്റൽ ചിപ്പ് ഇന്ത്യ", "ആത്മനിർഭർ ഭാരത്"], a: "ഇന്ത്യ സെമികണ്ടക്ടർ മിഷൻ" }, en: { q: "What is the government's program to promote semiconductor manufacturing in India?", o: ["Make in India", "India Semiconductor Mission", "Digital Chip India", "Aatmanirbhar Bharat"], a: "India Semiconductor Mission" } },
+            { id: 33, ml: { q: "2024-ലെ ദേശീയ ചലച്ചിത്ര പുരസ്കാരത്തിൽ മികച്ച ഫീച്ചർ ഫിലിമായി തിരഞ്ഞെടുക്കപ്പെട്ടത്?", o: ["RRR", "ഗംഗുഭായ് കത്തിയാവാഡി", "റോക്കട്രി: ദി നമ്പി എഫക്ട്", "സർദാർ ഉദ്ധം"], a: "റോക്കട്രി: ദി നമ്പി എഫക്ട്" }, en: { q: "Which film won the Best Feature Film at the National Film Awards in 2024?", o: ["RRR", "Gangubai Kathiawadi", "Rocketry: The Nambi Effect", "Sardar Udham"], a: "Rocketry: The Nambi Effect" } },
+            { id: 34, ml: { q: "2025-ലെ യൂണിയൻ ബജറ്റിൽ പ്രഖ്യാപിച്ച, യുവ സംരംഭകരെ സഹായിക്കുന്നതിനുള്ള പുതിയ പദ്ധതി?", o: ["സ്റ്റാർട്ടപ്പ് ഇന്ത്യ 2.0", "യുവ ഉദയം", "പ്രധാനമന്ത്രി യുവ റോജ്ഗാർ", "സ്കിൽ ഇന്ത്യ പ്ലസ്"], a: "യുവ ഉദയം" }, en: { q: "What is the new scheme announced in the 2025 Union Budget to support young entrepreneurs?", o: ["Startup India 2.0", "Yuva Udayam", "PM Yuva Rozgar", "Skill India Plus"], a: "Yuva Udayam" } },
+            { id: 35, ml: { q: "ഇന്ത്യയുടെ പുതിയ പാർലമെന്റ് മന്ദിരം 2024-ൽ ഏത് പേരിലാണ് പുനർനാമകരണം ചെയ്തത്?", o: ["ഭാരത് മന്ദിർ", "സംവിധാൻ സദൻ", "ലോക്തന്ത്ര ഭവൻ", "സൻസദ് ഭവൻ"], a: "സംവിധാൻ സദൻ" }, en: { q: "What was the new Parliament building of India renamed to in 2024?", o: ["Bharat Mandir", "Samvidhan Sadan", "Loktantra Bhavan", "Sansad Bhavan"], a: "Samvidhan Sadan" } },
+            { id: 36, ml: { q: "2025-ലെ ഇന്ത്യയുടെ പുതിയ മുഖ്യ തിരഞ്ഞെടുപ്പ് കമ്മീഷണർ?", o: ["രാജീവ് കുമാർ", "അനൂപ് ചന്ദ്ര പാണ്ഡെ", "ജ്ഞാനേഷ് കുമാർ", "സുശീൽ ചന്ദ്ര"], a: "ജ്ഞാനേഷ് കുമാർ" }, en: { q: "Who is the new Chief Election Commissioner of India in 2025?", o: ["Rajiv Kumar", "Anup Chandra Pandey", "Gyanesh Kumar", "Sushil Chandra"], a: "Gyanesh Kumar" } },
+            { id: 37, ml: { q: "2047-ഓടെ ഇന്ത്യയെ ഒരു വികസിത രാജ്യമാക്കാൻ ലക്ഷ്യമിടുന്ന സർക്കാർ സംരംഭം?", o: ["മേക്ക് ഇൻ ഇന്ത്യ", "വികസിത് ഭാരത് @ 2047", "ആത്മനിർഭർ ഭാരത്", "ഡിജിറ്റൽ ഇന്ത്യ"], a: "വികസിത് ഭാരത് @ 2047" }, en: { q: "What is the government initiative aimed at making India a developed country by 2047?", o: ["Make in India", "Viksit Bharat @ 2047", "Aatmanirbhar Bharat", "Digital India"], a: "Viksit Bharat @ 2047" } },
+            { id: 38, ml: { q: "ചന്ദ്രന്റെ ദക്ഷിണധ്രുവത്തിൽ വിജയകരമായി ലാൻഡർ ഇറക്കുന്ന ആദ്യത്തെ ദൗത്യം ഏതാണ്?", o: ["ചന്ദ്രയാൻ-2", "ലൂണ 25", "ചന്ദ്രയാൻ-3", "ആർടെമിസ്"], a: "ചന്ദ്രയാൻ-3" }, en: { q: "Which is the first mission to successfully land on the south pole of the Moon?", o: ["Chandrayaan-2", "Luna 25", "Chandrayaan-3", "Artemis"], a: "Chandrayaan-3" } },
+            { id: 39, ml: { q: "ഇന്ത്യയിലെ ആദ്യത്തെ ബുള്ളറ്റ് ട്രെയിൻ പദ്ധതി ഏതൊക്കെ നഗരങ്ങളെയാണ് ബന്ധിപ്പിക്കുന്നത്?", o: ["ഡൽഹി - മുംബൈ", "മുംബൈ - അഹമ്മദാബാദ്", "ചെന്നൈ - ബാംഗ്ലൂർ", "ഡൽഹി - കൊൽക്കത്ത"], a: "മുംബൈ - അഹമ്മദാബാദ്" }, en: { q: "Which cities does India's first bullet train project connect?", o: ["Delhi - Mumbai", "Mumbai - Ahmedabad", "Chennai - Bangalore", "Delhi - Kolkata"], a: "Mumbai - Ahmedabad" } },
+            { id: 40, ml: { q: "2024-ലെ ദാദാസാഹിബ് ഫാൽക്കെ അവാർഡ് ജേതാവ്?", o: ["ആശാ പരേഖ്", "രജനികാന്ത്", "മിഥുൻ ചക്രബർത്തി", "വഹീദ റഹ്മാൻ"], a: "മിഥുൻ ചക്രബർത്തി" }, en: { q: "Who is the recipient of the Dadasaheb Phalke Award for 2024?", o: ["Asha Parekh", "Rajinikanth", "Mithun Chakraborty", "Waheeda Rehman"], a: "Mithun Chakraborty" } },
+            { id: 41, ml: { q: "ഇന്ത്യയുടെ ആദ്യത്തെ സൗര ദൗത്യത്തിന്റെ പേര്?", o: ["സൂര്യയാൻ", "ആദിത്യ-L1", "രവി-1", "സോളാർ പ്രോബ്"], a: "ആദിത്യ-L1" }, en: { q: "What is the name of India's first solar mission?", o: ["Suryayaan", "Aditya-L1", "Ravi-1", "Solar Probe"], a: "Aditya-L1" } },
+            { id: 42, ml: { q: "ഇന്ത്യൻ ശിക്ഷാ നിയമത്തിന് പകരമായി 2024-ൽ നിലവിൽ വന്ന പുതിയ നിയമം?", o: ["ഭാരതീയ ന്യായ സംഹിത", "ഭാരതീയ നാഗരിക് സുരക്ഷാ സംഹിത", "ഭാരതീയ സാക്ഷ്യ അധിനിയം", "ഇവയെല്ലാം"], a: "ഭാരതീയ ന്യായ സംഹിത" }, en: { q: "What is the new law that replaced the Indian Penal Code in 2024?", o: ["Bharatiya Nyaya Sanhita", "Bharatiya Nagarik Suraksha Sanhita", "Bharatiya Sakshya Adhiniyam", "All of the above"], a: "Bharatiya Nyaya Sanhita" } },
+            { id: 43, ml: { q: "2024-ലെ സരസ്വതി സമ്മാൻ പുരസ്കാരം നേടിയത്?", o: ["ശിവശങ്കരി", "രാംദരശ് മിശ്ര", "പ്രഭാത് പട്നായിക്", "അരുൺ കമൽ"], a: "പ്രഭാത് പട്നായിക്" }, en: { q: "Who won the Saraswati Samman award for 2024?", o: ["Sivasankari", "Ramdarash Mishra", "Prabhat Patnaik", "Arun Kamal"], a: "Prabhat Patnaik" } },
+            { id: 44, ml: { q: "ഇന്ത്യയുടെ ആദ്യത്തെ തദ്ദേശീയ വിമാനവാഹിനിക്കപ്പലിന്റെ പേര്?", o: ["ഐ.എൻ.എസ് വിക്രാന്ത്", "ഐ.എൻ.എസ് വിക്രമാദിത്യ", "ഐ.എൻ.എസ് വിശാൽ", "ഐ.എൻ.എസ് അരിഹന്ത്"], a: "ഐ.എൻ.എസ് വിക്രാന്ത്" }, en: { q: "What is the name of India's first indigenous aircraft carrier?", o: ["INS Vikrant", "INS Vikramaditya", "INS Vishal", "INS Arihant"], a: "INS Vikrant" } },
+            { id: 45, ml: { q: "ഇന്ത്യയുടെ ആദ്യത്തെ മനുഷ്യ സമുദ്ര ദൗത്യത്തിന്റെ പേര്?", o: ["സമുദ്രയാൻ", "സാഗർ മിഷൻ", "ഡീപ് ഓഷ്യൻ മിഷൻ", "ജലയാൻ"], a: "സമുദ്രയാൻ" }, en: { q: "What is the name of India's first manned ocean mission?", o: ["Samudrayaan", "Sagar Mission", "Deep Ocean Mission", "Jalayaan"], a: "Samudrayaan" } },
+            { id: 46, ml: { q: "2024-ലെ പാരീസ് ഒളിമ്പിക്സിൽ ഇന്ത്യയുടെ സ്ഥാനം?", o: ["36", "48", "26", "52"], a: "26" }, en: { q: "What was India's rank in the 2024 Paris Olympics medal tally?", o: ["36", "48", "26", "52"], a: "26" } },
+            { id: 47, ml: { q: "2025-ലെ ഇന്ത്യയുടെ പുതിയ സുപ്രീം കോടതി ചീഫ് ജസ്റ്റിസ്?", o: ["ഡി.വൈ. ചന്ദ്രചൂഡ്", "സഞ്ജീവ് ഖന്ന", "യു.യു. ലളിത്", "എൻ.വി. രമണ"], a: "സഞ്ജീവ് ഖന്ന" }, en: { q: "Who is the new Chief Justice of the Supreme Court of India in 2025?", o: ["D. Y. Chandrachud", "Sanjiv Khanna", "U. U. Lalit", "N. V. Ramana"], a: "Sanjiv Khanna" } },
+            { id: 48, ml: { q: "2024-ലെ ലോകസുന്ദരി പട്ടം നേടിയ ഇന്ത്യൻ വനിത?", o: ["സിനി ഷെട്ടി", "മാനസ വാരാണസി", "നന്ദിനി ഗുപ്ത", "പ്രിയങ്ക ചോപ്ര"], a: "നന്ദിനി ഗുപ്ത" }, en: { q: "Which Indian woman won the Miss World title in 2024?", o: ["Sini Shetty", "Manasa Varanasi", "Nandini Gupta", "Priyanka Chopra"], a: "Nandini Gupta" } },
+            { id: 49, ml: { q: "ഇന്ത്യയിൽ 5G സേവനങ്ങൾ ഔദ്യോഗികമായി ആരംഭിച്ച വർഷം?", o: ["2022", "2023", "2024", "2025"], a: "2023" }, en: { q: "In which year were 5G services officially launched in India?", o: ["2022", "2023", "2024", "2025"], a: "2023" } },
+            { id: 50, ml: { q: "2024-ൽ ഇന്ത്യ വിജയകരമായി പരീക്ഷിച്ച പുതിയ തലമുറ ബാലിസ്റ്റിക് മിസൈൽ?", o: ["അഗ്നി-6", "പൃഥ്വി-3", "ബ്രഹ്മോസ്-2", "അഗ്നി-പ്രൈം"], a: "അഗ്നി-പ്രൈം" }, en: { q: "Which new generation ballistic missile did India successfully test in 2024?", o: ["Agni-6", "Prithvi-3", "BrahMos-II", "Agni-Prime"], a: "Agni-Prime" } },
+            
+            // World Current Affairs
+            { id: 51, ml: { q: "2024-ലെ സമ്മർ ഒളിമ്പിക്സിന് ആതിഥേയത്വം വഹിച്ച നഗരം?", o: ["ലോസ് ഏഞ്ചൽസ്", "ടോക്കിയോ", "പാരിസ്", "ലണ്ടൻ"], a: "പാരിസ്" }, en: { q: "Which city hosted the 2024 Summer Olympics?", o: ["Los Angeles", "Tokyo", "Paris", "London"], a: "Paris" } },
+            { id: 52, ml: { q: "2024-ലെ സമാധാനത്തിനുള്ള നോബൽ സമ്മാനം ലഭിച്ചത് ഏത് സംഘടനയ്ക്കാണ്?", o: ["റെഡ് ക്രോസ്", "യുനിസെഫ്", "വേൾഡ് ഫുഡ് പ്രോഗ്രാം", "ആംനസ്റ്റി ഇന്റർനാഷണൽ"], a: "ആംനസ്റ്റി ഇന്റർനാഷണൽ" }, en: { q: "Which organization received the Nobel Peace Prize in 2024?", o: ["Red Cross", "UNICEF", "World Food Programme", "Amnesty International"], a: "Amnesty International" } },
+            { id: 53, ml: { q: "2025-ലെ ഓസ്കാർ പുരസ്കാരത്തിൽ മികച്ച ചിത്രമായി തിരഞ്ഞെടുക്കപ്പെട്ടത്?", o: ["ഡ്യൂൺ: പാർട്ട് ടു", "ഓപ്പൺഹൈമർ", "ഫ്യൂരിയോസ", "ഗ്ലാഡിയേറ്റർ 2"], a: "ഡ്യൂൺ: പാർട്ട് ടു" }, en: { q: "Which film was chosen as the Best Picture at the 2025 Oscar Awards?", o: ["Dune: Part Two", "Oppenheimer", "Furiosa", "Gladiator 2"], a: "Dune: Part Two" } },
+            { id: 54, ml: { q: "2024-ൽ അമേരിക്കൻ പ്രസിഡന്റ് തിരഞ്ഞെടുപ്പിൽ വിജയിച്ചത് ആര്?", o: ["ജോ ബൈഡൻ", "ഡൊണാൾഡ് ട്രംപ്", "കമല ഹാരിസ്", "റോൺ ഡിസാന്റിസ്"], a: "ഡൊണാൾഡ് ട്രംപ്" }, en: { q: "Who won the US Presidential election in 2024?", o: ["Joe Biden", "Donald Trump", "Kamala Harris", "Ron DeSantis"], a: "Donald Trump" } },
+            { id: 55, ml: { q: "2025-ലെ G20 ഉച്ചകോടിക്ക് ആതിഥേയത്വം വഹിക്കുന്ന രാജ്യം?", o: ["ഇന്ത്യ", "ബ്രസീൽ", "ദക്ഷിണാഫ്രിക്ക", "ചൈന"], a: "ദക്ഷിണാഫ്രിക്ക" }, en: { q: "Which country is hosting the G20 Summit in 2025?", o: ["India", "Brazil", "South Africa", "China"], a: "South Africa" } },
+            { id: 56, ml: { q: "2024-ൽ യൂറോ കപ്പ് ഫുട്ബോൾ കിരീടം നേടിയ രാജ്യം?", o: ["ഫ്രാൻസ്", "ഇംഗ്ലണ്ട്", "ജർമ്മനി", "സ്പെയിൻ"], a: "സ്പെയിൻ" }, en: { q: "Which country won the Euro Cup football title in 2024?", o: ["France", "England", "Germany", "Spain"], a: "Spain" } },
+            { id: 57, ml: { q: "2024-ൽ വികസിപ്പിച്ച, മനുഷ്യന്റെ ചിന്തകളെ കമാൻഡുകളാക്കി മാറ്റുന്ന ന്യൂറൽ ഇന്റർഫേസ് ചിപ്പിന്റെ പേര്?", o: ["ന്യൂറാലിങ്ക്", "ബ്രെയിൻഗേറ്റ്", "ടെലിപ്പതി ചിപ്പ്", "സിനാപ്സ്"], a: "ന്യൂറാലിങ്ക്" }, en: { q: "What is the name of the neural interface chip developed in 2024 that translates human thoughts into commands?", o: ["Neuralink", "BrainGate", "Telepathy Chip", "Synapse"], a: "Neuralink" } },
+            { id: 58, ml: { q: "2024-ലെ ബുക്കർ പ്രൈസ് നേടിയ സാഹിത്യകാരൻ/സാഹിത്യകാരി?", o: ["പോൾ ലിഞ്ച്", "സമാന്ത ഹാർവി", "ഷെഹാൻ കരുണതിലക", "ഡാമൺ ഗാൽഗട്ട്"], a: "സമാന്ത ഹാർവി" }, en: { q: "Which author won the Booker Prize in 2024?", o: ["Paul Lynch", "Samantha Harvey", "Shehan Karunatilaka", "Damon Galgut"], a: "Samantha Harvey" } },
+            { id: 59, ml: { q: "2025-ൽ ചൊവ്വയിലേക്ക് മനുഷ്യരെ അയക്കാനുള്ള നാസയുടെ ദൗത്യത്തിന്റെ പേര്?", o: ["ആർടെമിസ്", "പെർസിവിയറൻസ് 2", "ഏരീസ് മിഷൻ", "ഓറിയോൺ"], a: "ഏരീസ് മിഷൻ" }, en: { q: "What is the name of NASA's mission to send humans to Mars, planned for 2025?", o: ["Artemis", "Perseverance 2", "Ares Mission", "Orion"], a: "Ares Mission" } },
+            { id: 60, ml: { q: "2024-ലെ കോപ്പ അമേരിക്ക ഫുട്ബോൾ കിരീടം നേടിയത്?", o: ["ബ്രസീൽ", "ഉറുഗ്വേ", "അർജന്റീന", "കൊളംബിയ"], a: "അർജന്റീന" }, en: { q: "Who won the Copa América football title in 2024?", o: ["Brazil", "Uruguay", "Argentina", "Colombia"], a: "Argentina" } },
+            { id: 61, ml: { q: "2025-ലെ ഫിഫ ക്ലബ് ലോകകപ്പിന് ആതിഥേയത്വം വഹിക്കുന്ന രാജ്യം?", o: ["സൗദി അറേബ്യ", "ഖത്തർ", "യു.എസ്.എ", "ചൈന"], a: "യു.എസ്.എ" }, en: { q: "Which country is hosting the 2025 FIFA Club World Cup?", o: ["Saudi Arabia", "Qatar", "USA", "China"], a: "USA" } },
+            { id: 62, ml: { q: "2024-ൽ ഫ്യൂഷൻ എനർജി ഗവേഷണത്തിൽ വലിയ മുന്നേറ്റം നടത്തിയ രാജ്യം?", o: ["യു.എസ്.എ", "ചൈന", "ജപ്പാൻ", "യു.കെ"], a: "യു.എസ്.എ" }, en: { q: "Which country made a major breakthrough in fusion energy research in 2024?", o: ["USA", "China", "Japan", "UK"], a: "USA" } },
+            { id: 63, ml: { q: "2025-ലെ ഫോർമുല 1 ലോക ചാമ്പ്യൻ?", o: ["ലൂയിസ് ഹാമിൽട്ടൺ", "മാക്സ് വെർസ്റ്റാപ്പൻ", "ചാൾസ് ലെക്ലർക്ക്", "ലാൻഡോ നോറിസ്"], a: "മാക്സ് വെർസ്റ്റാപ്പൻ" }, en: { q: "Who is the Formula 1 World Champion for 2025?", o: ["Lewis Hamilton", "Max Verstappen", "Charles Leclerc", "Lando Norris"], a: "Max Verstappen" } },
+            { id: 64, ml: { q: "2025-ലെ COP30 കാലാവസ്ഥാ ഉച്ചകോടി നടക്കുന്ന നഗരം?", o: ["ദുബായ്, യു.എ.ഇ", "ബെലെം, ബ്രസീൽ", "ഗ്ലാസ്ഗോ, സ്കോട്ട്ലൻഡ്", "മഡ്രിഡ്, സ്പെയിൻ"], a: "ബെലെം, ബ്രസീൽ" }, en: { q: "In which city will the COP30 climate summit be held in 2025?", o: ["Dubai, UAE", "Belém, Brazil", "Glasgow, Scotland", "Madrid, Spain"], a: "Belém, Brazil" } },
+            { id: 65, ml: { q: "2025-ൽ ബ്രിക്സ് (BRICS) സഖ്യത്തിൽ പുതുതായി ചേർന്ന രാജ്യം?", o: ["ഇന്തോനേഷ്യ", "നൈജീരിയ", "തുർക്കി", "അർജന്റീന"], a: "നൈജീരിയ" }, en: { q: "Which country newly joined the BRICS alliance in 2025?", o: ["Indonesia", "Nigeria", "Turkey", "Argentina"], a: "Nigeria" } },
+            { id: 66, ml: { q: "2024-ലെ ടൈം മാഗസിൻ 'പേഴ്സൺ ഓഫ് ദി ഇയർ' ആയി തിരഞ്ഞെടുത്തത്?", o: ["ഇലോൺ മസ്ക്", "വ്ലാഡിമിർ പുടിൻ", "എ.ഐ ചാറ്റ്ബോട്ടുകൾ", "ടെയ്ലർ സ്വിഫ്റ്റ്"], a: "എ.ഐ ചാറ്റ്ബോട്ടുകൾ" }, en: { q: "Who was chosen as Time Magazine's 'Person of the Year' for 2024?", o: ["Elon Musk", "Vladimir Putin", "AI Chatbots", "Taylor Swift"], a: "AI Chatbots" } },
+            { id: 67, ml: { q: "2026-ലെ ഫിഫ ലോകകപ്പിന് ആതിഥേയത്വം വഹിക്കുന്ന രാജ്യങ്ങളിൽ ഉൾപ്പെടാത്തത് ഏത്?", o: ["യു.എസ്.എ", "മെക്സിക്കോ", "കാനഡ", "ബ്രസീൽ"], a: "ബ്രസീൽ" }, en: { q: "Which of the following countries is NOT hosting the 2026 FIFA World Cup?", o: ["USA", "Mexico", "Canada", "Brazil"], a: "Brazil" } },
+            { id: 68, ml: { q: "2025-ലെ വിംബിൾഡൺ പുരുഷ സിംഗിൾസ് കിരീടം നേടിയത്?", o: ["നോവാക് ജോക്കോവിച്ച്", "കാർലോസ് അൽകാരാസ്", "യാനിക് സിന്നർ", "ഡാനിൽ മെദ്‌വദേവ്"], a: "കാർലോസ് അൽകാരാസ്" }, en: { q: "Who won the Wimbledon Men's Singles title in 2025?", o: ["Novak Djokovic", "Carlos Alcaraz", "Jannik Sinner", "Daniil Medvedev"], a: "Carlos Alcaraz" } },
+            { id: 69, ml: { q: "2024-ൽ ലോകാരോഗ്യ സംഘടന (WHO) ആഗോള ആരോഗ്യ അടിയന്തരാവസ്ഥയായി പ്രഖ്യാപിച്ച രോഗം?", o: ["കോവിഡ്-19", "മങ്കിപോക്സ്", "പക്ഷിപ്പനി (H5N1)", "സിക്ക വൈറസ്"], a: "പക്ഷിപ്പനി (H5N1)" }, en: { q: "Which disease was declared a global health emergency by the WHO in 2024?", o: ["COVID-19", "Mpox", "Avian Influenza (H5N1)", "Zika Virus"], a: "Avian Influenza (H5N1)" } },
+            { id: 70, ml: { q: "2025-ൽ ലോകത്തിലെ ഏറ്റവും മൂല്യമുള്ള കമ്പനി?", o: ["ആപ്പിൾ", "മൈക്രോസോഫ്റ്റ്", "ഗൂഗിൾ", "അമസോൺ"], a: "മൈക്രോസോഫ്റ്റ്" }, en: { q: "What is the world's most valuable company in 2025?", o: ["Apple", "Microsoft", "Google", "Amazon"], a: "Microsoft" } },
+            { id: 71, ml: { q: "ചാറ്റ്ജിപിടി-5 (ChatGPT-5) പുറത്തിറക്കിയ കമ്പനി?", o: ["ഗൂഗിൾ", "മെറ്റാ", "ഓപ്പൺഎഐ", "മൈക്രോസോഫ്റ്റ്"], a: "ഓപ്പൺഎഐ" }, en: { q: "Which company released ChatGPT-5?", o: ["Google", "Meta", "OpenAI", "Microsoft"], a: "OpenAI" } },
+            { id: 72, ml: { q: "2024-ലെ ട്വന്റി20 ക്രിക്കറ്റ് ലോകകപ്പ് നേടിയ രാജ്യം?", o: ["ഓസ്ട്രേലിയ", "ഇംഗ്ലണ്ട്", "ഇന്ത്യ", "ദക്ഷിണാഫ്രിക്ക"], a: "ഇന്ത്യ" }, en: { q: "Which country won the T20 Cricket World Cup in 2024?", o: ["Australia", "England", "India", "South Africa"], a: "India" } },
+            { id: 73, ml: { q: "2025-ൽ ചന്ദ്രന്റെ ഇരുണ്ട ഭാഗത്ത് റോവർ ഇറക്കാൻ പദ്ധതിയിടുന്ന രാജ്യം?", o: ["യു.എസ്.എ", "റഷ്യ", "ചൈന", "ഇന്ത്യ"], a: "ചൈന" }, en: { q: "Which country plans to land a rover on the far side of the Moon in 2025?", o: ["USA", "Russia", "China", "India"], a: "China" } },
+            { id: 74, ml: { q: "2024-ൽ പ്രവർത്തനമാരംഭിച്ച ലോകത്തിലെ ഏറ്റവും വലിയ സോളാർ പവർ പ്ലാന്റ് എവിടെയാണ്?", o: ["ഇന്ത്യ", "ചൈന", "യു.എ.ഇ", "യു.എസ്.എ"], a: "യു.എ.ഇ" }, en: { q: "Where is the world's largest solar power plant that became operational in 2024 located?", o: ["India", "China", "UAE", "USA"], a: "UAE" } },
+            { id: 75, ml: { q: "2025-ലെ സാഹിത്യത്തിനുള്ള നോബൽ സമ്മാനം നേടിയത്?", o: ["ഹരുകി മുറാകാമി", "മാർഗരറ്റ് അറ്റ്വുഡ്", "സൽമാൻ റുഷ്ദി", "അരുന്ധതി റോയ്"], a: "ഹരുകി മുറാകാമി" }, en: { q: "Who won the Nobel Prize in Literature for 2025?", o: ["Haruki Murakami", "Margaret Atwood", "Salman Rushdie", "Arundhati Roy"], a: "Haruki Murakami" } }
+        ];
+
+        // --- App State ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedLang = 'ml';
+        let userAnswers = new Array(quizData.length + 1).fill(null); // Use a larger array to map by ID
+        let questions = [];
+
+        // --- DOM Elements ---
+        const languageScreen = document.getElementById('language-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionCounter = document.getElementById('question-counter');
+        const scoreCounter = document.getElementById('score-counter');
+        const progressBar = document.getElementById('progress-bar');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedback = document.getElementById('feedback');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        // --- Functions ---
+        function startQuiz(lang) {
+            selectedLang = lang;
+            // Shuffle questions for variety each time
+            questions = [...quizData].sort(() => Math.random() - 0.5);
+            languageScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // Reset feedback and styles
+            feedback.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            if (currentQuestionIndex >= questions.length) {
+                showResults();
+                return;
+            }
+
+            const currentQuestion = questions[currentQuestionIndex][selectedLang];
+            const questionData = questions[currentQuestionIndex];
+            
+            // Set language class for proper font rendering
+            questionText.className = `text-2xl font-bold text-center text-gray-800 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            
+            questionText.textContent = currentQuestion.q;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1}/${questions.length}`;
+            scoreCounter.textContent = `Score: ${score}`;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+
+            // Shuffle options
+            const shuffledOptions = [...currentQuestion.o].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = `btn-option w-full p-4 rounded-lg border-2 border-gray-300 text-lg font-semibold text-gray-700 bg-white hover:bg-cyan-100 hover:border-cyan-400 transition ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+                button.onclick = () => selectAnswer(option, button);
+                optionsContainer.appendChild(button);
+            });
+
+            updateNavButtons();
+            
+            // If user has already answered this question (by using back button), show the result
+            if (userAnswers[questionData.id] !== null) {
+                showPreviousAnswer();
+            }
+        }
+        
+        function selectAnswer(selectedOption, button) {
+            const questionData = questions[currentQuestionIndex];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            // Only update score if the question hasn't been answered correctly before
+            if (userAnswers[questionData.id] !== currentQuestion.a && selectedOption === correctAnswer) {
+                 score++;
+            } else if (userAnswers[questionData.id] === currentQuestion.a && selectedOption !== correctAnswer) {
+                 // If user changes a correct answer to a wrong one, decrement score
+                 score--;
+            }
+
+            userAnswers[questionData.id] = selectedOption;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true; // Disable all options after one is selected
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+
+            if (selectedOption === correctAnswer) {
+                playCorrectSound();
+                feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                feedback.className = 'mt-4 text-center font-bold text-lg text-green-600';
+            } else {
+                playWrongSound();
+                button.classList.add('wrong');
+                feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                feedback.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+            }
+            
+            scoreCounter.textContent = `Score: ${score}`;
+        }
+
+        function showPreviousAnswer() {
+            const questionData = questions[currentQuestionIndex];
+            const selectedOption = userAnswers[questionData.id];
+            const currentQuestion = questionData[selectedLang];
+            const correctAnswer = currentQuestion.a;
+
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+                if (btn.textContent === selectedOption && selectedOption !== correctAnswer) {
+                    btn.classList.add('wrong');
+                }
+            });
+
+            if (selectedOption !== correctAnswer) {
+                 feedback.innerHTML = `${selectedLang === 'ml' ? 'തെറ്റ്! ശരിയുത്തരം' : 'Wrong! The correct answer is'}: <span class="font-bold">${correctAnswer}</span>`;
+                 feedback.className = 'mt-4 text-center font-semibold text-lg text-red-600';
+            } else {
+                 feedback.textContent = selectedLang === 'ml' ? 'ശരിയുത്തരം!' : 'Correct!';
+                 feedback.className = 'mt-4 text-center font-bold text-lg text-green-600';
+            }
+        }
+
+        function updateNavButtons() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', backBtn.disabled);
+            
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.textContent = selectedLang === 'ml' ? 'പൂർത്തിയാക്കുക' : 'Finish';
+            } else {
+                nextBtn.textContent = selectedLang === 'ml' ? 'അടുത്തത് >' : 'Next >';
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            const percentage = Math.round((score / questions.length) * 100);
+            const resultTitle = document.getElementById('result-title');
+            const finalScore = document.getElementById('final-score');
+            const resultMessage = document.getElementById('result-message');
+
+            resultTitle.className = `text-4xl font-bold mb-4 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            finalScore.className = `text-2xl mb-6 text-gray-700 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+            resultMessage.className = `text-xl mb-8 ${selectedLang === 'ml' ? 'malayalam' : ''}`;
+
+            if (selectedLang === 'ml') {
+                resultTitle.textContent = 'ഫലം';
+                finalScore.textContent = `നിങ്ങളുടെ സ്കോർ: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'അടിപൊളി! നിങ്ങൾ മിടുക്കനാണ്/മിടുക്കിയാണ്.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'നന്നായിരിക്കുന്നു! ഇനിയും മെച്ചപ്പെടുത്താം.';
+                } else {
+                    resultMessage.textContent = 'സാരമില്ല, വീണ്ടും ശ്രമിക്കുക!';
+                }
+            } else {
+                resultTitle.textContent = 'Results';
+                finalScore.textContent = `Your Score: ${score} / ${questions.length}`;
+                if (percentage >= 80) {
+                    resultMessage.textContent = 'Excellent! You did a great job.';
+                } else if (percentage >= 50) {
+                    resultMessage.textContent = 'Good effort! Keep practicing.';
+                } else {
+                    resultMessage.textContent = 'Don\'t worry, try again!';
+                }
+            }
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers.fill(null);
+            questions = [];
+            resultScreen.classList.add('hidden');
+            languageScreen.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
+
