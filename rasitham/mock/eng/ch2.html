@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Interactive Learning App: Voices in Unison</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #F0F9FF; /* A slightly different shade for the new chapter */
+            --primary-color: #10B981; /* Green for unity/nature */
+            --secondary-color: #8B5CF6; /* Purple for magic/wonder */
+            --accent-color-1: #F97316;
+            --accent-color-2: #3B82F6;
+            --text-color: #1F2937;
+            --card-bg: linear-gradient(145deg, #ffffff, #f5faff);
+        }
+
+        @keyframes tada {
+            from { transform: scale3d(1, 1, 1); }
+            10%, 20% { transform: scale3d(0.95, 0.95, 0.95) rotate3d(0, 0, 1, -5deg); }
+            30%, 50%, 70%, 90% { transform: scale3d(1.05, 1.05, 1.05) rotate3d(0, 0, 1, 5deg); }
+            40%, 60%, 80% { transform: scale3d(1.05, 1.05, 1.05) rotate3d(0, 0, 1, -5deg); }
+            to { transform: scale3d(1, 1, 1); }
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        body {
+            font-family: 'Comic Neue', cursive;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none;
+        }
+
+        #app-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 450px; /* Mobile-first constraint */
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 1.5rem;
+            transition: transform 0.4s ease-in-out;
+            background-color: var(--bg-color);
+            overflow-y: auto;
+        }
+
+        .screen.inactive { transform: translateX(100%); }
+        .screen.slide-out { transform: translateX(-100%); }
+
+        .header-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            text-shadow: 2px 2px 0px #fff;
+        }
+        
+        .tada { display: inline-block; animation: tada 1.5s infinite; }
+
+        /* Learning Path Menu */
+        #learning-path { display: flex; flex-direction: column; gap: 1rem; }
+        
+        .path-item {
+            display: flex; align-items: center; background: var(--card-bg);
+            border-radius: 20px; padding: 1rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+            transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
+        }
+        .path-item:hover { transform: scale(1.03); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); }
+        .path-item .icon-container {
+            width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center;
+            justify-content: center; margin-right: 1rem; flex-shrink: 0;
+        }
+        .path-item .icon-container svg { width: 36px; height: 36px; }
+        .path-item .text-content { flex-grow: 1; }
+        .path-item h3 { font-size: 1.25rem; font-weight: 700; }
+        .path-item p { font-size: 0.9rem; color: #6B7280; }
+
+        /* Activity Screen */
+        .activity-header { text-align: center; margin-bottom: 1rem; }
+        .activity-title { font-family: 'Fredoka One', cursive; font-size: 1.75rem; color: var(--secondary-color); }
+        .progress-bar-container {
+            width: 100%; height: 12px; background-color: #E5E7EB;
+            border-radius: 99px; margin-top: 0.5rem; overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #A78BFA, #8B5CF6);
+            border-radius: 99px; transition: width 0.5s ease;
+        }
+
+        .activity-card {
+            background: var(--card-bg); border-radius: 24px;
+            padding: 1.5rem; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn {
+            padding: 1rem 1.5rem; border-radius: 16px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease;
+            cursor: pointer; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%;
+        }
+        .btn-primary { background: linear-gradient(45deg, var(--primary-color), #34D399); color: white; }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 7px 14px rgba(16, 185, 129, 0.4); }
+        .btn-secondary { background: linear-gradient(45deg, var(--accent-color-1), #fb923c); color: white; }
+
+        /* Modal */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background-color: white; padding: 2rem; border-radius: 24px;
+            text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: bounceIn 0.5s ease; width: 90%; max-width: 350px;
+        }
+        .modal-emoji { font-size: 4rem; margin-bottom: 1rem; }
+        .modal-title { font-size: 1.8rem; font-weight: bold; margin-bottom: 0.5rem; }
+        .modal-message { font-size: 1.1rem; margin-bottom: 1.5rem; color: #4b5563; }
+        
+        /* Other styles for activities */
+        .option-btn {
+            display: block; width: 100%; text-align: center; padding: 1rem;
+            margin-bottom: 0.75rem; border: 2px solid #e5e7eb; border-radius: 16px;
+            transition: all 0.2s ease; background-color: #f9fafb; font-size: 1.1rem;
+        }
+        .option-btn:hover { transform: scale(1.03); border-color: var(--primary-color); }
+        .option-btn.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; font-weight: bold; }
+        .option-btn.incorrect { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; font-weight: bold; }
+        
+        .draggable { touch-action: none; cursor: move; background-color: #e0f2fe; padding: 0.75rem 1.25rem; border-radius: 12px; margin: 0.25rem; border: 1px solid #bae6fd; text-align: center; }
+        .drop-zone { border: 3px dashed #9ca3af; border-radius: 16px; padding: 1rem; min-height: 100px; background-color: #f9fafb; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 0.5rem; }
+        .letter-input { width: 2.5rem; height: 2.5rem; text-align: center; font-size: 1.25rem; border-radius: 8px; border: 2px solid #d1d5db; margin: 0 0.1rem; color: var(--secondary-color); }
+        .riddle-box { background-color: #fefce8; border: 3px dashed #eab308; padding: 1.5rem; border-radius: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="app-wrapper">
+        <!-- Main Menu Screen -->
+        <div id="main-menu-screen" class="screen">
+            <header class="text-center mb-6">
+                <h1 class="header-title">Voices in Unison <span class="tada">🌈</span></h1>
+                <p class="text-md text-gray-500 mt-1">A New Adventure in Teamwork!</p>
+            </header>
+            <div id="learning-path">
+                <!-- Path items will be generated by JS -->
+            </div>
+        </div>
+
+        <!-- Activity Screen -->
+        <div id="activity-screen" class="screen inactive">
+            <div class="activity-header">
+                <h2 id="activity-title" class="activity-title">Activity Title</h2>
+                <div class="progress-bar-container">
+                    <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+            <div id="activity-content" class="activity-card">
+                <!-- Activity content will be loaded here -->
+            </div>
+            <button class="btn btn-secondary mt-6" onclick="showMenu()">🏠 Back to Path</button>
+        </div>
+    </div>
+
+    <!-- Modal for feedback -->
+    <div id="feedback-modal" class="modal hidden">
+        <div class="modal-content">
+            <div id="modal-emoji" class="modal-emoji"></div>
+            <h2 id="modal-title" class="modal-title"></h2>
+            <p id="modal-message" class="modal-message"></p>
+            <div id="modal-buttons-container" class="mt-4 flex flex-col gap-2">
+                 <!-- Buttons are dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- SOUND SETUP ---
+        const correctSynth = new Tone.Synth({
+            oscillator: { type: 'triangle' },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
+        }).toDestination();
+
+        const incorrectSynth = new Tone.Synth({
+            oscillator: { type: 'square' },
+            envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
+        }).toDestination();
+
+        function playCorrectSound() {
+            correctSynth.triggerAttackRelease("C5", "8n", Tone.now());
+            correctSynth.triggerAttackRelease("E5", "8n", Tone.now() + 0.1);
+            correctSynth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
+        }
+
+        function playIncorrectSound() {
+            incorrectSynth.triggerAttackRelease("C3", "4n");
+        }
+
+        // --- DATA AND ICONS ---
+        const icons = {
+            fill: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16.707 2.293a1 1 0 0 1 1.414 0l4 4a1 1 0 0 1 0 1.414l-13 13a1 1 0 0 1-.707.293H4a1 1 0 0 1-1-1v-4.414a1 1 0 0 1 .293-.707l13-13zm3 4.414L17 4.414 4.707 16.707H4v.293L16.293 4.707l.414.414z"/></svg>`,
+            jumbled: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`,
+            complete: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.26 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z"/></svg>`,
+            odd: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM12 10h-2v2H8v-2H6V8h2V6h2v2h2v2z"/></svg>`,
+            rearrange: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18h17v-2H4v2zM4 13h17v-2H4v2zM4 6v2h17V6H4z"/></svg>`,
+            riddles: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>`,
+            order: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 11.9v-.9H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg>`,
+            letters: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M6.4 18L5 16.6l5.6-5.6L5 5.4 6.4 4l5.6 5.6L17.6 4 19 5.4l-5.6 5.6L19 16.6 17.6 18l-5.6-5.6L6.4 18z"/></svg>`,
+            poem: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>`,
+            language: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>`,
+            oneWord: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M14 17H4v2h10v-2Zm6-8H4v2h16V9Z"/>`,
+            preposition: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>`
+        };
+
+        const activities = {
+            fillInTheBlanks: {
+                title: "Fill in the Blanks",
+                questions: [
+                    { sentence: "On a vast sandy land, there was a warm and ___ village.", options: ["noisy", "peaceful", "busy"], answer: "peaceful" },
+                    { sentence: "The villagers had never met any ___.", options: ["friends", "family", "outsiders"], answer: "outsiders" },
+                    { sentence: "Suddenly, a warm ___ swept through the village.", options: ["breeze", "storm", "river"], answer: "breeze" },
+                    { sentence: "Colourful ___ began to fall from the sky.", options: ["stones", "ribbons", "leaves"], answer: "ribbons" },
+                    { sentence: "The villagers ran and eagerly ___ the ribbons.", options: ["grabbed", "threw", "ignored"], answer: "grabbed" },
+                    { sentence: "Lily's blue ribbon made her resemble the ___.", options: ["sea", "sky", "night"], answer: "sky" },
+                    { sentence: "The people, separated by colours, moved to different ___.", options: ["houses", "corners", "countries"], answer: "corners" },
+                    { sentence: "Each group built big ___ around their corners.", options: ["fences", "walls", "gardens"], answer: "walls" },
+                    { sentence: "The red group had water, but no ___.", options: ["food", "shelter", "wood"], answer: "food" },
+                    { sentence: "The blue group had food, but no ___.", options: ["food", "water", "shelter"], answer: "water" },
+                    { sentence: "The green group had wood, but no ___.", options: ["food", "water", "shelter"], answer: "shelter" },
+                    { sentence: "The yellow group had shelter, but no ___.", options: ["firewood", "water", "food"], answer: "firewood" },
+                    { sentence: "Hearing the helpless calls, a ___ arrived.", options: ["king", "stranger", "villager"], answer: "stranger" },
+                    { sentence: "The stranger's advice was to ___ what they have.", options: ["hide", "sell", "share"], answer: "share" },
+                    { sentence: "All the ribbons together turned into a beautiful ___.", options: ["scarf", "blanket", "rainbow"], answer: "rainbow" },
+                    { sentence: "The kite ___ high, dancing in the breeze.", options: ["crashed", "soared", "slept"], answer: "soared" },
+                    { sentence: "The ___ of the town strolled through the park.", options: ["Mayor", "King", "President"], answer: "Mayor" },
+                    { sentence: "The wind whispered softly, 'I ___ the kite high.'", options: ["push", "lift", "drop"], answer: "lift" },
+                    { sentence: "The kite's tail keeps the kite ___.", options: ["fast", "steady", "colorful"], answer: "steady" },
+                    { sentence: "The kite is a symbol of ___.", options: ["pride", "unity", "wind"], answer: "unity" },
+                    { sentence: "Ants never quit, they always find another ___.", options: ["problem", "way", "friend"], answer: "way" },
+                    { sentence: "A tiny ant can teach us how to earn ___.", options: ["money", "food", "respect"], answer: "respect" },
+                    { sentence: "The villagers lived together in ___.", options: ["harmony", "fear", "silence"], answer: "harmony" },
+                    { sentence: "The boy replied to the Mayor with ___.", options: ["fear", "pride", "sadness"], answer: "pride" },
+                    { sentence: "The string helps to ___ the kite as it moves.", options: ["break", "guide", "color"], answer: "guide" }
+                ]
+            },
+            jumbledWords: {
+                title: "Jumbled Words",
+                questions: [
+                    { jumbled: "YUTNI", correct: "UNITY" }, { jumbled: "EHASR", correct: "SHARE" },
+                    { jumbled: "BRNWOIA", correct: "RAINBOW" }, { jumbled: "PECAEFUL", correct: "PEACEFUL" },
+                    { jumbled: "BRBINO", correct: "RIBBON" }, { jumbled: "TRANGERS", correct: "STRANGER" },
+                    { jumbled: "TEHLESR", correct: "SHELTER" }, { jumbled: "LLAW", correct: "WALL" },
+                    { jumbled: "TEKI", correct: "KITE" }, { jumbled: "DIWN", correct: "WIND" },
+                    { jumbled: "TGINRS", correct: "STRING" }, { jumbled: "YORMA", correct: "MAYOR" },
+                    { jumbled: "ROSA", correct: "SOAR" }, { jumbled: "YEDAST", correct: "STEADY" },
+                    { jumbled: "TNA", correct: "ANT" }, { jumbled: "TUIQ", correct: "QUIT" },
+                    { jumbled: "PRETCES", correct: "RESPECT" }, { jumbled: "MBLISYC", correct: "SYMBOL" },
+                    { jumbled: "MONYHAR", correct: "HARMONY" }, { jumbled: "FORTEFS", correct: "EFFORTS" },
+                    { jumbled: "VIVEURS", correct: "SURVIVE" }, { jumbled: "KEDCNAIP", correct: "PANICKED" },
+                    { jumbled: "TTREFLUGNI", correct: "FLUTTERING" }, { jumbled: "SLOVECI", correct: "VOICES" },
+                    { jumbled: "NOSINU", correct: "UNISON" }
+                ]
+            },
+            completeTheSentence: {
+                title: "Complete the Sentence",
+                questions: [
+                    { sentence: "The villagers enjoyed the calm and ___ life.", answer: "QUIET" },
+                    { sentence: "The sun ___ its glowing golden light.", answer: "SPRINKLED" },
+                    { sentence: "The red group had water, but no ___.", answer: "FOOD" },
+                    { sentence: "The stranger advised them to ___ what they had.", answer: "SHARE" },
+                    { sentence: "They pulled down their walls and ___ their ribbons.", answer: "COMBINED" },
+                    { sentence: "The kite ___ high, dancing in the breeze.", answer: "SOARED" },
+                    { sentence: "The Mayor was ___ to know who flew the kite.", answer: "CURIOUS" },
+                    { sentence: "The wind helps to ___ the kite into the sky.", answer: "LIFT" },
+                    { sentence: "The kite's tail keeps it ___.", answer: "STEADY" },
+                    { sentence: "The string helps to ___ the kite.", answer: "GUIDE" },
+                    { sentence: "Together, you make the kite fly ___.", answer: "BEAUTIFULLY" },
+                    { sentence: "It seems there is nothing ants can't ___.", answer: "DO" },
+                    { sentence: "They always find another ___.", answer: "WAY" },
+                    { sentence: "A tiny ant can ___ us all.", answer: "TEACH" },
+                    { sentence: "The villagers were simple and ___.", answer: "KIND-HEARTED" },
+                    { sentence: "Blue ribbons ___ down from the sky.", answer: "DRIFTED" },
+                    { sentence: "They all ___ when they couldn't get what they needed.", answer: "PANICKED" },
+                    { sentence: "The rainbow ribbon became a ___ of their unity.", answer: "SYMBOL" },
+                    { sentence: "The villagers lived together in ___.", answer: "HARMONY" },
+                    { sentence: "The Mayor ___ through the park.", answer: "STROLLED" },
+                    { sentence: "The boy replied with ___.", answer: "PRIDE" },
+                    { sentence: "The wind ___ softly.", answer: "WHISPERED" },
+                    { sentence: "Without the tail, the kite would ___.", answer: "CRASH" },
+                    { sentence: "If we work together, we can ___ anything.", answer: "ACHIEVE" },
+                    { sentence: "The ant is a tiny ___.", answer: "SPECK" }
+                ]
+            },
+            oddOneOut: {
+                title: "Odd One Out",
+                questions: [
+                    { options: ["Red", "Blue", "Green", "Stranger"], answer: "Stranger" },
+                    { options: ["Food", "Water", "Shelter", "Ribbon"], answer: "Ribbon" },
+                    { options: ["Kite", "Wind", "String", "Mayor"], answer: "Mayor" },
+                    { options: ["Ant", "Butterfly", "Bee", "Kite"], answer: "Kite" },
+                    { options: ["Share", "Combine", "Separate", "Unite"], answer: "Separate" },
+                    { options: ["Wall", "Corner", "Village", "Sky"], answer: "Sky" },
+                    { options: ["Lily", "Max", "Mia", "Mayor"], answer: "Mayor" },
+                    { options: ["Soar", "Fly", "Lift", "Fall"], answer: "Fall" },
+                    { options: ["Happy", "Peaceful", "Panicked", "Joyful"], answer: "Panicked" },
+                    { options: ["Boy", "Wind", "Tail", "Stranger"], answer: "Stranger" },
+                    { options: ["Unity", "Teamwork", "Harmony", "Pride"], answer: "Pride" },
+                    { options: ["Wood", "Firewood", "Tree", "Water"], answer: "Water" },
+                    { options: ["Vast", "Big", "Large", "Tiny"], answer: "Tiny" },
+                    { options: ["Whisper", "Shout", "Speak", "Say"], answer: "Shout" },
+                    { options: ["Ant", "Bug", "Speck", "Kite"], answer: "Kite" },
+                    { options: ["Red", "Blue", "Yellow", "Rainbow"], answer: "Rainbow" },
+                    { options: ["Dance", "Play", "Sketch", "Build"], answer: "Build" },
+                    { options: ["Breeze", "Wind", "Air", "Wall"], answer: "Wall" },
+                    { options: ["Steady", "Balanced", "Still", "Moving"], answer: "Moving" },
+                    { options: ["Hungry", "Thirsty", "Cold", "Happy"], answer: "Happy" },
+                    { options: ["Morning", "Day", "Night", "Suddenly"], answer: "Suddenly" },
+                    { options: ["Simple", "Kind", "Helpless", "Calm"], answer: "Helpless" },
+                    { options: ["Flutter", "Spin", "Drift", "Stand"], answer: "Stand" },
+                    { options: ["Advice", "Question", "Problem", "Solution"], answer: "Problem" },
+                    { options: ["Achieve", "Succeed", "Win", "Quit"], answer: "Quit" }
+                ]
+            },
+            rearrangeSentence: {
+                title: "Rearrange Sentences",
+                questions: [
+                    ["The", "villagers", "were", "simple", "and", "kind-hearted"],
+                    ["Colourful", "ribbons", "began", "to", "fall"],
+                    ["Each", "group", "built", "big", "walls"],
+                    ["The", "stranger", "advised", "them", "to", "share"],
+                    ["They", "called", "themselves", "The", "Rainbow", "People"],
+                    ["The", "kite", "soared", "high", "in", "the", "breeze"],
+                    ["The", "Mayor", "was", "very", "curious"],
+                    ["The", "wind", "lifts", "the", "kite", "high"],
+                    ["The", "tail", "keeps", "the", "kite", "steady"],
+                    ["Together", "we", "fly", "the", "kite"],
+                    ["Ants", "always", "find", "another", "way"],
+                    ["A", "tiny", "speck", "can", "teach", "us"],
+                    ["The", "red", "group", "had", "no", "food"],
+                    ["The", "blue", "group", "had", "no", "water"],
+                    ["They", "lived", "together", "in", "harmony"],
+                    ["The", "string", "helps", "to", "guide", "it"],
+                    ["We", "can", "achieve", "anything", "together"],
+                    ["The", "boy", "replied", "with", "pride"],
+                    ["They", "pulled", "down", "their", "walls"],
+                    ["Sharing", "is", "the", "only", "way"],
+                    ["A", "warm", "breeze", "swept", "through"],
+                    ["Their", "eyes", "widened", "in", "wonder"],
+                    ["The", "people", "panicked"],
+                    ["The", "ant", "has", "no", "word", "for", "can't"],
+                    ["The", "kite", "is", "a", "symbol", "of", "unity"]
+                ]
+            },
+            riddles: {
+                title: "Riddles & Puzzles",
+                questions: [
+                    { riddle: "I am a color that looks like the sky. My group had food but no water. What color am I?", answer: "Blue" },
+                    { riddle: "I am a color that looks like the sun. My group had shelter but no firewood. What color am I?", answer: "Yellow" },
+                    { riddle: "I am a color that looks like grass. My group had wood but no shelter. What color am I?", answer: "Green" },
+                    { riddle: "I am a color that looks like a ripe apple. My group had water but no food. What color am I?", answer: "Red" },
+                    { riddle: "I am something people built to stay away from each other, but had to tear down to be happy. What am I?", answer: "Wall" },
+                    { riddle: "I am made of many colors and appeared when all the ribbons were combined. What am I?", answer: "Rainbow" },
+                    { riddle: "I am a visitor who gave the villagers the idea to share. Who am I?", answer: "Stranger" },
+                    { riddle: "I fly in the sky, but I need a boy, wind, a tail, and a string to help me. What am I?", answer: "Kite" },
+                    { riddle: "I am invisible, but I lift the kite high. Who am I?", answer: "Wind" },
+                    { riddle: "I am long and thin, and I connect the boy to the kite. Who am I?", answer: "String" },
+                    { riddle: "I am attached to the back of the kite to keep it balanced. What am I?", answer: "Tail" },
+                    { riddle: "I am a leader of a town who learned a lesson about teamwork from a kite. Who am I?", answer: "Mayor" },
+                    { riddle: "I am a tiny insect that never quits and can teach you about respect. Who am I?", answer: "Ant" },
+                    { riddle: "I am the feeling of working together in a group. What am I?", answer: "Teamwork" },
+                    { riddle: "I am the act of giving something of yours to someone else. What am I?", answer: "Sharing" },
+                    { riddle: "I am a place that was warm and peaceful before the ribbons fell. What am I?", answer: "Village" },
+                    { riddle: "I am the feeling the villagers had when they were separated and needed help. What am I?", answer: "Panicked" },
+                    { riddle: "I am a state of living together peacefully. What am I?", answer: "Harmony" },
+                    { riddle: "I am a feeling of satisfaction in what you have done. The boy felt this. What am I?", answer: "Pride" },
+                    { riddle: "I am a word that means 'to rise or fly high in the air'. What am I?", answer: "Soar" },
+                    { riddle: "I am a home that gives protection from bad weather. The green group needed me. What am I?", answer: "Shelter" },
+                    { riddle: "I am a word that means 'to continue to live'. What am I?", answer: "Survive" },
+                    { riddle: "I am a word that means 'very large in size', like the sandy land. What am I?", answer: "Vast" },
+                    { riddle: "I am a word that means to speak very softly. The wind did this. What am I?", answer: "Whisper" },
+                    { riddle: "I am a word for a group of people singing or speaking together. What am I?", answer: "Unison" }
+                ]
+            },
+            orderStory: {
+                title: "Order the Story",
+                questions: [
+                    {
+                        name: "The Rainbow People",
+                        events: [
+                            "A peaceful village lived on a vast sandy land.",
+                            "Magical, colorful ribbons fell from the sky.",
+                            "The villagers tied the ribbons and changed colors.",
+                            "Frightened of their differences, they built walls to separate themselves.",
+                            "Each color group began to lack something essential like food or water.",
+                            "A stranger arrived and heard their cries for help.",
+                            "The stranger advised them that sharing is the only way.",
+                            "The villagers shared, pulled down the walls, and combined their ribbons.",
+                            "A beautiful rainbow was formed from the ribbons.",
+                            "They called themselves 'The Rainbow People' and lived in harmony."
+                        ]
+                    },
+                    {
+                        name: "Who Flies the Kite?",
+                        events: [
+                            "The Mayor of the town saw a boy flying a colorful kite.",
+                            "The Mayor asked who made the kite fly so high.",
+                            "The boy proudly said that he flies the kite.",
+                            "The wind whispered that it lifts the kite.",
+                            "The kite's tail said it keeps the kite steady.",
+                            "The string claimed it guides the kite.",
+                            "The Mayor asked who really flies the kite.",
+                            "The boy realized that they all do it together.",
+                            "Everyone agreed that their combined efforts make the kite fly.",
+                            "The Mayor called the kite a symbol of unity."
+                        ]
+                    }
+                ]
+            },
+            missingLetters: {
+                title: "Find Missing Letters",
+                questions: ["RAINBOW", "VILLAGE", "STRANGER", "HARMONY", "SHELTER", "SHARING", "TOGETHER", "UNISON", "MAYOR", "EFFORTS", "SYMBOL", "STEADY", "WHISPER", "RESPECT", "SURVIVE", "PEACEFUL", "FLUTTER", "GUIDE", "ACHIEVE", "WONDER", "RIBBON", "COLOUR", "CHORUS", "PRIDE", "SOAR"]
+            },
+            addPoemLines: {
+                title: "Add to the Poem",
+                questions: [
+                    { start: "Such a little thing we call the ant,<br>It seems he has no word for 'can't'..." },
+                    { start: "They never quit, they never stay,<br>They always find another way..." },
+                    { start: "This bug so small, this tiny speck,<br>Can teach us all how to earn respect..." },
+                    { start: "Create two lines about working with a friend." },
+                    { start: "Write two rhyming lines about the colors of a rainbow." }
+                ]
+            },
+            languagePuzzle: {
+                title: "Language Puzzles",
+                questions: [
+                    { word: "Unity", synonym: "Togetherness" },
+                    { word: "Share", synonym: "Give" },
+                    { word: "Team", synonym: "Group" },
+                    { word: "Help", synonym: "Assist" },
+                    { word: "Combine", synonym: "Join" },
+                    { word: "Effort", synonym: "Work" },
+                    { word: "Friend", synonym: "Partner" },
+                    { word: "Happy", synonym: "Joyful" },
+                    { word: "Brave", synonym: "Courageous" },
+                    { word: "Kind", synonym: "Caring" },
+                    { word: "Vast", synonym: "Huge" },
+                    { word: "Peaceful", synonym: "Calm" },
+                    { word: "Eagerly", synonym: "Keenly" },
+                    { word: "Steady", synonym: "Stable" },
+                    { word: "Soar", synonym: "Fly high" },
+                    { word: "Whisper", synonym: "Murmur" },
+                    { word: "Flutter", synonym: "Flap" },
+                    { word: "Panicked", synonym: "Frightened" },
+                    { word: "Advised", synonym: "Suggested" },
+                    { word: "Firmly", synonym: "Strongly" },
+                    { word: "Miracle", synonym: "Wonder" },
+                    { word: "Symbol", synonym: "Sign" },
+                    { word: "Harmony", synonym: "Peace" },
+                    { word: "Curious", synonym: "Inquisitive" },
+                    { word: "Achieve", synonym: "Accomplish" }
+                ]
+            },
+            oneWord: {
+                title: "One Word",
+                questions: [
+                    { clue: "A place giving protection from bad weather", answer: "SHELTER" },
+                    { clue: "A long, soft feather", answer: "PLUME" },
+                    { clue: "To continue to live or exist", answer: "SURVIVE" },
+                    { clue: "A feeling of sudden fear or anxiety", answer: "PANIC" },
+                    { clue: "To look like someone or something", answer: "RESEMBLE" },
+                    { clue: "A ray of light", answer: "BEAM" },
+                    { clue: "To be carried slowly by a current of air", answer: "DRIFT" },
+                    { clue: "Doing something with great interest and excitement", answer: "EAGERLY" },
+                    { clue: "An area with a lot of plants and trees", answer: "LUSH" },
+                    { clue: "To drop a few pieces of something over a surface", answer: "SPRINKLE" },
+                    { clue: "Very large in size", answer: "VAST" },
+                    { clue: "Moderate heat", answer: "WARMTH" },
+                    { clue: "To walk in a slow, relaxed way", answer: "STROLL" },
+                    { clue: "To speak very softly", answer: "WHISPER" },
+                    { clue: "To move the wings quickly and lightly", answer: "FLUTTER" },
+                    { clue: "A feeling of satisfaction from one's achievements", answer: "PRIDE" },
+                    { clue: "Balanced and not likely to fall", answer: "STEADY" },
+                    { clue: "To rise or fly high in the air", answer: "SOAR" },
+                    { clue: "A small insect", answer: "BUG" },
+                    { clue: "To leave or give up", answer: "QUIT" },
+                    { clue: "Something very small", answer: "SPECK" },
+                    { clue: "A feeling of amazement", answer: "WONDER" },
+                    { clue: "The state of being united or joined as a whole", answer: "UNITY" },
+                    { clue: "A group of people singing or speaking at the same time", answer: "CHORUS" },
+                    { clue: "Living together in a peaceful way", answer: "HARMONY" }
+                ]
+            },
+            prepositions: {
+                title: "Find the Preposition",
+                questions: [
+                    { sentence: "The villagers gathered ___ their usual spots.", options: ["in", "on", "at"], answer: "in" },
+                    { sentence: "Some rested ___ the shade of tall trees.", options: ["under", "over", "beside"], answer: "under" },
+                    { sentence: "A warm breeze swept ___ the village.", options: ["over", "through", "from"], answer: "through" },
+                    { sentence: "Colourful ribbons began to fall ___ the sky.", options: ["from", "to", "in"], answer: "from" },
+                    { sentence: "They tied them ___ themselves.", options: ["on", "around", "with"], answer: "around" },
+                    { sentence: "The people moved ___ different corners.", options: ["to", "from", "at"], answer: "to" },
+                    { sentence: "Each built big walls ___ their corners.", options: ["over", "under", "around"], answer: "around" },
+                    { sentence: "The red group had water, but no food ___ them.", options: ["for", "with", "to"], answer: "for" },
+                    { sentence: "The stranger arrived ___ the village.", options: ["at", "in", "on"], answer: "in" },
+                    { sentence: "They hopefully looked ___ the shining eyes of the stranger.", options: ["to", "at", "on"], answer: "at" },
+                    { sentence: "The Mayor of the town strolled ___ the park.", options: ["through", "across", "over"], answer: "through" },
+                    { sentence: "The kite soared high, dancing ___ the breeze.", options: ["with", "by", "in"], answer: "in" },
+                    { sentence: "I lift the kite high ___ the sky.", options: ["into", "onto", "from"], answer: "into" },
+                    { sentence: "Without me, it would fall ___ the ground.", options: ["on", "to", "at"], answer: "to" },
+                    { sentence: "The string guides it as it moves ___ the sky.", options: ["over", "through", "under"], answer: "through" },
+                    { sentence: "Ants will climb up ___, around, and through.", options: ["over", "under", "beside"], answer: "over" },
+                    { sentence: "They get ___ where they need to go.", options: ["from", "at", "to"], answer: "to" },
+                    { sentence: "The sun sprinkled its light ___ the wide sky.", options: ["across", "through", "on"], answer: "across" },
+                    { sentence: "Children lay ___ the ground.", options: ["on", "in", "at"], answer: "on" },
+                    { sentence: "They sketched patterns ___ the sand.", options: ["on", "in", "with"], answer: "in" },
+                    { sentence: "The Mayor was curious ___ the kite.", options: ["of", "about", "for"], answer: "about" },
+                    { sentence: "The boy replied ___ pride.", options: ["in", "with", "by"], answer: "with" },
+                    { sentence: "The tail keeps the kite steady ___ the air.", options: ["on", "in", "at"], answer: "in" },
+                    { sentence: "If we work ___, we can achieve anything.", options: ["together", "apart", "alone"], answer: "together" },
+                    { sentence: "The villagers lived together ___ harmony.", options: ["with", "in", "for"], answer: "in" }
+                ]
+            }
+        };
+        
+        // --- SCRIPT LOGIC ---
+        let currentActivityId = null;
+        let currentQuestionIndex = 0;
+        let currentStoryIndex = 0; // For 'orderStory'
+        let audioStarted = false;
+
+        const mainMenuScreen = document.getElementById('main-menu-screen');
+        const activityScreen = document.getElementById('activity-screen');
+        const learningPathContainer = document.getElementById('learning-path');
+        const activityTitleEl = document.getElementById('activity-title');
+        const progressBarFillEl = document.getElementById('progress-bar-fill');
+        const activityContentEl = document.getElementById('activity-content');
+
+        const menuData = [
+            { id: 'fillInTheBlanks', title: 'Fill in the Blanks', desc: 'Find the missing word!', icon: icons.fill, color: '#3B82F6' },
+            { id: 'jumbledWords', title: 'Jumbled Words', desc: 'Unscramble the letters!', icon: icons.jumbled, color: '#10B981' },
+            { id: 'completeTheSentence', title: 'Complete the Sentence', desc: 'Finish the thought!', icon: icons.complete, color: '#EF4444' },
+            { id: 'oddOneOut', title: 'Odd One Out', desc: 'Which one is different?', icon: icons.odd, color: '#F59E0B' },
+            { id: 'rearrangeSentence', title: 'Rearrange Sentences', desc: 'Put the words in order!', icon: icons.rearrange, color: '#8B5CF6' },
+            { id: 'riddles', title: 'Riddles & Puzzles', desc: 'Solve the mystery!', icon: icons.riddles, color: '#EC4899' },
+            { id: 'orderStory', title: 'Order the Story', desc: 'What happens next?', icon: icons.order, color: '#6366F1' },
+            { id: 'missingLetters', title: 'Find Missing Letters', desc: 'Complete the word!', icon: icons.letters, color: '#0EA5E9' },
+            { id: 'addPoemLines', title: 'Add to the Poem', desc: 'Be a poet!', icon: icons.poem, color: '#D946EF' },
+            { id: 'languagePuzzle', title: 'Language Puzzles', desc: 'Find the matching word!', icon: icons.language, color: '#84CC16' },
+            { id: 'oneWord', title: 'One Word', desc: 'Find the single word!', icon: icons.oneWord, color: '#14B8A6' },
+            { id: 'prepositions', title: 'Find Prepositions', desc: 'Choose the right word!', icon: icons.preposition, color: '#F43F5E' }
+        ];
+        
+        function generateMenu() {
+            learningPathContainer.innerHTML = menuData.map(item => `
+                <div class="path-item" onclick="showActivity('${item.id}')">
+                    <div class="icon-container" style="background-color: ${item.color}20; color: ${item.color};">${item.icon}</div>
+                    <div class="text-content"><h3>${item.title}</h3><p>${item.desc}</p></div>
+                </div>`).join('');
+        }
+
+        function showMenu() {
+            activityScreen.classList.add('inactive');
+            mainMenuScreen.classList.remove('slide-out');
+        }
+
+        async function showActivity(activityId) {
+            if (!audioStarted) {
+                await Tone.start();
+                audioStarted = true;
+            }
+            currentActivityId = activityId;
+            currentQuestionIndex = 0;
+            currentStoryIndex = 0;
+            mainMenuScreen.classList.add('slide-out');
+            activityScreen.classList.remove('inactive');
+            loadActivity(activityId);
+        }
+
+        function updateProgressBar() {
+            const data = activities[currentActivityId];
+            const total = data.questions.length;
+            const percentage = total > 0 ? ((currentQuestionIndex) / total) * 100 : 0;
+            progressBarFillEl.style.width = `${percentage}%`;
+        }
+        
+        function loadActivity(activityId) {
+            const activityData = menuData.find(m => m.id === activityId);
+            activityTitleEl.innerText = activityData.title;
+            updateProgressBar();
+
+            const loaders = {
+                fillInTheBlanks, jumbledWords, completeTheSentence, oddOneOut,
+                rearrangeSentence, riddles, orderStory, missingLetters,
+                addPoemLines, languagePuzzle, oneWord, prepositions
+            };
+            if (loaders[activityId]) {
+                loaders[activityId]();
+            }
+        }
+        
+        function showModal(title, message, emoji, onclose, showAnswerCallback) {
+            if (emoji === '✅') playCorrectSound();
+            if (emoji === '❌') playIncorrectSound();
+
+            const modal = document.getElementById('feedback-modal');
+            const modalMessageEl = document.getElementById('modal-message');
+            document.getElementById('modal-title').innerText = title;
+            modalMessageEl.innerHTML = message; // Use innerHTML to allow for breaks
+            document.getElementById('modal-emoji').innerText = emoji;
+            const buttonsContainer = document.getElementById('modal-buttons-container');
+            buttonsContainer.innerHTML = ''; // Clear previous buttons
+
+            if (showAnswerCallback) {
+                const showAnswerBtn = document.createElement('button');
+                showAnswerBtn.id = 'show-answer-btn';
+                showAnswerBtn.className = 'btn btn-secondary';
+                showAnswerBtn.innerText = 'Show Answer';
+                showAnswerBtn.onclick = () => {
+                    const answer = showAnswerCallback();
+                    modalMessageEl.innerHTML += `<br><br><strong class="text-green-600">Correct Answer:<br>${answer}</strong>`;
+                    showAnswerBtn.style.display = 'none'; // Hide after clicking
+                };
+                buttonsContainer.appendChild(showAnswerBtn);
+            }
+            
+            const continueButton = document.createElement('button');
+            continueButton.className = 'btn btn-primary';
+            continueButton.innerText = 'Continue';
+            continueButton.onclick = onclose || closeModal;
+            buttonsContainer.appendChild(continueButton);
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('feedback-modal').classList.add('hidden');
+        }
+        
+        function showCompletionScreen() {
+             activityContentEl.innerHTML = `<div class="text-center"><h2 class="text-2xl font-bold mb-4 text-green-600">Great Job! <span class="tada">🎉</span></h2><p class="mb-4">You've completed this section!</p></div>`;
+             progressBarFillEl.style.width = '100%';
+        }
+
+        // --- ACTIVITY LOGIC FUNCTIONS ---
+        function fillInTheBlanks() {
+            const data = activities.fillInTheBlanks;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            activityContentEl.innerHTML = `<p class="text-lg text-center mb-6 p-4 bg-blue-50 rounded-lg">${q.sentence.replace('___', '<span class="font-bold text-blue-600">___</span>')}</p><div id="options-container"></div>`;
+            const optionsContainer = activityContentEl.querySelector('#options-container');
+            q.options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.innerText = option;
+                button.onclick = () => {
+                    button.parentElement.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+                    if (option === q.answer) {
+                        button.classList.add('correct');
+                        showModal("Correct!", "That's the right word!", '✅', () => { currentQuestionIndex++; fillInTheBlanks(); closeModal(); });
+                    } else {
+                        button.classList.add('incorrect');
+                        const next = () => { currentQuestionIndex++; fillInTheBlanks(); closeModal(); };
+                        const showAnswer = () => `"${q.answer}"`;
+                        showModal("Try Again!", "That wasn't quite right.", '❌', next, showAnswer);
+                    }
+                };
+                optionsContainer.appendChild(button);
+            });
+        }
+        
+        function jumbledWords() {
+            const data = activities.jumbledWords;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            activityContentEl.innerHTML = `
+                <p class="text-4xl font-bold tracking-widest text-center my-8 text-purple-600">${q.jumbled}</p>
+                <input type="text" id="jumbled-input" class="w-full p-3 border-2 border-gray-300 rounded-lg text-lg text-center" placeholder="Your answer..." autocapitalize="off">
+                <button class="btn btn-primary mt-4">Check Answer</button>`;
+            activityContentEl.querySelector('button').onclick = () => {
+                const userAnswer = activityContentEl.querySelector('input').value.toUpperCase();
+                if (userAnswer === q.correct) {
+                    showModal("You got it!", `"${q.correct}" is correct!`, '✅', () => { currentQuestionIndex++; jumbledWords(); closeModal(); });
+                } else {
+                    const next = () => { currentQuestionIndex++; jumbledWords(); closeModal(); };
+                    const showAnswer = () => `"${q.correct}"`;
+                    showModal("Not quite!", "Check your spelling.", '❌', next, showAnswer);
+                }
+            };
+        }
+
+        function completeTheSentence() {
+            const data = activities.completeTheSentence;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            
+            let scrambledWord = q.answer.split('').sort(() => Math.random() - 0.5).join('');
+            if (scrambledWord === q.answer && q.answer.length > 1) {
+                scrambledWord = q.answer.split('').sort(() => Math.random() - 0.5).join('');
+            }
+
+            activityContentEl.innerHTML = `
+                <p class="text-lg text-center mb-4 p-4 bg-orange-50 rounded-lg">${q.sentence.replace('___', '<span class="font-bold text-orange-500">___</span>')}</p>
+                <p class="text-lg text-center mb-6">Unscramble this word: <span class="font-bold text-2xl text-orange-500">${scrambledWord}</span></p>
+                <input type="text" id="complete-input" class="w-full p-3 border-2 border-gray-300 rounded-lg text-lg text-center" placeholder="Type the unscrambled word..." autocapitalize="off">
+                <button class="btn btn-primary mt-4">Check</button>`;
+            
+            activityContentEl.querySelector('button').onclick = () => {
+                const userAnswer = activityContentEl.querySelector('input').value.toUpperCase();
+                if (userAnswer === q.answer) {
+                    showModal("Perfect!", "You completed the sentence correctly!", '✅', () => { currentQuestionIndex++; completeTheSentence(); closeModal(); });
+                } else {
+                    const next = () => { currentQuestionIndex++; completeTheSentence(); closeModal(); };
+                    const showAnswer = () => `"${q.answer}"`;
+                    showModal("Oops!", "That's not the right word.", '❌', next, showAnswer);
+                }
+            };
+        }
+        
+        function oddOneOut() {
+            const data = activities.oddOneOut;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            activityContentEl.innerHTML = `<p class="text-lg text-center mb-6">Which word does not belong in this group?</p><div id="options-container"></div>`;
+            const optionsContainer = activityContentEl.querySelector('#options-container');
+            q.options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.innerText = option;
+                button.onclick = () => {
+                    button.parentElement.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+                    if (option === q.answer) {
+                        button.classList.add('correct');
+                        showModal("That's right!", `"${option}" is the odd one out.`, '✅', () => { currentQuestionIndex++; oddOneOut(); closeModal(); });
+                    } else {
+                        button.classList.add('incorrect');
+                        const next = () => { currentQuestionIndex++; oddOneOut(); closeModal(); };
+                        const showAnswer = () => `"${q.answer}"`;
+                        showModal("Not quite!", "That wasn't the one.", '❌', next, showAnswer);
+                    }
+                };
+                optionsContainer.appendChild(button);
+            });
+        }
+        
+        // --- Drag and Drop Logic ---
+        let draggedItem = null;
+        function handleDragStart(e) { 
+            draggedItem = this;
+            setTimeout(() => this.style.display = 'none', 0);
+            if (e.dataTransfer) e.dataTransfer.setData('text/html', this.innerHTML);
+        }
+        function handleDragEnd() { this.style.display = 'block'; draggedItem = null; }
+        function handleDragOver(e) { e.preventDefault(); }
+        function handleDrop(e) {
+            e.preventDefault();
+            if (e.target.classList.contains('draggable')) {
+                 e.target.parentNode.insertBefore(draggedItem, e.target.nextSibling);
+            } else if (e.target.classList.contains('drop-zone')) {
+                 e.target.appendChild(draggedItem);
+            }
+        }
+
+        function rearrangeSentence() {
+            const data = activities.rearrangeSentence;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const sentenceWords = [...data.questions[currentQuestionIndex]].sort(() => Math.random() - 0.5);
+            activityContentEl.innerHTML = `
+                <p class="mb-4 text-center">Drag and drop the words to form a correct sentence.</p>
+                <div id="drop-zone" class="drop-zone mb-4"></div>
+                <div id="word-bank" class="drop-zone bg-blue-100 border-blue-300"></div>
+                <button class="btn btn-primary mt-6">Check Sentence</button>`;
+            
+            const wordBank = activityContentEl.querySelector('#word-bank');
+            const dropZone = activityContentEl.querySelector('#drop-zone');
+            
+            sentenceWords.forEach(word => {
+                const wordEl = document.createElement('div');
+                wordEl.className = 'draggable';
+                wordEl.innerText = word;
+                wordEl.draggable = true;
+                wordBank.appendChild(wordEl);
+            });
+
+            [wordBank, dropZone].forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('drop', handleDrop);
+            });
+            
+            activityContentEl.querySelectorAll('.draggable').forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+
+            activityContentEl.querySelector('button').onclick = () => {
+                const userAnswer = Array.from(dropZone.children).map(el => el.innerText).join(' ');
+                const correctAnswer = data.questions[currentQuestionIndex].join(' ');
+                if (userAnswer === correctAnswer) {
+                    showModal("Excellent!", "You made a perfect sentence!", '✅', () => { currentQuestionIndex++; rearrangeSentence(); closeModal(); });
+                } else {
+                    const next = () => { currentQuestionIndex++; rearrangeSentence(); closeModal(); };
+                    const showAnswer = () => `"${correctAnswer}"`;
+                    showModal("Almost!", "The words are not in the right order.", '❌', next, showAnswer);
+                }
+            };
+        }
+
+        function riddles() {
+            const data = activities.riddles;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            activityContentEl.innerHTML = `
+                <div class="riddle-box"><p class="text-lg italic text-yellow-800 text-center">${q.riddle}</p></div>
+                <input type="text" id="riddle-input" class="w-full p-3 border-2 border-gray-300 rounded-lg text-lg mt-4 text-center" placeholder="What's the answer?" autocapitalize="off">
+                <button class="btn btn-primary mt-4">Solve</button>`;
+             activityContentEl.querySelector('button').onclick = () => {
+                const userAnswer = activityContentEl.querySelector('input').value.trim().toLowerCase();
+                if (userAnswer === q.answer.toLowerCase()) {
+                    showModal("Brilliant!", "You solved the riddle!", '✅', () => { currentQuestionIndex++; riddles(); closeModal(); });
+                } else {
+                    const next = () => { currentQuestionIndex++; riddles(); closeModal(); };
+                    const showAnswer = () => `"${q.answer}"`;
+                    showModal("Good guess!", "That's not it.", '❌', next, showAnswer);
+                }
+            };
+        }
+
+        function orderStory() {
+            const data = activities.orderStory;
+            if (currentStoryIndex >= data.questions.length) return showCompletionScreen();
+            progressBarFillEl.style.width = `${(currentStoryIndex / data.questions.length) * 100}%`;
+
+            const story = data.questions[currentStoryIndex];
+            const shuffledEvents = [...story.events].sort(() => Math.random() - 0.5);
+            activityContentEl.innerHTML = `
+                <h3 class="font-bold text-center text-lg mb-4">${story.name}</h3>
+                <p class="mb-4 text-center">Drag and drop the sentences to put the story in the correct order.</p>
+                <div id="story-drop-zone" class="drop-zone space-y-2 flex-col flex-nowrap"></div>
+                <button class="btn btn-primary mt-6">Check Order</button>`;
+            
+            const dropZone = activityContentEl.querySelector('#story-drop-zone');
+            shuffledEvents.forEach(event => {
+                const eventEl = document.createElement('div');
+                eventEl.className = 'draggable w-full';
+                eventEl.innerText = event;
+                eventEl.draggable = true;
+                dropZone.appendChild(eventEl);
+            });
+
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('drop', handleDrop);
+            activityContentEl.querySelectorAll('.draggable').forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+
+            activityContentEl.querySelector('button').onclick = () => {
+                const userOrder = Array.from(dropZone.children).map(el => el.innerText);
+                const isCorrect = JSON.stringify(userOrder) === JSON.stringify(story.events);
+                if (isCorrect) {
+                    showModal("Wonderful!", "You put the story in the perfect order!", '✅', () => { currentStoryIndex++; orderStory(); closeModal(); });
+                } else {
+                    const next = () => { currentStoryIndex++; orderStory(); closeModal(); };
+                    const showAnswer = () => story.events.map((e, i) => `${i+1}. ${e}`).join('<br>');
+                    showModal("Almost there!", "Some events are in the wrong place.", '❌', next, showAnswer);
+                }
+            };
+        }
+
+        function missingLetters() {
+            const data = activities.missingLetters;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const word = data.questions[currentQuestionIndex];
+            let html = `<p class="mb-6 text-center">Fill in the blanks to complete the word.</p><div class="flex justify-center items-center flex-wrap">`;
+            const missingIndices = new Set();
+            while(missingIndices.size < (word.length > 6 ? 3 : 2)) {
+                missingIndices.add(Math.floor(Math.random() * word.length));
+            }
+            word.split('').forEach((letter, index) => {
+                if (missingIndices.has(index)) {
+                    html += `<input type="text" class="letter-input" maxlength="1" data-letter="${letter.toUpperCase()}">`;
+                } else {
+                    html += `<span class="letter-input bg-gray-200 flex items-center justify-center">${letter}</span>`;
+                }
+            });
+            html += `</div><button class="btn btn-primary mt-6">Check Word</button>`;
+            activityContentEl.innerHTML = html;
+
+            activityContentEl.querySelector('button').onclick = () => {
+                let allCorrect = true;
+                activityContentEl.querySelectorAll('input').forEach(input => {
+                    if (input.value.toUpperCase() !== input.dataset.letter) {
+                        allCorrect = false;
+                        input.style.borderColor = 'red';
+                    } else {
+                         input.style.borderColor = '#22c55e';
+                    }
+                });
+                if (allCorrect) {
+                    showModal("Correct!", "You've completed the word!", '✅', () => { currentQuestionIndex++; missingLetters(); closeModal(); });
+                } else {
+                    const next = () => { currentQuestionIndex++; missingLetters(); closeModal(); };
+                    const showAnswer = () => `"${word}"`;
+                    showModal("Oops!", "One or more letters are incorrect.", '❌', next, showAnswer);
+                }
+            };
+        }
+        
+        function addPoemLines() {
+            const data = activities.addPoemLines;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            activityContentEl.innerHTML = `
+                <p class="text-lg mb-4 text-center">${q.start}</p>
+                <textarea id="poem-input" class="w-full p-3 border-2 border-gray-300 rounded-lg text-lg" rows="4" placeholder="Write your creative lines here..."></textarea>
+                <button class="btn btn-primary mt-4">Submit Lines</button>`;
+            activityContentEl.querySelector('button').onclick = () => {
+                const userInput = activityContentEl.querySelector('textarea').value;
+                if (userInput.trim().length > 10) {
+                    showModal("Creative!", "What wonderful lines! You're a poet!", '✅', () => { currentQuestionIndex++; addPoemLines(); closeModal(); });
+                } else {
+                    showModal("Keep thinking!", "Try to write a little more.", '❌', () => { closeModal(); });
+                }
+            };
+        }
+        
+        function languagePuzzle() {
+            const data = activities.languagePuzzle;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            const options = [q.synonym];
+            while (options.length < 3) {
+                const randomWord = data.questions[Math.floor(Math.random() * data.questions.length)].synonym;
+                if (!options.includes(randomWord)) {
+                    options.push(randomWord);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+            
+            activityContentEl.innerHTML = `
+                <p class="text-lg text-center mb-4">Which word means the same as:</p>
+                <p class="text-3xl font-bold text-center my-6 text-purple-600">${q.word}</p>
+                <div id="options-container"></div>`;
+            const optionsContainer = activityContentEl.querySelector('#options-container');
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.innerText = option;
+                button.onclick = () => {
+                     button.parentElement.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+                    if (option === q.synonym) {
+                        button.classList.add('correct');
+                        showModal("Correct!", `You found the matching word!`, '✅', () => { currentQuestionIndex++; languagePuzzle(); closeModal(); });
+                    } else {
+                        button.classList.add('incorrect');
+                        const next = () => { currentQuestionIndex++; languagePuzzle(); closeModal(); };
+                        const showAnswer = () => `"${q.synonym}"`;
+                        showModal("Not quite!", `The answer was "${q.synonym}".`, '❌', next, showAnswer);
+                    }
+                };
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function oneWord() {
+            const data = activities.oneWord;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            activityContentEl.innerHTML = `
+                <p class="text-lg text-center mb-6 p-4 bg-teal-50 rounded-lg">${q.clue}</p>
+                <input type="text" id="one-word-input" class="w-full p-3 border-2 border-gray-300 rounded-lg text-lg text-center" placeholder="Type one word..." autocapitalize="off">
+                <button class="btn btn-primary mt-4">Check Answer</button>`;
+            activityContentEl.querySelector('button').onclick = () => {
+                const userAnswer = activityContentEl.querySelector('input').value.toUpperCase();
+                if (userAnswer === q.answer) {
+                    showModal("Excellent!", "That's the right word!", '✅', () => { currentQuestionIndex++; oneWord(); closeModal(); });
+                } else {
+                    const next = () => { currentQuestionIndex++; oneWord(); closeModal(); };
+                    const showAnswer = () => `"${q.answer}"`;
+                    showModal("Not quite!", "Think of another word.", '❌', next, showAnswer);
+                }
+            };
+        }
+
+        function prepositions() {
+            const data = activities.prepositions;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            activityContentEl.innerHTML = `<p class="text-lg text-center mb-6 p-4 bg-pink-50 rounded-lg">${q.sentence.replace('___', '<span class="font-bold text-pink-600">___</span>')}</p><div id="options-container"></div>`;
+            const optionsContainer = activityContentEl.querySelector('#options-container');
+            q.options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.innerText = option;
+                button.onclick = () => {
+                    button.parentElement.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+                    if (option === q.answer) {
+                        button.classList.add('correct');
+                        showModal("Correct!", "You picked the right preposition!", '✅', () => { currentQuestionIndex++; prepositions(); closeModal(); });
+                    } else {
+                        button.classList.add('incorrect');
+                        const next = () => { currentQuestionIndex++; prepositions(); closeModal(); };
+                        const showAnswer = () => `"${q.answer}"`;
+                        showModal("Try Again!", "That wasn't the right one.", '❌', next, showAnswer);
+                    }
+                };
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        // Initial load
+        window.onload = () => {
+            generateMenu();
+            showMenu();
+        };
+    </script>
+</body>
+</html>
+
