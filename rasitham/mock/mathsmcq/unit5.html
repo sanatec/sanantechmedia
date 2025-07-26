@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: It's Time</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new blue/digital clock theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f1f5f9; /* Slate 100 background */
+        }
+        .quiz-container {
+            background: linear-gradient(135deg, #f8fafc, #e0f2fe); /* Slate 50 to Sky 100 */
+            box-shadow: 0 10px 25px rgba(30, 41, 59, 0.1);
+            border: 1px solid #e0e7ff;
+        }
+        .quiz-container:hover {
+            transform: translateY(-5px);
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid transparent;
+        }
+        .option-btn.selected {
+            background-color: #38bdf8; /* Sky 400 for selected */
+            color: white;
+            border-color: #0ea5e9; /* Sky 500 */
+        }
+        .option-btn.correct {
+            background-color: #4ade80; /* Green 400 for correct */
+            color: #14532d;
+            border-color: #16a34a;
+        }
+        .option-btn.wrong {
+            background-color: #f87171; /* Red 400 for wrong */
+            color: white;
+            border-color: #ef4444;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        /* Animation for screen transitions */
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-slate-800 mb-2">MCQ Adventure!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Let's Learn About Time!</p>
+            <img src="https://placehold.co/400x200/0ea5e9/ffffff?text=What+Time+Is+It%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Clock Adventure Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-cyan-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3">
+                    <!-- Options will be dynamically inserted here -->
+                </div>
+
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6 text-center">
+                <h2 id="review-title" class="text-3xl font-black text-slate-800 mb-2">Quiz Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                <div class="bg-cyan-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-cyan-800"></span>
+                </div>
+             </div>
+             <div id="review-content" class="mt-6 space-y-4">
+                <!-- Review details will be inserted here -->
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        
+        // --- UI Text Elements for Translation ---
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual Data ---
+        const uiText = {
+            en: { welcomeTitle: "MCQ Adventure!", welcomeSubtitle: "Let's Learn About Time!", startBtn: "Start Quiz", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Quiz Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "MCQ സാഹസികം!", welcomeSubtitle: "നമുക്ക് സമയത്തെക്കുറിച്ച് പഠിക്കാം!", startBtn: "ക്വിസ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ക്വിസ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        const quizData = [
+            { en: { question: "Nidhi's clock shows 09:15:00. Her school bus will arrive in 15 minutes. What time will it be?", options: ["09:25:00", "09:30:00", "10:00:00", "09:45:00"], answer: "09:30:00" }, ml: { question: "നിധിയുടെ ക്ലോക്കിൽ 09:15:00 കാണിക്കുന്നു. അവളുടെ സ്കൂൾ ബസ് 15 മിനിറ്റിനുള്ളിൽ വരും. അപ്പോൾ സമയം എത്രയായിരിക്കും?", options: ["09:25:00", "09:30:00", "10:00:00", "09:45:00"], answer: "09:30:00" } },
+            { en: { question: "What time comes 1 second after 09:29:59?", options: ["09:29:60", "09:30:00", "10:00:00", "09:30:01"], answer: "09:30:00" }, ml: { question: "09:29:59 കഴിഞ്ഞ് 1 സെക്കൻഡ് ആകുമ്പോൾ സമയം എത്ര?", options: ["09:29:60", "09:30:00", "10:00:00", "09:30:01"], answer: "09:30:00" } },
+            { en: { question: "How many seconds are in 1 minute?", options: ["30 seconds", "100 seconds", "60 seconds", "120 seconds"], answer: "60 seconds" }, ml: { question: "1 മിനിറ്റിൽ എത്ര സെക്കൻഡ് ഉണ്ട്?", options: ["30 സെക്കൻഡ്", "100 സെക്കൻഡ്", "60 സെക്കൻഡ്", "120 സെക്കൻഡ്"], answer: "60 സെക്കൻഡ്" } },
+            { en: { question: "The walking race started at 10:30:00. Mili finished at 10:31:32. How long did she take?", options: ["1 minute 30 seconds", "32 seconds", "1 minute 32 seconds", "2 minutes"], answer: "1 minute 32 seconds" }, ml: { question: "നടത്തമത്സരം 10:30:00-ന് തുടങ്ങി. മിലി 10:31:32-ന് മത്സരം പൂർത്തിയാക്കി. അവൾ എത്ര സമയമെടുത്തു?", options: ["1 മിനിറ്റ് 30 സെക്കൻഡ്", "32 സെക്കൻഡ്", "1 മിനിറ്റ് 32 സെക്കൻഡ്", "2 മിനിറ്റ്"], answer: "1 മിനിറ്റ് 32 സെക്കൻഡ്" } },
+            { en: { question: "Who won the walking race? (Sibi: 10:31:12, Ayana: 10:31:15, Tanu: 10:31:25)", options: ["Sibi", "Ayana", "Tanu", "Mili"], answer: "Sibi" }, ml: { question: "നടത്തമത്സരത്തിൽ ആരാണ് വിജയിച്ചത്? (സിബി: 10:31:12, അയന: 10:31:15, തനു: 10:31:25)", options: ["സിബി", "അയന", "തനു", "മിലി"], answer: "സിബി" } },
+            { en: { question: "How many minutes are in 2 hours?", options: ["60 minutes", "100 minutes", "120 minutes", "200 minutes"], answer: "120 minutes" }, ml: { question: "2 മണിക്കൂറിൽ എത്ര മിനിറ്റ് ഉണ്ട്?", options: ["60 മിനിറ്റ്", "100 മിനിറ്റ്", "120 മിനിറ്റ്", "200 മിനിറ്റ്"], answer: "120 minutes" } },
+            { en: { question: "How many seconds are in 2 hours?", options: ["120 seconds", "3600 seconds", "7200 seconds", "2000 seconds"], answer: "7200 seconds" }, ml: { question: "2 മണിക്കൂറിൽ എത്ര സെക്കൻഡ് ഉണ്ട്?", options: ["120 സെക്കൻഡ്", "3600 സെക്കൻഡ്", "7200 സെക്കൻഡ്", "2000 സെക്കൻഡ്"], answer: "7200 seconds" } },
+            { en: { question: "How many seconds does it take for the second hand to move from 9 to 12 on a clock?", options: ["3 seconds", "9 seconds", "12 seconds", "15 seconds"], answer: "15 seconds" }, ml: { question: "സെക്കൻഡ് സൂചി 9-ൽ നിന്ന് 12-ലേക്ക് നീങ്ങാൻ എത്ര സെക്കൻഡ് എടുക്കും?", options: ["3 സെക്കൻഡ്", "9 സെക്കൻഡ്", "12 സെക്കൻഡ്", "15 സെക്കൻഡ്"], answer: "15 seconds" } },
+            { en: { question: "If the time was 10:15 one hour ago, what time will it be in two and a half hours from now?", options: ["12:45", "1:45", "1:15", "11:45"], answer: "1:45" }, ml: { question: "ഒരു മണിക്കൂർ മുമ്പ് സമയം 10:15 ആയിരുന്നു. ഇപ്പോൾ മുതൽ രണ്ടര മണിക്കൂർ കഴിഞ്ഞാൽ സമയം എത്രയാകും?", options: ["12:45", "1:45", "1:15", "11:45"], answer: "1:45" } },
+            { en: { question: "How many milliliters of water will be wasted in 10 minutes if a tap leaks 1 ml per second?", options: ["10 ml", "60 ml", "100 ml", "600 ml"], answer: "600 ml" }, ml: { question: "ഒരു ടാപ്പിൽ നിന്ന് സെക്കൻഡിൽ 1 മില്ലിലിറ്റർ വെള്ളം നഷ്ടപ്പെട്ടാൽ 10 മിനിറ്റിൽ എത്ര വെള്ളം പാഴാകും?", options: ["10 മില്ലി", "60 മില്ലി", "100 മില്ലി", "600 മില്ലി"], answer: "600 ml" } },
+            { en: { question: "A school trip started at 5:30 in the morning and returned at 5:30 in the evening. How long was the trip?", options: ["10 hours", "11 hours", "12 hours", "24 hours"], answer: "12 hours" }, ml: { question: "ഒരു സ്കൂൾ വിനോദയാത്ര രാവിലെ 5:30-ന് തുടങ്ങി വൈകുന്നേരം 5:30-ന് തിരിച്ചെത്തി. യാത്രയുടെ ദൈർഘ്യം എത്രയായിരുന്നു?", options: ["10 മണിക്കൂർ", "11 മണിക്കൂർ", "12 മണിക്കൂർ", "24 മണിക്കൂർ"], answer: "12 hours" } },
+            { en: { question: "How many hours does it take for the hour hand to move from 7 to 3?", options: ["6 hours", "7 hours", "8 hours", "9 hours"], answer: "8 hours" }, ml: { question: "മണിക്കൂർ സൂചി 7-ൽ നിന്ന് 3-ലേക്ക് നീങ്ങാൻ എത്ര മണിക്കൂർ എടുക്കും?", options: ["6 മണിക്കൂർ", "7 മണിക്കൂർ", "8 മണിക്കൂർ", "9 മണിക്കൂർ"], answer: "8 hours" } },
+            { en: { question: "How many seconds does it take for the second hand to move from 5 to 11?", options: ["6 seconds", "25 seconds", "30 seconds", "55 seconds"], answer: "30 seconds" }, ml: { question: "സെക്കൻഡ് സൂചി 5-ൽ നിന്ന് 11-ലേക്ക് നീങ്ങാൻ എത്ര സെക്കൻഡ് എടുക്കും?", options: ["6 സെക്കൻഡ്", "25 സെക്കൻഡ്", "30 സെക്കൻഡ്", "55 സെക്കൻഡ്"], answer: "30 seconds" } },
+            { en: { question: "If it was 9:30 two hours ago, what time will it be in three and a half hours from now?", options: ["1:00", "2:00", "3:00", "1:30"], answer: "3:00" }, ml: { question: "രണ്ട് മണിക്കൂർ മുമ്പ് സമയം 9:30 ആയിരുന്നു. ഇപ്പോൾ മുതൽ മൂന്നര മണിക്കൂർ കഴിഞ്ഞാൽ സമയം എത്രയാകും?", options: ["1:00", "2:00", "3:00", "1:30"], answer: "3:00" } },
+            { en: { question: "If the first Friday of January is on the 2nd, what is the date of the third Friday?", options: ["14th", "16th", "21st", "23rd"], answer: "16th" }, ml: { question: "ജനുവരിയിലെ ആദ്യത്തെ വെള്ളിയാഴ്ച 2-ാം തീയതിയാണെങ്കിൽ, മൂന്നാമത്തെ വെള്ളിയാഴ്ച ഏത് തീയതിയായിരിക്കും?", options: ["14", "16", "21", "23"], answer: "16th" } },
+            { en: { question: "If the 7th of a month is a Thursday, what day is the 17th of that month?", options: ["Saturday", "Sunday", "Monday", "Friday"], answer: "Sunday" }, ml: { question: "ഒരു മാസത്തിലെ 7-ാം തീയതി വ്യാഴാഴ്ചയാണെങ്കിൽ, ആ മാസത്തിലെ 17-ാം തീയതി ഏത് ദിവസമായിരിക്കും?", options: ["ശനി", "ഞായർ", "തിങ്കൾ", "വെള്ളി"], answer: "Sunday" } },
+            { en: { question: "How many minutes are in one hour?", options: ["30 minutes", "60 minutes", "90 minutes", "100 minutes"], answer: "60 minutes" }, ml: { question: "ഒരു മണിക്കൂറിൽ എത്ര മിനിറ്റ് ഉണ്ട്?", options: ["30 മിനിറ്റ്", "60 മിനിറ്റ്", "90 മിനിറ്റ്", "100 മിനിറ്റ്"], answer: "60 minutes" } },
+            { en: { question: "A clock shows 1:55:45. What time will it be after 15 seconds?", options: ["2:00:00", "1:56:00", "1:55:60", "2:00:15"], answer: "1:56:00" }, ml: { question: "ഒരു ക്ലോക്ക് 1:55:45 കാണിക്കുന്നു. 15 സെക്കൻഡിന് ശേഷം സമയം എത്രയായിരിക്കും?", options: ["2:00:00", "1:56:00", "1:55:60", "2:00:15"], answer: "1:56:00" } },
+            { en: { question: "A cooking contest started at 10:05. One person took 2 hours and 10 seconds. When did they finish?", options: ["12:05:10", "12:15:00", "12:00:10", "11:05:10"], answer: "12:05:10" }, ml: { question: "ഒരു പാചകമത്സരം 10:05-ന് തുടങ്ങി. ഒരാൾ 2 മണിക്കൂറും 10 സെക്കൻഡും എടുത്തു. അയാൾ എപ്പോഴാണ് പൂർത്തിയാക്കിയത്?", options: ["12:05:10", "12:15:00", "12:00:10", "11:05:10"], answer: "12:05:10" } },
+            { en: { question: "Another person took 132 minutes and 35 seconds. How much time is that in hours, minutes, and seconds?", options: ["2h 12m 35s", "1h 32m 35s", "2h 22m 35s", "2h 32m 35s"], answer: "2h 12m 35s" }, ml: { question: "മറ്റൊരാൾ 132 മിനിറ്റും 35 സെക്കൻഡും എടുത്തു. ഇത് മണിക്കൂറിലും മിനിറ്റിലും സെക്കൻഡിലുമായി എത്രയാണ്?", options: ["2h 12m 35s", "1h 32m 35s", "2h 22m 35s", "2h 32m 35s"], answer: "2h 12m 35s" } },
+            { en: { question: "A third person finished 20 minutes and 45 seconds before 2 hours. How long did they take?", options: ["1h 39m 15s", "1h 40m 15s", "1h 39m 45s", "1h 40m 00s"], answer: "1h 39m 15s" }, ml: { question: "മൂന്നാമതൊരാൾ 2 മണിക്കൂർ ആകുന്നതിന് 20 മിനിറ്റും 45 സെക്കൻഡും മുമ്പ് പൂർത്തിയാക്കി. അയാൾ എത്ര സമയമെടുത്തു?", options: ["1h 39m 15s", "1h 40m 15s", "1h 39m 45s", "1h 40m 00s"], answer: "1h 39m 15s" } },
+            { en: { question: "The school competition is on 20.12.2025 and the sub-district is on 1.1.2026. How many days are between the two events?", options: ["10 days", "11 days", "12 days", "13 days"], answer: "12 days" }, ml: { question: "സ്കൂൾ മത്സരം 20.12.2025-നും സബ്ജില്ലാ മത്സരം 1.1.2026-നുമാണ്. രണ്ട് മത്സരങ്ങൾക്കിടയിൽ എത്ര ദിവസങ്ങളുണ്ട്?", options: ["10 ദിവസം", "11 ദിവസം", "12 ദിവസം", "13 ദിവസം"], answer: "12 days" } },
+            { en: { question: "If today is Sunday, what day will it be on the 24th day from today?", options: ["Sunday", "Monday", "Tuesday", "Wednesday"], answer: "Wednesday" }, ml: { question: "ഇന്ന് ഞായറാഴ്ചയാണെങ്കിൽ, ഇന്നേക്ക് 24-ാം ദിവസം ഏത് ദിവസമായിരിക്കും?", options: ["ഞായർ", "തിങ്കൾ", "ചൊവ്വ", "ബുധൻ"], answer: "Wednesday" } },
+            { en: { question: "Continue the calendar pattern: 3, 10, 17, ...", options: ["23", "24", "25", "21"], answer: "24" }, ml: { question: "കലണ്ടർ പാറ്റേൺ തുടരുക: 3, 10, 17, ...", options: ["23", "24", "25", "21"], answer: "24" } },
+            { en: { question: "Continue the calendar pattern: 4, 12, 20, ...", options: ["26", "27", "28", "30"], answer: "28" }, ml: { question: "കലണ്ടർ പാറ്റേൺ തുടരുക: 4, 12, 20, ...", options: ["26", "27", "28", "30"], answer: "28" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             currentQuestionIndex = 0;
+             userAnswers.fill(null);
+             score = 0;
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = quizData.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            const questionData = quizData[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / quizData.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn bg-white hover:bg-sky-100 rounded-lg shadow-sm border-2 border-slate-200';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = quizData[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-green-600';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-red-600';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === quizData.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${quizData.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-700">${text.reviewHeader}</h3>`;
+            quizData.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-green-100' : 'bg-red-100'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-green-800' : 'text-red-800'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Joining Clusters</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new red/yellow game theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #fef2f2; /* Red 50 background */
+        }
+        .quiz-container {
+            background: linear-gradient(135deg, #ffffff, #fef9c3); /* White to Yellow 100 */
+            box-shadow: 0 10px 25px rgba(120, 53, 15, 0.1);
+            border: 1px solid #fde047;
+        }
+        .quiz-container:hover {
+            transform: translateY(-5px);
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid transparent;
+        }
+        .option-btn.selected {
+            background-color: #f87171; /* Red 400 for selected */
+            color: white;
+            border-color: #dc2626; /* Red 600 */
+        }
+        .option-btn.correct {
+            background-color: #4ade80; /* Green 400 for correct */
+            color: #14532d;
+            border-color: #16a34a;
+        }
+        .option-btn.wrong {
+            background-color: #60a5fa; /* Blue 400 for wrong */
+            color: white;
+            border-color: #2563eb;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        /* Animation for screen transitions */
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-red-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-red-800 mb-2">MCQ Adventure!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Let's Join the Clusters!</p>
+            <img src="https://placehold.co/400x200/ef4444/ffffff?text=Ready+to+Play%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Game Adventure Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-yellow-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3">
+                    <!-- Options will be dynamically inserted here -->
+                </div>
+
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6 text-center">
+                <h2 id="review-title" class="text-3xl font-black text-red-800 mb-2">Quiz Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                <div class="bg-yellow-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-yellow-800"></span>
+                </div>
+             </div>
+             <div id="review-content" class="mt-6 space-y-4">
+                <!-- Review details will be inserted here -->
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        
+        // --- UI Text Elements for Translation ---
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual Data ---
+        const uiText = {
+            en: { welcomeTitle: "MCQ Adventure!", welcomeSubtitle: "Let's Join the Clusters!", startBtn: "Start Quiz", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Quiz Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "MCQ സാഹസികം!", welcomeSubtitle: "കൂട്ടത്തിൽ ചേരാം!", startBtn: "ക്വിസ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ക്വിസ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        const quizData = [
+            { en: { question: "What number should be added to 490 to make 1000?", options: ["500", "510", "610", "410"], answer: "510" }, ml: { question: "490-നോട് ഏത് സംഖ്യ കൂട്ടിയാൽ 1000 കിട്ടും?", options: ["500", "510", "610", "410"], answer: "510" } },
+            { en: { question: "What number should be added to 793 to make 1000?", options: ["207", "200", "217", "307"], answer: "207" }, ml: { question: "793-നോട് ഏത് സംഖ്യ കൂട്ടിയാൽ 1000 കിട്ടും?", options: ["207", "200", "217", "307"], answer: "207" } },
+            { en: { question: "In the shooting game, what is the total score for hitting 100, 900, and 525?", options: ["1500", "1425", "1525", "1625"], answer: "1525" }, ml: { question: "ഷൂട്ടിംഗ് ഗെയിമിൽ, 100, 900, 525 എന്നിവയിൽ ഷൂട്ട് ചെയ്താൽ ആകെ എത്ര പോയിന്റ് കിട്ടും?", options: ["1500", "1425", "1525", "1625"], answer: "1525" } },
+            { en: { question: "Suhail shot 363 three times. What is his total score?", options: ["1089", "989", "1099", "999"], answer: "1089" }, ml: { question: "സുഹൈൽ മൂന്നുതവണ 363-ൽ ഷൂട്ട് ചെയ്തു. അവന്റെ ആകെ സ്കോർ എത്ര?", options: ["1089", "989", "1099", "999"], answer: "1089" } },
+            { en: { question: "Lini scored 363, 475, and 750. What is her total score?", options: ["1588", "1688", "1580", "1488"], answer: "1588" }, ml: { question: "ലിനിക്ക് 363, 475, 750 എന്നിങ്ങനെ സ്കോർ ലഭിച്ചു. അവളുടെ ആകെ സ്കോർ എത്ര?", options: ["1588", "1688", "1580", "1488"], answer: "1588" } },
+            { en: { question: "What is the highest possible score if you shoot three times at the shooting corner (max score is 900)?", options: ["2175", "2700", "2250", "2500"], answer: "2700" }, ml: { question: "ഷൂട്ടിംഗ് കോർണറിൽ മൂന്നുതവണ ഷൂട്ട് ചെയ്താൽ ലഭിക്കാവുന്ന ഏറ്റവും ഉയർന്ന സ്കോർ എത്രയാണ് (പരമാവധി സ്കോർ 900)?", options: ["2175", "2700", "2250", "2500"], answer: "2700" } },
+            { en: { question: "In the dice game, what is 2349 + 251?", options: ["2500", "2600", "2550", "2650"], answer: "2600" }, ml: { question: "ഡൈസ് കളിയിൽ, 2349 + 251 എത്രയാണ്?", options: ["2500", "2600", "2550", "2650"], answer: "2600" } },
+            { en: { question: "From the dice table, what is 4450 + 400?", options: ["4800", "4850", "4950", "4900"], answer: "4850" }, ml: { question: "ഡൈസ് പട്ടികയിൽ നിന്ന്, 4450 + 400 എത്രയാണ്?", options: ["4800", "4850", "4950", "4900"], answer: "4850" } },
+            { en: { question: "Continue the pattern on the snail: 5050, 6050, 7050, ...", options: ["8000", "7060", "8050", "9050"], answer: "8050" }, ml: { question: "ഒച്ചിലെ പാറ്റേൺ തുടരുക: 5050, 6050, 7050, ...", options: ["8000", "7060", "8050", "9050"], answer: "8050" } },
+            { en: { question: "What is the total price of a cycle costing 3050 and a bat costing 980?", options: ["3930", "4000", "4130", "4030"], answer: "4030" }, ml: { question: "3050 രൂപ വിലയുള്ള ഒരു സൈക്കിളിനും 980 രൂപ വിലയുള്ള ഒരു ബാറ്റിനും കൂടിയാകെ എത്ര രൂപയാകും?", options: ["3930", "4000", "4130", "4030"], answer: "4030" } },
+            { en: { question: "In the magic trick, what is 4325 + 5674?", options: ["9999", "10000", "9000", "9990"], answer: "9999" }, ml: { question: "മാന്ത്രിക വിദ്യയിൽ, 4325 + 5674 എത്രയാണ്?", options: ["9999", "10000", "9000", "9990"], answer: "9999" } },
+            { en: { question: "What is 4123 + 3214?", options: ["7337", "7347", "7437", "8337"], answer: "7337" }, ml: { question: "4123 + 3214 എത്രയാണ്?", options: ["7337", "7347", "7437", "8337"], answer: "7337" } },
+            { en: { question: "What is 4002 + 2004?", options: ["6002", "6004", "6006", "6008"], answer: "6006" }, ml: { question: "4002 + 2004 എത്രയാണ്?", options: ["6002", "6004", "6006", "6008"], answer: "6006" } },
+            { en: { question: "In the caterpillar sum, what is 2357 + 7532?", options: ["9889", "9888", "9989", "9899"], answer: "9889" }, ml: { question: "പുഴുവിലെ കണക്കിൽ, 2357 + 7532 എത്രയാണ്?", options: ["9889", "9888", "9989", "9899"], answer: "9889" } },
+            { en: { question: "In the car game, what is Dhanu's total score from rounds 1 (2143) and 2 (1457)?", options: ["3500", "3600", "3590", "3610"], answer: "3600" }, ml: { question: "കാർ ഗെയിമിൽ, ധനുവിന്റെ ഒന്നും (2143) രണ്ടും (1457) റൗണ്ടുകളിലെ ആകെ സ്കോർ എത്ര?", options: ["3500", "3600", "3590", "3610"], answer: "3600" } },
+            { en: { question: "What is the total price of a TV (9999) and a bed (5999)?", options: ["15998", "16000", "15098", "15990"], answer: "15998" }, ml: { question: "ഒരു ടിവിക്കും (9999) ഒരു കട്ടിലിനും (5999) കൂടിയാകെ എത്ര രൂപയാകും?", options: ["15998", "16000", "15098", "15990"], answer: "15998" } },
+            { en: { question: "If you buy an item for 9999 and pay with 100 hundred-rupee notes (10000), what is your change?", options: ["10", "1", "100", "0"], answer: "1" }, ml: { question: "9999 രൂപയുടെ ഒരു സാധനം വാങ്ങി 100 നൂറുരൂപ നോട്ടുകൾ (10000) കൊടുത്താൽ ബാക്കി എത്ര കിട്ടും?", options: ["10", "1", "100", "0"], answer: "1" } },
+            { en: { question: "In the batting game, what is Jincy's total score (2344 + 3555 + 1592)?", options: ["7491", "7591", "7481", "7501"], answer: "7491" }, ml: { question: "ബാറ്റിംഗ് ഗെയിമിൽ, ജിൻസിയുടെ ആകെ സ്കോർ എത്രയാണ് (2344 + 3555 + 1592)?", options: ["7491", "7591", "7481", "7501"], answer: "7491" } },
+            { en: { question: "In the grid puzzle, what is the value of A (2850 + 1400)?", options: ["4250", "4350", "4200", "4150"], answer: "4250" }, ml: { question: "ഗ്രിഡ് പസിലിൽ, A-യുടെ വില എത്രയാണ് (2850 + 1400)?", options: ["4250", "4350", "4200", "4150"], answer: "4250" } },
+            { en: { question: "Continue the pattern: 4100, 5100, 6100, ...", options: ["7100", "7000", "6200", "8100"], answer: "7100" }, ml: { question: "ഈ ക്രമം തുടരുക: 4100, 5100, 6100, ...", options: ["7100", "7000", "6200", "8100"], answer: "7100" } },
+            { en: { question: "Continue the pattern: 1000, 2111, 3222, ...", options: ["4333", "4222", "4321", "4444"], answer: "4333" }, ml: { question: "ഈ ക്രമം തുടരുക: 1000, 2111, 3222, ...", options: ["4333", "4222", "4321", "4444"], answer: "4333" } },
+            { en: { question: "On the shooting board, what is the total score if you hit each circle (1, 10, 100, 1000) once?", options: ["1110", "1211", "1111", "1121"], answer: "1111" }, ml: { question: "ഷൂട്ടിംഗ് ബോർഡിൽ, ഓരോ വൃത്തത്തിലും (1, 10, 100, 1000) ഓരോ തവണ ഷൂട്ട് ചെയ്താൽ ആകെ സ്കോർ എത്ര?", options: ["1110", "1211", "1111", "1121"], answer: "1111" } },
+            { en: { question: "Dhvani shot 1000 three times and 10 two times. What is her total score?", options: ["3002", "3020", "3200", "30020"], answer: "3020" }, ml: { question: "ധ്വനി 1000-ൽ മൂന്നുതവണയും 10-ൽ രണ്ടുതവണയും ഷൂട്ട് ചെയ്തു. അവളുടെ ആകെ സ്കോർ എത്ര?", options: ["3002", "3020", "3200", "30020"], answer: "3020" } },
+            { en: { question: "A 3-digit number, with all digits the same, when added 3 times plus 1, equals 1000. What is the number?", options: ["111", "222", "333", "444"], answer: "333" }, ml: { question: "ഒരേ അക്കങ്ങളുള്ള ഒരു മൂന്നക്കസംഖ്യ 3 തവണ കൂട്ടി 1 ചേർത്തപ്പോൾ 1000 കിട്ടി. സംഖ്യ ഏതാണ്?", options: ["111", "222", "333", "444"], answer: "333" } },
+            { en: { question: "What is 1089, the number from the magic trick, reversed?", options: ["9801", "1980", "8901", "9081"], answer: "9801" }, ml: { question: "മാന്ത്രിക വിദ്യയിലെ 1089 എന്ന സംഖ്യ തിരിച്ചെഴുതിയാൽ എന്താണ്?", options: ["9801", "1980", "8901", "9081"], answer: "9801" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             currentQuestionIndex = 0;
+             userAnswers.fill(null);
+             score = 0;
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = quizData.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            const questionData = quizData[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / quizData.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn bg-white hover:bg-yellow-100 rounded-lg shadow-sm border-2 border-slate-200';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = quizData[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-green-600';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-blue-600';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === quizData.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${quizData.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-700">${text.reviewHeader}</h3>`;
+            quizData.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-green-100' : 'bg-blue-100'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-green-800' : 'text-blue-800'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+

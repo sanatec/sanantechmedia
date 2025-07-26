@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Fun with Shapes</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new green/nature theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0fdf4; /* Light green background */
+        }
+        .quiz-container {
+            background: linear-gradient(135deg, #ffffff, #dcfce7);
+            box-shadow: 0 10px 25px rgba(15, 95, 48, 0.1);
+            border: 1px solid #bbf7d0;
+        }
+        .quiz-container:hover {
+            transform: translateY(-5px);
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid transparent;
+        }
+        .option-btn.selected {
+            background-color: #86efac; /* A light green for selected */
+            color: #14532d;
+            border-color: #22c55e;
+        }
+        .option-btn.correct {
+            background-color: #22c55e; /* Green for correct */
+            color: white;
+            border-color: #15803d;
+        }
+        .option-btn.wrong {
+            background-color: #f43f5e; /* Rose for wrong */
+            color: white;
+            border-color: #be123c;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        /* Animation for screen transitions */
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-green-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-green-700 mb-2">MCQ Adventure!</h1>
+            <p id="welcome-subtitle" class="text-lg text-stone-600 mb-6">Let's learn about Shapes!</p>
+            <img src="https://placehold.co/400x200/22c55e/ffffff?text=Ready+for+Shapes%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Shapes Adventure Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-stone-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-stone-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-lime-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-stone-800 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3">
+                    <!-- Options will be dynamically inserted here -->
+                </div>
+
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6 text-center">
+                <h2 id="review-title" class="text-3xl font-black text-green-800 mb-2">Quiz Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-stone-600 mb-4">Great job! Here's your score:</p>
+                <div class="bg-lime-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-lime-800"></span>
+                </div>
+             </div>
+             <div id="review-content" class="mt-6 space-y-4">
+                <!-- Review details will be inserted here -->
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        
+        // --- UI Text Elements for Translation ---
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual Data ---
+        const uiText = {
+            en: {
+                welcomeTitle: "MCQ Adventure!",
+                welcomeSubtitle: "Let's learn about Shapes!",
+                startBtn: "Start Quiz",
+                questionLabel: "Question",
+                ofLabel: "of",
+                backBtn: "Back",
+                nextBtn: "Next",
+                submitBtn: "Submit",
+                reviewTitle: "Quiz Complete!",
+                reviewSubtitle: "Great job! Here's your score:",
+                reviewHeader: "Your Review",
+                yourAnswer: "Your answer:",
+                correctAnswer: "Correct answer:",
+                notAnswered: "Not answered",
+                playAgainBtn: "Play Again",
+                correctFeedback: "Correct! 🎉",
+            },
+            ml: {
+                welcomeTitle: "MCQ സാഹസികം!",
+                welcomeSubtitle: "രൂപങ്ങളെക്കുറിച്ച് പഠിക്കാം!",
+                startBtn: "ക്വിസ് ആരംഭിക്കുക",
+                questionLabel: "ചോദ്യം",
+                ofLabel: "/",
+                backBtn: "പുറകോട്ട്",
+                nextBtn: "അടുത്തത്",
+                submitBtn: "സമർപ്പിക്കുക",
+                reviewTitle: "ക്വിസ് പൂർത്തിയായി!",
+                reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:",
+                reviewHeader: "നിങ്ങളുടെ അവലോകനം",
+                yourAnswer: "നിങ്ങളുടെ ഉത്തരം:",
+                correctAnswer: "ശരിയായ ഉത്തരം:",
+                notAnswered: "ഉത്തരം നൽകിയില്ല",
+                playAgainBtn: "വീണ്ടും കളിക്കുക",
+                correctFeedback: "ശരിയാണ്! 🎉",
+            }
+        };
+
+        const quizData = [
+            { en: { question: "How many sides does a rectangle have?", options: ["3", "4", "5", "6"], answer: "4" }, ml: { question: "ഒരു ചതുരത്തിന് (rectangle) എത്ര വശങ്ങളുണ്ട്?", options: ["3", "4", "5", "6"], answer: "4" } },
+            { en: { question: "Which shape has 3 sides and 3 corners?", options: ["Rectangle", "Square", "Circle", "Triangle"], answer: "Triangle" }, ml: { question: "ഏത് രൂപത്തിനാണ് 3 വശങ്ങളും 3 കോണുകളും ഉള്ളത്?", options: ["ചതുരം", "സമചതുരം", "വൃത്തം", "ത്രികോണം"], answer: "ത്രികോണം" } },
+            { en: { question: "What is special about the sides of a square?", options: ["All sides are different", "Opposite sides are equal", "All 4 sides are equal", "It has no sides"], answer: "All 4 sides are equal" }, ml: { question: "ഒരു സമചതുരത്തിൻ്റെ (square) വശങ്ങളുടെ പ്രത്യേകതയെന്താണ്?", options: ["എല്ലാ വശങ്ങളും വ്യത്യസ്തമാണ്", "എതിർവശങ്ങൾ തുല്യമാണ്", "4 വശങ്ങളും തുല്യമാണ്", "വശങ്ങളില്ല"], answer: "4 വശങ്ങളും തുല്യമാണ്" } },
+            { en: { question: "If you cut one corner of a rectangular paper, how many corners will it have?", options: ["3", "4", "5", "2"], answer: "5" }, ml: { question: "ഒരു ചതുരക്കടലാസിന്റെ ഒരു മൂല മുറിച്ചാൽ അതിന് എത്ര മൂലകളുണ്ടാകും?", options: ["3", "4", "5", "2"], answer: "5" } },
+            { en: { question: "In the book, what did the children make using paper for the Ocean Day celebration ?", options: ["Boats", "Birds", "Fish", "Flowers"], answer: "Fish" }, ml: { question: "സമുദ്രദിനാഘോഷത്തിനായി കുട്ടികൾ കടലാസ് കൊണ്ട് എന്താണ് ഉണ്ടാക്കിയത്?", options: ["വഞ്ചികൾ", "പക്ഷികൾ", "മീനുകൾ", "പൂക്കൾ"], answer: "മീനുകൾ" } },
+            { en: { question: "A rectangle has opposite sides that are...", options: ["Different lengths", "Curved", "Equal in length", "Always short"], answer: "Equal in length" }, ml: { question: "ഒരു ചതുരത്തിന്റെ എതിർവശങ്ങൾ...", options: ["വ്യത്യസ്ത നീളമുള്ളവയാണ്", "വളഞ്ഞതാണ്", "തുല്യ നീളമുള്ളവയാണ്", "എപ്പോഴും ചെറുതാണ്"], answer: "തുല്യ നീളമുള്ളവയാണ്" } },
+            { en: { question: "Which 3D shape has all faces in the shape of a square? ", options: ["Square", "Cube", "Circle", "Pyramid"], answer: "Cube" }, ml: { question: "'സമചതുരക്കട്ട' എന്ന് വിളിക്കുന്ന 3D രൂപം ഏതാണ്?", options: ["സമചതുരം", "ക്യൂബ്", "വൃത്തം", "പിരമിഡ്"], answer: "ക്യൂബ്" } },
+            { en: { question: "A birthday party hat is usually in the shape of a...", options: ["Sphere", "Cube", "Cylinder", "Cone"], answer: "Cone" }, ml: { question: "ഒരു ജന്മദിന തൊപ്പി സാധാരണയായി ഏത് ആകൃതിയിലാണ്?", options: ["ഗോളം", "ക്യൂബ്", "സിലിണ്ടർ", "കോൺ (വൃത്തസ്തൂപിക)"], answer: "കോൺ (വൃത്തസ്തൂപിക)" } },
+            { en: { question: "A ball is an example of which 3D shape?", options: ["Sphere", "Circle", "Cone", "Cuboid"], answer: "Sphere" }, ml: { question: "ഒരു പന്ത് ഏത് 3D രൂപത്തിന് ഉദാഹരണമാണ്?", options: ["ഗോളം", "വൃത്തം", "കോൺ", "ചതുരക്കട്ട"], answer: "ഗോളം" } },
+            { en: { question: "Is every square a rectangle?", options: ["Yes", "No", "Only sometimes", "Never"], answer: "Yes" }, ml: { question: "എല്ലാ സമചതുരവും ഒരു ചതുരമാണോ?", options: ["അതെ", "അല്ല", "ചിലപ്പോൾ മാത്രം", "ഒരിക്കലുമല്ല"], answer: "അതെ" } },
+            { en: { question: "Is every rectangle a square?", options: ["Yes", "No", "Only if it's small", "Always"], answer: "No" }, ml: { question: "എല്ലാ ചതുരവും ഒരു സമചതുരമാണോ?", options: ["അതെ", "അല്ല", "ചെറുതാണെങ്കിൽ മാത്രം", "എല്ലായ്പ്പോഴും"], answer: "അല്ല" } },
+            { en: { question: "Manu used a wool thread to border a square card with sides of 8 cm each. What is the total length of the thread used?", options: ["8 cm", "16 cm", "24 cm", "32 cm"], answer: "32 cm" }, ml: { question: "8 സെ.മീ വീതം വശങ്ങളുള്ള ഒരു സമചതുര കാർഡിന് ചുറ്റും മനു നൂല് ഒട്ടിച്ചു. ഉപയോഗിച്ച നൂലിന്റെ ആകെ നീളം എത്ര?", options: ["8 സെ.മീ", "16 സെ.മീ", "24 സെ.മീ", "32 സെ.മീ"], answer: "32 സെ.മീ" } },
+            { en: { question: "Which set of side lengths can form a rectangle?", options: ["5, 8, 6, 7", "5, 6, 7, 9", "5, 8, 5, 8", "8, 8, 5, 8"], answer: "5, 8, 5, 8" }, ml: { question: "ഏത് അളവുകൾ ഉപയോഗിച്ച് ഒരു ചതുരം നിർമ്മിക്കാം?", options: ["5, 8, 6, 7", "5, 6, 7, 9", "5, 8, 5, 8", "8, 8, 5, 8"], answer: "5, 8, 5, 8" } },
+            { en: { question: "Which set of side lengths CANNOT form a square?", options: ["8, 8, 8, 8", "5, 5, 5, 5", "6, 6, 6, 6", "5, 5, 6, 6"], answer: "5, 5, 6, 6" }, ml: { question: "ഏത് അളവുകൾ ഉപയോഗിച്ച് ഒരു സമചതുരം നിർമ്മിക്കാൻ കഴിയില്ല?", options: ["8, 8, 8, 8", "5, 5, 5, 5", "6, 6, 6, 6", "5, 5, 6, 6"], answer: "5, 5, 6, 6" } },
+            { en: { question: "What tool is used to measure the length of the sides of a shape?", options: ["Compass", "Protractor", "Scale/Ruler", "Pencil"], answer: "Scale/Ruler" }, ml: { question: "ഒരു രൂപത്തിൻ്റെ വശങ്ങളുടെ നീളം അളക്കാൻ ഉപയോഗിക്കുന്ന ഉപകരണം ഏതാണ്?", options: ["കോമ്പസ്", "പ്രൊട്രാക്ടർ", "സ്കെയിൽ/റൂളർ", "പെൻസിൽ"], answer: "സ്കെയിൽ/റൂളർ" } },
+            { en: { question: "A square is the 3D name for which shape?", options: ["Pyramid", "Cuboid", "Sphere", "Cone"], answer: "Cuboid" }, ml: { question: "'ചതുരക്കട്ട' എന്നത് ഏത് 3D രൂപത്തിൻ്റെ പേരാണ്?", options: ["പിരമിഡ്", "ക്യൂബോയിഡ്", "ഗോളം", "കോൺ"], answer: "ക്യൂബോയിഡ്" } },
+            { en: { question: "A dice is a common example of which shape?", options: ["Cuboid (ചതുരക്കട്ട)", "Sphere (ഗോളം)", "Cube (സമചതുരക്കട്ട)", "Cone (വൃത്തസ്തൂപിക)"], answer: "Cube (സമചതുരക്കട്ട)" }, ml: { question: "പകിട ഏത് രൂപത്തിന് ഉദാഹരണമാണ്?", options: ["ചതുരക്കട്ട", "ഗോളം", "ക്യൂബ് (സമചതുരക്കട്ട)", "കോൺ"], answer: "ക്യൂബ് (സമചതുരക്കട്ട)" } },
+            { en: { question: "How many shapes are typically in a Tangram set?", options: ["5", "6", "7", "8"], answer: "7" }, ml: { question: "ഒരു ടാൻഗ്രാം സെറ്റിൽ സാധാരണയായി എത്ര രൂപങ്ങളുണ്ട്?", options: ["5", "6", "7", "8"], answer: "7" } },
+            { en: { question: "In a GeoBoard, what do you use to make shapes?", options: ["String", "Rubber bands", "Pencils", "Chalk"], answer: "Rubber bands" }, ml: { question: "ജിയോബോർഡിൽ രൂപങ്ങൾ ഉണ്ടാക്കാൻ എന്തുപയോഗിക്കുന്നു?", options: ["ചരട്", "റബ്ബർ ബാൻഡുകൾ", "പെൻസിലുകൾ", "ചോക്ക്"], answer: "റബ്ബർ ബാൻഡുകൾ" } },
+            { en: { question: "Which shape has no straight sides and no corners?", options: ["Triangle", "Square", "Circle", "Rectangle"], answer: "Circle" }, ml: { question: "നേരെയുള്ള വശങ്ങളോ കോണുകളോ ഇല്ലാത്ത രൂപം ഏതാണ്?", options: ["ത്രികോണം", "സമചതുരം", "വൃത്തം", "ചതുരം"], answer: "വൃത്തം" } },
+            { en: { question: "A book or a brick is usually in the shape of a...", options: ["Cube", "Sphere", "Cone", "Cuboid"], answer: "Cuboid" }, ml: { question: "ഒരു പുസ്തകം അല്ലെങ്കിൽ ഇഷ്ടിക സാധാരണയായി ഏത് ആകൃതിയിലാണ്?", options: ["ക്യൂബ്", "ഗോളം", "കോൺ", "ചതുരക്കട്ട"], answer: "ചതുരക്കട്ട" } },
+            { en: { question: "If a rectangle has one side of 5 cm and another side of 10 cm, what are the lengths of the other two sides?", options: ["10 cm, 10 cm", "5 cm, 5 cm", "5 cm, 10 cm", "Cannot be determined"], answer: "5 cm, 10 cm" }, ml: { question: "ഒരു ചതുരത്തിന്റെ ഒരു വശം 5 സെ.മീ, മറ്റേ വശം 10 സെ.മീ ആയാൽ, മറ്റ് രണ്ട് വശങ്ങളുടെ നീളം എത്ര?", options: ["10 സെ.മീ, 10 സെ.മീ", "5 സെ.മീ, 5 സെ.മീ", "5 സെ.മീ, 10 സെ.മീ", "കണ്ടെത്താൻ കഴിയില്ല"], answer: "5 സെ.മീ, 10 സെ.മീ" } },
+            { en: { question: "The butterfly drawing in the book was made of which shapes?", options: ["Only circles", "Only squares", "Circles, squares, and triangles", "Only rectangles"], answer: "Circles, squares, and triangles" }, ml: { question: "പുസ്തകത്തിലെ ചിത്രശലഭം ഏതൊക്കെ രൂപങ്ങൾ ഉപയോഗിച്ചാണ് നിർമ്മിച്ചത്?", options: ["വൃത്തങ്ങൾ മാത്രം", "സമചതുരങ്ങൾ മാത്രം", "വൃത്തങ്ങൾ, സമചതുരങ്ങൾ, ത്രികോണങ്ങൾ", "ചതുരങ്ങൾ മാത്രം"], answer: "വൃത്തങ്ങൾ, സമചതുരങ്ങൾ, ത്രികോണങ്ങൾ" } },
+            { en: { question: "In the book, Athul and Binsa made shapes with sticks of 5 cm and 8 cm. Whose shape was a proper rectangle?", options: ["Athul's", "Binsa's", "Both", "Neither"], answer: "Athul's" }, ml: { question: "പുസ്തകത്തിൽ, അതുലും ബിൻസയും 5 സെ.മീ, 8 സെ.മീ അളവുകളുള്ള ഈർക്കിലുകൾ കൊണ്ട് രൂപങ്ങളുണ്ടാക്കി. ആരുടെ രൂപമാണ് ശരിയായ ചതുരമായത്?", options: ["അതുലിന്റെ", "ബിൻസയുടെ", "രണ്ടുപേരുടേതും", "ഒരാളുടേതുമല്ല"], answer: "അതുലിന്റെ" } },
+            { en: { question: "What is the main topic of this chapter?", options: ["Numbers", "Addition", "Shapes and Lines", "Time"], answer: "Shapes and Lines" }, ml: { question: "ഈ അധ്യായത്തിലെ പ്രധാന വിഷയം എന്താണ്?", options: ["സംഖ്യകൾ", "സങ്കലനം", "വരകളും രൂപങ്ങളും", "സമയം"], answer: "വരകളും രൂപങ്ങളും" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             currentQuestionIndex = 0;
+             userAnswers.fill(null);
+             score = 0;
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = quizData.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            const questionData = quizData[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / quizData.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn bg-white hover:bg-green-100 rounded-lg shadow-sm border-2 border-stone-200';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = quizData[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-green-600';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-600';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === quizData.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${quizData.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-stone-700">${text.reviewHeader}</h3>`;
+            quizData.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-green-100' : 'bg-rose-100'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-stone-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-green-800' : 'text-rose-800'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+

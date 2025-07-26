@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Beyond a Thousand</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new blue/grey racing theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f1f5f9; /* Slate 100 background */
+        }
+        .quiz-container {
+            background: linear-gradient(135deg, #ffffff, #e2e8f0);
+            box-shadow: 0 10px 25px rgba(30, 41, 59, 0.1);
+            border: 1px solid #cbd5e1;
+        }
+        .quiz-container:hover {
+            transform: translateY(-5px);
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid transparent;
+        }
+        .option-btn.selected {
+            background-color: #60a5fa; /* A nice blue for selected */
+            color: white;
+            border-color: #2563eb;
+        }
+        .option-btn.correct {
+            background-color: #22c55e; /* Green for correct */
+            color: white;
+            border-color: #15803d;
+        }
+        .option-btn.wrong {
+            background-color: #f43f5e; /* Rose for wrong */
+            color: white;
+            border-color: #be123c;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        /* Animation for screen transitions */
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-slate-700 mb-2">MCQ Adventure!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Let's go Beyond a Thousand!</p>
+            <img src="https://placehold.co/400x200/3b82f6/ffffff?text=Ready+to+Race%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Car Race Adventure Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-amber-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3">
+                    <!-- Options will be dynamically inserted here -->
+                </div>
+
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6 text-center">
+                <h2 id="review-title" class="text-3xl font-black text-slate-800 mb-2">Quiz Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                <div class="bg-amber-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-amber-800"></span>
+                </div>
+             </div>
+             <div id="review-content" class="mt-6 space-y-4">
+                <!-- Review details will be inserted here -->
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        
+        // --- UI Text Elements for Translation ---
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual Data ---
+        const uiText = {
+            en: { welcomeTitle: "MCQ Adventure!", welcomeSubtitle: "Let's go Beyond a Thousand!", startBtn: "Start Quiz", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Quiz Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "MCQ സാഹസികം!", welcomeSubtitle: "ആയിരവും കടന്ന് പോകാം!", startBtn: "ക്വിസ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ക്വിസ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        const quizData = [
+            { en: { question: "What is the smallest 4-digit number?", options: ["999", "1001", "1000", "9999"], answer: "1000" }, ml: { question: "ഏറ്റവും ചെറിയ നാലക്ക സംഖ്യ ഏതാണ്?", options: ["999", "1001", "1000", "9999"], answer: "1000" } },
+            { en: { question: "What number is 1 less than 910?", options: ["900", "911", "909", "920"], answer: "909" }, ml: { question: "910-ൽ നിന്ന് 1 കുറച്ചാൽ കിട്ടുന്ന സംഖ്യ ഏത്?", options: ["900", "911", "909", "920"], answer: "909" } },
+            { en: { question: "What is the largest 3-digit number?", options: ["100", "999", "990", "1000"], answer: "999" }, ml: { question: "ഏറ്റവും വലിയ മൂന്നക്ക സംഖ്യ ഏതാണ്?", options: ["100", "999", "990", "1000"], answer: "999" } },
+            { en: { question: "What is 999 + 1?", options: ["998", "1001", "1000", "1010"], answer: "1000" }, ml: { question: "999 + 1 എത്രയാണ്?", options: ["998", "1001", "1000", "1010"], answer: "1000" } },
+            { en: { question: "How many 100 rupee notes make 1000 rupees?", options: ["1", "10", "100", "1000"], answer: "10" }, ml: { question: "എത്ര 100 രൂപ നോട്ടുകൾ ചേർന്നാൽ 1000 രൂപയാകും?", options: ["1", "10", "100", "1000"], answer: "10" } },
+            { en: { question: "How many 10 rupee notes make 1000 rupees?", options: ["10", "50", "100", "1000"], answer: "100" }, ml: { question: "എത്ര 10 രൂപ നോട്ടുകൾ ചേർന്നാൽ 1000 രൂപയാകും?", options: ["10", "50", "100", "1000"], answer: "100" } },
+            { en: { question: "In the car race, if 1 round is 1000 points, how many points do you get for 5 rounds?", options: ["1005", "500", "5000", "10000"], answer: "5000" }, ml: { question: "കാറോട്ട മത്സരത്തിൽ 1 റൗണ്ടിന് 1000 പോയിന്റ് ആണെങ്കിൽ, 5 റൗണ്ടിന് എത്ര പോയിന്റ് ലഭിക്കും?", options: ["1005", "500", "5000", "10000"], answer: "5000" } },
+            { en: { question: "What number comes after 1001?", options: ["1000", "1010", "1002", "1003"], answer: "1002" }, ml: { question: "1001-ന് ശേഷമുള്ള സംഖ്യ ഏതാണ്?", options: ["1000", "1010", "1002", "1003"], answer: "1002" } },
+            { en: { question: "Which number is 'Seven thousand seven hundred and seven'?", options: ["7077", "7770", "7707", "7007"], answer: "7707" }, ml: { question: "'എഴായിരത്തി എഴുന്നൂറ്റിയേഴ്' എന്ന സംഖ്യ ഏതാണ്?", options: ["7077", "7770", "7707", "7007"], answer: "7707" } },
+            { en: { question: "Which number is 'Nine thousand and nine'?", options: ["9009", "9900", "9090", "9099"], answer: "9009" }, ml: { question: "'ഒൻപതിനായിരത്തി ഒൻപത്' എന്ന സംഖ്യ ഏതാണ്?", options: ["9009", "9900", "9090", "9099"], answer: "9009" } },
+            { en: { question: "Using the digits 3, 5, 8, 1, what is the largest 4-digit number you can make?", options: ["1358", "8531", "5831", "8513"], answer: "8531" }, ml: { question: "3, 5, 8, 1 എന്നീ അക്കങ്ങൾ ഉപയോഗിച്ച് ഉണ്ടാക്കാവുന്ന ഏറ്റവും വലിയ നാലക്ക സംഖ്യ ഏതാണ്?", options: ["1358", "8531", "5831", "8513"], answer: "8531" } },
+            { en: { question: "What is 2000 + 200?", options: ["2002", "2020", "2200", "4000"], answer: "2200" }, ml: { question: "2000 + 200 എത്രയാണ്?", options: ["2002", "2020", "2200", "4000"], answer: "2200" } },
+            { en: { question: "In the Mud Race game, what happens if you land on a bridge (പാലം)?", options: ["Go back", "Miss a turn", "Move forward", "Start again"], answer: "Move forward" }, ml: { question: "മഡ് റേസ് കളിയിൽ, ഒരു പാലത്തിൽ എത്തിയാൽ എന്ത് സംഭവിക്കും?", options: ["പുറകോട്ട് പോകും", "ഒരു അവസരം നഷ്ടപ്പെടും", "മുന്നോട്ട് പോകും", "വീണ്ടും തുടങ്ങണം"], answer: "മുന്നോട്ട് പോകും" } },
+            { en: { question: "If one car tire costs 2500 rupees, how much will 4 tires cost?", options: ["5000", "7500", "10000", "2504"], answer: "10000" }, ml: { question: "ഒരു കാർ ടയറിന് 2500 രൂപയാണെങ്കിൽ, 4 ടയറുകൾക്ക് എത്ര രൂപയാകും?", options: ["5000", "7500", "10000", "2504"], answer: "10000" } },
+            { en: { question: "Continue the pattern: 500, 1000, 1500, ...", options: ["1600", "2500", "2000", "1501"], answer: "2000" }, ml: { question: "ഈ ക്രമം തുടരുക: 500, 1000, 1500, ...", options: ["1600", "2500", "2000", "1501"], answer: "2000" } },
+            { en: { question: "Continue the pattern: 9400, 9300, 9200, ...", options: ["9100", "9250", "9000", "9150"], answer: "9100" }, ml: { question: "ഈ ക്രമം തുടരുക: 9400, 9300, 9200, ...", options: ["9100", "9250", "9000", "9150"], answer: "9100" } },
+            { en: { question: "What is 3500 + 2500?", options: ["5000", "5500", "6000", "6500"], answer: "6000" }, ml: { question: "3500 + 2500 എത്രയാണ്?", options: ["5000", "5500", "6000", "6500"], answer: "6000" } },
+            { en: { question: "How many cars participated in the race if registration numbers were from 5000 to 5050?", options: ["50", "51", "49", "55"], answer: "51" }, ml: { question: "രജിസ്റ്റർ നമ്പറുകൾ 5000 മുതൽ 5050 വരെയാണെങ്കിൽ മത്സരത്തിൽ എത്ര കാറുകൾ പങ്കെടുത്തു?", options: ["50", "51", "49", "55"], answer: "51" } },
+            { en: { question: "If you take one bead from the thousands place and put it in the ones place on an abacus showing 1000, what is the new number?", options: ["999", "1001", "901", "991"], answer: "991" }, ml: { question: "1000 കാണിക്കുന്ന അബാക്കസിൽ നിന്ന് ആയിരത്തിന്റെ സ്ഥാനത്തുനിന്ന് ഒരു മുത്തെടുത്ത് ഒന്നിന്റെ സ്ഥാനത്തിട്ടാൽ കിട്ടുന്ന പുതിയ സംഖ്യ ഏതാണ്?", options: ["999", "1001", "901", "991"], answer: "991" } },
+            { en: { question: "What is 10000 + 1?", options: ["10001", "10010", "11000", "9999"], answer: "10001" }, ml: { question: "10000 + 1 എത്രയാണ്?", options: ["10001", "10010", "11000", "9999"], answer: "10001" } },
+            { en: { question: "Which car travelled the farthest distance?", options: ["Mikki (8546)", "Bony (7982)", "Speedy (6375)", "A new car (8564)"], answer: "A new car (8564)" }, ml: { question: "ഏത് കാറാണ് ഏറ്റവും കൂടുതൽ ദൂരം സഞ്ചരിച്ചത്?", options: ["മിക്കി (8546)", "ബോണി (7982)", "സ്പീഡി (6375)", "പുതിയ കാർ (8564)"], answer: "പുതിയ കാർ (8564)" } },
+            { en: { question: "What is the number with 8 hundreds, 4 tens, and 2 ones?", options: ["824", "428", "842", "284"], answer: "842" }, ml: { question: "8 നൂറും, 4 പത്തും, 2 ഒന്നും ചേർന്ന സംഖ്യ ഏതാണ്?", options: ["824", "428", "842", "284"], answer: "842" } },
+            { en: { question: "Which two numbers add up to 1000?", options: ["505 + 495", "990 + 100", "250 + 900", "100 + 1"], answer: "505 + 495" }, ml: { question: "ഏത് രണ്ട് സംഖ്യകൾ കൂട്ടിയാൽ 1000 കിട്ടും?", options: ["505 + 495", "990 + 100", "250 + 900", "100 + 1"], answer: "505 + 495" } },
+            { en: { question: "What is the prize money on the check in words?", options: ["Nine thousand nine hundred ninety-nine", "Ten thousand", "Nine thousand ninety-nine", "One thousand and one"], answer: "Nine thousand nine hundred ninety-nine" }, ml: { question: "ചെക്കിൽ അക്ഷരത്തിൽ എഴുതിയ സമ്മാനത്തുക എത്രയാണ്?", options: ["ഒൻപതിനായിരത്തി തൊള്ളായിരത്തി തൊണ്ണൂറ്റി ഒൻപത്", "പതിനായിരം", "ഒൻപതിനായിരത്തി തൊണ്ണൂറ്റി ഒൻപത്", "ആയിരത്തി ഒന്ന്"], answer: "ഒൻപതിനായിരത്തി തൊള്ളായിരത്തി തൊണ്ണൂറ്റി ഒൻപത്" } },
+            { en: { question: "What is 9999 + 1?", options: ["9998", "10000", "10001", "10010"], answer: "10000" }, ml: { question: "9999 + 1 എത്രയാണ്?", options: ["9998", "10000", "10001", "10010"], answer: "10000" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             currentQuestionIndex = 0;
+             userAnswers.fill(null);
+             score = 0;
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = quizData.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            const questionData = quizData[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / quizData.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn bg-white hover:bg-blue-100 rounded-lg shadow-sm border-2 border-slate-200';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = quizData[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-green-600';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-600';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === quizData.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${quizData.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-700">${text.reviewHeader}</h3>`;
+            quizData.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-green-100' : 'bg-rose-100'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-green-800' : 'text-rose-800'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+

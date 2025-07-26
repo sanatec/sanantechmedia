@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Decreasing Clusters</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new purple/pink theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #fdf2f8; /* Pink 50 background */
+        }
+        .quiz-container {
+            background: linear-gradient(135deg, #ffffff, #fce7f3); /* White to Pink 100 */
+            box-shadow: 0 10px 25px rgba(131, 24, 67, 0.1);
+            border: 1px solid #fbcfe8;
+        }
+        .quiz-container:hover {
+            transform: translateY(-5px);
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid transparent;
+        }
+        .option-btn.selected {
+            background-color: #c084fc; /* Purple 400 for selected */
+            color: white;
+            border-color: #9333ea; /* Purple 600 */
+        }
+        .option-btn.correct {
+            background-color: #4ade80; /* Green 400 for correct */
+            color: #14532d;
+            border-color: #16a34a;
+        }
+        .option-btn.wrong {
+            background-color: #f472b6; /* Pink 400 for wrong */
+            color: white;
+            border-color: #db2777;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        /* Animation for screen transitions */
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-pink-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-purple-800 mb-2">MCQ Adventure!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Let's Subtract and Solve!</p>
+            <img src="https://placehold.co/400x200/a855f7/ffffff?text=Ready+to+Subtract%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Subtraction Adventure Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3">
+                    <!-- Options will be dynamically inserted here -->
+                </div>
+
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6 text-center">
+                <h2 id="review-title" class="text-3xl font-black text-purple-800 mb-2">Quiz Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                </div>
+             </div>
+             <div id="review-content" class="mt-6 space-y-4">
+                <!-- Review details will be inserted here -->
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        
+        // --- UI Text Elements for Translation ---
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual Data ---
+        const uiText = {
+            en: { welcomeTitle: "MCQ Adventure!", welcomeSubtitle: "Let's Subtract and Solve!", startBtn: "Start Quiz", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Quiz Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "MCQ സാഹസികം!", welcomeSubtitle: "കുറച്ച് ഉത്തരം കണ്ടെത്താം!", startBtn: "ക്വിസ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ക്വിസ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        const quizData = [
+            { en: { question: "What is 999 - 100?", options: ["899", "989", "900", "800"], answer: "899" }, ml: { question: "999 - 100 എത്രയാണ്?", options: ["899", "989", "900", "800"], answer: "899" } },
+            { en: { question: "What is 9999 - 1000?", options: ["8999", "9899", "9000", "8000"], answer: "8999" }, ml: { question: "9999 - 1000 എത്രയാണ്?", options: ["8999", "9899", "9000", "8000"], answer: "8999" } },
+            { en: { question: "What is the difference between the largest 3-digit number (999) and the largest 2-digit number (99)?", options: ["90", "990", "900", "899"], answer: "900" }, ml: { question: "ഏറ്റവും വലിയ മൂന്നക്ക സംഖ്യയും (999) ഏറ്റവും വലിയ രണ്ടക്ക സംഖ്യയും (99) തമ്മിലുള്ള വ്യത്യാസം എത്രയാണ്?", options: ["90", "990", "900", "899"], answer: "900" } },
+            { en: { question: "What is 340 - 120?", options: ["200", "220", "120", "240"], answer: "220" }, ml: { question: "340 - 120 എത്രയാണ്?", options: ["200", "220", "120", "240"], answer: "220" } },
+            { en: { question: "What is 346 - 162?", options: ["184", "180", "284", "204"], answer: "184" }, ml: { question: "346 - 162 എത്രയാണ്?", options: ["184", "180", "284", "204"], answer: "184" } },
+            { en: { question: "Kichu's number is 876 and Chippy's is 697. How much more is Kichu's number?", options: ["170", "189", "179", "279"], answer: "179" }, ml: { question: "കിച്ചുവിന്റെ സംഖ്യ 876, ചിപ്പിയുടേത് 697. കിച്ചുവിന്റെ സംഖ്യ എത്ര കൂടുതലാണ്?", options: ["170", "189", "179", "279"], answer: "179" } },
+            { en: { question: "What number must be added to 3542 to get 3798?", options: ["250", "256", "206", "356"], answer: "256" }, ml: { question: "3542-നോട് എത്ര കൂട്ടിയാൽ 3798 കിട്ടും?", options: ["250", "256", "206", "356"], answer: "256" } },
+            { en: { question: "What is the difference between 5849 and 2617?", options: ["3232", "3230", "3332", "2232"], answer: "3232" }, ml: { question: "5849-ഉം 2617-ഉം തമ്മിലുള്ള വ്യത്യാസം എത്രയാണ്?", options: ["3232", "3230", "3332", "2232"], answer: "3232" } },
+            { en: { question: "What is 3625 - 1812?", options: ["1813", "1713", "1803", "2813"], answer: "1813" }, ml: { question: "3625 - 1812 എത്രയാണ്?", options: ["1813", "1713", "1803", "2813"], answer: "1813" } },
+            { en: { question: "The electricity meter reading was 4526. The previous reading was 3845. How many units were used?", options: ["681", "781", "621", "721"], answer: "681" }, ml: { question: "വൈദ്യുതി മീറ്റർ റീഡിംഗ് 4526. മുൻ റീഡിംഗ് 3845. എത്ര യൂണിറ്റ് ഉപയോഗിച്ചു?", options: ["681", "781", "621", "721"], answer: "681" } },
+            { en: { question: "Chippy's meter reading went from 4215 to 4826. How many units did she use?", options: ["601", "611", "511", "621"], answer: "611" }, ml: { question: "ചിപ്പിയുടെ മീറ്റർ റീഡിംഗ് 4215-ൽ നിന്ന് 4826 ആയി. അവൾ എത്ര യൂണിറ്റ് ഉപയോഗിച്ചു?", options: ["601", "611", "511", "621"], answer: "611" } },
+            { en: { question: "Faris's meter reading went from 6970 to 7340. How many units did he use?", options: ["370", "330", "470", "430"], answer: "370" }, ml: { question: "ഫാരിസിന്റെ മീറ്റർ റീഡിംഗ് 6970-ൽ നിന്ന് 7340 ആയി. അവൻ എത്ര യൂണിറ്റ് ഉപയോഗിച്ചു?", options: ["370", "330", "470", "430"], answer: "370" } },
+            { en: { question: "A family with 2 adults (180 each) and 2 children (90 each) goes to the circus. What is the total ticket cost?", options: ["500", "520", "540", "600"], answer: "540" }, ml: { question: "2 മുതിർന്നവരും (180 വീതം) 2 കുട്ടികളും (90 വീതം) സർക്കസിന് പോയാൽ ആകെ ടിക്കറ്റ് നിരക്ക് എത്ര?", options: ["500", "520", "540", "600"], answer: "540" } },
+            { en: { question: "If you pay 1000 for a bill of 540, how much change do you get back?", options: ["460", "450", "560", "540"], answer: "460" }, ml: { question: "540 രൂപയുടെ ബില്ലിന് 1000 രൂപ കൊടുത്താൽ ബാക്കി എത്ര കിട്ടും?", options: ["460", "450", "560", "540"], answer: "460" } },
+            { en: { question: "What is 1000 - 250?", options: ["700", "850", "750", "800"], answer: "750" }, ml: { question: "1000 - 250 എത്രയാണ്?", options: ["700", "850", "750", "800"], answer: "750" } },
+            { en: { question: "Kichu had 5484 in his account and withdrew 3295. What is his balance?", options: ["2189", "2289", "2199", "2299"], answer: "2189" }, ml: { question: "കിച്ചുവിന്റെ അക്കൗണ്ടിൽ 5484 രൂപയുണ്ടായിരുന്നു, 3295 രൂപ പിൻവലിച്ചു. ബാക്കി എത്ര?", options: ["2189", "2289", "2199", "2299"], answer: "2189" } },
+            { en: { question: "Minni had 4971 and withdrew 2784. What is her balance?", options: ["2187", "2287", "2197", "2297"], answer: "2187" }, ml: { question: "മിന്നിയുടെ അക്കൗണ്ടിൽ 4971 രൂപയുണ്ടായിരുന്നു, 2784 രൂപ പിൻവലിച്ചു. ബാക്കി എത്ര?", options: ["2187", "2287", "2197", "2297"], answer: "2187" } },
+            { en: { question: "A number plus 6349 equals 8778. What is the number?", options: ["2429", "2439", "2529", "2539"], answer: "2429" }, ml: { question: "ഒരു സംഖ്യയോട് 6349 കൂട്ടിയപ്പോൾ 8778 കിട്ടി. സംഖ്യ ഏതാണ്?", options: ["2429", "2439", "2529", "2539"], answer: "2429" } },
+            { en: { question: "Kichu bought shoes (800), a football (950), and a bag (950). What was his total bill?", options: ["2700", "2600", "2750", "2650"], answer: "2700" }, ml: { question: "കിച്ചു ഷൂസും (800), ഫുട്ബോളും (950), ബാഗും (950) വാങ്ങി. അവന്റെ ആകെ ബിൽ എത്ര?", options: ["2700", "2600", "2750", "2650"], answer: "2700" } },
+            { en: { question: "Minni bought a bat (1400) and an umbrella (420). What was her total bill?", options: ["1800", "1820", "1920", "1900"], answer: "1820" }, ml: { question: "മിന്നി ഒരു ബാറ്റും (1400) ഒരു കുടയും (420) വാങ്ങി. അവളുടെ ആകെ ബിൽ എത്ര?", options: ["1800", "1820", "1920", "1900"], answer: "1820" } },
+            { en: { question: "If Kichu's balance was 2189 and he spent 2700, how much is he short?", options: ["511", "521", "611", "411"], answer: "511" }, ml: { question: "കിച്ചുവിന്റെ ബാലൻസ് 2189 രൂപയും അവൻ 2700 രൂപ ചിലവഴിക്കുകയും ചെയ്താൽ, അവന് എത്ര രൂപ കുറവുണ്ട്?", options: ["511", "521", "611", "411"], answer: "511" } },
+            { en: { question: "If Minni's balance was 2187 and she spent 1820, what is her remaining balance?", options: ["367", "377", "467", "477"], answer: "367" }, ml: { question: "മിന്നിയുടെ ബാലൻസ് 2187 രൂപയും അവൾ 1820 രൂപ ചിലവഴിക്കുകയും ചെയ്താൽ, അവളുടെ ബാക്കി ബാലൻസ് എത്ര?", options: ["367", "377", "467", "477"], answer: "367" } },
+            { en: { question: "What is 888 - 111?", options: ["777", "770", "707", "677"], answer: "777" }, ml: { question: "888 - 111 എത്രയാണ്?", options: ["777", "770", "707", "677"], answer: "777" } },
+            { en: { question: "What is 8888 - 1111?", options: ["7777", "7770", "7007", "7707"], answer: "7777" }, ml: { question: "8888 - 1111 എത്രയാണ്?", options: ["7777", "7770", "7007", "7707"], answer: "7777" } },
+            { en: { question: "What is the difference between 2837 and 524?", options: ["2313", "2303", "2413", "2403"], answer: "2313" }, ml: { question: "2837-ഉം 524-ഉം തമ്മിലുള്ള വ്യത്യാസം എത്രയാണ്?", options: ["2313", "2303", "2413", "2403"], answer: "2313" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             currentQuestionIndex = 0;
+             userAnswers.fill(null);
+             score = 0;
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = quizData.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            const questionData = quizData[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / quizData.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn bg-white hover:bg-pink-100 rounded-lg shadow-sm border-2 border-slate-200';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = quizData[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-green-600';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-pink-600';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === quizData.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${quizData.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-700">${text.reviewHeader}</h3>`;
+            quizData.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-green-100' : 'bg-pink-100'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-green-800' : 'text-pink-800'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+
