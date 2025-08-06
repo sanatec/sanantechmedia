@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Document & Design Skills</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new vibrant/creative theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0fdfa; /* Teal 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(13, 148, 136, 0.1);
+            border: 1px solid #ccfbf1; /* Teal 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #99f6e4; /* Teal 200 */
+        }
+        .option-btn:hover {
+             background-color: #f3f4f6; /* Gray 100 */
+        }
+        .option-btn.selected {
+            background-color: #ec4899; /* Pink 500 for selected */
+            color: white;
+            border-color: #db2777; /* Pink 600 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f43f5e; /* Rose 500 for wrong */
+            color: white;
+            border-color: #be123c;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-teal-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-teal-800 mb-2">Design & Document Skills Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your GIMP & LibreOffice Knowledge!</p>
+            <img src="https://placehold.co/400x200/14b8a6/ffffff?text=Ready+to+Create%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="GIMP Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3"></div>
+                
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                <h2 id="review-title" class="text-3xl font-black text-teal-800 mb-2">Quiz Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                </div>
+                <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Document Skills Quiz!", welcomeSubtitle: "Test Your LibreOffice & OCR Knowledge!", startBtn: "Start Quiz", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Quiz Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "ഡോക്യുമെന്റ് സ്കിൽസ് ക്വിസ്!", welcomeSubtitle: "നിങ്ങളുടെ ലിബ്രെ ഓഫീസ്, OCR പരിജ്ഞാനം പരീക്ഷിക്കുക!", startBtn: "ക്വിസ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ക്വിസ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- Full Question Bank (50 questions) from the provided list ---
+        const fullQuizData = [
+            { en: { question: "What is data?", options: ["Processed information", "Unnecessary facts", "Raw and unprocessed information", "Only numbers"], answer: "Raw and unprocessed information" }, ml: { question: "എന്താണ് ഡാറ്റ?", options: ["പ്രോസസ്സ് ചെയ്ത വിവരങ്ങൾ", "അനാവശ്യ വസ്‌തുതകൾ", "അസംസ്കൃതവും പ്രോസസ്സ് ചെയ്യാത്തതുമായ വിവരങ്ങൾ", "സംഖ്യകൾ മാത്രം"], answer: "അസംസ്കൃതവും പ്രോസസ്സ് ചെയ്യാത്തതുമായ വിവരങ്ങൾ" } },
+            { en: { question: "Which of the following is a spreadsheet software used for data analysis?", options: ["Notepad", "LibreOffice Calc", "VLC Media Player", "MS Word"], answer: "LibreOffice Calc" }, ml: { question: "ഡാറ്റാ വിശകലനത്തിനായി ഉപയോഗിക്കുന്ന ഒരു സ്പ്രെഡ്ഷീറ്റ് സോഫ്റ്റ്‌വെയർ ഏതാണ്?", options: ["നോട്ട്പാഡ്", "ലിബ്രെ ഓഫീസ് കാൽക്ക്", "വിഎൽസി മീഡിയ പ്ലെയർ", "എംഎസ് വേഡ്"], answer: "ലിബ്രെ ഓഫീസ് കാൽക്ക്" } },
+            { en: { question: "Which file is provided for population analysis in the chapter?", options: ["India_Population.xls", "States_Density.xlsx", "Census_India_2011.ots", "Population_Data.ods"], answer: "Census_India_2011.ots" }, ml: { question: "ഈ അധ്യായത്തിൽ ജനസംഖ്യാ വിശകലനത്തിനായി നൽകിയിട്ടുള്ള ഫയൽ ഏതാണ്?", options: ["India_Population.xls", "States_Density.xlsx", "Census_India_2011.ots", "Population_Data.ods"], answer: "Census_India_2011.ots" } },
+            { en: { question: "Which function is used to count the number of entries that meet a specific condition?", options: ["SUM", "AVERAGE", "COUNTIF", "LOOKUP"], answer: "COUNTIF" }, ml: { question: "ഒരു നിശ്ചിത വ്യവസ്ഥ പാലിക്കുന്ന എൻട്രികളുടെ എണ്ണം കണക്കാക്കാൻ ഏത് ഫംഗ്ഷനാണ് ഉപയോഗിക്കുന്നത്?", options: ["SUM", "AVERAGE", "COUNTIF", "LOOKUP"], answer: "COUNTIF" } },
+            { en: { question: "The LOOKUP function is mainly used to:", options: ["Sort values", "Delete data", "Classify data", "Protect sheet"], answer: "Classify data" }, ml: { question: "LOOKUP ഫംഗ്ഷൻ പ്രധാനമായും എന്തിനാണ് ഉപയോഗിക്കുന്നത്?", options: ["മൂല്യങ്ങൾ അടുക്കാൻ", "ഡാറ്റ ഇല്ലാതാക്കാൻ", "ഡാറ്റ തരംതിരിക്കാൻ", "ഷീറ്റ് സംരക്ഷിക്കാൻ"], answer: "ഡാറ്റ തരംതിരിക്കാൻ" } },
+            { en: { question: "Which tool helps display only rows that meet specific criteria?", options: ["Sort", "AutoFilter", "Merge", "Protect Sheet"], answer: "AutoFilter" }, ml: { question: "നിശ്ചിത മാനദണ്ഡങ്ങൾ പാലിക്കുന്ന വരികൾ മാത്രം പ്രദർശിപ്പിക്കാൻ സഹായിക്കുന്ന ടൂൾ ഏതാണ്?", options: ["സോർട്ട്", "ഓട്ടോഫിൽട്ടർ", "മെർജ്", "പ്രൊട്ടക്റ്റ് ഷീറ്റ്"], answer: "ഓട്ടോഫിൽട്ടർ" } },
+            { en: { question: "Which website provided the population data in the chapter?", options: ["www.dataindia.gov.in", "www.census2011.co.in", "www.indiastats.com", "www.govdata.in"], answer: "www.census2011.co.in" }, ml: { question: "ഈ അധ്യായത്തിലെ ജനസംഖ്യാ ഡാറ്റ നൽകിയ വെബ്സൈറ്റ് ഏതാണ്?", options: ["www.dataindia.gov.in", "www.census2011.co.in", "www.indiastats.com", "www.govdata.in"], answer: "www.census2011.co.in" } },
+            { en: { question: "What is the maximum number of rows in a Calc sheet?", options: ["1048576", "100000", "65536", "500000"], answer: "1048576" }, ml: { question: "ഒരു കാൽക്ക് ഷീറ്റിലെ പരമാവധി വരികളുടെ എണ്ണം എത്രയാണ്?", options: ["1048576", "100000", "65536", "500000"], answer: "1048576" } },
+            { en: { question: "What is a workbook?", options: ["A single sheet", "A group of columns", "A spreadsheet with one or more sheets", "A text document"], answer: "A spreadsheet with one or more sheets" }, ml: { question: "എന്താണ് ഒരു വർക്ക്ബുക്ക്?", options: ["ഒരൊറ്റ ഷീറ്റ്", "നിരകളുടെ ഒരു കൂട്ടം", "ഒന്നോ അതിലധികമോ ഷീറ്റുകളുള്ള ഒരു സ്പ്രെഡ്ഷീറ്റ്", "ഒരു ടെക്സ്റ്റ് ഡോക്യുമെന്റ്"], answer: "ഒന്നോ അതിലധികമോ ഷീറ്റുകളുള്ള ഒരു സ്പ്രെഡ്ഷീറ്റ്" } },
+            { en: { question: "What formula is used to calculate population density in LibreOffice Calc?", options: ["=C2+F2", "=C2-F2", "=C2/F2", "=F2/C2"], answer: "=C2/F2" }, ml: { question: "ലിബ്രെ ഓഫീസ് കാൽക്കിൽ ജനസാന്ദ്രത കണക്കാക്കാൻ ഉപയോഗിക്കുന്ന ഫോർമുല ഏതാണ്?", options: ["=C2+F2", "=C2-F2", "=C2/F2", "=F2/C2"], answer: "=C2/F2" } },
+            { en: { question: "The result of the population density formula is entered in which column?", options: ["A", "G", "D", "H"], answer: "G" }, ml: { question: "ജനസാന്ദ്രത ഫോർമുലയുടെ ഫലം ഏത് കോളത്തിലാണ് നൽകുന്നത്?", options: ["A", "G", "D", "H"], answer: "G" } },
+            { en: { question: "Which toolbar feature is used to apply the same formula to other rows?", options: ["Merge", "AutoFill", "Fill Handle", "Clone Format"], answer: "Fill Handle" }, ml: { question: "ഒരേ ഫോർമുല മറ്റ് വരികളിലേക്ക് പ്രയോഗിക്കാൻ ഏത് ടൂൾബാർ ഫീച്ചറാണ് ഉപയോഗിക്കുന്നത്?", options: ["മെർജ്", "ഓട്ടോഫിൽ", "ഫിൽ ഹാൻഡിൽ", "ക്ലോൺ ഫോർമാറ്റ്"], answer: "ഫിൽ ഹാൻഡിൽ" } },
+            { en: { question: "To remove extra decimal places, use:", options: ["Increase Decimal", "Delete Decimal Place", "Format Text", "Sort"], answer: "Delete Decimal Place" }, ml: { question: "അധിക ദശാംശ സ്ഥാനങ്ങൾ നീക്കം ചെയ്യാൻ എന്തു ചെയ്യണം?", options: ["ഇൻക്രീസ് ഡെസിമൽ", "ഡിലീറ്റ് ഡെസിമൽ പ്ലേസ്", "ഫോർമാറ്റ് ടെക്സ്റ്റ്", "സോർട്ട്"], answer: "ഡിലീറ്റ് ഡെസിമൽ പ്ലേസ്" } },
+            { en: { question: "Which category represents states with population density below 100?", options: ["Low", "High", "Moderate", "Very Low"], answer: "Very Low" }, ml: { question: "100-ൽ താഴെ ജനസാന്ദ്രതയുള്ള സംസ്ഥാനങ്ങളെ പ്രതിനിധീകരിക്കുന്ന വിഭാഗം ഏതാണ്?", options: ["കുറഞ്ഞ", "ഉയർന്ന", "ഇടത്തരം", "വളരെ കുറഞ്ഞ"], answer: "വളരെ കുറഞ്ഞ" } },
+            { en: { question: "LOOKUP Table criteria should be entered in:", options: ["Sheet1", "Sheet2", "Any column", "Sheet3"], answer: "Sheet2" }, ml: { question: "LOOKUP ടേബിൾ മാനദണ്ഡങ്ങൾ എവിടെയാണ് നൽകേണ്ടത്?", options: ["ഷീറ്റ്1", "ഷീറ്റ്2", "ഏതെങ്കിലും കോളം", "ഷീറ്റ്3"], answer: "ഷീറ്റ്2" } },
+            { en: { question: "What is the purpose of the Define Range option in LOOKUP?", options: ["To name the table range", "To insert images", "To sort data", "To calculate sums"], answer: "To name the table range" }, ml: { question: "LOOKUP-ലെ 'ഡിഫൈൻ റേഞ്ച്' ഓപ്ഷന്റെ ഉദ്ദേശ്യം എന്താണ്?", options: ["ടേബിൾ റേഞ്ചിന് പേര് നൽകാൻ", "ചിത്രങ്ങൾ ചേർക്കാൻ", "ഡാറ്റ അടുക്കാൻ", "തുക കണക്കാക്കാൻ"], answer: "ടേബിൾ റേഞ്ചിന് പേര് നൽകാൻ" } },
+            { en: { question: "In LOOKUP function, which box should contain the cell with population density?", options: ["Search Vector", "Result Vector", "Search Criterion", "Define Range"], answer: "Search Criterion" }, ml: { question: "LOOKUP ഫംഗ്ഷനിൽ, ജനസാന്ദ്രതയുള്ള സെൽ ഏത് ബോക്സിൽ അടങ്ങിയിരിക്കണം?", options: ["സെർച്ച് വെക്റ്റർ", "റിസൾട്ട് വെക്റ്റർ", "സെർച്ച് ക്രൈറ്റീരിയൻ", "ഡിഫൈൻ റേഞ്ച്"], answer: "സെർച്ച് ക്രൈറ്റീരിയൻ" } },
+            { en: { question: "Which category includes states with density between 400 to 799?", options: ["Moderate", "High", "Low", "Very High"], answer: "High" }, ml: { question: "400-നും 799-നും ഇടയിൽ ജനസാന്ദ്രതയുള്ള സംസ്ഥാനങ്ങൾ ഏത് വിഭാഗത്തിൽ ഉൾപ്പെടുന്നു?", options: ["ഇടത്തരം", "ഉയർന്ന", "കുറഞ്ഞ", "വളരെ ഉയർന്ന"], answer: "ഉയർന്ന" } },
+            { en: { question: "Which function is used to count classified data?", options: ["COUNT", "IF", "COUNTIF", "SUMIF"], answer: "COUNTIF" }, ml: { question: "തരംതിരിച്ച ഡാറ്റയുടെ എണ്ണം കണക്കാക്കാൻ ഏത് ഫംഗ്ഷനാണ് ഉപയോഗിക്കുന്നത്?", options: ["COUNT", "IF", "COUNTIF", "SUMIF"], answer: "COUNTIF" } },
+            { en: { question: "What appears after enabling AutoFilter on headers?", options: ["Checkboxes", "Arrows", "Bold fonts", "Dropdown lists"], answer: "Arrows" }, ml: { question: "ഹെഡറുകളിൽ ഓട്ടോഫിൽട്ടർ പ്രവർത്തനക്ഷമമാക്കിയ ശേഷം എന്ത് ദൃശ്യമാകും?", options: ["ചെക്ക്ബോക്സുകൾ", "അമ്പടയാളങ്ങൾ", "കടുപ്പിച്ച ഫോണ്ടുകൾ", "ഡ്രോപ്പ്ഡൗൺ ലിസ്റ്റുകൾ"], answer: "അമ്പടയാളങ്ങൾ" } },
+            { en: { question: "To count how many states fall under ‘Low Density’, use:", options: ["SUM", "COUNTIF", "LOOKUP", "IF"], answer: "COUNTIF" }, ml: { question: "'കുറഞ്ഞ സാന്ദ്രത' വിഭാഗത്തിൽ എത്ര സംസ്ഥാനങ്ങൾ ഉൾപ്പെടുന്നുവെന്ന് കണക്കാക്കാൻ എന്തുപയോഗിക്കണം?", options: ["SUM", "COUNTIF", "LOOKUP", "IF"], answer: "COUNTIF" } },
+            { en: { question: "AutoFilter is accessed through which menu?", options: ["Tools", "Format", "Data", "View"], answer: "Data" }, ml: { question: "ഏത് മെനുവിലൂടെയാണ് ഓട്ടോഫിൽട്ടർ ആക്സസ് ചെയ്യുന്നത്?", options: ["ടൂൾസ്", "ഫോർമാറ്റ്", "ഡാറ്റ", "വ്യൂ"], answer: "ഡാറ്റ" } },
+            { en: { question: "To protect a sheet in Calc, go to:", options: ["Insert → Protect", "Tools → Protect Sheet", "Format → Sheet", "View → Lock Sheet"], answer: "Tools → Protect Sheet" }, ml: { question: "കാൽക്കിൽ ഒരു ഷീറ്റ് സംരക്ഷിക്കാൻ എവിടെ പോകണം?", options: ["ഇൻസേർട്ട് → പ്രൊട്ടക്റ്റ്", "ടൂൾസ് → പ്രൊട്ടക്റ്റ് ഷീറ്റ്", "ഫോർമാറ്റ് → ഷീറ്റ്", "വ്യൂ → ലോക്ക് ഷീറ്റ്"], answer: "ടൂൾസ് → പ്രൊട്ടക്റ്റ് ഷീറ്റ്" } },
+            { en: { question: "What is required to unlock a protected sheet?", options: ["Username", "Formula", "Password", "Key File"], answer: "Password" }, ml: { question: "സംരക്ഷിത ഷീറ്റ് അൺലോക്ക് ചെയ്യാൻ എന്ത് ആവശ്യമാണ്?", options: ["ഉപയോക്തൃനാമം", "ഫോർമുല", "പാസ്‌വേഡ്", "കീ ഫയൽ"], answer: "പാസ്‌വേഡ്" } },
+            { en: { question: "Which of these is an online spreadsheet?", options: ["MS Word", "Photoshop", "Google Sheet", "Notepad++"], answer: "Google Sheet" }, ml: { question: "ഇവയിൽ ഏതാണ് ഒരു ഓൺലൈൻ സ്പ്രെഡ്ഷീറ്റ്?", options: ["എംഎസ് വേഡ്", "ഫോട്ടോഷോപ്പ്", "ഗൂഗിൾ ഷീറ്റ്", "നോട്ട്പാഡ്++"], answer: "ഗൂഗിൾ ഷീറ്റ്" } },
+            { en: { question: "Which feature rounds decimal numbers in Calc?", options: ["Increase Font", "Decimal Control", "ROUND function or Delete Decimal", "Format Cells"], answer: "ROUND function or Delete Decimal" }, ml: { question: "കാൽക്കിൽ ദശാംശ സംഖ്യകളെ റൗണ്ട് ചെയ്യുന്ന ഫീച്ചർ ഏതാണ്?", options: ["ഇൻക്രീസ് ഫോണ്ട്", "ഡെസിമൽ കൺട്രോൾ", "ROUND ഫംഗ്ഷൻ അല്ലെങ്കിൽ ഡിലീറ്റ് ഡെസിമൽ", "ഫോർമാറ്റ് സെൽസ്"], answer: "ROUND ഫംഗ്ഷൻ അല്ലെങ്കിൽ ഡിലീറ്റ് ഡെസിമൽ" } },
+            { en: { question: "Which of the following is not a valid population density category?", options: ["Very Low", "Low", "Extremely High", "Moderate"], answer: "Extremely High" }, ml: { question: "താഴെ പറയുന്നവയിൽ സാധുവായ ജനസാന്ദ്രതാ വിഭാഗമല്ലാത്തത് ഏതാണ്?", options: ["വളരെ കുറഞ്ഞ", "കുറഞ്ഞ", "അങ്ങേയറ്റം ഉയർന്ന", "ഇടത്തരം"], answer: "അങ്ങേയറ്റം ഉയർന്ന" } },
+            { en: { question: "Which function can be used to find the grade of students from marks?", options: ["IF", "COUNTIF", "LOOKUP", "SUM"], answer: "LOOKUP" }, ml: { question: "മാർക്കുകളിൽ നിന്ന് വിദ്യാർത്ഥികളുടെ ഗ്രേഡ് കണ്ടെത്താൻ ഏത് ഫംഗ്ഷൻ ഉപയോഗിക്കാം?", options: ["IF", "COUNTIF", "LOOKUP", "SUM"], answer: "LOOKUP" } },
+            { en: { question: "The formula =COUNTIF(J2:J36, “Very High”) counts:", options: ["All high population states", "Very high population density states", "Low density states", "Empty rows"], answer: "Very high population density states" }, ml: { question: "=COUNTIF(J2:J36, “Very High”) എന്ന ഫോർമുല എണ്ണുന്നത്:", options: ["ഉയർന്ന ജനസംഖ്യയുള്ള എല്ലാ സംസ്ഥാനങ്ങളും", "വളരെ ഉയർന്ന ജനസാന്ദ്രതയുള്ള സംസ്ഥാനങ്ങൾ", "കുറഞ്ഞ സാന്ദ്രതയുള്ള സംസ്ഥാനങ്ങൾ", "ഒഴിഞ്ഞ വരികൾ"], answer: "വളരെ ഉയർന്ന ജനസാന്ദ്രതയുള്ള സംസ്ഥാനങ്ങൾ" } },
+            { en: { question: "What does a Lookup Table help with?", options: ["Removing data", "Calculating percentage", "Classifying data", "Protecting data"], answer: "Classifying data" }, ml: { question: "ഒരു ലുക്ക്അപ്പ് ടേബിൾ എന്തിന് സഹായിക്കുന്നു?", options: ["ഡാറ്റ നീക്കംചെയ്യാൻ", "ശതമാനം കണക്കാക്കാൻ", "ഡാറ്റ തരംതിരിക്കാൻ", "ഡാറ്റ സംരക്ഷിക്കാൻ"], answer: "ഡാറ്റ തരംതിരിക്കാൻ" } },
+            { en: { question: "The maximum number of sheets in a LibreOffice Calc file is:", options: ["100", "1,000", "10,000", "Unlimited"], answer: "10,000" }, ml: { question: "ഒരു ലിബ്രെ ഓഫീസ് കാൽക്ക് ഫയലിലെ പരമാവധി ഷീറ്റുകളുടെ എണ്ണം എത്രയാണ്?", options: ["100", "1,000", "10,000", "അൺലിമിറ്റഡ്"], answer: "10,000" } },
+            { en: { question: "To avoid retyping formulas in each cell, we use:", options: ["Cut-Paste", "AutoSum", "Fill Handle", "Clone Format"], answer: "Fill Handle" }, ml: { question: "ഓരോ സെല്ലിലും ഫോർമുലകൾ വീണ്ടും ടൈപ്പ് ചെയ്യുന്നത് ഒഴിവാക്കാൻ നമ്മൾ എന്തുപയോഗിക്കുന്നു?", options: ["കട്ട്-പേസ്റ്റ്", "ഓട്ടോസം", "ഫിൽ ഹാൻഡിൽ", "ക്ലോൺ ഫോർമാറ്റ്"], answer: "ഫിൽ ഹാൻഡിൽ" } },
+            { en: { question: "Which population category has density above 800?", options: ["High", "Very High", "Moderate", "Low"], answer: "Very High" }, ml: { question: "800-ന് മുകളിൽ ജനസാന്ദ്രതയുള്ള ജനസംഖ്യാ വിഭാഗം ഏതാണ്?", options: ["ഉയർന്ന", "വളരെ ഉയർന്ന", "ഇടത്തരം", "കുറഞ്ഞ"], answer: "വളരെ ഉയർന്ന" } },
+            { en: { question: "What happens when data is filtered using AutoFilter?", options: ["Sheet is saved", "Chart is created", "Only rows matching criteria are displayed", "Sheet is deleted"], answer: "Only rows matching criteria are displayed" }, ml: { question: "ഓട്ടോഫിൽട്ടർ ഉപയോഗിച്ച് ഡാറ്റ ഫിൽട്ടർ ചെയ്യുമ്പോൾ എന്ത് സംഭവിക്കുന്നു?", options: ["ഷീറ്റ് സേവ് ചെയ്യപ്പെടുന്നു", "ചാർട്ട് നിർമ്മിക്കപ്പെടുന്നു", "മാനദണ്ഡങ്ങളുമായി പൊരുത്തപ്പെടുന്ന വരികൾ മാത്രം പ്രദർശിപ്പിക്കുന്നു", "ഷീറ്റ് ഡിലീറ്റ് ചെയ്യപ്പെടുന്നു"], answer: "മാനദണ്ഡങ്ങളുമായി പൊരുത്തപ്പെടുന്ന വരികൾ മാത്രം പ്രദർശിപ്പിക്കുന്നു" } },
+            { en: { question: "Which key is pressed after entering formula in Calc?", options: ["Ctrl", "Alt", "Enter", "Shift"], answer: "Enter" }, ml: { question: "കാൽക്കിൽ ഫോർമുല നൽകിയ ശേഷം ഏത് കീയാണ് അമർത്തേണ്ടത്?", options: ["Ctrl", "Alt", "Enter", "Shift"], answer: "Enter" } },
+            { en: { question: "You are given population and area of a state. What formula will give you density?", options: ["=Population * Area", "=Area/Population", "=Population / Area", "=Area - Population"], answer: "=Population / Area" }, ml: { question: "ഒരു സംസ്ഥാനത്തിന്റെ ജനസംഖ്യയും വിസ്തീർണ്ണവും നൽകിയിരിക്കുന്നു. സാന്ദ്രത നൽകുന്ന ഫോർമുല ഏതാണ്?", options: ["=ജനസംഖ്യ * വിസ്തീർണ്ണം", "=വിസ്തീർണ്ണം/ജനസംഖ്യ", "=ജനസംഖ്യ / വിസ്തീർണ്ണം", "=വിസ്തീർണ്ണം - ജനസംഖ്യ"], answer: "=ജനസംഖ്യ / വിസ്തീർണ്ണം" } },
+            { en: { question: "A student wants to find how many students scored above 90. Which function should be used?", options: ["AVERAGE", "COUNTIF", "SUMIF", "ROUND"], answer: "COUNTIF" }, ml: { question: "90-ന് മുകളിൽ സ്കോർ ചെയ്ത എത്ര വിദ്യാർത്ഥികളുണ്ടെന്ന് കണ്ടെത്താൻ ഏത് ഫംഗ്ഷൻ ഉപയോഗിക്കണം?", options: ["AVERAGE", "COUNTIF", "SUMIF", "ROUND"], answer: "COUNTIF" } },
+            { en: { question: "If G2 has population density and 'Criteria' is the lookup range, what is the correct LOOKUP syntax?", options: ["=LOOKUP(G2, Criteria)", "=LOOKUP(Criteria, G2)", "=LOOKUP(Criteria)", "=LOOKUP(G2)"], answer: "=LOOKUP(G2, Criteria)" }, ml: { question: "G2-ൽ ജനസാന്ദ്രതയും 'ക്രൈറ്റീരിയ' ലുക്ക്അപ്പ് റേഞ്ചുമാണെങ്കിൽ, ശരിയായ LOOKUP സിന്റാക്സ് ഏതാണ്?", options: ["=LOOKUP(G2, Criteria)", "=LOOKUP(Criteria, G2)", "=LOOKUP(Criteria)", "=LOOKUP(G2)"], answer: "=LOOKUP(G2, Criteria)" } },
+            { en: { question: "Which tool will you use to extract all students with grade 'A' from a grade sheet?", options: ["COUNTIF", "AutoFilter", "SUM", "LOOKUP"], answer: "AutoFilter" }, ml: { question: "ഒരു ഗ്രേഡ് ഷീറ്റിൽ നിന്ന് 'A' ഗ്രേഡുള്ള എല്ലാ വിദ്യാർത്ഥികളെയും വേർതിരിച്ചെടുക്കാൻ ഏത് ടൂൾ ഉപയോഗിക്കും?", options: ["COUNTIF", "ഓട്ടോഫിൽട്ടർ", "SUM", "LOOKUP"], answer: "ഓട്ടോഫിൽട്ടർ" } },
+            { en: { question: "Which function will you use to classify states based on literacy rates?", options: ["COUNTIF", "SUM", "LOOKUP", "IF"], answer: "LOOKUP" }, ml: { question: "സാക്ഷരതാ നിരക്കിന്റെ അടിസ്ഥാനത്തിൽ സംസ്ഥാനങ്ങളെ തരംതിരിക്കാൻ ഏത് ഫംഗ്ഷൻ ഉപയോഗിക്കും?", options: ["COUNTIF", "SUM", "LOOKUP", "IF"], answer: "LOOKUP" } },
+            { en: { question: "To make the file editable only by teachers, which feature is ideal?", options: ["Hide sheet", "Filter", "Protect Sheet", "AutoSum"], answer: "Protect Sheet" }, ml: { question: "ഫയൽ അധ്യാപകർക്ക് മാത്രം എഡിറ്റ് ചെയ്യാൻ കഴിയുന്നതാക്കാൻ ഏത് ഫീച്ചറാണ് അനുയോജ്യം?", options: ["ഷീറ്റ് മറയ്ക്കുക", "ഫിൽട്ടർ", "പ്രൊട്ടക്റ്റ് ഷീറ്റ്", "ഓട്ടോസം"], answer: "പ്രൊട്ടക്റ്റ് ഷീറ്റ്" } },
+            { en: { question: "In a population sheet, you want to know how many states fall in each category. What to use?", options: ["LOOKUP", "COUNTIF", "SORT", "Protect"], answer: "COUNTIF" }, ml: { question: "ഒരു ജനസംഖ്യാ ഷീറ്റിൽ, ഓരോ വിഭാഗത്തിലും എത്ര സംസ്ഥാനങ്ങൾ ഉൾപ്പെടുന്നുവെന്ന് അറിയാൻ എന്തുപയോഗിക്കണം?", options: ["LOOKUP", "COUNTIF", "സോർട്ട്", "പ്രൊട്ടക്റ്റ്"], answer: "COUNTIF" } },
+            { en: { question: "You filtered a table to show only ‘High Density’ states. What should you do to return to full view?", options: ["Refresh Data", "Remove AutoFilter", "Insert Filter Again", "Click Save"], answer: "Remove AutoFilter" }, ml: { question: "'ഉയർന്ന സാന്ദ്രത'യുള്ള സംസ്ഥാനങ്ങൾ മാത്രം കാണിക്കാൻ നിങ്ങൾ ഒരു ടേബിൾ ഫിൽട്ടർ ചെയ്തു. പൂർണ്ണ കാഴ്‌ചയിലേക്ക് മടങ്ങാൻ എന്തു ചെയ്യണം?", options: ["ഡാറ്റ റീഫ്രഷ് ചെയ്യുക", "ഓട്ടോഫിൽട്ടർ നീക്കംചെയ്യുക", "വീണ്ടും ഫിൽട്ടർ ചേർക്കുക", "സേവ് ക്ലിക്ക് ചെയ്യുക"], answer: "ഓട്ടോഫിൽട്ടർ നീക്കംചെയ്യുക" } },
+            { en: { question: "Which is the correct order to use LOOKUP in LibreOffice Calc?", options: ["Function Wizard → LOOKUP → Search Criterion → Search Vector", "Tools → Protect Sheet → Search Vector", "Insert → LOOKUP → Search Criterion", "File → LOOKUP Table"], answer: "Function Wizard → LOOKUP → Search Criterion → Search Vector" }, ml: { question: "ലിബ്രെ ഓഫീസ് കാൽക്കിൽ LOOKUP ഉപയോഗിക്കുന്നതിനുള്ള ശരിയായ ക്രമം ഏതാണ്?", options: ["ഫംഗ്ഷൻ വിസാർഡ് → LOOKUP → സെർച്ച് ക്രൈറ്റീരിയൻ → സെർച്ച് വെക്റ്റർ", "ടൂൾസ് → പ്രൊട്ടക്റ്റ് ഷീറ്റ് → സെർച്ച് വെക്റ്റർ", "ഇൻസേർട്ട് → LOOKUP → സെർച്ച് ക്രൈറ്റീരിയൻ", "ഫയൽ → LOOKUP ടേബിൾ"], answer: "ഫംഗ്ഷൻ വിസാർഡ് → LOOKUP → സെർച്ച് ക്രൈറ്റീരിയൻ → സെർച്ച് വെക്റ്റർ" } },
+            { en: { question: "If population density is too long (e.g., 101.54321), how to round to 2 decimal places?", options: ["Format as text", "Use ROUND function", "Use AutoFilter", "Use SUMIF"], answer: "Use ROUND function" }, ml: { question: "ജനസാന്ദ്രത വളരെ നീണ്ടതാണെങ്കിൽ (ഉദാ: 101.54321), 2 ദശാംശ സ്ഥാനങ്ങളിലേക്ക് എങ്ങനെ റൗണ്ട് ചെയ്യാം?", options: ["ടെക്സ്റ്റായി ഫോർമാറ്റ് ചെയ്യുക", "ROUND ഫംഗ്ഷൻ ഉപയോഗിക്കുക", "ഓട്ടോഫിൽട്ടർ ഉപയോഗിക്കുക", "SUMIF ഉപയോഗിക്കുക"], answer: "ROUND ഫംഗ്ഷൻ ഉപയോഗിക്കുക" } },
+            { en: { question: "What happens if a wrong range is given in COUNTIF?", options: ["Error", "Blank result", "Wrong count", "All of the above"], answer: "All of the above" }, ml: { question: "COUNTIF-ൽ തെറ്റായ റേഞ്ച് നൽകിയാൽ എന്ത് സംഭവിക്കും?", options: ["പിശക്", "ഒഴിഞ്ഞ ഫലം", "തെറ്റായ എണ്ണം", "മുകളിൽ പറഞ്ഞവയെല്ലാം"], answer: "മുകളിൽ പറഞ്ഞവയെല്ലാം" } },
+            { en: { question: "How will you protect just the grades column in a student spreadsheet?", options: ["Hide column", "Filter it", "Lock specific cells before protecting sheet", "Use AutoSum"], answer: "Lock specific cells before protecting sheet" }, ml: { question: "ഒരു സ്റ്റുഡന്റ് സ്പ്രെഡ്ഷീറ്റിലെ ഗ്രേഡ് കോളം മാത്രം എങ്ങനെ സംരക്ഷിക്കും?", options: ["കോളം മറയ്ക്കുക", "അത് ഫിൽട്ടർ ചെയ്യുക", "ഷീറ്റ് സംരക്ഷിക്കുന്നതിന് മുമ്പ് നിർദ്ദിഷ്ട സെല്ലുകൾ ലോക്ക് ചെയ്യുക", "ഓട്ടോസം ഉപയോഗിക്കുക"], answer: "ഷീറ്റ് സംരക്ഷിക്കുന്നതിന് മുമ്പ് നിർദ്ദിഷ്ട സെല്ലുകൾ ലോക്ക് ചെയ്യുക" } },
+            { en: { question: "What is a practical use of LOOKUP in a school setting?", options: ["Finding average marks", "Counting students", "Grading students automatically", "Making charts"], answer: "Grading students automatically" }, ml: { question: "ഒരു സ്കൂൾ പശ്ചാത്തലത്തിൽ LOOKUP-ന്റെ പ്രായോഗിക ഉപയോഗം എന്താണ്?", options: ["ശരാശരി മാർക്ക് കണ്ടെത്തൽ", "വിദ്യാർത്ഥികളെ എണ്ണൽ", "വിദ്യാർത്ഥികളെ സ്വയമേവ ഗ്രേഡ് ചെയ്യൽ", "ചാർട്ടുകൾ നിർമ്മിക്കൽ"], answer: "വിദ്യാർത്ഥികളെ സ്വയമേവ ഗ്രേഡ് ചെയ്യൽ" } },
+            { en: { question: "You want to categorize score bands (A, B, C, D). Which function helps?", options: ["ROUND", "COUNTIF", "LOOKUP", "IFERROR"], answer: "LOOKUP" }, ml: { question: "നിങ്ങൾക്ക് സ്കോർ ബാൻഡുകൾ (A, B, C, D) തരംതിരിക്കണമെങ്കിൽ, ഏത് ഫംഗ്ഷൻ സഹായിക്കും?", options: ["ROUND", "COUNTIF", "LOOKUP", "IFERROR"], answer: "LOOKUP" } },
+            { en: { question: "You need to show only students scoring below 40. What feature should be used?", options: ["Conditional Formatting", "AutoFilter", "COUNTIF", "PROTECT"], answer: "AutoFilter" }, ml: { question: "40-ൽ താഴെ സ്കോർ ചെയ്യുന്ന വിദ്യാർത്ഥികളെ മാത്രം കാണിക്കണമെങ്കിൽ, ഏത് ഫീച്ചർ ഉപയോഗിക്കണം?", options: ["കണ്ടീഷണൽ ഫോർമാറ്റിംഗ്", "ഓട്ടോഫിൽട്ടർ", "COUNTIF", "പ്രൊട്ടക്റ്റ്"], answer: "ഓട്ടോഫിൽട്ടർ" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 50-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-300">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-900/50' : 'bg-rose-900/50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-100">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Digital Music with LMMS</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new digital music theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f5f3ff; /* Violet 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(91, 33, 182, 0.1);
+            border: 1px solid #ddd6fe; /* Violet 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #c4b5fd; /* Violet 300 */
+        }
+        .option-btn:hover {
+             background-color: #f5f3ff; /* Violet 50 */
+        }
+        .option-btn.selected {
+            background-color: #8b5cf6; /* Violet 500 for selected */
+            color: white;
+            border-color: #7c3aed; /* Violet 600 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f43f5e; /* Rose 500 for wrong */
+            color: white;
+            border-color: #be123c;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-violet-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-violet-800 mb-2">Digital Music Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your LMMS Knowledge!</p>
+            <img src="https://placehold.co/400x200/8b5cf6/ffffff?text=Ready+to+Compose%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Digital Music Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3"></div>
+                
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                <h2 id="review-title" class="text-3xl font-black text-violet-800 mb-2">Quiz Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                </div>
+                <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Digital Music Quiz!", welcomeSubtitle: "Test Your LMMS Knowledge!", startBtn: "Start Quiz", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Quiz Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "ഡിജിറ്റൽ മ്യൂസിക് ക്വിസ്!", welcomeSubtitle: "നിങ്ങളുടെ LMMS പരിജ്ഞാനം പരീക്ഷിക്കുക!", startBtn: "ക്വിസ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ക്വിസ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- Full Question Bank (50 questions) from the provided list ---
+        const fullQuizData = [
+            { en: { question: "What is a DAW?", options: ["Digital Access Writer", "Digital Audio Workstation", "Data Analysis Workbench", "Disk Audio Writer"], answer: "Digital Audio Workstation" }, ml: { question: "എന്താണ് ഒരു DAW?", options: ["ഡിജിറ്റൽ ആക്സസ് റൈറ്റർ", "ഡിജിറ്റൽ ഓഡിയോ വർക്ക്സ്റ്റേഷൻ", "ഡാറ്റാ അനാലിസിസ് വർക്ക്ബെഞ്ച്", "ഡിസ്ക് ഓഡിയോ റൈറ്റർ"], answer: "ഡിജിറ്റൽ ഓഡിയോ വർക്ക്സ്റ്റേഷൻ" } },
+            { en: { question: "Which of the following is a DAW software?", options: ["Paint", "Scratch", "LMMS", "Firefox"], answer: "LMMS" }, ml: { question: "താഴെ പറയുന്നവയിൽ ഏതാണ് ഒരു DAW സോഫ്റ്റ്‌വെയർ?", options: ["പെയിന്റ്", "സ്ക്രാച്ച്", "LMMS", "ഫയർഫോക്സ്"], answer: "LMMS" } },
+            { en: { question: "Which software is used in your system for creating digital music?", options: ["Photoshop", "LMMS", "WordPad", "Pinta"], answer: "LMMS" }, ml: { question: "ഡിജിറ്റൽ സംഗീതം നിർമ്മിക്കാൻ നിങ്ങളുടെ സിസ്റ്റത്തിൽ ഉപയോഗിക്കുന്ന സോഫ്റ്റ്‌വെയർ ഏതാണ്?", options: ["ഫോട്ടോഷോപ്പ്", "LMMS", "വേഡ്പാഡ്", "പിന്റ"], answer: "LMMS" } },
+            { en: { question: "Which window in LMMS contains tracks like TripleOscillator and Sample track?", options: ["Piano Roll", "FX-Mixer", "Song Editor", "Beat+Bassline Editor"], answer: "Song Editor" }, ml: { question: "LMMS-ലെ ഏത് വിൻഡോയിലാണ് ട്രിപ്പിൾ ഓസിലേറ്റർ, സാമ്പിൾ ട്രാക്ക് പോലുള്ള ട്രാക്കുകൾ അടങ്ങിയിരിക്കുന്നത്?", options: ["പിയാനോ റോൾ", "എഫ്എക്സ്-മിക്സർ", "സോംഗ് എഡിറ്റർ", "ബീറ്റ്+ബാസ്ലൈൻ എഡിറ്റർ"], answer: "സോംഗ് എഡിറ്റർ" } },
+            { en: { question: "Which window in LMMS is used to arrange rhythm patterns?", options: ["FX-Mixer", "Controller Rack", "Beat+Bassline Editor", "Sample Track"], answer: "Beat+Bassline Editor" }, ml: { question: "താളക്രമങ്ങൾ ക്രമീകരിക്കാൻ LMMS-ലെ ഏത് വിൻഡോയാണ് ഉപയോഗിക്കുന്നത്?", options: ["എഫ്എക്സ്-മിക്സർ", "കൺട്രോളർ റാക്ക്", "ബീറ്റ്+ബാസ്ലൈൻ എഡിറ്റർ", "സാമ്പിൾ ട്രാക്ക്"], answer: "ബീറ്റ്+ബാസ്ലൈൻ എഡിറ്റർ" } },
+            { en: { question: "What tool is used to add new instruments in LMMS?", options: ["File Menu", "My Projects", "My Samples", "Instrument Rack"], answer: "My Samples" }, ml: { question: "LMMS-ൽ പുതിയ സംഗീതോപകരണങ്ങൾ ചേർക്കാൻ ഏത് ടൂൾ ആണ് ഉപയോഗിക്കുന്നത്?", options: ["ഫയൽ മെനു", "മൈ പ്രോജക്ട്സ്", "മൈ സാമ്പിൾസ്", "ഇൻസ്ട്രുമെന്റ് റാക്ക്"], answer: "മൈ സാമ്പിൾസ്" } },
+            { en: { question: "What does BPM stand for in digital music?", options: ["Beats Per Measure", "Blocks Per Measure", "Beats Per Minute", "Blocks Per Music"], answer: "Beats Per Minute" }, ml: { question: "ഡിജിറ്റൽ സംഗീതത്തിൽ BPM എന്നതിൻ്റെ പൂർണ്ണരൂപം എന്താണ്?", options: ["ബീറ്റ്സ് പെർ മെഷർ", "ബ്ലോക്ക്സ് പെർ മെഷർ", "ബീറ്റ്സ് പെർ മിനിറ്റ്", "ബ്ലോക്ക്സ് പെർ മ്യൂസിക്"], answer: "ബീറ്റ്സ് പെർ മിനിറ്റ്" } },
+            { en: { question: "What is the default BPM often used in LMMS for rhythm?", options: ["100", "120", "140", "160"], answer: "140" }, ml: { question: "താളത്തിനായി LMMS-ൽ സാധാരണയായി ഉപയോഗിക്കുന്ന ഡിഫോൾട്ട് BPM എത്രയാണ്?", options: ["100", "120", "140", "160"], answer: "140" } }, // Note: The document says 140, not 120.
+            { en: { question: "Which one of these is NOT a DAW?", options: ["LMMS", "FL Studio", "Audacity", "MS Excel"], answer: "MS Excel" }, ml: { question: "ഇവയിൽ ഏതാണ് ഒരു DAW അല്ലാത്തത്?", options: ["LMMS", "FL സ്റ്റുഡിയോ", "ഓഡാസിറ്റി", "എംഎസ് എക്സൽ"], answer: "എംഎസ് എക്സൽ" } },
+            { en: { question: "What should be used to delete a block in Song Editor?", options: ["Ctrl + Z", "Double Click", "Right Click", "Scroll"], answer: "Right Click" }, ml: { question: "സോംഗ് എഡിറ്ററിൽ ഒരു ബ്ലോക്ക് ഇല്ലാതാക്കാൻ എന്തുപയോഗിക്കണം?", options: ["Ctrl + Z", "ഡബിൾ ക്ലിക്ക്", "റൈറ്റ് ക്ലിക്ക്", "സ്ക്രോൾ"], answer: "റൈറ്റ് ക്ലിക്ക്" } },
+            { en: { question: "How can you open the Beat+Bassline Editor?", options: ["From Sidebar", "Double-click Beat+Bassline Track", "Open File Menu", "Use Settings"], answer: "Double-click Beat+Bassline Track" }, ml: { question: "ബീറ്റ്+ബാസ്ലൈൻ എഡിറ്റർ എങ്ങനെ തുറക്കാം?", options: ["സൈഡ്ബാറിൽ നിന്ന്", "ബീറ്റ്+ബാസ്ലൈൻ ട്രാക്കിൽ ഡബിൾ ക്ലിക്ക് ചെയ്യുക", "ഫയൽ മെനു തുറക്കുക", "ക്രമീകരണങ്ങൾ ഉപയോഗിക്കുക"], answer: "ബീറ്റ്+ബാസ്ലൈൻ ട്രാക്കിൽ ഡബിൾ ക്ലിക്ക് ചെയ്യുക" } },
+            { en: { question: "What is the use of the Piano Roll in LMMS?", options: ["Drawing shapes", "Arranging files", "Composing melodies", "Adding text"], answer: "Composing melodies" }, ml: { question: "LMMS-ലെ പിയാനോ റോളിന്റെ ഉപയോഗം എന്താണ്?", options: ["രൂപങ്ങൾ വരയ്ക്കാൻ", "ഫയലുകൾ ക്രമീകരിക്കാൻ", "ഈണങ്ങൾ ചിട്ടപ്പെടുത്താൻ", "ടെക്സ്റ്റ് ചേർക്കാൻ"], answer: "ഈണങ്ങൾ ചിട്ടപ്പെടുത്താൻ" } },
+            { en: { question: "What is ‘kick01’ in LMMS?", options: ["A video file", "A font", "A percussion instrument sample", "A melody tone"], answer: "A percussion instrument sample" }, ml: { question: "LMMS-ലെ 'kick01' എന്താണ്?", options: ["ഒരു വീഡിയോ ഫയൽ", "ഒരു ഫോണ്ട്", "ഒരു താളവാദ്യത്തിന്റെ സാമ്പിൾ", "ഒരു ഈണത്തിന്റെ ടോൺ"], answer: "ഒരു താളവാദ്യത്തിന്റെ സാമ്പിൾ" } },
+            { en: { question: "Which sub-window is used for mixing different audio tracks?", options: ["Song Editor", "FX-Mixer", "My Projects", "Sidebar"], answer: "FX-Mixer" }, ml: { question: "വ്യത്യസ്ത ഓഡിയോ ട്രാക്കുകൾ മിക്സ് ചെയ്യാൻ ഏത് ഉപ-വിൻഡോയാണ് ഉപയോഗിക്കുന്നത്?", options: ["സോംഗ് എഡിറ്റർ", "എഫ്എക്സ്-മിക്സർ", "മൈ പ്രോജക്ട്സ്", "സൈഡ്ബാർ"], answer: "എഫ്എക്സ്-മിക്സർ" } },
+            { en: { question: "How do you listen to the rhythm you created?", options: ["Using Save button", "Pressing Export", "Clicking Play button", "Using Sidebar"], answer: "Clicking Play button" }, ml: { question: "നിങ്ങൾ സൃഷ്ടിച്ച താളം എങ്ങനെ കേൾക്കാം?", options: ["സേവ് ബട്ടൺ ഉപയോഗിച്ച്", "എക്സ്പോർട്ട് അമർത്തി", "പ്ലേ ബട്ടൺ ക്ലിക്ക് ചെയ്ത്", "സൈഡ്ബാർ ഉപയോഗിച്ച്"], answer: "പ്ലേ ബട്ടൺ ക്ലിക്ക് ചെയ്ത്" } },
+            { en: { question: "Where can you change tempo in LMMS?", options: ["FX-Mixer", "File Menu", "TEMPO/BPM section", "Piano Roll"], answer: "TEMPO/BPM section" }, ml: { question: "LMMS-ൽ എവിടെയാണ് ടെമ്പോ മാറ്റാൻ കഴിയുക?", options: ["എഫ്എക്സ്-മിക്സർ", "ഫയൽ മെനു", "TEMPO/BPM വിഭാഗം", "പിയാനോ റോൾ"], answer: "TEMPO/BPM വിഭാഗം" } },
+            { en: { question: "How can you delete notes from the Piano Roll?", options: ["Ctrl + Delete", "Right Click", "Scroll Click", "Drag and Drop"], answer: "Right Click" }, ml: { question: "പിയാനോ റോളിൽ നിന്ന് നോട്ടുകൾ എങ്ങനെ ഇല്ലാതാക്കാം?", options: ["Ctrl + Delete", "റൈറ്റ് ക്ലിക്ക്", "സ്ക്രോൾ ക്ലിക്ക്", "വലിച്ചിടുക"], answer: "റൈറ്റ് ക്ലിക്ക്" } },
+            { en: { question: "Which instrument category contains 'dong03'?", options: ["Misc", "Drums", "Effects", "Keys"], answer: "Misc" }, ml: { question: "'dong03' ഏത് ഉപകരണ വിഭാഗത്തിലാണ് അടങ്ങിയിരിക്കുന്നത്?", options: ["പലവക (Misc)", "ഡ്രംസ്", "ഇഫക്റ്റുകൾ", "കീകൾ"], answer: "പലവക (Misc)" } },
+            { en: { question: "Which of these formats is used to save LMMS projects?", options: [".pptx", ".odt", ".mmpz", ".jpg"], answer: ".mmpz" }, ml: { question: "LMMS പ്രോജക്റ്റുകൾ സേവ് ചെയ്യാൻ ഈ ഫോർമാറ്റുകളിൽ ഏതാണ് ഉപയോഗിക്കുന്നത്?", options: [".pptx", ".odt", ".mmpz", ".jpg"], answer: ".mmpz" } }, // Corrected from export to save.
+            { en: { question: "What is a feature of DAWs?", options: ["Send Emails", "Edit Audio", "Browse Internet", "Draw Images"], answer: "Edit Audio" }, ml: { question: "DAW-കളുടെ ഒരു സവിശേഷത എന്താണ്?", options: ["ഇമെയിലുകൾ അയയ്ക്കുക", "ഓഡിയോ എഡിറ്റ് ചെയ്യുക", "ഇന്റർനെറ്റ് ബ്രൗസ് ചെയ്യുക", "ചിത്രങ്ങൾ വരയ്ക്കുക"], answer: "ഓഡിയോ എഡിറ്റ് ചെയ്യുക" } },
+            { en: { question: "Which of these is NOT visible by default in LMMS?", options: ["Song Editor", "FX-Mixer", "Sidebar", "Tools"], answer: "FX-Mixer" }, ml: { question: "LMMS-ൽ ഡിഫോൾട്ടായി ദൃശ്യമാകാത്തത് ഏതാണ്?", options: ["സോംഗ് എഡിറ്റർ", "എഫ്എക്സ്-മിക്സർ", "സൈഡ്ബാർ", "ടൂൾസ്"], answer: "എഫ്എക്സ്-മിക്സർ" } },
+            { en: { question: "Which musical elements can be created with LMMS?", options: ["Only rhythm", "Only melody", "Rhythm and melody", "Only vocals"], answer: "Rhythm and melody" }, ml: { question: "LMMS ഉപയോഗിച്ച് ഏതൊക്കെ സംഗീത ഘടകങ്ങൾ സൃഷ്ടിക്കാൻ കഴിയും?", options: ["താളം മാത്രം", "ഈണം മാത്രം", "താളവും ഈണവും", "വോക്കൽസ് മാത്രം"], answer: "താളവും ഈണവും" } },
+            { en: { question: "Where do you click to play a created melody?", options: ["Song Editor", "Play button in Piano Roll", "FX-Mixer", "Sidebar"], answer: "Play button in Piano Roll" }, ml: { question: "സൃഷ്ടിച്ച ഈണം പ്ലേ ചെയ്യാൻ എവിടെയാണ് ക്ലിക്ക് ചെയ്യേണ്ടത്?", options: ["സോംഗ് എഡിറ്റർ", "പിയാനോ റോളിലെ പ്ലേ ബട്ടൺ", "എഫ്എക്സ്-മിക്സർ", "സൈഡ്ബാർ"], answer: "പിയാനോ റോളിലെ പ്ലേ ബട്ടൺ" } },
+            { en: { question: "To use a new percussion instrument, you should:", options: ["Draw it", "Select from My Samples", "Click Export", "Open Paint"], answer: "Select from My Samples" }, ml: { question: "ഒരു പുതിയ താളവാദ്യം ഉപയോഗിക്കാൻ, നിങ്ങൾ എന്തു ചെയ്യണം?", options: ["അത് വരയ്ക്കുക", "മൈ സാമ്പിൾസിൽ നിന്ന് തിരഞ്ഞെടുക്കുക", "എക്സ്പോർട്ട് ക്ലിക്ക് ചെയ്യുക", "പെയിന്റ് തുറക്കുക"], answer: "മൈ സാമ്പിൾസിൽ നിന്ന് തിരഞ്ഞെടുക്കുക" } },
+            { en: { question: "What type of license does LMMS have?", options: ["Paid", "Trial", "Free", "Commercial"], answer: "Free" }, ml: { question: "LMMS-ന് ഏത് തരം ലൈസൻസാണ് ഉള്ളത്?", options: ["പണമടച്ചത്", "ട്രയൽ", "സൗജന്യം", "വാണിജ്യപരം"], answer: "സൗജന്യം" } },
+            { en: { question: "Which musical structure is set while creating a rhythm?", options: ["Font size", "BPM and Time Signature", "Border style", "Animation speed"], answer: "BPM and Time Signature" }, ml: { question: "ഒരു താളം സൃഷ്ടിക്കുമ്പോൾ ഏത് സംഗീത ഘടനയാണ് സജ്ജീകരിക്കുന്നത്?", options: ["ഫോണ്ട് വലുപ്പം", "BPM, ടൈം സിഗ്നേച്ചർ", "ബോർഡർ സ്റ്റൈൽ", "ആനിമേഷൻ വേഗത"], answer: "BPM, ടൈം സിഗ്നേച്ചർ" } },
+            { en: { question: "Where do you arrange how long music should play?", options: ["Song Editor Timeline", "FX-Mixer", "Toolbar", "Sidebar"], answer: "Song Editor Timeline" }, ml: { question: "സംഗീതം എത്രനേരം പ്ലേ ചെയ്യണമെന്ന് എവിടെയാണ് നിങ്ങൾ ക്രമീകരിക്കുന്നത്?", options: ["സോംഗ് എഡിറ്റർ ടൈംലൈൻ", "എഫ്എക്സ്-മിക്സർ", "ടൂൾബാർ", "സൈഡ്ബാർ"], answer: "സോംഗ് എഡിറ്റർ ടൈംലൈൻ" } },
+            { en: { question: "How is animation linked to music in this lesson?", options: ["With image editor", "By timing transitions with music", "By writing a script", "By changing fonts"], answer: "By timing transitions with music" }, ml: { question: "ഈ പാഠത്തിൽ ആനിമേഷൻ സംഗീതവുമായി എങ്ങനെ ബന്ധിപ്പിച്ചിരിക്കുന്നു?", options: ["ഇമേജ് എഡിറ്റർ ഉപയോഗിച്ച്", "സംഗീതത്തിനനുസരിച്ച് ട്രാൻസിഷനുകൾ സമയബന്ധിതമാക്കി", "ഒരു സ്ക്രിപ്റ്റ് എഴുതി", "ഫോണ്ടുകൾ മാറ്റി"], answer: "സംഗീതത്തിനനുസരിച്ച് ട്രാൻസിഷനുകൾ സമയബന്ധിതമാക്കി" } },
+            { en: { question: "What happens when you close the Beat+Bassline Editor window after editing rhythm?", options: ["It deletes the rhythm", "Rhythm is added to Song Editor", "LMMS crashes", "Nothing"], answer: "Rhythm is added to Song Editor" }, ml: { question: "താളം എഡിറ്റ് ചെയ്ത ശേഷം ബീറ്റ്+ബാസ്ലൈൻ എഡിറ്റർ വിൻഡോ അടയ്ക്കുമ്പോൾ എന്ത് സംഭവിക്കും?", options: ["അത് താളം ഇല്ലാതാക്കുന്നു", "താളം സോംഗ് എഡിറ്ററിലേക്ക് ചേർക്കപ്പെടുന്നു", "LMMS ക്രാഷ് ആകുന്നു", "ഒന്നും സംഭവിക്കുന്നില്ല"], answer: "താളം സോംഗ് എഡിറ്ററിലേക്ക് ചേർക്കപ്പെടുന്നു" } },
+            { en: { question: "Which tool helps explore saved music files?", options: ["My Documents", "FX-Mixer", "My Projects", "Song-Editor"], answer: "My Projects" }, ml: { question: "സേവ് ചെയ്ത സംഗീത ഫയലുകൾ കണ്ടെത്താൻ ഏത് ടൂൾ സഹായിക്കുന്നു?", options: ["മൈ ഡോക്യുമെന്റ്സ്", "എഫ്എക്സ്-മിക്സർ", "മൈ പ്രോജക്ട്സ്", "സോംഗ്-എഡിറ്റർ"], answer: "മൈ പ്രോജക്ട്സ്" } },
+            { en: { question: "What part of LMMS allows timing adjustments for instruments?", options: ["FX-Mixer", "Timeline in Song Editor", "Piano Roll", "Sidebar"], answer: "Timeline in Song Editor" }, ml: { question: "LMMS-ന്റെ ഏത് ഭാഗമാണ് ഉപകരണങ്ങളുടെ സമയക്രമീകരണം അനുവദിക്കുന്നത്?", options: ["എഫ്എക്സ്-മിക്സർ", "സോംഗ് എഡിറ്ററിലെ ടൈംലൈൻ", "പിയാനോ റോൾ", "സൈഡ്ബാർ"], answer: "സോംഗ് എഡിറ്ററിലെ ടൈംലൈൻ" } },
+            { en: { question: "What is the function of ‘dong01’?", options: ["Folder", "Sound tone", "Effect tool", "Export tool"], answer: "Sound tone" }, ml: { question: "'dong01'-ന്റെ പ്രവർത്തനം എന്താണ്?", options: ["ഫോൾഡർ", "ശബ്ദ ടോൺ", "ഇഫക്റ്റ് ടൂൾ", "എക്സ്പോർട്ട് ടൂൾ"], answer: "ശബ്ദ ടോൺ" } },
+            { en: { question: "Which button should be used to start recording in Piano Roll?", options: ["Play", "Record", "Save", "Export"], answer: "Record" }, ml: { question: "പിയാനോ റോളിൽ റെക്കോർഡിംഗ് ആരംഭിക്കാൻ ഏത് ബട്ടൺ ഉപയോഗിക്കണം?", options: ["പ്ലേ", "റെക്കോർഡ്", "സേവ്", "എക്സ്പോർട്ട്"], answer: "റെക്കോർഡ്" } },
+            { en: { question: "Where should you click to remove a window like FX-Mixer?", options: ["File Menu", "Window Controls Toolbar", "Sidebar", "Piano Roll"], answer: "Window Controls Toolbar" }, ml: { question: "FX-മിക്സർ പോലുള്ള ഒരു വിൻഡോ നീക്കം ചെയ്യാൻ എവിടെയാണ് ക്ലിക്ക് ചെയ്യേണ്ടത്?", options: ["ഫയൽ മെനു", "വിൻഡോ കൺട്രോൾസ് ടൂൾബാർ", "സൈഡ്ബാർ", "പിയാനോ റോൾ"], answer: "വിൻഡോ കൺട്രോൾസ് ടൂൾബാർ" } },
+            { en: { question: "How can you create a rhythmic pattern for your project?", options: ["Use Paragraph Settings", "Draw Shapes", "Click blocks in Beat+Bassline Editor", "Use Header/Footer"], answer: "Click blocks in Beat+Bassline Editor" }, ml: { question: "നിങ്ങളുടെ പ്രോജക്റ്റിനായി ഒരു താളക്രമം എങ്ങനെ സൃഷ്ടിക്കാം?", options: ["പാരഗ്രാഫ് ക്രമീകരണങ്ങൾ ഉപയോഗിക്കുക", "രൂപങ്ങൾ വരയ്ക്കുക", "ബീറ്റ്+ബാസ്ലൈൻ എഡിറ്ററിലെ ബ്ലോക്കുകളിൽ ക്ലിക്ക് ചെയ്യുക", "ഹെഡർ/ഫൂട്ടർ ഉപയോഗിക്കുക"], answer: "ബീറ്റ്+ബാസ്ലൈൻ എഡിറ്ററിലെ ബ്ലോക്കുകളിൽ ക്ലിക്ക് ചെയ്യുക" } },
+            { en: { question: "You are making music for an animation. Which LMMS feature should be used to time melody with animation transitions?", options: ["My Samples", "FX-Mixer", "Piano Roll", "Sidebar"], answer: "Piano Roll" }, ml: { question: "ഒരു ആനിമേഷനായി സംഗീതം നിർമ്മിക്കുമ്പോൾ, ആനിമേഷൻ ട്രാൻസിഷനുകളുമായി ഈണം സമയബന്ധിതമാക്കാൻ ഏത് LMMS ഫീച്ചർ ഉപയോഗിക്കണം?", options: ["മൈ സാമ്പിൾസ്", "എഫ്എക്സ്-മിക്സർ", "പിയാനോ റോൾ", "സൈഡ്ബാർ"], answer: "പിയാനോ റോൾ" } },
+            { en: { question: "You need to increase the speed of the rhythm. What will you do?", options: ["Add more instruments", "Reduce track length", "Increase BPM", "Adjust volume"], answer: "Increase BPM" }, ml: { question: "താളത്തിന്റെ വേഗത വർദ്ധിപ്പിക്കണമെങ്കിൽ എന്തു ചെയ്യണം?", options: ["കൂടുതൽ ഉപകരണങ്ങൾ ചേർക്കുക", "ട്രാക്കിന്റെ നീളം കുറയ്ക്കുക", "BPM വർദ്ധിപ്പിക്കുക", "ശബ്ദം ക്രമീകരിക്കുക"], answer: "BPM വർദ്ധിപ്പിക്കുക" } },
+            { en: { question: "You want to add more percussion instruments to the rhythm. What tool will you use?", options: ["My Projects", "My Samples", "Export", "FX-Mixer"], answer: "My Samples" }, ml: { question: "താളത്തിലേക്ക് കൂടുതൽ താളവാദ്യങ്ങൾ ചേർക്കാൻ ഏത് ടൂൾ ഉപയോഗിക്കും?", options: ["മൈ പ്രോജക്ട്സ്", "മൈ സാമ്പിൾസ്", "എക്സ്പോർട്ട്", "എഫ്എക്സ്-മിക്സർ"], answer: "മൈ സാമ്പിൾസ്" } },
+            { en: { question: "While editing melody, a wrong note is placed. What action should you take?", options: ["Undo", "Use Record again", "Right-click to delete", "Save and reopen"], answer: "Right-click to delete" }, ml: { question: "ഈണം എഡിറ്റ് ചെയ്യുമ്പോൾ ഒരു തെറ്റായ നോട്ട് സ്ഥാപിച്ചാൽ എന്തു ചെയ്യണം?", options: ["അൺഡു ചെയ്യുക", "വീണ്ടും റെക്കോർഡ് ഉപയോഗിക്കുക", "ഇല്ലാതാക്കാൻ റൈറ്റ് ക്ലിക്ക് ചെയ്യുക", "സേവ് ചെയ്ത് വീണ്ടും തുറക്കുക"], answer: "ഇല്ലാതാക്കാൻ റൈറ്റ് ക്ലിക്ക് ചെയ്യുക" } },
+            { en: { question: "You want the rhythm to play throughout the animation. What will you do in the Song Editor?", options: ["Repeat block across timeline", "Change BPM", "Add more instruments", "Use FX-Mixer"], answer: "Repeat block across timeline" }, ml: { question: "ആനിമേഷനിലുടനീളം താളം പ്ലേ ചെയ്യണമെങ്കിൽ സോംഗ് എഡിറ്ററിൽ എന്തു ചെയ്യണം?", options: ["ടൈംലൈനിലുടനീളം ബ്ലോക്ക് ആവർത്തിക്കുക", "BPM മാറ്റുക", "കൂടുതൽ ഉപകരണങ്ങൾ ചേർക്കുക", "എഫ്എക്സ്-മിക്സർ ഉപയോഗിക്കുക"], answer: "ടൈംലൈനിലുടനീളം ബ്ലോക്ക് ആവർത്തിക്കുക" } },
+            { en: { question: "You accidentally closed the Piano Roll. How can you open it again?", options: ["From File menu", "Double-click block in Song Editor", "Use FX-Mixer", "Right-click in Sidebar"], answer: "Double-click block in Song Editor" }, ml: { question: "നിങ്ങൾ അബദ്ധത്തിൽ പിയാനോ റോൾ അടച്ചു. അത് എങ്ങനെ വീണ്ടും തുറക്കാം?", options: ["ഫയൽ മെനുവിൽ നിന്ന്", "സോംഗ് എഡിറ്ററിലെ ബ്ലോക്കിൽ ഡബിൾ ക്ലിക്ക് ചെയ്യുക", "എഫ്എക്സ്-മിക്സർ ഉപയോഗിക്കുക", "സൈഡ്ബാറിൽ റൈറ്റ് ക്ലിക്ക് ചെയ്യുക"], answer: "സോംഗ് എഡിറ്ററിലെ ബ്ലോക്കിൽ ഡബിൾ ക്ലിക്ക് ചെയ്യുക" } },
+            { en: { question: "To save the composed music in a shareable format, you should:", options: ["Use File → Export", "Use My Samples", "Add new block", "Use FX-Mixer"], answer: "Use File → Export" }, ml: { question: "ചിട്ടപ്പെടുത്തിയ സംഗീതം പങ്കുവെക്കാവുന്ന ഫോർമാറ്റിൽ സേവ് ചെയ്യാൻ എന്തു ചെയ്യണം?", options: ["ഫയൽ → എക്സ്പോർട്ട് ഉപയോഗിക്കുക", "മൈ സാമ്പിൾസ് ഉപയോഗിക്കുക", "പുതിയ ബ്ലോക്ക് ചേർക്കുക", "എഫ്എക്സ്-മിക്സർ ഉപയോഗിക്കുക"], answer: "ഫയൽ → എക്സ്പോർട്ട് ഉപയോഗിക്കുക" } },
+            { en: { question: "You need to match rhythm with fast animation scenes. What must you adjust?", options: ["BPM", "Volume", "Track type", "Instrument name"], answer: "BPM" }, ml: { question: "വേഗതയേറിയ ആനിമേഷൻ രംഗങ്ങളുമായി താളം പൊരുത്തപ്പെടുത്താൻ എന്ത് ക്രമീകരിക്കണം?", options: ["BPM", "ശബ്ദം", "ട്രാക്ക് തരം", "ഉപകരണത്തിന്റെ പേര്"], answer: "BPM" } },
+            { en: { question: "You're asked to compose login music for school computers. What will you use?", options: ["Word Processor", "Paint", "LMMS", "Web Browser"], answer: "LMMS" }, ml: { question: "സ്കൂൾ കമ്പ്യൂട്ടറുകൾക്കായി ലോഗിൻ സംഗീതം ചിട്ടപ്പെടുത്താൻ ആവശ്യപ്പെട്ടാൽ എന്തുപയോഗിക്കും?", options: ["വേഡ് പ്രോസസർ", "പെയിന്റ്", "LMMS", "വെബ് ബ്രൗസർ"], answer: "LMMS" } },
+            { en: { question: "You wish to use 'dong03' in your composition. What steps should you follow?", options: ["Find it in My Samples → misc → drag to Song Editor", "Type it in Piano Roll", "Copy it from FX-Mixer", "Use File → Export"], answer: "Find it in My Samples → misc → drag to Song Editor" }, ml: { question: "നിങ്ങളുടെ കോമ്പോസിഷനിൽ 'dong03' ഉപയോഗിക്കാൻ ആഗ്രഹിക്കുന്നുവെങ്കിൽ, എന്തു നടപടികൾ സ്വീകരിക്കണം?", options: ["മൈ സാമ്പിൾസ് → misc-ൽ കണ്ടെത്തി സോംഗ് എഡിറ്ററിലേക്ക് വലിച്ചിടുക", "അത് പിയാനോ റോളിൽ ടൈപ്പ് ചെയ്യുക", "അത് എഫ്എക്സ്-മിക്സറിൽ നിന്ന് പകർത്തുക", "ഫയൽ → എക്സ്പോർട്ട് ഉപയോഗിക്കുക"], answer: "മൈ സാമ്പിൾസ് → misc-ൽ കണ്ടെത്തി സോംഗ് എഡിറ്ററിലേക്ക് വലിച്ചിടുക" } },
+            { en: { question: "You want to listen to rhythm changes before saving. What should you use?", options: ["Save", "Record", "Play button", "Export"], answer: "Play button" }, ml: { question: "സേവ് ചെയ്യുന്നതിന് മുമ്പ് താളത്തിലെ മാറ്റങ്ങൾ കേൾക്കാൻ എന്തുപയോഗിക്കണം?", options: ["സേവ്", "റെക്കോർഡ്", "പ്ലേ ബട്ടൺ", "എക്സ്പോർട്ട്"], answer: "പ്ലേ ബട്ടൺ" } },
+            { en: { question: "You composed rhythm using 'kick01' but it feels dull. What will enhance it?", options: ["Increase volume", "Add more instruments from My Samples", "Delete all blocks", "Use another DAW"], answer: "Add more instruments from My Samples" }, ml: { question: "'kick01' ഉപയോഗിച്ച് നിങ്ങൾ താളം ചിട്ടപ്പെടുത്തി, പക്ഷേ അത് വിരസമായി തോന്നുന്നു. എന്ത് മെച്ചപ്പെടുത്തും?", options: ["ശബ്ദം വർദ്ധിപ്പിക്കുക", "മൈ സാമ്പിൾസിൽ നിന്ന് കൂടുതൽ ഉപകരണങ്ങൾ ചേർക്കുക", "എല്ലാ ബ്ലോക്കുകളും ഇല്ലാതാക്കുക", "മറ്റൊരു DAW ഉപയോഗിക്കുക"], answer: "മൈ സാമ്പിൾസിൽ നിന്ന് കൂടുതൽ ഉപകരണങ്ങൾ ചേർക്കുക" } },
+            { en: { question: "To copy a rhythm from one part of the timeline to another, you should:", options: ["Click to add new blocks", "Drag blocks along timeline", "Use Sidebar", "Use Record button"], answer: "Drag blocks along timeline" }, ml: { question: "ടൈംലൈനിന്റെ ഒരു ഭാഗത്ത് നിന്ന് മറ്റൊന്നിലേക്ക് ഒരു താളം പകർത്താൻ എന്തു ചെയ്യണം?", options: ["പുതിയ ബ്ലോക്കുകൾ ചേർക്കാൻ ക്ലിക്ക് ചെയ്യുക", "ടൈംലൈനിലുടനീളം ബ്ലോക്കുകൾ വലിച്ചിടുക", "സൈഡ്ബാർ ഉപയോഗിക്കുക", "റെക്കോർഡ് ബട്ടൺ ഉപയോഗിക്കുക"], answer: "ടൈംലൈനിലുടനീളം ബ്ലോക്കുകൾ വലിച്ചിടുക" } },
+            { en: { question: "Your exported file is not playing in media player. What may be wrong?", options: ["You forgot to save", "Wrong export format", "Too many instruments", "Not enough blocks"], answer: "Wrong export format" }, ml: { question: "നിങ്ങൾ എക്സ്പോർട്ട് ചെയ്ത ഫയൽ മീഡിയ പ്ലെയറിൽ പ്ലേ ആകുന്നില്ല. എന്തായിരിക്കാം തെറ്റ്?", options: ["നിങ്ങൾ സേവ് ചെയ്യാൻ മറന്നു", "തെറ്റായ എക്സ്പോർട്ട് ഫോർമാറ്റ്", "വളരെയധികം ഉപകരണങ്ങൾ", "മതിയായ ബ്ലോക്കുകൾ ഇല്ല"], answer: "തെറ്റായ എക്സ്പോർട്ട് ഫോർമാറ്റ്" } },
+            { en: { question: "Your teacher asks for a slow rhythm. What setting must you adjust?", options: ["Reduce BPM", "Change pitch", "Add more instruments", "Increase volume"], answer: "Reduce BPM" }, ml: { question: "നിങ്ങളുടെ ടീച്ചർ ഒരു വേഗത കുറഞ്ഞ താളം ആവശ്യപ്പെടുന്നു. ഏത് ക്രമീകരണം നിങ്ങൾ ക്രമീകരിക്കണം?", options: ["BPM കുറയ്ക്കുക", "പിച്ച് മാറ്റുക", "കൂടുതൽ ഉപകരണങ്ങൾ ചേർക്കുക", "ശബ്ദം വർദ്ധിപ്പിക്കുക"], answer: "BPM കുറയ്ക്കുക" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 50-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-300">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-900/50' : 'bg-rose-900/50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-100">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+

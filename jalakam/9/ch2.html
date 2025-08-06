@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Document & Image Design</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the professional/document theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f1f5f9; /* Slate 100 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(100, 116, 139, 0.1);
+            border: 1px solid #e2e8f0; /* Slate 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #cbd5e1; /* Slate 300 */
+        }
+        .option-btn:hover {
+             background-color: #f1f5f9; /* Slate 100 */
+        }
+        .option-btn.selected {
+            background-color: #3b82f6; /* Blue 500 for selected */
+            color: white;
+            border-color: #2563eb; /* Blue 600 */
+        }
+        .option-btn.correct {
+            background-color: #16a34a; /* Green 600 for correct */
+            color: white;
+            border-color: #15803d;
+        }
+        .option-btn.wrong {
+            background-color: #ef4444; /* Red 500 for wrong */
+            color: white;
+            border-color: #dc2626;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-slate-800 mb-2">Design & Document Skills Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your GIMP & LibreOffice Knowledge!</p>
+            <img src="https://placehold.co/400x200/3b82f6/ffffff?text=Ready+to+Create%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Document Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-sky-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3"></div>
+                
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                <h2 id="review-title" class="text-3xl font-black text-slate-800 mb-2">Quiz Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                <div class="bg-sky-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-sky-800"></span>
+                </div>
+                <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Document Skills Quiz!", welcomeSubtitle: "Test Your LibreOffice & OCR Knowledge!", startBtn: "Start Quiz", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Quiz Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "ഡോക്യുമെന്റ് സ്കിൽസ് ക്വിസ്!", welcomeSubtitle: "നിങ്ങളുടെ ലിബ്രെ ഓഫീസ്, OCR പരിജ്ഞാനം പരീക്ഷിക്കുക!", startBtn: "ക്വിസ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ക്വിസ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- Full Question Bank (50 questions) from the provided list ---
+        const fullQuizData = [
+            { en: { question: "What does OCR stand for?", options: ["Optical Content Reader", "Optical Character Recognition", "Optical Colour Recognition", "Official Character Recognition"], answer: "Optical Character Recognition" }, ml: { question: "OCR എന്നതിൻ്റെ പൂർണ്ണരൂപം എന്താണ്?", options: ["ഒപ്റ്റിക്കൽ കണ്ടന്റ് റീഡർ", "ഒപ്റ്റിക്കൽ ക്യാരക്ടർ റെക്കഗ്നിഷൻ", "ഒപ്റ്റിക്കൽ കളർ റെക്കഗ്നിഷൻ", "ഒഫീഷ്യൽ ക്യാരക്ടർ റെക്കഗ്നിഷൻ"], answer: "ഒപ്റ്റിക്കൽ ക്യാരക്ടർ റെക്കഗ്നിഷൻ" } },
+            { en: { question: "Which software is NOT an OCR tool?", options: ["Tesseract OCR", "EasyOCR", "GOCR", "GIMP"], answer: "GIMP" }, ml: { question: "ഇവയിൽ ഏതാണ് ഒരു OCR ടൂൾ അല്ലാത്തത്?", options: ["ടെസറാക്റ്റ് OCR", "ഈസി OCR", "GOCR", "GIMP"], answer: "GIMP" } },
+            { en: { question: "gImageReader is used for:", options: ["Image editing", "Text recognition from images", "Drawing graphics", "Creating tables"], answer: "Text recognition from images" }, ml: { question: "gImageReader എന്തിനാണ് ഉപയോഗിക്കുന്നത്?", options: ["ചിത്രങ്ങൾ എഡിറ്റ് ചെയ്യാൻ", "ചിത്രങ്ങളിൽ നിന്ന് അക്ഷരങ്ങൾ തിരിച്ചറിയാൻ", "ഗ്രാഫിക്സ് വരയ്ക്കാൻ", "പട്ടികകൾ നിർമ്മിക്കാൻ"], answer: "ചിത്രങ്ങളിൽ നിന്ന് അക്ഷരങ്ങൾ തിരിച്ചറിയാൻ" } },
+            { en: { question: "After recognizing text with an OCR tool, you can save it as a:", options: ["Executable file", "Audio file", "Text file", "Video file"], answer: "Text file" }, ml: { question: "ഒരു OCR ടൂൾ ഉപയോഗിച്ച് അക്ഷരങ്ങൾ തിരിച്ചറിഞ്ഞ ശേഷം, അത് ഏത് ഫയലായി സേവ് ചെയ്യാം?", options: ["എക്സിക്യൂട്ടബിൾ ഫയൽ", "ഓഡിയോ ഫയൽ", "ടെക്സ്റ്റ് ഫയൽ", "വീഡിയോ ഫയൽ"], answer: "ടെക്സ്റ്റ് ഫയൽ" } },
+            { en: { question: "What is the first step in using gImageReader for OCR?", options: ["Save output", "Add images", "Print image", "Insert table"], answer: "Add images" }, ml: { question: "OCR-നായി gImageReader ഉപയോഗിക്കുന്നതിലെ ആദ്യപടി എന്താണ്?", options: ["ഔട്ട്പുട്ട് സേവ് ചെയ്യുക", "ചിത്രങ്ങൾ ചേർക്കുക", "ചിത്രം പ്രിന്റ് ചെയ്യുക", "പട്ടിക ചേർക്കുക"], answer: "ചിത്രങ്ങൾ ചേർക്കുക" } },
+            { en: { question: "In LibreOffice Writer, ‘styles’ are:", options: ["Predefined formatting for elements", "Ways to insert equations", "Colour filters for images", "Spreadsheet formulas"], answer: "Predefined formatting for elements" }, ml: { question: "ലിബ്രെ ഓഫീസ് റൈറ്ററിലെ 'സ്റ്റൈലുകൾ' എന്നാൽ എന്താണ്?", options: ["ഘടകങ്ങൾക്കായി മുൻകൂട്ടി നിശ്ചയിച്ച ഫോർമാറ്റിംഗ്", "സമവാക്യങ്ങൾ ചേർക്കാനുള്ള വഴികൾ", "ചിത്രങ്ങൾക്കുള്ള കളർ ഫിൽട്ടറുകൾ", "സ്പ്രെഡ്ഷീറ്റ് ഫോർമുലകൾ"], answer: "ഘടകങ്ങൾക്കായി മുൻകൂട്ടി നിശ്ചയിച്ച ഫോർമാറ്റിംഗ്" } },
+            { en: { question: "Which is NOT a benefit of using styles?", options: ["Consistent formatting", "Easy global changes", "Reduces the need to reformat each part", "Automatically saves your document"], answer: "Automatically saves your document" }, ml: { question: "സ്റ്റൈലുകൾ ഉപയോഗിക്കുന്നതിന്റെ പ്രയോജനമല്ലാത്തത് ഏതാണ്?", options: ["സ്ഥിരതയുള്ള ഫോർമാറ്റിംഗ്", "എളുപ്പത്തിലുള്ള ആഗോള മാറ്റങ്ങൾ", "ഓരോ ഭാഗവും വീണ്ടും ഫോർമാറ്റ് ചെയ്യേണ്ട ആവശ്യം കുറയ്ക്കുന്നു", "നിങ്ങളുടെ ഡോക്യുമെന്റ് സ്വയമേവ സേവ് ചെയ്യുന്നു"], answer: "നിങ്ങളുടെ ഡോക്യുമെന്റ് സ്വയമേവ സേവ് ചെയ്യുന്നു" } },
+            { en: { question: "Which style is used for main headings in LibreOffice Writer by default?", options: ["Heading 2", "Heading 1", "Title", "Subtitle"], answer: "Heading 1" }, ml: { question: "ലിബ്രെ ഓഫീസ് റൈറ്ററിൽ പ്രധാന തലക്കെട്ടുകൾക്കായി ഡിഫോൾട്ടായി ഉപയോഗിക്കുന്ന സ്റ്റൈൽ ഏതാണ്?", options: ["ഹെഡിംഗ് 2", "ഹെഡിംഗ് 1", "ടൈറ്റിൽ", "സബ്ടൈറ്റിൽ"], answer: "ഹെഡിംഗ് 1" } },
+            { en: { question: "To apply a heading style in LibreOffice Writer, you use the:", options: ["Drawing toolbar", "Style box in the formatting toolbar", "Animation panel", "Hyperlink menu"], answer: "Style box in the formatting toolbar" }, ml: { question: "ലിബ്രെ ഓഫീസ് റൈറ്ററിൽ ഒരു ഹെഡിംഗ് സ്റ്റൈൽ പ്രയോഗിക്കാൻ എന്തു ചെയ്യണം?", options: ["ഡ്രോയിംഗ് ടൂൾബാർ ഉപയോഗിക്കുക", "ഫോർമാറ്റിംഗ് ടൂൾബാറിലെ സ്റ്റൈൽ ബോക്സ് ഉപയോഗിക്കുക", "ആനിമേഷൻ പാനൽ ഉപയോഗിക്കുക", "ഹൈപ്പർലിങ്ക് മെനു ഉപയോഗിക്കുക"], answer: "ഫോർമാറ്റിംഗ് ടൂൾബാറിലെ സ്റ്റൈൽ ബോക്സ് ഉപയോഗിക്കുക" } },
+            { en: { question: "The Fill Format Mode in Styles window is used to:", options: ["Paint images", "Apply an existing style to multiple elements quickly", "Fill table cells with colour", "Scale pictures"], answer: "Apply an existing style to multiple elements quickly" }, ml: { question: "സ്റ്റൈൽസ് വിൻഡോയിലെ 'ഫിൽ ഫോർമാറ്റ് മോഡ്' എന്തിനാണ് ഉപയോഗിക്കുന്നത്?", options: ["ചിത്രങ്ങൾക്ക് നിറം നൽകാൻ", "നിലവിലുള്ള ഒരു സ്റ്റൈൽ ഒരേസമയം പലയിടത്ത് പ്രയോഗിക്കാൻ", "പട്ടികയിലെ കളങ്ങളിൽ നിറം നൽകാൻ", "ചിത്രങ്ങളുടെ വലുപ്പം മാറ്റാൻ"], answer: "നിലവിലുള്ള ഒരു സ്റ്റൈൽ ഒരേസമയം പലയിടത്ത് പ്രയോഗിക്കാൻ" } },
+            { en: { question: "To open the Styles window quickly in LibreOffice Writer, the shortcut is:", options: ["F5", "F11", "Ctrl+S", "F1"], answer: "F11" }, ml: { question: "ലിബ്രെ ഓഫീസ് റൈറ്ററിൽ സ്റ്റൈൽസ് വിൻഡോ വേഗത്തിൽ തുറക്കാനുള്ള കുറുക്കുവഴി ഏതാണ്?", options: ["F5", "F11", "Ctrl+S", "F1"], answer: "F11" } },
+            { en: { question: "If you change formatting of a style, e.g., change font in Heading 1, it will:", options: ["Affect only the selected heading", "Affect all text in the document", "Affect all text using Heading 1 style", "Not make any change"], answer: "Affect all text using Heading 1 style" }, ml: { question: "നിങ്ങൾ ഒരു സ്റ്റൈലിന്റെ ഫോർമാറ്റിംഗ് മാറ്റിയാൽ, ഉദാഹരണത്തിന് ഹെഡിംഗ് 1-ന്റെ ഫോണ്ട് മാറ്റിയാൽ, അത്:", options: ["തിരഞ്ഞെടുത്ത തലക്കെട്ടിനെ മാത്രം ബാധിക്കും", "ഡോക്യുമെന്റിലെ എല്ലാ ടെക്സ്റ്റിനെയും ബാധിക്കും", "ഹെഡിംഗ് 1 സ്റ്റൈൽ ഉപയോഗിക്കുന്ന എല്ലാ ടെക്സ്റ്റിനെയും ബാധിക്കും", "ഒരു മാറ്റവും വരുത്തില്ല"], answer: "ഹെഡിംഗ് 1 സ്റ്റൈൽ ഉപയോഗിക്കുന്ന എല്ലാ ടെക്സ്റ്റിനെയും ബാധിക്കും" } },
+            { en: { question: "Which is NOT a style category in LibreOffice Writer?", options: ["Paragraph Styles", "Character Styles", "Cell Styles", "Table Styles"], answer: "Cell Styles" }, ml: { question: "ലിബ്രെ ഓഫീസ് റൈറ്ററിലെ ഒരു സ്റ്റൈൽ വിഭാഗമല്ലാത്തത് ഏതാണ്?", options: ["പാരഗ്രാഫ് സ്റ്റൈൽസ്", "ക്യാരക്ടർ സ്റ്റൈൽസ്", "സെൽ സ്റ്റൈൽസ്", "ടേബിൾ സ്റ്റൈൽസ്"], answer: "സെൽ സ്റ്റൈൽസ്" } },
+            { en: { question: "To modify an existing style (e.g., Heading 1), you should:", options: ["Double-click it", "Right-click and choose Modify", "Copy it", "Drag to Styles window"], answer: "Right-click and choose Modify" }, ml: { question: "നിലവിലുള്ള ഒരു സ്റ്റൈൽ (ഉദാ: ഹെഡിംഗ് 1) പരിഷ്കരിക്കാൻ എന്തു ചെയ്യണം?", options: ["അതിൽ ഡബിൾ ക്ലിക്ക് ചെയ്യുക", "റൈറ്റ് ക്ലിക്ക് ചെയ്ത് മോഡിഫൈ തിരഞ്ഞെടുക്കുക", "അത് കോപ്പി ചെയ്യുക", "സ്റ്റൈൽസ് വിൻഡോയിലേക്ക് വലിച്ചിടുക"], answer: "റൈറ്റ് ക്ലിക്ക് ചെയ്ത് മോഡിഫൈ തിരഞ്ഞെടുക്കുക" } },
+            { en: { question: "Styles can define all of the following EXCEPT:", options: ["Font family and size", "Font colour", "Image content", "Text alignment"], answer: "Image content" }, ml: { question: "സ്റ്റൈലുകൾക്ക് താഴെ പറയുന്നവയെല്ലാം നിർവചിക്കാൻ കഴിയും, ഒരെണ്ണം ഒഴികെ:", options: ["ഫോണ്ട് കുടുംബവും വലുപ്പവും", "ഫോണ്ടിന്റെ നിറം", "ചിത്രത്തിന്റെ ഉള്ളടക്കം", "ടെക്സ്റ്റ് വിന്യാസം"], answer: "ചിത്രത്തിന്റെ ഉള്ളടക്കം" } },
+            { en: { question: "What happens if you apply a style to a paragraph and later change the style’s properties?", options: ["You have to reapply the style for it to update", "The paragraph instantly reflects the new style properties", "The paragraph is deleted", "Nothing happens"], answer: "The paragraph instantly reflects the new style properties" }, ml: { question: "ഒരു ഖണ്ഡികയിൽ സ്റ്റൈൽ പ്രയോഗിച്ച ശേഷം സ്റ്റൈലിന്റെ സവിശേഷതകൾ മാറ്റിയാൽ എന്ത് സംഭവിക്കും?", options: ["അപ്ഡേറ്റ് ചെയ്യുന്നതിന് സ്റ്റൈൽ വീണ്ടും പ്രയോഗിക്കണം", "ആ ഖണ്ഡിക തൽക്ഷണം പുതിയ സ്റ്റൈൽ സവിശേഷതകൾ പ്രതിഫലിപ്പിക്കും", "ആ ഖണ്ഡിക ഡിലീറ്റ് ആകും", "ഒന്നും സംഭവിക്കില്ല"], answer: "ആ ഖണ്ഡിക തൽക്ഷണം പുതിയ സ്റ്റൈൽ സവിശേഷതകൾ പ്രതിഫലിപ്പിക്കും" } },
+            { en: { question: "Which feature allows you to copy formatting from one part of a document and apply it to others?", options: ["Format Painter", "Fill Format Mode", "Style Copier", "Text Brush"], answer: "Fill Format Mode" }, ml: { question: "ഒരു ഡോക്യുമെന്റിന്റെ ഒരു ഭാഗത്തുനിന്നും ഫോർമാറ്റിംഗ് പകർത്തി മറ്റുള്ളവയിൽ പ്രയോഗിക്കാൻ അനുവദിക്കുന്ന ഫീച്ചർ ഏതാണ്?", options: ["ഫോർമാറ്റ് പെയിന്റർ", "ഫിൽ ഫോർമാറ്റ് മോഡ്", "സ്റ്റൈൽ കോപ്പിയർ", "ടെക്സ്റ്റ് ബ്രഷ്"], answer: "ഫിൽ ഫോർമാറ്റ് മോഡ്" } },
+            { en: { question: "To create a new Paragraph Style in LibreOffice, you:", options: ["Click New in the Styles window", "Click Save As", "Print Preview", "Load Template"], answer: "Click New in the Styles window" }, ml: { question: "ലിബ്രെ ഓഫീസിൽ ഒരു പുതിയ പാരഗ്രാഫ് സ്റ്റൈൽ നിർമ്മിക്കാൻ എന്തു ചെയ്യണം?", options: ["സ്റ്റൈൽസ് വിൻഡോയിൽ 'ന്യൂ' ക്ലിക്ക് ചെയ്യുക", "'സേവ് ആസ്' ക്ലിക്ക് ചെയ്യുക", "പ്രിന്റ് പ്രിവ്യൂ", "ലോഡ് ടെംപ്ലേറ്റ്"], answer: "സ്റ്റൈൽസ് വിൻഡോയിൽ 'ന്യൂ' ക്ലിക്ക് ചെയ്യുക" } },
+            { en: { question: "On which tab do you enter the style’s name while creating a new style?", options: ["Font", "Organizer", "Indents & Spacing", "Border"], answer: "Organizer" }, ml: { question: "ഒരു പുതിയ സ്റ്റൈൽ നിർമ്മിക്കുമ്പോൾ ഏത് ടാബിലാണ് സ്റ്റൈലിന്റെ പേര് നൽകേണ്ടത്?", options: ["ഫോണ്ട്", "ഓർഗനൈസർ", "ഇൻഡന്റ്സ് & സ്പേസിംഗ്", "ബോർഡർ"], answer: "ഓർഗനൈസർ" } },
+            { en: { question: "The ‘Inherit from’ option in style creation lets you:", options: ["Import images from another file", "Base your custom style on another style", "Create tables quickly", "Lock a document"], answer: "Base your custom style on another style" }, ml: { question: "സ്റ്റൈൽ നിർമ്മാണത്തിലെ 'ഇൻഹെറിറ്റ് ഫ്രം' ഓപ്ഷൻ എന്തിന് സഹായിക്കുന്നു?", options: ["മറ്റൊരു ഫയലിൽ നിന്ന് ചിത്രങ്ങൾ ഇറക്കുമതി ചെയ്യാൻ", "നിങ്ങളുടെ ഇഷ്ടാനുസൃത സ്റ്റൈൽ മറ്റൊരു സ്റ്റൈലിനെ അടിസ്ഥാനമാക്കാൻ", "വേഗത്തിൽ പട്ടികകൾ നിർമ്മിക്കാൻ", "ഒരു ഡോക്യുമെന്റ് ലോക്ക് ചെയ്യാൻ"], answer: "നിങ്ങളുടെ ഇഷ്ടാനുസൃത സ്റ്റൈൽ മറ്റൊരു സ്റ്റൈലിനെ അടിസ്ഥാനമാക്കാൻ" } },
+            { en: { question: "To apply a style you created (e.g., MyStyle1) to headings:", options: ["Use Fill Format Mode with MyStyle1 selected", "Copy-paste formatted text", "Use Table of Contents", "Change paragraph spacing"], answer: "Use Fill Format Mode with MyStyle1 selected" }, ml: { question: "നിങ്ങൾ നിർമ്മിച്ച ഒരു സ്റ്റൈൽ (ഉദാ: MyStyle1) തലക്കെട്ടുകളിൽ പ്രയോഗിക്കാൻ എന്തു ചെയ്യണം?", options: ["MyStyle1 തിരഞ്ഞെടുത്ത ശേഷം ഫിൽ ഫോർമാറ്റ് മോഡ് ഉപയോഗിക്കുക", "ഫോർമാറ്റ് ചെയ്ത ടെക്സ്റ്റ് കോപ്പി-പേസ്റ്റ് ചെയ്യുക", "ഉള്ളടക്കപ്പട്ടിക ഉപയോഗിക്കുക", "ഖണ്ഡികയുടെ അകലം മാറ്റുക"], answer: "MyStyle1 തിരഞ്ഞെടുത്ത ശേഷം ഫിൽ ഫോർമാറ്റ് മോഡ് ഉപയോഗിക്കുക" } },
+            { en: { question: "Which method allows you to make a new style from a formatted paragraph by simply dragging it?", options: ["Insert Table", "Load Styles from Template", "Drag and Drop to Styles window", "Import Style Wizard"], answer: "Drag and Drop to Styles window" }, ml: { question: "ഫോർമാറ്റ് ചെയ്ത ഒരു ഖണ്ഡികയെ വലിച്ചിട്ട് ഒരു പുതിയ സ്റ്റൈൽ ആക്കാൻ സഹായിക്കുന്ന രീതി ഏതാണ്?", options: ["ഇൻസേർട്ട് ടേബിൾ", "ലോഡ് സ്റ്റൈൽസ് ഫ്രം ടെംപ്ലേറ്റ്", "സ്റ്റൈൽസ് വിൻഡോയിലേക്ക് വലിച്ചിടുക", "ഇംപോർട്ട് സ്റ്റൈൽ വിസാർഡ്"], answer: "സ്റ്റൈൽസ് വിൻഡോയിലേക്ക് വലിച്ചിടുക" } },
+            { en: { question: "What is the file extension for LibreOffice document templates?", options: [".docx", ".ott", ".odt", ".ppt"], answer: ".ott" }, ml: { question: "ലിബ്രെ ഓഫീസ് ഡോക്യുമെന്റ് ടെംപ്ലേറ്റുകളുടെ ഫയൽ എക്സ്റ്റൻഷൻ എന്താണ്?", options: [".docx", ".ott", ".odt", ".ppt"], answer: ".ott" } },
+            { en: { question: "After opening an OTT template, it's recommended to:", options: ["Print immediately", "Edit the file directly and save with a new name", "Change file extension", "Embed images"], answer: "Edit the file directly and save with a new name" }, ml: { question: "ഒരു OTT ടെംപ്ലേറ്റ് തുറന്ന ശേഷം എന്തു ചെയ്യാനാണ് ശുപാർശ ചെയ്യുന്നത്?", options: ["ഉടൻ പ്രിന്റ് ചെയ്യുക", "ഫയൽ നേരിട്ട് എഡിറ്റ് ചെയ്ത് പുതിയ പേരിൽ സേവ് ചെയ്യുക", "ഫയൽ എക്സ്റ്റൻഷൻ മാറ്റുക", "ചിത്രങ്ങൾ ഉൾപ്പെടുത്തുക"], answer: "ഫയൽ നേരിട്ട് എഡിറ്റ് ചെയ്ത് പുതിയ പേരിൽ സേവ് ചെയ്യുക" } },
+            { en: { question: "In the Styles window, ‘Heading 1’ belongs to:", options: ["Paragraph Styles", "List Styles", "Table Styles", "Page Styles"], answer: "Paragraph Styles" }, ml: { question: "സ്റ്റൈൽസ് വിൻഡോയിൽ, 'ഹെഡിംഗ് 1' ഏത് വിഭാഗത്തിൽ പെടുന്നു?", options: ["പാരഗ്രാഫ് സ്റ്റൈൽസ്", "ലിസ്റ്റ് സ്റ്റൈൽസ്", "ടേബിൾ സ്റ്റൈൽസ്", "പേജ് സ്റ്റൈൽസ്"], answer: "പാരഗ്രാഫ് സ്റ്റൈൽസ്" } },
+            { en: { question: "Footnotes in documents are used for:", options: ["Creating headlines", "Providing additional information at the bottom of a page", "Formatting text", "Changing font colour"], answer: "Providing additional information at the bottom of a page" }, ml: { question: "ഡോക്യുമെന്റുകളിൽ അടിക്കുറിപ്പുകൾ (Footnotes) എന്തിനാണ് ഉപയോഗിക്കുന്നത്?", options: ["തലക്കെട്ടുകൾ നിർമ്മിക്കാൻ", "ഒരു പേജിന്റെ താഴെ അധിക വിവരങ്ങൾ നൽകാൻ", "ടെക്സ്റ്റ് ഫോർമാറ്റ് ചെയ്യാൻ", "ഫോണ്ടിന്റെ നിറം മാറ്റാൻ"], answer: "ഒരു പേജിന്റെ താഴെ അധിക വിവരങ്ങൾ നൽകാൻ" } },
+            { en: { question: "To insert a footnote in LibreOffice Writer, you:", options: ["Insert > Table of Contents", "Insert > Footnote and Endnote > Footnote", "Right-click > Insert image", "View > Comments"], answer: "Insert > Footnote and Endnote > Footnote" }, ml: { question: "ലിബ്രെ ഓഫീസ് റൈറ്ററിൽ ഒരു അടിക്കുറിപ്പ് ചേർക്കാൻ എന്തു ചെയ്യണം?", options: ["ഇൻസേർട്ട് > ടേബിൾ ഓഫ് കണ്ടന്റ്സ്", "ഇൻസേർട്ട് > ഫുട്നോട്ട് ആൻഡ് എൻഡ്നോട്ട് > ഫുട്നോട്ട്", "റൈറ്റ് ക്ലിക്ക് > ഇൻസേർട്ട് ഇമേജ്", "വ്യൂ > കമന്റ്സ്"], answer: "ഇൻസേർട്ട് > ഫുട്നോട്ട് ആൻഡ് എൻഡ്നോട്ട് > ഫുട്നോട്ട്" } },
+            { en: { question: "What’s the difference between a footnote and an endnote?", options: ["Footnote is at end, endnote is at bottom of page", "Both are the same", "Footnote: bottom of page, Endnote: end of document", "Endnote: at top of the page"], answer: "Footnote: bottom of page, Endnote: end of document" }, ml: { question: "അടിക്കുറിപ്പും (footnote) അന്ത്യക്കുറിപ്പും (endnote) തമ്മിലുള്ള വ്യത്യാസം എന്താണ്?", options: ["അടിക്കുറിപ്പ് അവസാനം, അന്ത്യക്കുറിപ്പ് പേജിന്റെ താഴെ", "രണ്ടും ഒന്നുതന്നെ", "അടിക്കുറിപ്പ്: പേജിന്റെ താഴെ, അന്ത്യക്കുറിപ്പ്: ഡോക്യുമെന്റിന്റെ അവസാനം", "അന്ത്യക്കുറിപ്പ്: പേജിന്റെ മുകളിൽ"], answer: "അടിക്കുറിപ്പ്: പേജിന്റെ താഴെ, അന്ത്യക്കുറിപ്പ്: ഡോക്യുമെന്റിന്റെ അവസാനം" } },
+            { en: { question: "Footnotes and endnotes are numbered:", options: ["Alphabetically", "Sequentially", "Randomly", "Not numbered"], answer: "Sequentially" }, ml: { question: "അടിക്കുറിപ്പുകളും അന്ത്യക്കുറിപ്പുകളും എങ്ങനെയാണ് നമ്പറിടുന്നത്?", options: ["അക്ഷരമാലാക്രമത്തിൽ", "തുടർച്ചയായി", "ക്രമരഹിതമായി", "നമ്പറിടാറില്ല"], answer: "തുടർച്ചയായി" } },
+            { en: { question: "Clicking the index number near a word with footnote:", options: ["Opens a new document", "Takes you to the explanation below", "Copies the word", "Makes the word bold"], answer: "Takes you to the explanation below" }, ml: { question: "അടിക്കുറിപ്പുള്ള വാക്കിനടുത്തുള്ള ഇൻഡെക്സ് നമ്പറിൽ ക്ലിക്ക് ചെയ്താൽ എന്ത് സംഭവിക്കും?", options: ["ഒരു പുതിയ ഡോക്യുമെന്റ് തുറക്കും", "താഴെയുള്ള വിശദീകരണത്തിലേക്ക് കൊണ്ടുപോകും", "വാക്ക് പകർത്തും", "വാക്ക് കടുപ്പിക്കും"], answer: "താഴെയുള്ള വിശദീകരണത്തിലേക്ക് കൊണ്ടുപോകും" } },
+            { en: { question: "In LibreOffice, you can create a table of contents from:", options: ["Manually typing out sections", "The styles assigned to headings and subheadings", "List Styles only", "Comments"], answer: "The styles assigned to headings and subheadings" }, ml: { question: "ലിബ്രെ ഓഫീസിൽ, എവിടെ നിന്നാണ് നിങ്ങൾക്ക് ഉള്ളടക്കപ്പട്ടിക നിർമ്മിക്കാൻ കഴിയുക?", options: ["വിഭാഗങ്ങൾ നേരിട്ട് ടൈപ്പ് ചെയ്ത്", "തലക്കെട്ടുകൾക്കും ഉപതലക്കെട്ടുകൾക്കും നൽകിയിട്ടുള്ള സ്റ്റൈലുകളിൽ നിന്ന്", "ലിസ്റ്റ് സ്റ്റൈലുകളിൽ നിന്ന് മാത്രം", "കമന്റുകളിൽ നിന്ന്"], answer: "തലക്കെട്ടുകൾക്കും ഉപതലക്കെട്ടുകൾക്കും നൽകിയിട്ടുള്ള സ്റ്റൈലുകളിൽ നിന്ന്" } },
+            { en: { question: "What’s the benefit of using automatic TOC over manual typing?", options: ["No benefit", "Automatically updates with document changes", "Allows colour changes", "Faster page numbering"], answer: "Automatically updates with document changes" }, ml: { question: "കൈകൊണ്ട് ടൈപ്പ് ചെയ്യുന്നതിനേക്കാൾ ഓട്ടോമാറ്റിക് TOC ഉപയോഗിക്കുന്നതിന്റെ പ്രയോജനം എന്താണ്?", options: ["പ്രയോജനമില്ല", "ഡോക്യുമെന്റിലെ മാറ്റങ്ങൾക്കനുസരിച്ച് സ്വയമേവ അപ്ഡേറ്റ് ചെയ്യും", "നിറം മാറ്റാൻ അനുവദിക്കുന്നു", "വേഗത്തിലുള്ള പേജ് നമ്പറിംഗ്"], answer: "ഡോക്യുമെന്റിലെ മാറ്റങ്ങൾക്കനുസരിച്ച് സ്വയമേവ അപ്ഡേറ്റ് ചെയ്യും" } },
+            { en: { question: "To insert TOC, you should:", options: ["Edit > Table of Contents", "Insert > Table of Contents and Index > Table of Contents, Index or Bibliography", "View > Headers", "Tools > Outline Numbering"], answer: "Insert > Table of Contents and Index > Table of Contents, Index or Bibliography" }, ml: { question: "ഉള്ളടക്കപ്പട്ടിക ചേർക്കാൻ എന്തു ചെയ്യണം?", options: ["എഡിറ്റ് > ടേബിൾ ഓഫ് കണ്ടന്റ്സ്", "ഇൻസേർട്ട് > ടേബിൾ ഓഫ് കണ്ടന്റ്സ് ആൻഡ് ഇൻഡെക്സ് > ടേബിൾ ഓഫ് കണ്ടന്റ്സ്, ഇൻഡെക്സ് ഓർ ബിബ്ലിയോഗ്രാഫി", "വ്യൂ > ഹെഡേഴ്സ്", "ടൂൾസ് > ഔട്ട്ലൈൻ നമ്പറിംഗ്"], answer: "ഇൻസേർട്ട് > ടേബിൾ ഓഫ് കണ്ടന്റ്സ് ആൻഡ് ഇൻഡെക്സ് > ടേബിൾ ഓഫ് കണ്ടന്റ്സ്, ഇൻഡെക്സ് ഓർ ബിബ്ലിയോഗ്രാഫി" } },
+            { en: { question: "The title of the Table of Contents can be set in:", options: ["Styles window", "Table of Contents Window, Title field", "Insert menu", "Drawing Toolbar"], answer: "Table of Contents Window, Title field" }, ml: { question: "ഉള്ളടക്കപ്പട്ടികയുടെ തലക്കെട്ട് എവിടെയാണ് സജ്ജീകരിക്കാൻ കഴിയുക?", options: ["സ്റ്റൈൽസ് വിൻഡോ", "ടേബിൾ ഓഫ് കണ്ടന്റ്സ് വിൻഡോയിലെ, ടൈറ്റിൽ ഫീൽഡ്", "ഇൻസേർട്ട് മെനു", "ഡ്രോയിംഗ് ടൂൾബാർ"], answer: "ടേബിൾ ഓഫ് കണ്ടന്റ്സ് വിൻഡോയിലെ, ടൈറ്റിൽ ഫീൽഡ്" } },
+            { en: { question: "Which headings appear in TOC by default?", options: ["Only Heading 1", "Headings with relevant styles (Heading 1, 2, etc.)", "Footnotes", "Images"], answer: "Headings with relevant styles (Heading 1, 2, etc.)" }, ml: { question: "ഡിഫോൾട്ടായി ഏതൊക്കെ തലക്കെട്ടുകളാണ് TOC-ൽ ദൃശ്യമാകുന്നത്?", options: ["ഹെഡിംഗ് 1 മാത്രം", "അനുയോജ്യമായ സ്റ്റൈലുകളുള്ള തലക്കെട്ടുകൾ (ഹെഡിംഗ് 1, 2, മുതലായവ)", "അടിക്കുറിപ്പുകൾ", "ചിത്രങ്ങൾ"], answer: "അനുയോജ്യമായ സ്റ്റൈലുകളുള്ള തലക്കെട്ടുകൾ (ഹെഡിംഗ് 1, 2, മുതലായവ)" } },
+            { en: { question: "To edit and update the TOC after document changes, you should:", options: ["Delete and re-insert the TOC", "Right-click and choose Update Index", "Change styles", "Re-type all text"], answer: "Right-click and choose Update Index" }, ml: { question: "ഡോക്യുമെന്റിലെ മാറ്റങ്ങൾക്ക് ശേഷം TOC എഡിറ്റ് ചെയ്യാനും അപ്ഡേറ്റ് ചെയ്യാനും എന്തു ചെയ്യണം?", options: ["TOC ഡിലീറ്റ് ചെയ്ത് വീണ്ടും ചേർക്കുക", "റൈറ്റ് ക്ലിക്ക് ചെയ്ത് അപ്ഡേറ്റ് ഇൻഡെക്സ് തിരഞ്ഞെടുക്കുക", "സ്റ്റൈലുകൾ മാറ്റുക", "എല്ലാ ടെക്സ്റ്റും വീണ്ടും ടൈപ്പ് ചെയ്യുക"], answer: "റൈറ്റ് ക്ലിക്ക് ചെയ്ത് അപ്ഡേറ്റ് ഇൻഡെക്സ് തിരഞ്ഞെടുക്കുക" } },
+            { en: { question: "Which option allows you to format the TOC directly?", options: ["“Protected against manual changes” is unchecked", "Heading styles are deleted", "Insert > Comments", "Drag paragraphs"], answer: "“Protected against manual changes” is unchecked" }, ml: { question: "TOC നേരിട്ട് ഫോർമാറ്റ് ചെയ്യാൻ ഏത് ഓപ്ഷൻ അനുവദിക്കുന്നു?", options: ["“പ്രൊട്ടക്റ്റഡ് എഗൈൻസ്റ്റ് മാനുവൽ ചേഞ്ചസ്” അൺചെക്ക് ചെയ്തിരിക്കുന്നു", "ഹെഡിംഗ് സ്റ്റൈലുകൾ ഡിലീറ്റ് ചെയ്തിരിക്കുന്നു", "ഇൻസേർട്ട് > കമന്റ്സ്", "ഖണ്ഡികകൾ വലിച്ചിടുക"], answer: "“പ്രൊട്ടക്റ്റഡ് എഗൈൻസ്റ്റ് മാനുവൽ ചേഞ്ചസ്” അൺചെക്ക് ചെയ്തിരിക്കുന്നു" } },
+            { en: { question: "In the exported PDF, clicking a TOC link while pressing Ctrl:", options: ["Has no effect", "Jumps to the corresponding page/section", "Changes font size", "Opens new window"], answer: "Jumps to the corresponding page/section" }, ml: { question: "എക്സ്പോർട്ട് ചെയ്ത PDF-ൽ, Ctrl അമർത്തിപ്പിടിച്ച് ഒരു TOC ലിങ്കിൽ ക്ലിക്ക് ചെയ്താൽ എന്ത് സംഭവിക്കും?", options: ["ഒരു ഫലവുമില്ല", "അനുബന്ധ പേജിലേക്കോ വിഭാഗത്തിലേക്കോ പോകുന്നു", "ഫോണ്ട് വലുപ്പം മാറ്റുന്നു", "പുതിയ വിൻഡോ തുറക്കുന്നു"], answer: "അനുബന്ധ പേജിലേക്കോ വിഭാഗത്തിലേക്കോ പോകുന്നു" } },
+            { en: { question: "The “Inherit from” option for main headings in TOC should be:", options: ["Heading 4", "Heading 1", "Heading 3", "Text body"], answer: "Heading 1" }, ml: { question: "TOC-ലെ പ്രധാന തലക്കെട്ടുകൾക്കുള്ള “ഇൻഹെറിറ്റ് ഫ്രം” ഓപ്ഷൻ എന്തായിരിക്കണം?", options: ["ഹെഡിംഗ് 4", "ഹെഡിംഗ് 1", "ഹെഡിംഗ് 3", "ടെക്സ്റ്റ് ബോഡി"], answer: "ഹെഡിംഗ് 1" } },
+            { en: { question: "Which formatting technique arranges text along with images and shapes?", options: ["Drop Cap", "Wrap", "Index", "Caption"], answer: "Wrap" }, ml: { question: "ചിത്രങ്ങൾക്കും രൂപങ്ങൾക്കുമൊപ്പം ടെക്സ്റ്റ് ക്രമീകരിക്കുന്ന ഫോർമാറ്റിംഗ് ടെക്നിക് ഏതാണ്?", options: ["ഡ്രോപ്പ് ക്യാപ്", "റാപ്", "ഇൻഡെക്സ്", "ക്യാപ്ഷൻ"], answer: "റാപ്" } },
+            { en: { question: "Which formatting adds a boundary to a table?", options: ["Font Style", "Border", "Indentation", "Outline"], answer: "Border" }, ml: { question: "ഒരു പട്ടികയ്ക്ക് അതിർത്തി ചേർക്കുന്ന ഫോർമാറ്റിംഗ് ഏതാണ്?", options: ["ഫോണ്ട് സ്റ്റൈൽ", "ബോർഡർ", "ഇൻഡന്റേഷൻ", "ഔട്ട്ലൈൻ"], answer: "ബോർഡർ" } },
+            { en: { question: "What does the LaTeX software specialize in?", options: ["Image editing", "Scientific/mathematical documents", "Creating animations", "Video editing"], answer: "Scientific/mathematical documents" }, ml: { question: "ലാറ്റെക്സ് (LaTeX) സോഫ്റ്റ്‌വെയർ എന്തിലാണ് വൈദഗ്ദ്ധ്യം നേടിയിരിക്കുന്നത്?", options: ["ഇമേജ് എഡിറ്റിംഗ്", "ശാസ്ത്രീയ/ഗണിതശാസ്ത്രപരമായ ഡോക്യുമെന്റുകൾ", "ആനിമേഷനുകൾ നിർമ്മിക്കൽ", "വീഡിയോ എഡിറ്റിംഗ്"], answer: "ശാസ്ത്രീയ/ഗണിതശാസ്ത്രപരമായ ഡോക്യുമെന്റുകൾ" } },
+            { en: { question: "Which open source software is recommended for making magazine page layouts more attractive?", options: ["Calc", "Scribus", "GIMP", "LaTeX"], answer: "Scribus" }, ml: { question: "മാസികയുടെ പേജ് ലേഔട്ടുകൾ കൂടുതൽ ആകർഷകമാക്കാൻ ശുപാർശ ചെയ്യുന്ന ഓപ്പൺ സോഴ്‌സ് സോഫ്റ്റ്‌വെയർ ഏതാണ്?", options: ["കാൽക്ക്", "സ്ക്രൈബസ്", "ജിമ്പ്", "ലാറ്റെക്സ്"], answer: "സ്ക്രൈബസ്" } },
+            { en: { question: "Scribus is especially used for:", options: ["Image scanning", "Desktop publishing and page design", "Web development", "Word counting"], answer: "Desktop publishing and page design" }, ml: { question: "സ്ക്രൈബസ് പ്രധാനമായും എന്തിനാണ് ഉപയോഗിക്കുന്നത്?", options: ["ഇമേജ് സ്കാനിംഗ്", "ഡെസ്ക്ടോപ്പ് പബ്ലിഷിംഗും പേജ് ഡിസൈനും", "വെബ് ഡെവലപ്മെന്റ്", "വാക്കുകളുടെ എണ്ണം കണ്ടെത്തൽ"], answer: "ഡെസ്ക്ടോപ്പ് പബ്ലിഷിംഗും പേജ് ഡിസൈനും" } },
+            { en: { question: "Using styles is especially important for:", options: ["Short single-page notes", "Long or multi-page documents", "Tables only", "Images only"], answer: "Long or multi-page documents" }, ml: { question: "സ്റ്റൈലുകൾ ഉപയോഗിക്കുന്നത് പ്രധാനമായും എവിടെയാണ്?", options: ["ചെറിയ ഒറ്റ പേജ് നോട്ടുകൾ", "വലുതും ഒന്നിലധികം പേജുകളുള്ളതുമായ ഡോക്യുമെന്റുകൾ", "പട്ടികകൾക്ക് മാത്രം", "ചിത്രങ്ങൾക്ക് മാത്രം"], answer: "വലുതും ഒന്നിലധികം പേജുകളുള്ളതുമായ ഡോക്യുമെന്റുകൾ" } },
+            { en: { question: "Which tab should be used to change alignment in a style?", options: ["Borders", "Alignment", "Font", "Organizer"], answer: "Alignment" }, ml: { question: "ഒരു സ്റ്റൈലിൽ അലൈൻമെന്റ് മാറ്റാൻ ഏത് ടാബ് ഉപയോഗിക്കണം?", options: ["ബോർഡറുകൾ", "അലൈൻമെന്റ്", "ഫോണ്ട്", "ഓർഗനൈസർ"], answer: "അലൈൻമെന്റ്" } },
+            { en: { question: "To make paragraph spacing consistent, you should use:", options: ["Manual Enter key", "Styles with Indents & Spacing tab set", "Insert Image", "Spreadsheet Formula"], answer: "Styles with Indents & Spacing tab set" }, ml: { question: "ഖണ്ഡികകൾക്കിടയിലുള്ള അകലം സ്ഥിരമാക്കാൻ എന്തു ചെയ്യണം?", options: ["കൈകൊണ്ട് എന്റർ കീ ഉപയോഗിക്കുക", "ഇൻഡന്റ്സ് & സ്പേസിംഗ് ടാബ് സജ്ജീകരിച്ച സ്റ്റൈലുകൾ ഉപയോഗിക്കുക", "ചിത്രം ചേർക്കുക", "സ്പ്രെഡ്ഷീറ്റ് ഫോർമുല"], answer: "ഇൻഡന്റ്സ് & സ്പേസിംഗ് ടാബ് സജ്ജീകരിച്ച സ്റ്റൈലുകൾ ഉപയോഗിക്കുക" } },
+            { en: { question: "A style created in one document can be reused in another by:", options: ["Load Styles from Template", "Print Preview", "Spell check", "Page Setup"], answer: "Load Styles from Template" }, ml: { question: "ഒരു ഡോക്യുമെന്റിൽ നിർമ്മിച്ച സ്റ്റൈൽ മറ്റൊന്നിൽ എങ്ങനെ പുനരുപയോഗിക്കാം?", options: ["ലോഡ് സ്റ്റൈൽസ് ഫ്രം ടെംപ്ലേറ്റ്", "പ്രിന്റ് പ്രിവ്യൂ", "സ്പെൽ ചെക്ക്", "പേജ് സെറ്റപ്പ്"], answer: "ലോഡ് സ്റ്റൈൽസ് ഫ്രം ടെംപ്ലേറ്റ്" } },
+            { en: { question: "To create an organized class magazine with categories and article names on first page, you should:", options: ["Use manual typing throughout", "Apply styles consistently and insert automated TOC", "Only use images", "Use footnotes only"], answer: "Apply styles consistently and insert automated TOC" }, ml: { question: "വിഭാഗങ്ങളും ലേഖനങ്ങളുടെ പേരുകളും ആദ്യ പേജിൽ ഉൾപ്പെടുത്തി ഒരു സംഘടിത ക്ലാസ് മാഗസിൻ നിർമ്മിക്കാൻ എന്തു ചെയ്യണം?", options: ["തുടർച്ചയായി കൈകൊണ്ട് ടൈപ്പ് ചെയ്യുക", "സ്ഥിരമായി സ്റ്റൈലുകൾ പ്രയോഗിക്കുകയും ഓട്ടോമേറ്റഡ് TOC ചേർക്കുകയും ചെയ്യുക", "ചിത്രങ്ങൾ മാത്രം ഉപയോഗിക്കുക", "അടിക്കുറിപ്പുകൾ മാത്രം ഉപയോഗിക്കുക"], answer: "സ്ഥിരമായി സ്റ്റൈലുകൾ പ്രയോഗിക്കുകയും ഓട്ടോമേറ്റഡ് TOC ചേർക്കുകയും ചെയ്യുക" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 50-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-300">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-900/50' : 'bg-rose-900/50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-100">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+
