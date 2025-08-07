@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: GIMP Poster Design</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new vibrant/creative theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0fdfa; /* Teal 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(13, 148, 136, 0.1);
+            border: 1px solid #ccfbf1; /* Teal 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #99f6e4; /* Teal 200 */
+        }
+        .option-btn:hover {
+             background-color: #f3f4f6; /* Gray 100 */
+        }
+        .option-btn.selected {
+            background-color: #ec4899; /* Pink 500 for selected */
+            color: white;
+            border-color: #db2777; /* Pink 600 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f43f5e; /* Rose 500 for wrong */
+            color: white;
+            border-color: #be123c;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-teal-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-teal-800 mb-2">GIMP Design Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your Image Editing Skills!</p>
+            <img src="https://placehold.co/400x200/14b8a6/ffffff?text=Ready+to+Design%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="GIMP Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3"></div>
+                
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                <h2 id="review-title" class="text-3xl font-black text-teal-800 mb-2">Quiz Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                </div>
+                <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "GIMP Design Quiz!", welcomeSubtitle: "Test Your Image Editing Skills!", startBtn: "Start Quiz", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Quiz Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "GIMP ഡിസൈൻ ക്വിസ്!", welcomeSubtitle: "നിങ്ങളുടെ ഇമേജ് എഡിറ്റിംഗ് കഴിവുകൾ പരീക്ഷിക്കുക!", startBtn: "ക്വിസ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ക്വിസ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- Full Question Bank (50 questions) from 9_1.pdf ---
+        const fullQuizData = [
+            { en: { question: "Which tool in GIMP allows you to select an area of an image based on colour similarity?", options: ["Path Tool", "Fuzzy Select Tool", "Rectangle Select Tool", "Scale Tool"], answer: "Fuzzy Select Tool" }, ml: { question: "GIMP-ൽ, നിറത്തിന്റെ സാമ്യം അനുസരിച്ച് ഒരു ചിത്രത്തിന്റെ ഭാഗം തിരഞ്ഞെടുക്കാൻ സഹായിക്കുന്ന ടൂൾ ഏതാണ്?", options: ["പാത്ത് ടൂൾ", "ഫസി സെലക്ട് ടൂൾ", "റെക്ടാങ്കിൾ സെലക്ട് ടൂൾ", "സ്കെയിൽ ടൂൾ"], answer: "ഫസി സെലക്ട് ടൂൾ" } },
+            { en: { question: "What does the Threshold option in the Fuzzy Select Tool control?", options: ["Shape of selection", "Brightness of selection", "Colour tolerance for selection", "Size of selection"], answer: "Colour tolerance for selection" }, ml: { question: "ഫസി സെലക്ട് ടൂളിലെ 'Threshold' ഓപ്ഷൻ എന്തിനെയാണ് നിയന്ത്രിക്കുന്നത്?", options: ["തിരഞ്ഞെടുപ്പിന്റെ ആകൃതി", "തിരഞ്ഞെടുപ്പിന്റെ പ്രകാശം", "നിറം തിരഞ്ഞെടുക്കുന്നതിനുള്ള പരിധി", "തിരഞ്ഞെടുപ്പിന്റെ വലുപ്പം"], answer: "നിറം തിരഞ്ഞെടുക്കുന്നതിനുള്ള പരിധി" } },
+            { en: { question: "If an image does not support transparency, what must be added before removing its background?", options: ["RGB channel", "RGBA channel", "Alpha channel", "Layer mask"], answer: "Alpha channel" }, ml: { question: "ഒരു ചിത്രത്തിൽ സുതാര്യത (transparency) ഇല്ലെങ്കിൽ, പശ്ചാത്തലം നീക്കം ചെയ്യുന്നതിന് മുമ്പ് എന്ത് ചേർക്കണം?", options: ["RGB ചാനൽ", "RGBA ചാനൽ", "ആൽഫ ചാനൽ", "ലെയർ മാസ്ക്"], answer: "ആൽഫ ചാനൽ" } },
+            { en: { question: "How can you add an alpha channel to an image in GIMP?", options: ["Edit > Copy", "Right-click layer > Add Alpha Channel", "Filters > Add Alpha Channel", "Image > Alpha Channel"], answer: "Right-click layer > Add Alpha Channel" }, ml: { question: "GIMP-ൽ എങ്ങനെ ഒരു ആൽഫ ചാനൽ ചേർക്കാം?", options: ["എഡിറ്റ് > കോപ്പി", "ലെയറിൽ റൈറ്റ് ക്ലിക്ക് > ആഡ് ആൽഫ ചാനൽ", "ഫിൽറ്ററുകൾ > ആഡ് ആൽഫ ചാനൽ", "ഇമേജ് > ആൽഫ ചാനൽ"], answer: "ലെയറിൽ റൈറ്റ് ക്ലിക്ക് > ആഡ് ആൽഫ ചാനൽ" } },
+            { en: { question: "What does the 'A' in RGBA stand for?", options: ["Aspect ratio", "Alpha (transparency)", "Alignment", "Amount"], answer: "Alpha (transparency)" }, ml: { question: "RGBA-യിലെ 'A' എന്തിനെ സൂചിപ്പിക്കുന്നു?", options: ["വീക്ഷണാനുപാതം", "ആൽഫ (സുതാര്യത)", "വിന്യാസം", "അളവ്"], answer: "ആൽഫ (സുതാര്യത)" } },
+            { en: { question: "To paste a copied image as a new editable layer, you should use:", options: ["Edit > Paste as > New Layer", "Edit > Paste as > New Image", "File > Open as Layer", "File > Import Layer"], answer: "Edit > Paste as > New Layer" }, ml: { question: "പകർത്തിയെടുത്ത ചിത്രം എഡിറ്റ് ചെയ്യാൻ കഴിയുന്ന പുതിയ ലെയറായി ഒട്ടിക്കാൻ എന്തു ചെയ്യണം?", options: ["എഡിറ്റ് > പേസ്റ്റ് ആസ് > ന്യൂ ലെയർ", "എഡിറ്റ് > പേസ്റ്റ് ആസ് > ന്യൂ ഇമേജ്", "ഫയൽ > ഓപ്പൺ ആസ് ലെയർ", "ഫയൽ > ഇംപോർട്ട് ലെയർ"], answer: "എഡിറ്റ് > പേസ്റ്റ് ആസ് > ന്യൂ ലെയർ" } },
+            { en: { question: "Which tool allows you to change the position of an image layer?", options: ["Scale Tool", "Paths Tool", "Move Tool", "Crop Tool"], answer: "Move Tool" }, ml: { question: "ഒരു ഇമേജ് ലെയറിന്റെ സ്ഥാനം മാറ്റാൻ ഏത് ടൂൾ ഉപയോഗിക്കാം?", options: ["സ്കെയിൽ ടൂൾ", "പാത്ത്സ് ടൂൾ", "മൂവ് ടൂൾ", "ക്രോപ്പ് ടൂൾ"], answer: "മൂവ് ടൂൾ" } },
+            { en: { question: "Unlinking the chain between Width and Height in the Scale Tool allows you to:", options: ["Move layer independently", "Resize image non-proportionally", "Merge two layers", "Rotate the image"], answer: "Resize image non-proportionally" }, ml: { question: "സ്കെയിൽ ടൂളിൽ വീതിയും ഉയരവും തമ്മിലുള്ള ചെയിൻ വിച്ഛേദിക്കുന്നത് എന്തിന് സഹായിക്കുന്നു?", options: ["ലെയർ സ്വതന്ത്രമായി നീക്കാൻ", "ചിത്രത്തിന്റെ വലുപ്പം ആനുപാതികമല്ലാതെ മാറ്റാൻ", "രണ്ട് ലെയറുകൾ ലയിപ്പിക്കാൻ", "ചിത്രം തിരിക്കാൻ"], answer: "ചിത്രത്തിന്റെ വലുപ്പം ആനുപാതികമല്ലാതെ മാറ്റാൻ" } },
+            { en: { question: "Which tool in GIMP is primarily used to extract a specific shaped part from an image?", options: ["Crop Tool", "Rectangle Select Tool", "Paths Tool", "Fuzzy Select Tool"], answer: "Paths Tool" }, ml: { question: "ഒരു ചിത്രത്തിൽ നിന്ന് ഒരു പ്രത്യേക ആകൃതിയിലുള്ള ഭാഗം വേർതിരിച്ചെടുക്കാൻ പ്രധാനമായും ഉപയോഗിക്കുന്ന GIMP ടൂൾ ഏതാണ്?", options: ["ക്രോപ്പ് ടൂൾ", "റെക്ടാങ്കിൾ സെലക്ട് ടൂൾ", "പാത്ത്സ് ടൂൾ", "ഫസി സെലക്ട് ടൂൾ"], answer: "പാത്ത്സ് ടൂൾ" } },
+            { en: { question: "How do you convert a path selection into an actual selection in GIMP using the Paths Tool?", options: ["Edit > Convert to Selection", "File > Select from Path", "Select > From Path", "Image > From Path"], answer: "Select > From Path" }, ml: { question: "പാത്ത്സ് ടൂൾ ഉപയോഗിച്ച് ഒരു പാത്തിനെ എങ്ങനെ യഥാർത്ഥ സെലക്ഷനാക്കി മാറ്റാം?", options: ["എഡിറ്റ് > കൺവേർട്ട് ടു സെലക്ഷൻ", "ഫയൽ > സെലക്ട് ഫ്രം പാത്ത്", "സെലക്ട് > ഫ്രം പാത്ത്", "ഇമേജ് > ഫ്രം പാത്ത്"], answer: "സെലക്ട് > ഫ്രം പാത്ത്" } },
+            { en: { question: "Why is it recommended to insert images in new layers when creating a poster?", options: ["Layers save storage space", "Layered images can be repositioned and resized independently", "Layers improve colour", "Layers increase contrast"], answer: "Layered images can be repositioned and resized independently" }, ml: { question: "ഒരു പോസ്റ്റർ നിർമ്മിക്കുമ്പോൾ ചിത്രങ്ങൾ പുതിയ ലെയറുകളിൽ ചേർക്കാൻ ശുപാർശ ചെയ്യുന്നത് എന്തുകൊണ്ട്?", options: ["ലെയറുകൾ സംഭരണ സ്ഥലം ലാഭിക്കുന്നു", "ലെയറുകളിലെ ചിത്രങ്ങൾ സ്വതന്ത്രമായി പുനഃസ്ഥാപിക്കാനും വലുപ്പം മാറ്റാനും കഴിയും", "ലെയറുകൾ നിറം മെച്ചപ്പെടുത്തുന്നു", "ലെയറുകൾ കോൺട്രാസ്റ്റ് വർദ്ധിപ്പിക്കുന്നു"], answer: "ലെയറുകളിലെ ചിത്രങ്ങൾ സ്വതന്ത്രമായി പുനഃസ്ഥാപിക്കാനും വലുപ്പം മാറ്റാനും കഴിയും" } },
+            { en: { question: "What is the procedure to duplicate an image layer in GIMP?", options: ["Right-click layer > Duplicate Layer", "Edit > Duplicate", "Select > Duplicate", "Image > Duplicate Layer"], answer: "Right-click layer > Duplicate Layer" }, ml: { question: "GIMP-ൽ ഒരു ഇമേജ് ലെയർ ഡ്യൂപ്ലിക്കേറ്റ് ചെയ്യാനുള്ള നടപടിക്രമം എന്താണ്?", options: ["ലെയറിൽ റൈറ്റ് ക്ലിക്ക് > ഡ്യൂപ്ലിക്കേറ്റ് ലെയർ", "എഡിറ്റ് > ഡ്യൂപ്ലിക്കേറ്റ്", "സെലക്ട് > ഡ്യൂപ്ലിക്കേറ്റ്", "ഇമേജ് > ഡ്യൂപ്ലിക്കേറ്റ് ലെയർ"], answer: "ലെയറിൽ റൈറ്റ് ക്ലിക്ക് > ഡ്യൂപ്ലിക്കേറ്റ് ലെയർ" } },
+            { en: { question: "The background of the poster should be placed on which layer?", options: ["Layer 1", "Foreground Layer", "Background Layer", "Topmost Layer"], answer: "Background Layer" }, ml: { question: "പോസ്റ്ററിന്റെ പശ്ചാത്തലം ഏത് ലെയറിലാണ് സ്ഥാപിക്കേണ്ടത്?", options: ["ലെയർ 1", "ഫോർഗ്രൗണ്ട് ലെയർ", "ബാക്ക്ഗ്രൗണ്ട് ലെയർ", "ഏറ്റവും മുകളിലെ ലെയർ"], answer: "ബാക്ക്ഗ്രൗണ്ട് ലെയർ" } },
+            { en: { question: "Arranging the order of layers can be done using:", options: ["File > Order", "Move Up/Down arrows in Layers palette", "Select > Arrange", "Image > Layer Arrange"], answer: "Move Up/Down arrows in Layers palette" }, ml: { question: "ലെയറുകളുടെ ക്രമം ക്രമീകരിക്കാൻ എന്തുപയോഗിക്കാം?", options: ["ഫയൽ > ഓർഡർ", "ലെയേഴ്സ് പാലറ്റിലെ മുകളിലേക്കും താഴേക്കുമുള്ള അമ്പടയാളങ്ങൾ", "സെലക്ട് > അറേഞ്ച്", "ഇമേജ് > ലെയർ അറേഞ്ച്"], answer: "ലെയേഴ്സ് പാലറ്റിലെ മുകളിലേക്കും താഴേക്കുമുള്ള അമ്പടയാളങ്ങൾ" } },
+            { en: { question: "Which statement is correct about layers in GIMP?", options: ["Only one layer can be visible at a time", "Layers allow independent adjustment of poster elements", "Layers cannot be renamed", "Text and images must be on the same layer"], answer: "Layers allow independent adjustment of poster elements" }, ml: { question: "GIMP-ലെ ലെയറുകളെക്കുറിച്ചുള്ള ശരിയായ പ്രസ്താവന ഏതാണ്?", options: ["ഒരു സമയം ഒരു ലെയർ മാത്രമേ ദൃശ്യമാകൂ", "പോസ്റ്ററിലെ ഘടകങ്ങൾ സ്വതന്ത്രമായി ക്രമീകരിക്കാൻ ലെയറുകൾ അനുവദിക്കുന്നു", "ലെയറുകൾക്ക് പേരുമാറ്റാൻ കഴിയില്ല", "ടെക്സ്റ്റും ചിത്രങ്ങളും ഒരേ ലെയറിൽ ആയിരിക്കണം"], answer: "പോസ്റ്ററിലെ ഘടകങ്ങൾ സ്വതന്ത്രമായി ക്രമീകരിക്കാൻ ലെയറുകൾ അനുവദിക്കുന്നു" } },
+            { en: { question: "How can you increase the brightness and contrast of an image in GIMP?", options: ["Edit > Adjust Brightness-Contrast", "Colours > Brightness-Contrast", "Tools > Brightness-Contrast", "Filters > Brightness-Contrast"], answer: "Colours > Brightness-Contrast" }, ml: { question: "GIMP-ൽ ഒരു ചിത്രത്തിന്റെ പ്രകാശവും കോൺട്രാസ്റ്റും എങ്ങനെ വർദ്ധിപ്പിക്കാം?", options: ["എഡിറ്റ് > അഡ്ജസ്റ്റ് ബ്രൈറ്റ്നസ്-കോൺട്രാസ്റ്റ്", "കളേഴ്സ് > ബ്രൈറ്റ്നസ്-കോൺട്രാസ്റ്റ്", "ടൂൾസ് > ബ്രൈറ്റ്നസ്-കോൺട്രാസ്റ്റ്", "ഫിൽറ്ററുകൾ > ബ്രൈറ്റ്നസ്-കോൺട്രാസ്റ്റ്"], answer: "കളേഴ്സ് > ബ്രൈറ്റ്നസ്-കോൺട്രാസ്റ്റ്" } },
+            { en: { question: "To change the background colour of the poster in GIMP, you should:", options: ["Select the Background Layer and fill with the desired colour", "Add a new image layer", "Use the Crop Tool", "Use the Paths Tool"], answer: "Select the Background Layer and fill with the desired colour" }, ml: { question: "GIMP-ൽ പോസ്റ്ററിന്റെ പശ്ചാത്തല നിറം മാറ്റാൻ എന്തു ചെയ്യണം?", options: ["ബാക്ക്ഗ്രൗണ്ട് ലെയർ തിരഞ്ഞെടുത്ത് ആവശ്യമുള്ള നിറം നൽകുക", "പുതിയ ഇമേജ് ലെയർ ചേർക്കുക", "ക്രോപ്പ് ടൂൾ ഉപയോഗിക്കുക", "പാത്ത്സ് ടൂൾ ഉപയോഗിക്കുക"], answer: "ബാക്ക്ഗ്രൗണ്ട് ലെയർ തിരഞ്ഞെടുത്ത് ആവശ്യമുള്ള നിറം നൽകുക" } },
+            { en: { question: "Adjusting the size of an image can be done using the:", options: ["Transform Tool", "Scale Tool", "Shear Tool", "Flip Tool"], answer: "Scale Tool" }, ml: { question: "ഒരു ചിത്രത്തിന്റെ വലുപ്പം ക്രമീകരിക്കാൻ ഏത് ടൂൾ ഉപയോഗിക്കാം?", options: ["ട്രാൻസ്ഫോം ടൂൾ", "സ്കെയിൽ ടൂൾ", "ഷിയർ ടൂൾ", "ഫ്ലിപ്പ് ടൂൾ"], answer: "സ്കെയിൽ ടൂൾ" } },
+            { en: { question: "When changing scale, what does keeping the width and height chain linked do?", options: ["Resizes non-proportionally", "Keeps aspect ratio", "Changes only width", "Changes only height"], answer: "Keeps aspect ratio" }, ml: { question: "വലുപ്പം മാറ്റുമ്പോൾ, വീതിയും ഉയരവും തമ്മിലുള്ള ചെയിൻ ബന്ധിപ്പിച്ചു വെക്കുന്നത് എന്തിന് സഹായിക്കുന്നു?", options: ["ആനുപാതികമല്ലാതെ വലുപ്പം മാറ്റുന്നു", "വീക്ഷണാനുപാതം നിലനിർത്തുന്നു", "വീതി മാത്രം മാറ്റുന്നു", "ഉയരം മാത്രം മാറ്റുന്നു"], answer: "വീക്ഷണാനുപാതം നിലനിർത്തുന്നു" } },
+            { en: { question: "Which menu option lets you apply Blur/Shadow effects to images or text?", options: ["Colours", "Tools", "Filters", "Edit"], answer: "Filters" }, ml: { question: "ചിത്രങ്ങൾക്കോ ടെക്സ്റ്റിനോ ബ്ലർ/ഷാഡോ ഇഫക്റ്റുകൾ നൽകാൻ ഏത് മെനു ഓപ്ഷൻ ഉപയോഗിക്കാം?", options: ["കളേഴ്സ്", "ടൂൾസ്", "ഫിൽറ്ററുകൾ", "എഡിറ്റ്"], answer: "ഫിൽറ്ററുകൾ" } },
+            { en: { question: "Which tool allows you to add words and headings to a poster in GIMP?", options: ["Paths Tool", "Fuzzy Select Tool", "Text Tool", "Move Tool"], answer: "Text Tool" }, ml: { question: "GIMP-ൽ ഒരു പോസ്റ്ററിലേക്ക് വാക്കുകളും തലക്കെട്ടുകളും ചേർക്കാൻ ഏത് ടൂൾ ഉപയോഗിക്കാം?", options: ["പാത്ത്സ് ടൂൾ", "ഫസി സെലക്ട് ടൂൾ", "ടെക്സ്റ്റ് ടൂൾ", "മൂവ് ടൂൾ"], answer: "ടെക്സ്റ്റ് ടൂൾ" } },
+            { en: { question: "To make the title text look 3D with a shadow, the best approach is:", options: ["Only change font size", "Duplicate text layer, colour it black, blur and reposition", "Scale the text", "Only change text colour"], answer: "Duplicate text layer, colour it black, blur and reposition" }, ml: { question: "തലക്കെട്ടിന് നിഴൽ നൽകി 3D രൂപം നൽകാൻ ഏറ്റവും നല്ല മാർഗ്ഗം ഏതാണ്?", options: ["ഫോണ്ട് വലുപ്പം മാത്രം മാറ്റുക", "ടെക്സ്റ്റ് ലെയർ ഡ്യൂപ്ലിക്കേറ്റ് ചെയ്ത് കറുപ്പ് നിറം നൽകി, ബ്ലർ ചെയ്ത് പുനഃസ്ഥാപിക്കുക", "ടെക്സ്റ്റ് വലുപ്പം മാറ്റുക", "ടെക്സ്റ്റിന്റെ നിറം മാത്രം മാറ്റുക"], answer: "ടെക്സ്റ്റ് ലെയർ ഡ്യൂപ്ലിക്കേറ്റ് ചെയ്ത് കറുപ്പ് നിറം നൽകി, ബ്ലർ ചെയ്ത് പുനഃസ്ഥാപിക്കുക" } },
+            { en: { question: "What is the one-click method to add a shadow effect in GIMP?", options: ["Scale Tool", "Drop Shadow Filter", "Rotate Tool", "Alpha to Selection"], answer: "Drop Shadow Filter" }, ml: { question: "GIMP-ൽ ഒറ്റ ക്ലിക്കിൽ നിഴൽ ഇഫക്റ്റ് ചേർക്കാനുള്ള രീതി ഏതാണ്?", options: ["സ്കെയിൽ ടൂൾ", "ഡ്രോപ്പ് ഷാഡോ ഫിൽറ്റർ", "റൊട്ടേറ്റ് ടൂൾ", "ആൽഫ ടു സെലക്ഷൻ"], answer: "ഡ്രോപ്പ് ഷാഡോ ഫിൽറ്റർ" } },
+            { en: { question: "When using the Drop Shadow effect, which setting blurs the shadow?", options: ["X-Offset", "Y-Offset", "Blur Radius", "Threshold"], answer: "Blur Radius" }, ml: { question: "ഡ്രോപ്പ് ഷാഡോ ഇഫക്റ്റ് ഉപയോഗിക്കുമ്പോൾ, ഏത് ക്രമീകരണമാണ് നിഴലിനെ മങ്ങിക്കാൻ ഉപയോഗിക്കുന്നത്?", options: ["X-ഓഫ്സെറ്റ്", "Y-ഓഫ്സെറ്റ്", "ബ്ലർ റേഡിയസ്", "ത്രെഷോൾഡ്"], answer: "ബ്ലർ റേഡിയസ്" } },
+            { en: { question: "Changing the position of text in the layer order is accomplished using:", options: ["Bring to Front/Send to Back", "Raise this layer/Lower this layer", "Move Tool", "Scale Tool"], answer: "Raise this layer/Lower this layer" }, ml: { question: "ലെയർ ക്രമത്തിൽ ടെക്സ്റ്റിന്റെ സ്ഥാനം മാറ്റാൻ എന്തുപയോഗിക്കാം?", options: ["ബ്രിംഗ് ടു ഫ്രണ്ട്/സെൻഡ് ടു ബാക്ക്", "റൈസ് ദിസ് ലെയർ/ലോവർ ദിസ് ലെയർ", "മൂവ് ടൂൾ", "സ്കെയിൽ ടൂൾ"], answer: "റൈസ് ദിസ് ലെയർ/ലോവർ ദിസ് ലെയർ" } },
+            { en: { question: "Which tool is used to create a rectangular shape on the canvas?", options: ["Paths Tool", "Rectangle Select Tool", "Ellipse Tool", "Fuzzy Select Tool"], answer: "Rectangle Select Tool" }, ml: { question: "ക്യാൻവാസിൽ ഒരു ചതുരാകൃതിയിലുള്ള രൂപം നിർമ്മിക്കാൻ ഏത് ടൂൾ ഉപയോഗിക്കുന്നു?", options: ["പാത്ത്സ് ടൂൾ", "റെക്ടാങ്കിൾ സെലക്ട് ടൂൾ", "എലിപ്സ് ടൂൾ", "ഫസി സെലക്ട് ടൂൾ"], answer: "റെക്ടാങ്കിൾ സെലക്ട് ടൂൾ" } },
+            { en: { question: "To fill a selected area with a colour, use:", options: ["Crop Tool", "Move Tool", "Bucket Fill Tool", "Text Tool"], answer: "Bucket Fill Tool" }, ml: { question: "തിരഞ്ഞെടുത്ത ഭാഗത്ത് നിറം നൽകാൻ എന്തുപയോഗിക്കാം?", options: ["ക്രോപ്പ് ടൂൾ", "മൂവ് ടൂൾ", "ബക്കറ്റ് ഫിൽ ടൂൾ", "ടെക്സ്റ്റ് ടൂൾ"], answer: "ബക്കറ്റ് ഫിൽ ടൂൾ" } },
+            { en: { question: "How can you create shapes with different colours in GIMP?", options: ["Draw lines manually", "Use selection tools + Colour fill tools", "Use the Crop Tool", "Use the Move Tool"], answer: "Use selection tools + Colour fill tools" }, ml: { question: "GIMP-ൽ വ്യത്യസ്ത നിറങ്ങളിലുള്ള രൂപങ്ങൾ എങ്ങനെ നിർമ്മിക്കാം?", options: ["വരകൾ സ്വയം വരയ്ക്കുക", "സെലക്ഷൻ ടൂളുകളും കളർ ഫിൽ ടൂളുകളും ഉപയോഗിക്കുക", "ക്രോപ്പ് ടൂൾ ഉപയോഗിക്കുക", "മൂവ് ടൂൾ ഉപയോഗിക്കുക"], answer: "സെലക്ഷൻ ടൂളുകളും കളർ ഫിൽ ടൂളുകളും ഉപയോഗിക്കുക" } },
+            { en: { question: "If you want to flip a shape horizontally, you should use:", options: ["Rotate Tool", "Scale Tool", "Flip Tool", "Shear Tool"], answer: "Flip Tool" }, ml: { question: "ഒരു രൂപം തിരശ്ചീനമായി തിരിക്കണമെങ്കിൽ എന്തുപയോഗിക്കണം?", options: ["റൊട്ടേറ്റ് ടൂൾ", "സ്കെയിൽ ടൂൾ", "ഫ്ലിപ്പ് ടൂൾ", "ഷിയർ ടൂൾ"], answer: "ഫ്ലിപ്പ് ടൂൾ" } },
+            { en: { question: "To place text inside a filled rectangular shape, the correct order is:", options: ["Add text, then fill rectangle", "Fill rectangle, then add text", "Use only text tool", "Use path tool only"], answer: "Fill rectangle, then add text" }, ml: { question: "നിറം നൽകിയ ഒരു ചതുരത്തിനുള്ളിൽ ടെക്സ്റ്റ് സ്ഥാപിക്കാൻ ശരിയായ ക്രമം ഏതാണ്?", options: ["ടെക്സ്റ്റ് ചേർത്ത ശേഷം ചതുരത്തിൽ നിറം നൽകുക", "ചതുരത്തിൽ നിറം നൽകിയ ശേഷം ടെക്സ്റ്റ് ചേർക്കുക", "ടെക്സ്റ്റ് ടൂൾ മാത്രം ഉപയോഗിക്കുക", "പാത്ത് ടൂൾ മാത്രം ഉപയോഗിക്കുക"], answer: "ചതുരത്തിൽ നിറം നൽകിയ ശേഷം ടെക്സ്റ്റ് ചേർക്കുക" } },
+            { en: { question: "Which of the following is the default project file format in GIMP?", options: [".jpg", ".png", ".xcf", ".gif"], answer: ".xcf" }, ml: { question: "താഴെ പറയുന്നവയിൽ GIMP-ന്റെ ഡിഫോൾട്ട് പ്രോജക്റ്റ് ഫയൽ ഫോർമാറ്റ് ഏതാണ്?", options: [".jpg", ".png", ".xcf", ".gif"], answer: ".xcf" } },
+            { en: { question: "To use your poster image outside of GIMP, you should:", options: ["Print the screen", "Directly copy and paste", "Export as a suitable image format (e.g., JPG or PNG)", "Save as .xcf only"], answer: "Export as a suitable image format (e.g., JPG or PNG)" }, ml: { question: "നിങ്ങളുടെ പോസ്റ്റർ GIMP-ന് പുറത്ത് ഉപയോഗിക്കാൻ എന്തു ചെയ്യണം?", options: ["സ്ക്രീൻ പ്രിന്റ് ചെയ്യുക", "നേരിട്ട് കോപ്പി പേസ്റ്റ് ചെയ്യുക", "അനുയോജ്യമായ ഇമേജ് ഫോർമാറ്റിലേക്ക് (ഉദാ: JPG അല്ലെങ്കിൽ PNG) എക്സ്പോർട്ട് ചെയ്യുക", ".xcf ആയി മാത്രം സേവ് ചെയ്യുക"], answer: "അനുയോജ്യമായ ഇമേജ് ഫോർമാറ്റിലേക്ക് (ഉദാ: JPG അല്ലെങ്കിൽ PNG) എക്സ്പോർട്ട് ചെയ്യുക" } },
+            { en: { question: "Where do you find the Export option in GIMP?", options: ["File menu", "Edit menu", "Tools menu", "View menu"], answer: "File menu" }, ml: { question: "GIMP-ൽ എക്സ്പോർട്ട് ഓപ്ഷൻ എവിടെയാണ് കാണുന്നത്?", options: ["ഫയൽ മെനു", "എഡിറ്റ് മെനു", "ടൂൾസ് മെനു", "വ്യൂ മെനു"], answer: "ഫയൽ മെനു" } },
+            { en: { question: "Which exported image formats support transparency (alpha channel)?", options: ["JPG", "PNG", "BMP", "PDF"], answer: "PNG" }, ml: { question: "ഏത് എക്സ്പോർട്ട് ചെയ്ത ഇമേജ് ഫോർമാറ്റുകളാണ് സുതാര്യത (ആൽഫ ചാനൽ) പിന്തുണയ്ക്കുന്നത്?", options: ["JPG", "PNG", "BMP", "PDF"], answer: "PNG" } },
+            { en: { question: "What does the final step 'Export' do in poster making?", options: ["Layers are merged", "Project is saved as .xcf only", "Poster is converted to an image file for sharing/printing", "Poster is deleted"], answer: "Poster is converted to an image file for sharing/printing" }, ml: { question: "പോസ്റ്റർ നിർമ്മാണത്തിലെ അവസാന ഘട്ടമായ 'എക്സ്പോർട്ട്' എന്തു ചെയ്യുന്നു?", options: ["ലെയറുകൾ ലയിപ്പിക്കുന്നു", "പ്രോജക്റ്റ് .xcf ആയി മാത്രം സേവ് ചെയ്യുന്നു", "പങ്കിടാനും പ്രിന്റ് ചെയ്യാനുമായി പോസ്റ്ററിനെ ഒരു ഇമേജ് ഫയലാക്കി മാറ്റുന്നു", "പോസ്റ്റർ ഡിലീറ്റ് ചെയ്യുന്നു"], answer: "പങ്കിടാനും പ്രിന്റ് ചെയ്യാനുമായി പോസ്റ്ററിനെ ഒരു ഇമേജ് ഫയലാക്കി മാറ്റുന്നു" } },
+            { en: { question: "Which of the following is NOT a career option related to image editing?", options: ["Graphic Designer", "Poster Maker", "Data Entry Operator", "Visual Effects Specialist"], answer: "Data Entry Operator" }, ml: { question: "താഴെ പറയുന്നവയിൽ ഇമേജ് എഡിറ്റിംഗുമായി ബന്ധമില്ലാത്ത തൊഴിൽ ഏതാണ്?", options: ["ഗ്രാഫിക് ഡിസൈനർ", "പോസ്റ്റർ മേക്കർ", "ഡാറ്റാ എൻട്രി ഓപ്പറേറ്റർ", "വിഷ്വൽ എഫക്റ്റ്സ് സ്പെഷ്യലിസ്റ്റ്"], answer: "ഡാറ്റാ എൻട്രി ഓപ്പറേറ്റർ" } },
+            { en: { question: "Image editing skills are in demand in industries such as:", options: ["Film", "E-commerce", "Social Media", "All of the above"], answer: "All of the above" }, ml: { question: "ഏതൊക്കെ വ്യവസായങ്ങളിലാണ് ഇമേജ് എഡിറ്റിംഗ് കഴിവുകൾക്ക് ആവശ്യക്കാരുള്ളത്?", options: ["സിനിമ", "ഇ-കൊമേഴ്സ്", "സോഷ്യൽ മീഡിയ", "മുകളിൽ പറഞ്ഞവയെല്ലാം"], answer: "മുകളിൽ പറഞ്ഞവയെല്ലാം" } },
+            { en: { question: "When should you save your work while creating a poster?", options: ["Only at the end", "At regular intervals throughout the process", "Only before exporting", "Never"], answer: "At regular intervals throughout the process" }, ml: { question: "ഒരു പോസ്റ്റർ നിർമ്മിക്കുമ്പോൾ എപ്പോഴാണ് നിങ്ങളുടെ വർക്ക് സേവ് ചെയ്യേണ്ടത്?", options: ["അവസാനം മാത്രം", "പ്രക്രിയയിലുടനീളം കൃത്യമായ ഇടവേളകളിൽ", "എക്സ്പോർട്ട് ചെയ്യുന്നതിന് തൊട്ടുമുമ്പ് മാത്രം", "ഒരിക്കലും ചെയ്യരുത്"], answer: "പ്രക്രിയയിലുടനീളം കൃത്യമായ ഇടവേളകളിൽ" } },
+            { en: { question: "Which GIMP tool would best be used for fine, more controlled image selections?", options: ["Scale Tool", "Fuzzy Select Tool", "Paths Tool", "Move Tool"], answer: "Paths Tool" }, ml: { question: "കൃത്യവും നിയന്ത്രിതവുമായ ഇമേജ് സെലക്ഷനുകൾക്ക് ഏറ്റവും അനുയോജ്യമായ GIMP ടൂൾ ഏതാണ്?", options: ["സ്കെയിൽ ടൂൾ", "ഫസി സെലക്ട് ടൂൾ", "പാത്ത്സ് ടൂൾ", "മൂവ് ടൂൾ"], answer: "പാത്ത്സ് ടൂൾ" } },
+            { en: { question: "Poster making helps to develop which of the following skills?", options: ["Creativity", "Technical skills", "Communication skills", "All of the above"], answer: "All of the above" }, ml: { question: "പോസ്റ്റർ നിർമ്മാണം താഴെ പറയുന്നവയിൽ ഏത് കഴിവുകൾ വികസിപ്പിക്കാൻ സഹായിക്കുന്നു?", options: ["സർഗ്ഗാത്മകത", "സാങ്കേതിക കഴിവുകൾ", "ആശയവിനിമയ കഴിവുകൾ", "മുകളിൽ പറഞ്ഞവയെല്ലാം"], answer: "മുകളിൽ പറഞ്ഞവയെല്ലാം" } },
+            { en: { question: "If the background moves along with an image during repositioning, it is because:", options: ["The image was pasted into the background layer", "The Move tool is not working", "The image format is not supported", "The image could not be pasted into the canvas"], answer: "The image was pasted into the background layer" }, ml: { question: "ഒരു ചിത്രം പുനഃസ്ഥാപിക്കുമ്പോൾ പശ്ചാത്തലവും കൂടെ നീങ്ങുന്നുവെങ്കിൽ, അതിന്റെ കാരണം എന്താണ്?", options: ["ചിത്രം ബാക്ക്ഗ്രൗണ്ട് ലെയറിലാണ് ഒട്ടിച്ചത്", "മൂവ് ടൂൾ പ്രവർത്തിക്കുന്നില്ല", "ചിത്രത്തിന്റെ ഫോർമാറ്റ് പിന്തുണയ്ക്കുന്നില്ല", "ചിത്രം ക്യാൻവാസിലേക്ക് ഒട്ടിക്കാൻ കഴിഞ്ഞില്ല"], answer: "ചിത്രം ബാക്ക്ഗ്രൗണ്ട് ലെയറിലാണ് ഒട്ടിച്ചത്" } },
+            { en: { question: "To create a duplicate of a bottle in a poster, which is the best method?", options: ["Re-import the image", "Duplicate the bottle layer", "Use the Crop Tool", "Re-select and copy-paste"], answer: "Duplicate the bottle layer" }, ml: { question: "ഒരു പോസ്റ്ററിലെ കുപ്പിയുടെ തനിപ്പകർപ്പ് ഉണ്ടാക്കാൻ ഏറ്റവും നല്ല മാർഗ്ഗം ഏതാണ്?", options: ["ചിത്രം വീണ്ടും ഇംപോർട്ട് ചെയ്യുക", "കുപ്പിയുടെ ലെയർ ഡ്യൂപ്ലിക്കേറ്റ് ചെയ്യുക", "ക്രോപ്പ് ടൂൾ ഉപയോഗിക്കുക", "വീണ്ടും തിരഞ്ഞെടുത്ത് കോപ്പി-പേസ്റ്റ് ചെയ്യുക"], answer: "കുപ്പിയുടെ ലെയർ ഡ്യൂപ്ലിക്കേറ്റ് ചെയ്യുക" } },
+            { en: { question: "Which selection tool would you use for circular shapes?", options: ["Ellipse Select Tool", "Path Tool", "Fuzzy Select Tool", "Rectangle Select Tool"], answer: "Ellipse Select Tool" }, ml: { question: "വൃത്താകൃതിയിലുള്ള രൂപങ്ങൾ തിരഞ്ഞെടുക്കാൻ ഏത് സെലക്ഷൻ ടൂൾ ഉപയോഗിക്കും?", options: ["എലിപ്സ് സെലക്ട് ടൂൾ", "പാത്ത് ടൂൾ", "ഫസി സെലക്ട് ടൂൾ", "റെക്ടാങ്കിൾ സെലക്ട് ടൂൾ"], answer: "എലിപ്സ് സെലക്ട് ടൂൾ" } },
+            { en: { question: "To adjust text font and colour in GIMP, you use:", options: ["Edit > Text Options", "Tool Options in the Text Tool", "Filters > Text", "Image > Adjust Text"], answer: "Tool Options in the Text Tool" }, ml: { question: "GIMP-ൽ ടെക്സ്റ്റിന്റെ ഫോണ്ടും നിറവും ക്രമീകരിക്കാൻ എന്തുപയോഗിക്കാം?", options: ["എഡിറ്റ് > ടെക്സ്റ്റ് ഓപ്ഷനുകൾ", "ടെക്സ്റ്റ് ടൂളിലെ ടൂൾ ഓപ്ഷനുകൾ", "ഫിൽറ്ററുകൾ > ടെക്സ്റ്റ്", "ഇമേജ് > അഡ്ജസ്റ്റ് ടെക്സ്റ്റ്"], answer: "ടെക്സ്റ്റ് ടൂളിലെ ടൂൾ ഓപ്ഷനുകൾ" } },
+            { en: { question: "When adding a QR code to your poster, you should:", options: ["Draw it manually", "Import as an image layer", "Use the Text Tool", "Use the Paths Tool"], answer: "Import as an image layer" }, ml: { question: "നിങ്ങളുടെ പോസ്റ്ററിലേക്ക് ഒരു QR കോഡ് ചേർക്കുമ്പോൾ എന്തു ചെയ്യണം?", options: ["അത് സ്വയം വരയ്ക്കുക", "ഒരു ഇമേജ് ലെയറായി ഇംപോർട്ട് ചെയ്യുക", "ടെക്സ്റ്റ് ടൂൾ ഉപയോഗിക്കുക", "പാത്ത്സ് ടൂൾ ഉപയോഗിക്കുക"], answer: "ഒരു ഇമേജ് ലെയറായി ഇംപോർട്ട് ചെയ്യുക" } },
+            { en: { question: "In GIMP, after selecting an area, how do you remove (clear) it?", options: ["Press the Backspace key", "Press the Delete key", "Double-click the area", "Right-click and select Remove"], answer: "Press the Delete key" }, ml: { question: "GIMP-ൽ ഒരു ഭാഗം തിരഞ്ഞെടുത്ത ശേഷം അത് എങ്ങനെ നീക്കം ചെയ്യാം (മായ്ക്കാം)?", options: ["ബാക്ക്സ്പേസ് കീ അമർത്തുക", "ഡിലീറ്റ് കീ അമർത്തുക", "ആ ഭാഗത്ത് ഡബിൾ ക്ലിക്ക് ചെയ്യുക", "റൈറ്റ് ക്ലിക്ക് ചെയ്ത് റിമൂവ് തിരഞ്ഞെടുക്കുക"], answer: "ഡിലീറ്റ് കീ അമർത്തുക" } },
+            { en: { question: "When resizing, rotating, or moving images in GIMP, you should primarily work with:", options: ["The background layer", "The correct image or text layer", "The palette", "The canvas only"], answer: "The correct image or text layer" }, ml: { question: "GIMP-ൽ ചിത്രങ്ങളുടെ വലുപ്പം മാറ്റുമ്പോഴോ, തിരിക്കുമ്പോഴോ, നീക്കുമ്പോഴോ നിങ്ങൾ പ്രധാനമായും ഏത് ലെയറിലാണ് പ്രവർത്തിക്കേണ്ടത്?", options: ["ബാക്ക്ഗ്രൗണ്ട് ലെയർ", "ശരിയായ ചിത്രം അല്ലെങ്കിൽ ടെക്സ്റ്റ് ലെയർ", "പാലറ്റ്", "ക്യാൻവാസ് മാത്രം"], answer: "ശരിയായ ചിത്രം അല്ലെങ്കിൽ ടെക്സ്റ്റ് ലെയർ" } },
+            { en: { question: "Which is the best way to edit an already filled shape without affecting other elements?", options: ["Merge layers first", "Keep each shape on a separate layer", "Use path tool only", "Use erase tool on canvas"], answer: "Keep each shape on a separate layer" }, ml: { question: "മറ്റ് ഘടകങ്ങളെ ബാധിക്കാതെ, ഇതിനകം നിറം നൽകിയ ഒരു രൂപം എഡിറ്റ് ചെയ്യാനുള്ള ഏറ്റവും നല്ല മാർഗം ഏതാണ്?", options: ["ആദ്യം ലെയറുകൾ ലയിപ്പിക്കുക", "ഓരോ രൂപവും വെവ്വേറെ ലെയറുകളിൽ സൂക്ഷിക്കുക", "പാത്ത് ടൂൾ മാത്രം ഉപയോഗിക്കുക", "ക്യാൻവാസിൽ ഇറേസർ ടൂൾ ഉപയോഗിക്കുക"], answer: "ഓരോ രൂപവും വെവ്വേറെ ലെയറുകളിൽ സൂക്ഷിക്കുക" } },
+            { en: { question: "If you want to quickly blend a shadow for a 3D effect, you would:", options: ["Use Gaussian Blur on the shadow layer", "Change the layer name", "Reduce canvas size", "Use Move tool"], answer: "Use Gaussian Blur on the shadow layer" }, ml: { question: "ഒരു 3D ഇഫക്റ്റിനായി ഒരു നിഴൽ വേഗത്തിൽ മിശ്രണം ചെയ്യണമെങ്കിൽ, നിങ്ങൾ എന്തു ചെയ്യും?", options: ["ഷാഡോ ലെയറിൽ ഗാസിയൻ ബ്ലർ ഉപയോഗിക്കുക", "ലെയറിന്റെ പേര് മാറ്റുക", "ക്യാൻവാസിന്റെ വലുപ്പം കുറയ്ക്കുക", "മൂവ് ടൂൾ ഉപയോഗിക്കുക"], answer: "ഷാഡോ ലെയറിൽ ഗാസിയൻ ബ്ലർ ഉപയോഗിക്കുക" } },
+            { en: { question: "Which is the most essential skill highlighted by this chapter for a career in design?", options: ["Coding", "Image Editing Techniques", "Website Development", "Hardware Assembly"], answer: "Image Editing Techniques" }, ml: { question: "ഡിസൈൻ രംഗത്ത് ഒരു കരിയറിനായി ഈ അധ്യായം എടുത്തുപറയുന്ന ഏറ്റവും അത്യാവശ്യമായ കഴിവ് ഏതാണ്?", options: ["കോഡിംഗ്", "ഇമേജ് എഡിറ്റിംഗ് ടെക്നിക്കുകൾ", "വെബ്സൈറ്റ് ഡെവലപ്മെന്റ്", "ഹാർഡ്‌വെയർ അസംബ്ലി"], answer: "ഇമേജ് എഡിറ്റിംഗ് ടെക്നിക്കുകൾ" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 50-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-300">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-900/50' : 'bg-rose-900/50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-100">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+

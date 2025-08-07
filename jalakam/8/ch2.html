@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: LibreOffice Writer Skills</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the professional/document theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f1f5f9; /* Slate 100 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(100, 116, 139, 0.1);
+            border: 1px solid #e2e8f0; /* Slate 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #cbd5e1; /* Slate 300 */
+        }
+        .option-btn:hover {
+             background-color: #f1f5f9; /* Slate 100 */
+        }
+        .option-btn.selected {
+            background-color: #3b82f6; /* Blue 500 for selected */
+            color: white;
+            border-color: #2563eb; /* Blue 600 */
+        }
+        .option-btn.correct {
+            background-color: #16a34a; /* Green 600 for correct */
+            color: white;
+            border-color: #15803d;
+        }
+        .option-btn.wrong {
+            background-color: #ef4444; /* Red 500 for wrong */
+            color: white;
+            border-color: #dc2626;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-slate-800 mb-2">Document Skills Test!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your LibreOffice Writer Knowledge!</p>
+            <img src="https://placehold.co/400x200/3b82f6/ffffff?text=Ready+to+Write%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Document Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-sky-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3"></div>
+                
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                <h2 id="review-title" class="text-3xl font-black text-slate-800 mb-2">Test Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                <div class="bg-sky-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-sky-800"></span>
+                </div>
+                <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Document Skills Test!", welcomeSubtitle: "Test Your LibreOffice Writer Knowledge!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "ഡോക്യുമെന്റ് സ്കിൽസ് ടെസ്റ്റ്!", welcomeSubtitle: "നിങ്ങളുടെ ലിബ്രെ ഓഫീസ് റൈറ്റർ പരിജ്ഞാനം പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- Full Question Bank (50 questions) from the provided list ---
+        const fullQuizData = [
+            { en: { question: "Which file is used to start formatting the travelogue in LibreOffice Writer?", options: ["travel.odt", "ajanta.ott", "diya.odt", "tour.txt"], answer: "ajanta.ott" }, ml: { question: "ലിബ്രെ ഓഫീസ് റൈറ്ററിൽ യാത്രാവിവരണം ഫോർമാറ്റ് ചെയ്യാൻ ഏത് ഫയലാണ് ഉപയോഗിക്കുന്നത്?", options: ["travel.odt", "ajanta.ott", "diya.odt", "tour.txt"], answer: "ajanta.ott" } },
+            { en: { question: "Which tool is used to change the font in LibreOffice Writer?", options: ["Paragraph", "Format Painter", "Font Name", "Table"], answer: "Font Name" }, ml: { question: "ലിബ്രെ ഓഫീസ് റൈറ്ററിൽ ഫോണ്ട് മാറ്റാൻ ഏത് ടൂൾ ആണ് ഉപയോഗിക്കുന്നത്?", options: ["പാരഗ്രാഫ്", "ഫോർമാറ്റ് പെയിന്റർ", "ഫോണ്ട് നെയിം", "ടേബിൾ"], answer: "ഫോണ്ട് നെയിം" } },
+            { en: { question: "Which option allows changing the size of text?", options: ["Line spacing", "Font size", "Indent", "Text wrap"], answer: "Font size" }, ml: { question: "ടെക്സ്റ്റിന്റെ വലുപ്പം മാറ്റാൻ ഏത് ഓപ്ഷനാണ് അനുവദിക്കുന്നത്?", options: ["ലൈൻ സ്പേസിംഗ്", "ഫോണ്ട് സൈസ്", "ഇൻഡന്റ്", "ടെക്സ്റ്റ് റാപ്"], answer: "ഫോണ്ട് സൈസ്" } },
+            { en: { question: "Which of the following is a Malayalam font?", options: ["Times New Roman", "Noto Serif Malayalam", "Roboto", "Calibri"], answer: "Noto Serif Malayalam" }, ml: { question: "താഴെ പറയുന്നവയിൽ ഏതാണ് ഒരു മലയാളം ഫോണ്ട്?", options: ["ടൈംസ് ന്യൂ റോമൻ", "നോട്ടോ സെരിഫ് മലയാളം", "റോബോട്ടോ", "കാലിബ്രി"], answer: "നോട്ടോ സെരിഫ് മലയാളം" } },
+            { en: { question: "What shortcut is used to create a new document in Writer?", options: ["Ctrl + C", "Ctrl + N", "Ctrl + S", "Ctrl + X"], answer: "Ctrl + N" }, ml: { question: "റൈറ്ററിൽ ഒരു പുതിയ ഡോക്യുമെന്റ് സൃഷ്ടിക്കാൻ ഏത് കുറുക്കുവഴിയാണ് ഉപയോഗിക്കുന്നത്?", options: ["Ctrl + C", "Ctrl + N", "Ctrl + S", "Ctrl + X"], answer: "Ctrl + N" } },
+            { en: { question: "Which command is used to save a file?", options: ["Ctrl + A", "Ctrl + V", "Ctrl + S", "Ctrl + Z"], answer: "Ctrl + S" }, ml: { question: "ഒരു ഫയൽ സേവ് ചെയ്യാൻ ഏത് കമാൻഡ് ആണ് ഉപയോഗിക്കുന്നത്?", options: ["Ctrl + A", "Ctrl + V", "Ctrl + S", "Ctrl + Z"], answer: "Ctrl + S" } },
+            { en: { question: "Which formatting option aligns text in the center?", options: ["Justify", "Align Left", "Align Center", "Align Right"], answer: "Align Center" }, ml: { question: "ഏത് ഫോർമാറ്റിംഗ് ഓപ്ഷനാണ് ടെക്സ്റ്റ് മധ്യഭാഗത്ത് അലൈൻ ചെയ്യുന്നത്?", options: ["ജസ്റ്റിഫൈ", "അലൈൻ ലെഫ്റ്റ്", "അലൈൻ സെന്റർ", "അലൈൻ റൈറ്റ്"], answer: "അലൈൻ സെന്റർ" } },
+            { en: { question: "Which panel is used to adjust spacing between paragraphs?", options: ["Table", "Image", "Properties", "Page"], answer: "Properties" }, ml: { question: "ഖണ്ഡികകൾക്കിടയിലുള്ള അകലം ക്രമീകരിക്കാൻ ഏത് പാനലാണ് ഉപയോഗിക്കുന്നത്?", options: ["ടേബിൾ", "ഇമേജ്", "പ്രോപ്പർട്ടീസ്", "പേജ്"], answer: "പ്രോപ്പർട്ടീസ്" } },
+            { en: { question: "What is used to insert page numbers?", options: ["Header", "Footer", "Indent", "Paragraph spacing"], answer: "Footer" }, ml: { question: "പേജ് നമ്പറുകൾ ചേർക്കാൻ എന്തുപയോഗിക്കുന്നു?", options: ["ഹെഡർ", "ഫൂട്ടർ", "ഇൻഡന്റ്", "പാരഗ്രാഫ് സ്പേസിംഗ്"], answer: "ഫൂട്ടർ" } },
+            { en: { question: "Which tab is used to add background color to a paragraph?", options: ["Font", "Area", "Image", "Highlight"], answer: "Area" }, ml: { question: "ഒരു ഖണ്ഡികയ്ക്ക് പശ്ചാത്തല നിറം ചേർക്കാൻ ഏത് ടാബാണ് ഉപയോഗിക്കുന്നത്?", options: ["ഫോണ്ട്", "ഏരിയ", "ഇമേജ്", "ഹൈലൈറ്റ്"], answer: "ഏരിയ" } },
+            { en: { question: "What option is used to apply borders to a paragraph?", options: ["Line Style", "Area Tab", "Border Tab", "Spacing"], answer: "Border Tab" }, ml: { question: "ഒരു ഖണ്ഡികയ്ക്ക് ബോർഡറുകൾ പ്രയോഗിക്കാൻ ഏത് ഓപ്ഷനാണ് ഉപയോഗിക്കുന്നത്?", options: ["ലൈൻ സ്റ്റൈൽ", "ഏരിയ ടാബ്", "ബോർഡർ ടാബ്", "സ്പേസിംഗ്"], answer: "ബോർഡർ ടാബ്" } },
+            { en: { question: "What is the use of bullets in a document?", options: ["Delete text", "Highlight text", "List important points", "Add borders"], answer: "List important points" }, ml: { question: "ഒരു ഡോക്യുമെന്റിൽ ബുള്ളറ്റുകളുടെ ഉപയോഗം എന്താണ്?", options: ["ടെക്സ്റ്റ് ഇല്ലാതാക്കുക", "ടെക്സ്റ്റ് ഹൈലൈറ്റ് ചെയ്യുക", "പ്രധാനപ്പെട്ട പോയിന്റുകൾ ലിസ്റ്റ് ചെയ്യുക", "ബോർഡറുകൾ ചേർക്കുക"], answer: "പ്രധാനപ്പെട്ട പോയിന്റുകൾ ലിസ്റ്റ് ചെയ്യുക" } },
+            { en: { question: "Which icon is used to create a bulleted list?", options: ["Table", "Toggle Unordered List", "Page Break", "Text Box"], answer: "Toggle Unordered List" }, ml: { question: "ഒരു ബുള്ളറ്റഡ് ലിസ്റ്റ് സൃഷ്ടിക്കാൻ ഏത് ഐക്കണാണ് ഉപയോഗിക്കുന്നത്?", options: ["ടേബിൾ", "ടോഗിൾ അൺഓർഡേർഡ് ലിസ്റ്റ്", "പേജ് ബ്രേക്ക്", "ടെക്സ്റ്റ് ബോക്സ്"], answer: "ടോഗിൾ അൺഓർഡേർഡ് ലിസ്റ്റ്" } },
+            { en: { question: "Which feature helps to repeat information on every page?", options: ["Margin", "Indent", "Header and Footer", "Page Number"], answer: "Header and Footer" }, ml: { question: "എല്ലാ പേജിലും വിവരങ്ങൾ ആവർത്തിക്കാൻ ഏത് ഫീച്ചറാണ് സഹായിക്കുന്നത്?", options: ["മാർജിൻ", "ഇൻഡന്റ്", "ഹെഡറും ഫൂട്ടറും", "പേജ് നമ്പർ"], answer: "ഹെഡറും ഫൂട്ടറും" } },
+            { en: { question: "Where can you find more bullet styles?", options: ["Area tab", "Table toolbar", "More Bullets option", "Font tab"], answer: "More Bullets option" }, ml: { question: "കൂടുതൽ ബുള്ളറ്റ് സ്റ്റൈലുകൾ എവിടെ കണ്ടെത്താനാകും?", options: ["ഏരിയ ടാബ്", "ടേബിൾ ടൂൾബാർ", "മോർ ബുള്ളറ്റ്സ് ഓപ്ഷൻ", "ഫോണ്ട് ടാബ്"], answer: "മോർ ബുള്ളറ്റ്സ് ഓപ്ഷൻ" } },
+            { en: { question: "Which key combination is used to select all text?", options: ["Ctrl + C", "Ctrl + A", "Ctrl + V", "Ctrl + Z"], answer: "Ctrl + A" }, ml: { question: "എല്ലാ ടെക്സ്റ്റും തിരഞ്ഞെടുക്കാൻ ഏത് കീ കോമ്പിനേഷനാണ് ഉപയോഗിക്കുന്നത്?", options: ["Ctrl + C", "Ctrl + A", "Ctrl + V", "Ctrl + Z"], answer: "Ctrl + A" } },
+            { en: { question: "Which feature helps adjust space between lines?", options: ["Paragraph alignment", "Font size", "Line spacing", "Header"], answer: "Line spacing" }, ml: { question: "വരികൾക്കിടയിലുള്ള അകലം ക്രമീകരിക്കാൻ ഏത് ഫീച്ചറാണ് സഹായിക്കുന്നത്?", options: ["പാരഗ്രാഫ് അലൈൻമെന്റ്", "ഫോണ്ട് സൈസ്", "ലൈൻ സ്പേസിംഗ്", "ഹെഡർ"], answer: "ലൈൻ സ്പേസിംഗ്" } },
+            { en: { question: "Which alignment is used for headings typically?", options: ["Left", "Right", "Center", "Justify"], answer: "Center" }, ml: { question: "തലക്കെട്ടുകൾക്ക് സാധാരണയായി ഏത് അലൈൻമെന്റാണ് ഉപയോഗിക്കുന്നത്?", options: ["ഇടത്", "വലത്", "മധ്യം", "ജസ്റ്റിഫൈ"], answer: "മധ്യം" } },
+            { en: { question: "Which of the following is not a font style in Malayalam?", options: ["Anek", "Thumpapoo", "Comic Sans", "Gayathri"], answer: "Comic Sans" }, ml: { question: "താഴെ പറയുന്നവയിൽ മലയാളത്തിലെ ഒരു ഫോണ്ട് സ്റ്റൈൽ അല്ലാത്തത് ഏതാണ്?", options: ["അനേക്", "തുമ്പപ്പൂ", "കോമിക് സാൻസ്", "ഗായത്രി"], answer: "കോമിക് സാൻസ്" } },
+            { en: { question: "To adjust indent for the first line of a paragraph, use:", options: ["Header tab", "Font settings", "Paragraph tab", "Bullet tab"], answer: "Paragraph tab" }, ml: { question: "ഒരു ഖണ്ഡികയുടെ ആദ്യ വരിയുടെ ഇൻഡന്റ് ക്രമീകരിക്കാൻ എന്തുപയോഗിക്കണം?", options: ["ഹെഡർ ടാബ്", "ഫോണ്ട് ക്രമീകരണങ്ങൾ", "പാരഗ്രാഫ് ടാബ്", "ബുള്ളറ്റ് ടാബ്"], answer: "പാരഗ്രാഫ് ടാബ്" } },
+            { en: { question: "Which tool is used to insert a table?", options: ["Insert → Table", "Tools → Insert", "View → Table", "Format → Grid"], answer: "Insert → Table" }, ml: { question: "ഒരു പട്ടിക ചേർക്കാൻ ഏത് ടൂൾ ആണ് ഉപയോഗിക്കുന്നത്?", options: ["ഇൻസേർട്ട് → ടേബിൾ", "ടൂൾസ് → ഇൻസേർട്ട്", "വ്യൂ → ടേബിൾ", "ഫോർമാറ്റ് → ഗ്രിഡ്"], answer: "ഇൻസേർട്ട് → ടേബിൾ" } },
+            { en: { question: "What is the use of ‘Merge Cells’ in tables?", options: ["Adds color", "Splits one cell", "Joins multiple cells", "Moves the table"], answer: "Joins multiple cells" }, ml: { question: "പട്ടികകളിൽ 'മെർജ് സെൽസ്' എന്നതിന്റെ ഉപയോഗം എന്താണ്?", options: ["നിറം ചേർക്കുന്നു", "ഒരു സെൽ വിഭജിക്കുന്നു", "ഒന്നിലധികം സെല്ലുകൾ യോജിപ്പിക്കുന്നു", "പട്ടിക നീക്കുന്നു"], answer: "ഒന്നിലധികം സെല്ലുകൾ യോജിപ്പിക്കുന്നു" } },
+            { en: { question: "Which tab helps to change row height in a table?", options: ["Font", "Table Toolbar", "Paragraph", "Area"], answer: "Table Toolbar" }, ml: { question: "ഒരു പട്ടികയിലെ വരിയുടെ ഉയരം മാറ്റാൻ ഏത് ടാബ് സഹായിക്കുന്നു?", options: ["ഫോണ്ട്", "ടേബിൾ ടൂൾബാർ", "പാരഗ്രാഫ്", "ഏരിയ"], answer: "ടേബിൾ ടൂൾബാർ" } },
+            { en: { question: "Which keyboard shortcut is used to copy text?", options: ["Ctrl + V", "Ctrl + X", "Ctrl + C", "Ctrl + A"], answer: "Ctrl + C" }, ml: { question: "ടെക്സ്റ്റ് പകർത്താൻ ഏത് കീബോർഡ് കുറുക്കുവഴിയാണ് ഉപയോഗിക്കുന്നത്?", options: ["Ctrl + V", "Ctrl + X", "Ctrl + C", "Ctrl + A"], answer: "Ctrl + C" } },
+            { en: { question: "Which option is used to preview before printing?", options: ["Page Layout", "Print Setup", "Print Preview", "Export"], answer: "Print Preview" }, ml: { question: "പ്രിന്റ് ചെയ്യുന്നതിന് മുമ്പ് പ്രിവ്യൂ കാണാൻ ഏത് ഓപ്ഷനാണ് ഉപയോഗിക്കുന്നത്?", options: ["പേജ് ലേഔട്ട്", "പ്രിന്റ് സെറ്റപ്പ്", "പ്രിന്റ് പ്രിവ്യൂ", "എക്സ്പോർട്ട്"], answer: "പ്രിന്റ് പ്രിവ്യൂ" } },
+            { en: { question: "What type of file should be created for printing layout compatibility?", options: ["TXT", "DOCX", "PDF", "PPT"], answer: "PDF" }, ml: { question: "പ്രിന്റിംഗ് ലേഔട്ട് അനുയോജ്യതയ്ക്കായി ഏത് തരം ഫയലാണ് സൃഷ്ടിക്കേണ്ടത്?", options: ["TXT", "DOCX", "PDF", "PPT"], answer: "PDF" } },
+            { en: { question: "Which tab helps in inserting a header?", options: ["View", "Format", "Insert", "Edit"], answer: "Insert" }, ml: { question: "ഒരു ഹെഡർ ചേർക്കാൻ ഏത് ടാബ് സഹായിക്കുന്നു?", options: ["വ്യൂ", "ഫോർമാറ്റ്", "ഇൻസേർട്ട്", "എഡിറ്റ്"], answer: "ഇൻസേർട്ട്" } },
+            { en: { question: "Which platform is not a cloud word processor?", options: ["Google Docs", "MS Office 365", "Dropbox Paper", "MS Paint"], answer: "MS Paint" }, ml: { question: "ഏത് പ്ലാറ്റ്ഫോമാണ് ഒരു ക്ലൗഡ് വേഡ് പ്രോസസർ അല്ലാത്തത്?", options: ["ഗൂഗിൾ ഡോക്സ്", "എംഎസ് ഓഫീസ് 365", "ഡ്രോപ്പ്ബോക്സ് പേപ്പർ", "എംഎസ് പെയിന്റ്"], answer: "എംഎസ് പെയിന്റ്" } },
+            { en: { question: "Which key combination pastes copied content?", options: ["Ctrl + X", "Ctrl + A", "Ctrl + P", "Ctrl + V"], answer: "Ctrl + V" }, ml: { question: "പകർത്തപ്പെട്ട ഉള്ളടക്കം ഒട്ടിക്കാൻ ഏത് കീ കോമ്പിനേഷനാണ് ഉപയോഗിക്കുന്നത്?", options: ["Ctrl + X", "Ctrl + A", "Ctrl + P", "Ctrl + V"], answer: "Ctrl + V" } },
+            { en: { question: "Which layout is used to switch to Hindi typing?", options: ["Keyboard indicator", "File menu", "Format menu", "Export options"], answer: "Keyboard indicator" }, ml: { question: "ഹിന്ദി ടൈപ്പിംഗിലേക്ക് മാറാൻ ഏത് ലേഔട്ടാണ് ഉപയോഗിക്കുന്നത്?", options: ["കീബോർഡ് ഇൻഡിക്കേറ്റർ", "ഫയൽ മെനു", "ഫോർമാറ്റ് മെനു", "എക്സ്പോർട്ട് ഓപ്ഷനുകൾ"], answer: "കീബോർഡ് ഇൻഡിക്കേറ്റർ" } },
+            { en: { question: "Which action helps create text boxes over images?", options: ["Format → Wrap", "Using Text Box Tool", "Background Color", "Border Tool"], answer: "Using Text Box Tool" }, ml: { question: "ചിത്രങ്ങൾക്ക് മുകളിൽ ടെക്സ്റ്റ് ബോക്സുകൾ സൃഷ്ടിക്കാൻ ഏത് പ്രവർത്തനം സഹായിക്കുന്നു?", options: ["ഫോർമാറ്റ് → റാപ്", "ടെക്സ്റ്റ് ബോക്സ് ടൂൾ ഉപയോഗിക്കുന്നത്", "പശ്ചാത്തല നിറം", "ബോർഡർ ടൂൾ"], answer: "ടെക്സ്റ്റ് ബോക്സ് ടൂൾ ഉപയോഗിക്കുന്നത്" } },
+            { en: { question: "Which option helps adjust spacing between lines within a paragraph?", options: ["Line Spacing Tool", "Header/Footer", "Indent", "Font Size"], answer: "Line Spacing Tool" }, ml: { question: "ഒരു ഖണ്ഡികയിലെ വരികൾക്കിടയിലുള്ള അകലം ക്രമീകരിക്കാൻ ഏത് ഓപ്ഷൻ സഹായിക്കുന്നു?", options: ["ലൈൻ സ്പേസിംഗ് ടൂൾ", "ഹെഡർ/ഫൂട്ടർ", "ഇൻഡന്റ്", "ഫോണ്ട് സൈസ്"], answer: "ലൈൻ സ്പേസിംഗ് ടൂൾ" } },
+            { en: { question: "In Paragraph settings, what does 'Padding' adjust?", options: ["Line height", "Space outside border", "Space between text and border", "Table width"], answer: "Space between text and border" }, ml: { question: "പാരഗ്രാഫ് ക്രമീകരണങ്ങളിൽ, 'പാഡിംഗ്' എന്തിനെയാണ് ക്രമീകരിക്കുന്നത്?", options: ["വരിയുടെ ഉയരം", "ബോർഡറിന് പുറത്തുള്ള സ്ഥലം", "ടെക്സ്റ്റും ബോർഡറും തമ്മിലുള്ള സ്ഥലം", "പട്ടികയുടെ വീതി"], answer: "ടെക്സ്റ്റും ബോർഡറും തമ്മിലുള്ള സ്ഥലം" } },
+            { en: { question: "Which option adjusts spacing before/after a paragraph?", options: ["Font Size", "Line Height", "Paragraph Spacing", "Alignment"], answer: "Paragraph Spacing" }, ml: { question: "ഒരു ഖണ്ഡികയ്ക്ക് മുമ്പും ശേഷവുമുള്ള അകലം ക്രമീകരിക്കുന്ന ഓപ്ഷൻ ഏതാണ്?", options: ["ഫോണ്ട് സൈസ്", "ലൈൻ ഹൈറ്റ്", "പാരഗ്രാഫ് സ്പേസിംഗ്", "അലൈൻമെന്റ്"], answer: "പാരഗ്രാഫ് സ്പേസിംഗ്" } },
+            { en: { question: "Which icon adjusts text alignment vertically in table cells?", options: ["Center Vertically", "Merge Cells", "Toggle Bullets", "Area Fill"], answer: "Center Vertically" }, ml: { question: "പട്ടികയിലെ സെല്ലുകളിൽ ടെക്സ്റ്റ് ലംബമായി അലൈൻ ചെയ്യാൻ ഏത് ഐക്കൺ ക്രമീകരിക്കുന്നു?", options: ["സെന്റർ വെർട്ടിക്കലി", "മെർജ് സെൽസ്", "ടോഗിൾ ബുള്ളറ്റ്സ്", "ഏരിയ ഫിൽ"], answer: "സെന്റർ വെർട്ടിക്കലി" } },
+            { en: { question: "You want to highlight key caves of Ellora. What is the best method?", options: ["Add footnotes", "Use red font", "Use bullets, borders, and background color", "Italicize the names"], answer: "Use bullets, borders, and background color" }, ml: { question: "എല്ലോറയിലെ പ്രധാന ഗുഹകൾ ഹൈലൈറ്റ് ചെയ്യാൻ ഏറ്റവും നല്ല മാർഗം ഏതാണ്?", options: ["അടിക്കുറിപ്പുകൾ ചേർക്കുക", "ചുവന്ന ഫോണ്ട് ഉപയോഗിക്കുക", "ബുള്ളറ്റുകൾ, ബോർഡറുകൾ, പശ്ചാത്തല നിറം എന്നിവ ഉപയോഗിക്കുക", "പേരുകൾ ഇറ്റാലിക്സിൽ എഴുതുക"], answer: "ബുള്ളറ്റുകൾ, ബോർഡറുകൾ, പശ്ചാത്തല നിറം എന്നിവ ഉപയോഗിക്കുക" } },
+            { en: { question: "While printing the file on another system, the fonts are missing. What should you do?", options: ["Use bold fonts", "Export the file as a PDF", "Print from USB", "Save as text file"], answer: "Export the file as a PDF" }, ml: { question: "മറ്റൊരു സിസ്റ്റത്തിൽ ഫയൽ പ്രിന്റ് ചെയ്യുമ്പോൾ ഫോണ്ടുകൾ കാണുന്നില്ല. എന്തു ചെയ്യണം?", options: ["കടുപ്പിച്ച ഫോണ്ടുകൾ ഉപയോഗിക്കുക", "ഫയൽ PDF ആയി എക്സ്പോർട്ട് ചെയ്യുക", "USB-ൽ നിന്ന് പ്രിന്റ് ചെയ്യുക", "ടെക്സ്റ്റ് ഫയലായി സേവ് ചെയ്യുക"], answer: "ഫയൽ PDF ആയി എക്സ്പോർട്ട് ചെയ്യുക" } },
+            { en: { question: "To add the document title on each page, which method should you use?", options: ["Footer", "Comments", "Header", "Highlight"], answer: "Header" }, ml: { question: "ഓരോ പേജിലും ഡോക്യുമെന്റിന്റെ തലക്കെട്ട് ചേർക്കാൻ ഏത് രീതി ഉപയോഗിക്കണം?", options: ["ഫൂട്ടർ", "കമന്റുകൾ", "ഹെഡർ", "ഹൈലൈറ്റ്"], answer: "ഹെഡർ" } },
+            { en: { question: "To distinguish first lines in each paragraph, what should be applied?", options: ["Text Box", "Font Color", "First Line Indent", "Footer"], answer: "First Line Indent" }, ml: { question: "ഓരോ ഖണ്ഡികയിലെയും ആദ്യ വരികൾ വേർതിരിച്ചറിയാൻ എന്ത് പ്രയോഗിക്കണം?", options: ["ടെക്സ്റ്റ് ബോക്സ്", "ഫോണ്ട് കളർ", "ഫസ്റ്റ് ലൈൻ ഇൻഡന്റ്", "ഫൂട്ടർ"], answer: "ഫസ്റ്റ് ലൈൻ ഇൻഡന്റ്" } },
+            { en: { question: "You want to organize Ajanta and Ellora routes. Which format is best?", options: ["Bullets", "Paragraphs", "Table", "Text Box"], answer: "Table" }, ml: { question: "അജന്ത, എല്ലോറ റൂട്ടുകൾ സംഘടിപ്പിക്കാൻ ഏത് ഫോർമാറ്റാണ് ഏറ്റവും മികച്ചത്?", options: ["ബുള്ളറ്റുകൾ", "ഖണ്ഡികകൾ", "പട്ടിക", "ടെക്സ്റ്റ് ബോക്സ്"], answer: "പട്ടിക" } },
+            { en: { question: "To match the look of a magazine, you need:", options: ["Line spacing = 1.15, paragraph spacing, indents", "Only bold headings", "Table of contents", "Landscape layout"], answer: "Line spacing = 1.15, paragraph spacing, indents" }, ml: { question: "ഒരു മാസികയുടെ രൂപവുമായി പൊരുത്തപ്പെടാൻ നിങ്ങൾക്ക് എന്ത് വേണം?", options: ["ലൈൻ സ്പേസിംഗ് = 1.15, പാരഗ്രാഫ് സ്പേസിംഗ്, ഇൻഡന്റുകൾ", "കടുപ്പിച്ച തലക്കെട്ടുകൾ മാത്രം", "ഉള്ളടക്കപ്പട്ടിക", "ലാൻഡ്സ്കേപ്പ് ലേഔട്ട്"], answer: "ലൈൻ സ്പേസിംഗ് = 1.15, പാരഗ്രാഫ് സ്പേസിംഗ്, ഇൻഡന്റുകൾ" } },
+            { en: { question: "You need different headers on odd and even pages. What should you do?", options: ["Use Page Break", "Use “Different headers” setting in Header format", "Create a table", "Insert different footers manually"], answer: "Use “Different headers” setting in Header format" }, ml: { question: "ഒറ്റ, ഇരട്ട പേജുകളിൽ വ്യത്യസ്ത ഹെഡറുകൾ വേണമെങ്കിൽ എന്തു ചെയ്യണം?", options: ["പേജ് ബ്രേക്ക് ഉപയോഗിക്കുക", "ഹെഡർ ഫോർമാറ്റിലെ “ഡിഫറന്റ് ഹെഡേഴ്സ്” ക്രമീകരണം ഉപയോഗിക്കുക", "ഒരു പട്ടിക സൃഷ്ടിക്കുക", "വ്യത്യസ്ത ഫൂട്ടറുകൾ നേരിട്ട് ചേർക്കുക"], answer: "ഹെഡർ ഫോർമാറ്റിലെ “ഡിഫറന്റ് ഹെഡേഴ്സ്” ക്രമീകരണം ഉപയോഗിക്കുക" } },
+            { en: { question: "You want to change all paragraph headings to blue font, center-aligned. What steps apply?", options: ["Highlight → Change font → Align center", "Select → Font color blue → Center align", "Select paragraph → Change color → Apply center alignment", "All of the above"], answer: "All of the above" }, ml: { question: "എല്ലാ ഖണ്ഡിക തലക്കെട്ടുകളും നീല ഫോണ്ടിലേക്കും മധ്യഭാഗത്ത് അലൈൻ ചെയ്യാനും ഏത് ഘട്ടങ്ങൾ പ്രയോഗിക്കണം?", options: ["ഹൈലൈറ്റ് ചെയ്യുക → ഫോണ്ട് മാറ്റുക → സെന്റർ അലൈൻ ചെയ്യുക", "തിരഞ്ഞെടുക്കുക → ഫോണ്ട് നിറം നീലയാക്കുക → സെന്റർ അലൈൻ ചെയ്യുക", "ഖണ്ഡിക തിരഞ്ഞെടുക്കുക → നിറം മാറ്റുക → സെന്റർ അലൈൻമെന്റ് പ്രയോഗിക്കുക", "മുകളിൽ പറഞ്ഞവയെല്ലാം"], answer: "മുകളിൽ പറഞ്ഞവയെല്ലാം" } },
+            { en: { question: "You want to add bullets with custom symbols. Where should you go?", options: ["Format → Font", "Insert → Symbol", "Toggle List → More Bullets", "Tools → Preferences"], answer: "Toggle List → More Bullets" }, ml: { question: "ഇഷ്ടാനുസൃത ചിഹ്നങ്ങളുള്ള ബുള്ളറ്റുകൾ ചേർക്കാൻ എവിടെ പോകണം?", options: ["ഫോർമാറ്റ് → ഫോണ്ട്", "ഇൻസേർട്ട് → സിംബൽ", "ടോഗിൾ ലിസ്റ്റ് → മോർ ബുള്ളറ്റ്സ്", "ടൂൾസ് → പ്രിഫറൻസസ്"], answer: "ടോഗിൾ ലിസ്റ്റ് → മോർ ബുള്ളറ്റ്സ്" } },
+            { en: { question: "To make table headers yellow, what should you use?", options: ["Paragraph background", "Table cell background color", "Header tool", "Bullets"], answer: "Table cell background color" }, ml: { question: "പട്ടികയുടെ തലക്കെട്ടുകൾ മഞ്ഞയാക്കാൻ എന്തുപയോഗിക്കണം?", options: ["പാരഗ്രാഫ് പശ്ചാത്തലം", "ടേബിൾ സെൽ പശ്ചാത്തല നിറം", "ഹെഡർ ടൂൾ", "ബുള്ളറ്റുകൾ"], answer: "ടേബിൾ സെൽ പശ്ചാത്തല നിറം" } },
+            { en: { question: "To view print layout before printing, you should:", options: ["Click Print Setup", "Select Print Preview from File menu", "Open Printer Properties", "Save as .txt"], answer: "Select Print Preview from File menu" }, ml: { question: "പ്രിന്റ് ചെയ്യുന്നതിന് മുമ്പ് പ്രിന്റ് ലേഔട്ട് കാണാൻ എന്തു ചെയ്യണം?", options: ["പ്രിന്റ് സെറ്റപ്പ് ക്ലിക്ക് ചെയ്യുക", "ഫയൽ മെനുവിൽ നിന്ന് പ്രിന്റ് പ്രിവ്യൂ തിരഞ്ഞെടുക്കുക", "പ്രിന്റർ പ്രോപ്പർട്ടീസ് തുറക്കുക", ".txt ആയി സേവ് ചെയ്യുക"], answer: "ഫയൽ മെനുവിൽ നിന്ന് പ്രിന്റ് പ്രിവ്യൂ തിരഞ്ഞെടുക്കുക" } },
+            { en: { question: "Your paragraph is too close to the border. What should you adjust?", options: ["Font size", "Padding", "Line height", "Indent"], answer: "Padding" }, ml: { question: "നിങ്ങളുടെ ഖണ്ഡിക ബോർഡറിനോട് വളരെ അടുത്താണ്. എന്ത് ക്രമീകരിക്കണം?", options: ["ഫോണ്ട് സൈസ്", "പാഡിംഗ്", "ലൈൻ ഹൈറ്റ്", "ഇൻഡന്റ്"], answer: "പാഡിംഗ്" } },
+            { en: { question: "To change bullet style to symbols like stars or arrows:", options: ["Format → Border", "Insert → Shapes", "Use More Bullets option", "Change font"], answer: "Use More Bullets option" }, ml: { question: "ബുള്ളറ്റ് സ്റ്റൈൽ നക്ഷത്രങ്ങൾ, അമ്പടയാളങ്ങൾ പോലുള്ള ചിഹ്നങ്ങളിലേക്ക് മാറ്റാൻ എന്തു ചെയ്യണം?", options: ["ഫോർമാറ്റ് → ബോർഡർ", "ഇൻസേർട്ട് → ഷേപ്പ്സ്", "മോർ ബുള്ളറ്റ്സ് ഓപ്ഷൻ ഉപയോഗിക്കുക", "ഫോണ്ട് മാറ്റുക"], answer: "മോർ ബുള്ളറ്റ്സ് ഓപ്ഷൻ ഉപയോഗിക്കുക" } },
+            { en: { question: "To align all items in a table cell to the middle vertically, use:", options: ["Align Center", "Center Vertically", "Paragraph spacing", "Justify"], answer: "Center Vertically" }, ml: { question: "ഒരു ടേബിൾ സെല്ലിലെ എല്ലാ ഇനങ്ങളും ലംബമായി മധ്യഭാഗത്ത് അലൈൻ ചെയ്യാൻ എന്തുപയോഗിക്കണം?", options: ["അലൈൻ സെന്റർ", "സെന്റർ വെർട്ടിക്കലി", "പാരഗ്രാഫ് സ്പേസിംഗ്", "ജസ്റ്റിഫൈ"], answer: "സെന്റർ വെർട്ടിക്കലി" } },
+            { en: { question: "You want to position a text box above an image. What should you do?", options: ["Use text wrap", "Use a table", "Use a floating text box", "Convert to PDF"], answer: "Use a floating text box" }, ml: { question: "ഒരു ചിത്രത്തിന് മുകളിൽ ഒരു ടെക്സ്റ്റ് ബോക്സ് സ്ഥാപിക്കാൻ എന്തു ചെയ്യണം?", options: ["ടെക്സ്റ്റ് റാപ് ഉപയോഗിക്കുക", "ഒരു പട്ടിക ഉപയോഗിക്കുക", "ഒരു ഫ്ലോട്ടിംഗ് ടെക്സ്റ്റ് ബോക്സ് ഉപയോഗിക്കുക", "PDF-ലേക്ക് പരിവർത്തനം ചെയ്യുക"], answer: "ഒരു ഫ്ലോട്ടിംഗ് ടെക്സ്റ്റ് ബോക്സ് ഉപയോഗിക്കുക" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 50-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-300">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-900/50' : 'bg-rose-900/50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-100">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+

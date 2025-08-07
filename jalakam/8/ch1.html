@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Krita Digital Painting</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new digital art theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f5f3ff; /* Violet 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(91, 33, 182, 0.1);
+            border: 1px solid #ddd6fe; /* Violet 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #c4b5fd; /* Violet 300 */
+        }
+        .option-btn:hover {
+             background-color: #f5f3ff; /* Violet 50 */
+        }
+        .option-btn.selected {
+            background-color: #db2777; /* Pink 600 for selected */
+            color: white;
+            border-color: #be185d; /* Pink 700 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f87171; /* Red 400 for wrong */
+            color: white;
+            border-color: #ef4444;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-violet-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-violet-800 mb-2">Digital Art Test!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your Krita Knowledge!</p>
+            <img src="https://placehold.co/400x200/a78bfa/ffffff?text=Ready+to+Draw%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Krita Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3"></div>
+                
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                <h2 id="review-title" class="text-3xl font-black text-violet-800 mb-2">Test Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                </div>
+                <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Digital Art Test!", welcomeSubtitle: "Test Your Krita Knowledge!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "ഡിജിറ്റൽ ആർട്ട് ടെസ്റ്റ്!", welcomeSubtitle: "നിങ്ങളുടെ ക്രിറ്റ പരിജ്ഞാനം പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- Full Question Bank (50 questions) from the provided list ---
+        const fullQuizData = [
+            { en: { question: "What is Krita primarily used for?", options: ["Programming", "Spreadsheet creation", "Digital painting", "Video editing"], answer: "Digital painting" }, ml: { question: "ക്രിറ്റ പ്രധാനമായും എന്തിനാണ് ഉപയോഗിക്കുന്നത്?", options: ["പ്രോഗ്രാമിംഗ്", "സ്പ്രെഡ്ഷീറ്റ് നിർമ്മാണം", "ഡിജിറ്റൽ പെയിന്റിംഗ്", "വീഡിയോ എഡിറ്റിംഗ്"], answer: "ഡിജിറ്റൽ പെയിന്റിംഗ്" } },
+            { en: { question: "Which file format is Krita’s default project format?", options: [".psd", ".jpg", ".kra", ".png"], answer: ".kra" }, ml: { question: "ക്രിറ്റയുടെ ഡിഫോൾട്ട് പ്രോജക്റ്റ് ഫയൽ ഫോർമാറ്റ് ഏതാണ്?", options: [".psd", ".jpg", ".kra", ".png"], answer: ".kra" } },
+            { en: { question: "Which tool in Krita is used for freehand drawing?", options: ["Fill Tool", "Gradient Tool", "Brush Tool", "Text Tool"], answer: "Brush Tool" }, ml: { question: "ക്രിറ്റയിൽ ഫ്രീഹാൻഡ് ഡ്രോയിംഗിനായി ഉപയോഗിക്കുന്ന ടൂൾ ഏതാണ്?", options: ["ഫിൽ ടൂൾ", "ഗ്രേഡിയന്റ് ടൂൾ", "ബ്രഷ് ടൂൾ", "ടെക്സ്റ്റ് ടൂൾ"], answer: "ബ്രഷ് ടൂൾ" } },
+            { en: { question: "What is the shortcut to create a new file in Krita?", options: ["Ctrl + S", "Ctrl + T", "Ctrl + N", "Ctrl + F"], answer: "Ctrl + N" }, ml: { question: "ക്രിറ്റയിൽ ഒരു പുതിയ ഫയൽ സൃഷ്ടിക്കുന്നതിനുള്ള കുറുക്കുവഴി എന്താണ്?", options: ["Ctrl + S", "Ctrl + T", "Ctrl + N", "Ctrl + F"], answer: "Ctrl + N" } },
+            { en: { question: "Where is the canvas located in Krita’s interface?", options: ["Left side", "Top bar", "Center", "Right side"], answer: "Center" }, ml: { question: "ക്രിറ്റയുടെ ഇന്റർഫേസിൽ ക്യാൻവാസ് എവിടെയാണ് സ്ഥിതി ചെയ്യുന്നത്?", options: ["ഇടതുവശത്ത്", "മുകളിലെ ബാറിൽ", "മധ്യഭാഗത്ത്", "വലതുവശത്ത്"], answer: "മധ്യഭാഗത്ത്" } },
+            { en: { question: "What does the Layer Docker help with?", options: ["Text formatting", "File saving", "Managing layers", "Exporting images"], answer: "Managing layers" }, ml: { question: "ലെയർ ഡോക്കർ എന്തിനാണ് സഹായിക്കുന്നത്?", options: ["ടെക്സ്റ്റ് ഫോർമാറ്റിംഗ്", "ഫയൽ സേവിംഗ്", "ലെയറുകൾ കൈകാര്യം ചെയ്യൽ", "ചിത്രങ്ങൾ എക്സ്പോർട്ട് ചെയ്യൽ"], answer: "ലെയറുകൾ കൈകാര്യം ചെയ്യൽ" } },
+            { en: { question: "Which of the following tools is used to fill closed shapes with color?", options: ["Brush Tool", "Text Tool", "Fill Tool", "Selection Tool"], answer: "Fill Tool" }, ml: { question: "അടഞ്ഞ രൂപങ്ങളിൽ നിറം നൽകാൻ താഴെ പറയുന്നവയിൽ ഏത് ടൂൾ ആണ് ഉപയോഗിക്കുന്നത്?", options: ["ബ്രഷ് ടൂൾ", "ടെക്സ്റ്റ് ടൂൾ", "ഫിൽ ടൂൾ", "സെലക്ഷൻ ടൂൾ"], answer: "ഫിൽ ടൂൾ" } },
+            { en: { question: "What is the use of the Move Tool in Krita?", options: ["To fill colors", "To rotate canvas", "To reposition elements", "To draw shapes"], answer: "To reposition elements" }, ml: { question: "ക്രിറ്റയിലെ മൂവ് ടൂളിന്റെ ഉപയോഗം എന്താണ്?", options: ["നിറങ്ങൾ നൽകാൻ", "ക്യാൻവാസ് തിരിക്കാൻ", "ഘടകങ്ങൾ പുനഃസ്ഥാപിക്കാൻ", "രൂപങ്ങൾ വരയ്ക്കാൻ"], answer: "ഘടകങ്ങൾ പുനഃസ്ഥാപിക്കാൻ" } },
+            { en: { question: "Which of the following tools is used to draw elliptical shapes?", options: ["Polygon Tool", "Bezier Curve Tool", "Ellipse Tool", "Freehand Tool"], answer: "Ellipse Tool" }, ml: { question: "ദീർഘവൃത്താകൃതിയിലുള്ള രൂപങ്ങൾ വരയ്ക്കാൻ താഴെ പറയുന്നവയിൽ ഏത് ടൂൾ ആണ് ഉപയോഗിക്കുന്നത്?", options: ["പോളിഗൺ ടൂൾ", "ബെസിയർ കർവ് ടൂൾ", "എലിപ്സ് ടൂൾ", "ഫ്രീഹാൻഡ് ടൂൾ"], answer: "എലിപ്സ് ടൂൾ" } },
+            { en: { question: "Which key helps in drawing a perfect circle with the Ellipse Tool?", options: ["Ctrl", "Shift", "Alt", "Tab"], answer: "Shift" }, ml: { question: "എലിപ്സ് ടൂൾ ഉപയോഗിച്ച് ഒരു പൂർണ്ണ വൃത്തം വരയ്ക്കാൻ ഏത് കീയാണ് സഹായിക്കുന്നത്?", options: ["Ctrl", "Shift", "Alt", "Tab"], answer: "Shift" } },
+            { en: { question: "Which tool allows drawing curved shapes by connecting points?", options: ["Polyline Tool", "Bezier Curve Tool", "Gradient Tool", "Eraser Tool"], answer: "Bezier Curve Tool" }, ml: { question: "പോയിന്റുകൾ ബന്ധിപ്പിച്ച് വളഞ്ഞ രൂപങ്ങൾ വരയ്ക്കാൻ ഏത് ടൂൾ അനുവദിക്കുന്നു?", options: ["പോളി ലൈൻ ടൂൾ", "ബെസിയർ കർവ് ടൂൾ", "ഗ്രേഡിയന്റ് ടൂൾ", "ഇറേസർ ടൂൾ"], answer: "ബെസിയർ കർവ് ടൂൾ" } },
+            { en: { question: "Which brush types are suitable for natural-looking tree branches?", options: ["Vector", "Charcoal/Ink", "Pixel", "Erase"], answer: "Charcoal/Ink" }, ml: { question: "സ്വാഭാവികമായി കാണപ്പെടുന്ന മരച്ചില്ലകൾക്ക് അനുയോജ്യമായ ബ്രഷ് തരം ഏതാണ്?", options: ["വെക്റ്റർ", "ചാർക്കോൾ/ഇങ്ക്", "പിക്സൽ", "ഇറേസ്"], answer: "ചാർക്കോൾ/ഇങ്ക്" } },
+            { en: { question: "How can you rotate the canvas while drawing in Krita?", options: ["Using mouse", "With the Rotate Tool", "With keyboard shortcuts", "All of the above"], answer: "All of the above" }, ml: { question: "ക്രിറ്റയിൽ വരയ്ക്കുമ്പോൾ ക്യാൻവാസ് എങ്ങനെ തിരിക്കാം?", options: ["മൗസ് ഉപയോഗിച്ച്", "റൊട്ടേറ്റ് ടൂൾ ഉപയോഗിച്ച്", "കീബോർഡ് കുറുക്കുവഴികൾ ഉപയോഗിച്ച്", "മുകളിൽ പറഞ്ഞവയെല്ലാം"], answer: "മുകളിൽ പറഞ്ഞവയെല്ലാം" } },
+            { en: { question: "What is the use of the Eraser Tool?", options: ["Fill shapes", "Add text", "Remove unwanted lines", "Resize canvas"], answer: "Remove unwanted lines" }, ml: { question: "ഇറേസർ ടൂളിന്റെ ഉപയോഗം എന്താണ്?", options: ["രൂപങ്ങൾ നിറയ്ക്കാൻ", "ടെക്സ്റ്റ് ചേർക്കാൻ", "അനാവശ്യ വരകൾ നീക്കം ചെയ്യാൻ", "ക്യാൻവാസിന്റെ വലുപ്പം മാറ്റാൻ"], answer: "അനാവശ്യ വരകൾ നീക്കം ചെയ്യാൻ" } },
+            { en: { question: "What is the use of layers in digital drawing?", options: ["Add animations", "Arrange tools", "Organize and edit elements separately", "Save the file"], answer: "Organize and edit elements separately" }, ml: { question: "ഡിജിറ്റൽ ഡ്രോയിംഗിൽ ലെയറുകളുടെ ഉപയോഗം എന്താണ്?", options: ["ആനിമേഷനുകൾ ചേർക്കാൻ", "ടൂളുകൾ ക്രമീകരിക്കാൻ", "ഘടകങ്ങൾ വെവ്വേറെ സംഘടിപ്പിക്കാനും എഡിറ്റ് ചെയ്യാനും", "ഫയൽ സേവ് ചെയ്യാൻ"], answer: "ഘടകങ്ങൾ വെവ്വേറെ സംഘടിപ്പിക്കാനും എഡിറ്റ് ചെയ്യാനും" } },
+            { en: { question: "Which Krita tool is used to add text in drawings?", options: ["Gradient Tool", "Text Tool", "Transform Tool", "Fill Tool"], answer: "Text Tool" }, ml: { question: "ഡ്രോയിംഗുകളിൽ ടെക്സ്റ്റ് ചേർക്കാൻ ഉപയോഗിക്കുന്ന ക്രിറ്റ ടൂൾ ഏതാണ്?", options: ["ഗ്രേഡിയന്റ് ടൂൾ", "ടെക്സ്റ്റ് ടൂൾ", "ട്രാൻസ്ഫോം ടൂൾ", "ഫിൽ ടൂൾ"], answer: "ടെക്സ്റ്റ് ടൂൾ" } },
+            { en: { question: "What should be done before drawing on a wall?", options: ["Apply primer", "Export file", "Resize canvas", "Open image"], answer: "Apply primer" }, ml: { question: "ചുവരിൽ വരയ്ക്കുന്നതിന് മുമ്പ് എന്തു ചെയ്യണം?", options: ["പ്രൈമർ അടിക്കുക", "ഫയൽ എക്സ്പോർട്ട് ചെയ്യുക", "ക്യാൻവാസിന്റെ വലുപ്പം മാറ്റുക", "ചിത്രം തുറക്കുക"], answer: "പ്രൈമർ അടിക്കുക" } },
+            { en: { question: "Which tool helps in selecting an irregular shape?", options: ["Ellipse Tool", "Freehand Selection Tool", "Gradient Tool", "Transform Tool"], answer: "Freehand Selection Tool" }, ml: { question: "ക്രമരഹിതമായ ഒരു രൂപം തിരഞ്ഞെടുക്കാൻ ഏത് ടൂൾ സഹായിക്കുന്നു?", options: ["എലിപ്സ് ടൂൾ", "ഫ്രീഹാൻഡ് സെലക്ഷൻ ടൂൾ", "ഗ്രേഡിയന്റ് ടൂൾ", "ട്രാൻസ്ഫോം ടൂൾ"], answer: "ഫ്രീഹാൻഡ് സെലക്ഷൻ ടൂൾ" } },
+            { en: { question: "Which Krita feature helps clone shapes like leaves?", options: ["Layer Mask", "Stamp Brush", "Crop Tool", "Path Tool"], answer: "Stamp Brush" }, ml: { question: "ഇലകൾ പോലുള്ള രൂപങ്ങൾ ക്ലോൺ ചെയ്യാൻ ക്രിറ്റയിലെ ഏത് ഫീച്ചറാണ് സഹായിക്കുന്നത്?", options: ["ലെയർ മാസ്ക്", "സ്റ്റാമ്പ് ബ്രഷ്", "ക്രോപ്പ് ടൂൾ", "പാത്ത് ടൂൾ"], answer: "സ്റ്റാമ്പ് ബ്രഷ്" } },
+            { en: { question: "How can you make a new layer in Krita?", options: ["File → New", "Click + in Layer Docker", "Ctrl + M", "Right-click → Duplicate"], answer: "Click + in Layer Docker" }, ml: { question: "ക്രിറ്റയിൽ ഒരു പുതിയ ലെയർ എങ്ങനെ നിർമ്മിക്കാം?", options: ["ഫയൽ → ന്യൂ", "ലെയർ ഡോക്കറിലെ + ക്ലിക്ക് ചെയ്യുക", "Ctrl + M", "റൈറ്റ് ക്ലിക്ക് → ഡ്യൂപ്ലിക്കേറ്റ്"], answer: "ലെയർ ഡോക്കറിലെ + ക്ലിക്ക് ചെയ്യുക" } },
+            { en: { question: "Which tool adjusts the size and rotation of shapes?", options: ["Fill Tool", "Move Tool", "Transform Tool", "Clone Tool"], answer: "Transform Tool" }, ml: { question: "ഏത് ടൂളാണ് രൂപങ്ങളുടെ വലുപ്പവും റൊട്ടേഷനും ക്രമീകരിക്കുന്നത്?", options: ["ഫിൽ ടൂൾ", "മൂവ് ടൂൾ", "ട്രാൻസ്ഫോം ടൂൾ", "ക്ലോൺ ടൂൾ"], answer: "ട്രാൻസ്ഫോം ടൂൾ" } },
+            { en: { question: "What is the purpose of using gradients in background design?", options: ["Blur image", "Add noise", "Blend colors smoothly", "Crop canvas"], answer: "Blend colors smoothly" }, ml: { question: "പശ്ചാത്തല ഡിസൈനിൽ ഗ്രേഡിയന്റുകൾ ഉപയോഗിക്കുന്നതിന്റെ ഉദ്ദേശ്യം എന്താണ്?", options: ["ചിത്രം മങ്ങിക്കാൻ", "നോയിസ് ചേർക്കാൻ", "നിറങ്ങൾ സുഗമമായി മിശ്രണം ചെയ്യാൻ", "ക്യാൻവാസ് ക്രോപ്പ് ചെയ്യാൻ"], answer: "നിറങ്ങൾ സുഗമമായി മിശ്രണം ചെയ്യാൻ" } },
+            { en: { question: "What type of background enhances the main subject?", options: ["Bright red", "Complex drawings", "Simple textures and gradients", "Transparent"], answer: "Simple textures and gradients" }, ml: { question: "ഏത് തരം പശ്ചാത്തലമാണ് പ്രധാന വിഷയത്തെ മെച്ചപ്പെടുത്തുന്നത്?", options: ["കടും ചുവപ്പ്", "സങ്കീർണ്ണമായ ഡ്രോയിംഗുകൾ", "ലളിതമായ ടെക്സ്ചറുകളും ഗ്രേഡിയന്റുകളും", "സുതാര്യം"], answer: "ലളിതമായ ടെക്സ്ചറുകളും ഗ്രേഡിയന്റുകളും" } },
+            { en: { question: "What is used to color closed shapes quickly?", options: ["Brush Tool", "Bucket Fill Tool", "Line Tool", "Polygon Tool"], answer: "Bucket Fill Tool" }, ml: { question: "അടഞ്ഞ രൂപങ്ങൾക്ക് വേഗത്തിൽ നിറം നൽകാൻ എന്തുപയോഗിക്കുന്നു?", options: ["ബ്രഷ് ടൂൾ", "ബക്കറ്റ് ഫിൽ ടൂൾ", "ലൈൻ ടൂൾ", "പോളിഗൺ ടൂൾ"], answer: "ബക്കറ്റ് ഫിൽ ടൂൾ" } },
+            { en: { question: "What is the first step in making a preset stamp brush?", options: ["Draw a shape", "Fill canvas", "Crop canvas", "Export image"], answer: "Draw a shape" }, ml: { question: "ഒരു പ്രീസെറ്റ് സ്റ്റാമ്പ് ബ്രഷ് നിർമ്മിക്കുന്നതിലെ ആദ്യപടി എന്താണ്?", options: ["ഒരു രൂപം വരയ്ക്കുക", "ക്യാൻവാസ് നിറയ്ക്കുക", "ക്യാൻവാസ് ക്രോപ്പ് ചെയ്യുക", "ചിത്രം എക്സ്പോർട്ട് ചെയ്യുക"], answer: "ഒരു രൂപം വരയ്ക്കുക" } },
+            { en: { question: "What’s the purpose of hiding all layers before creating a stamp?", options: ["Clear memory", "Reduce size", "Select only the target element", "Delete rest"], answer: "Select only the target element" }, ml: { question: "ഒരു സ്റ്റാമ്പ് നിർമ്മിക്കുന്നതിന് മുമ്പ് എല്ലാ ലെയറുകളും മറയ്ക്കുന്നതിന്റെ ഉദ്ദേശ്യം എന്താണ്?", options: ["മെമ്മറി ക്ലിയർ ചെയ്യാൻ", "വലുപ്പം കുറയ്ക്കാൻ", "ലക്ഷ്യമിടുന്ന ഘടകം മാത്രം തിരഞ്ഞെടുക്കാൻ", "ബാക്കിയുള്ളവ ഇല്ലാതാക്കാൻ"], answer: "ലക്ഷ്യമിടുന്ന ഘടകം മാത്രം തിരഞ്ഞെടുക്കാൻ" } },
+            { en: { question: "What is Krita’s tool for blending two colors?", options: ["Line Tool", "Bezier Tool", "Gradient Tool", "Fill Tool"], answer: "Gradient Tool" }, ml: { question: "രണ്ട് നിറങ്ങൾ മിശ്രണം ചെയ്യുന്നതിനുള്ള ക്രിറ്റയുടെ ടൂൾ ഏതാണ്?", options: ["ലൈൻ ടൂൾ", "ബെസിയർ ടൂൾ", "ഗ്രേഡിയന്റ് ടൂൾ", "ഫിൽ ടൂൾ"], answer: "ഗ്രേഡിയന്റ് ടൂൾ" } },
+            { en: { question: "Which Krita tool is used to draw wings with curves?", options: ["Line Tool", "Bezier Curve Tool", "Fill Tool", "Stamp Tool"], answer: "Bezier Curve Tool" }, ml: { question: "വളവുകളുള്ള ചിറകുകൾ വരയ്ക്കാൻ ഉപയോഗിക്കുന്ന ക്രിറ്റ ടൂൾ ഏതാണ്?", options: ["ലൈൻ ടൂൾ", "ബെസിയർ കർവ് ടൂൾ", "ഫിൽ ടൂൾ", "സ്റ്റാമ്പ് ടൂൾ"], answer: "ബെസിയർ കർവ് ടൂൾ" } },
+            { en: { question: "Why is it better to draw bird body parts on different layers?", options: ["Reduce file size", "For easy editing", "Faster drawing", "For coloring"], answer: "For easy editing" }, ml: { question: "പക്ഷിയുടെ ശരീരഭാഗങ്ങൾ വ്യത്യസ്ത ലെയറുകളിൽ വരയ്ക്കുന്നത് നല്ലതായിരിക്കുന്നത് എന്തുകൊണ്ട്?", options: ["ഫയൽ വലുപ്പം കുറയ്ക്കാൻ", "എളുപ്പത്തിൽ എഡിറ്റ് ചെയ്യാൻ", "വേഗത്തിൽ വരയ്ക്കാൻ", "നിറം നൽകാൻ"], answer: "എളുപ്പത്തിൽ എഡിറ്റ് ചെയ്യാൻ" } },
+            { en: { question: "What should be done before painting on the wall using a projector?", options: ["Finalize Krita file", "Block light", "Trace the projection", "Export to PDF"], answer: "Trace the projection" }, ml: { question: "ഒരു പ്രൊജക്ടർ ഉപയോഗിച്ച് ചുവരിൽ പെയിന്റ് ചെയ്യുന്നതിന് മുമ്പ് എന്തു ചെയ്യണം?", options: ["ക്രിറ്റ ഫയൽ അന്തിമമാക്കുക", "പ്രകാശം തടയുക", "പ്രൊജക്ഷൻ ട്രേസ് ചെയ്യുക", "PDF-ലേക്ക് എക്സ്പോർട്ട് ചെയ്യുക"], answer: "പ്രൊജക്ഷൻ ട്രേസ് ചെയ്യുക" } },
+            { en: { question: "How do you preserve the size of canvas in Krita for wall drawing?", options: ["Use auto-size", "Use wall dimensions proportionally", "Use default size", "Crop image"], answer: "Use wall dimensions proportionally" }, ml: { question: "ചുവർ ചിത്രരചനയ്ക്കായി ക്രിറ്റയിൽ ക്യാൻവാസിന്റെ വലുപ്പം എങ്ങനെ സംരക്ഷിക്കാം?", options: ["ഓട്ടോ-സൈസ് ഉപയോഗിക്കുക", "ചുവരിന്റെ അളവുകൾ ആനുപാതികമായി ഉപയോഗിക്കുക", "ഡിഫോൾട്ട് വലുപ്പം ഉപയോഗിക്കുക", "ചിത്രം ക്രോപ്പ് ചെയ്യുക"], answer: "ചുവരിന്റെ അളവുകൾ ആനുപാതികമായി ഉപയോഗിക്കുക" } },
+            { en: { question: "Which key is used for transforming a layer or selection?", options: ["Ctrl+R", "Ctrl+F", "Ctrl+T", "Ctrl+M"], answer: "Ctrl+T" }, ml: { question: "ഒരു ലെയറോ സെലക്ഷനോ രൂപാന്തരപ്പെടുത്താൻ ഏത് കീയാണ് ഉപയോഗിക്കുന്നത്?", options: ["Ctrl+R", "Ctrl+F", "Ctrl+T", "Ctrl+M"], answer: "Ctrl+T" } },
+            { en: { question: "How do you save your progress in Krita?", options: ["Export as .jpg", "Save as .kra", "Use .psd", "Ctrl+E"], answer: "Save as .kra" }, ml: { question: "ക്രിറ്റയിൽ നിങ്ങളുടെ പുരോഗതി എങ്ങനെ സേവ് ചെയ്യാം?", options: [".jpg ആയി എക്സ്പോർട്ട് ചെയ്യുക", ".kra ആയി സേവ് ചെയ്യുക", ".psd ഉപയോഗിക്കുക", "Ctrl+E"], answer: ".kra ആയി സേവ് ചെയ്യുക" } },
+            { en: { question: "Which element helps draw a grid to transfer drawing to wall?", options: ["Ruler", "Projector", "Scale and pencil", "Scanner"], answer: "Scale and pencil" }, ml: { question: "ചിത്രം ചുവരിലേക്ക് പകർത്താൻ ഒരു ഗ്രിഡ് വരയ്ക്കാൻ ഏത് ഘടകം സഹായിക്കുന്നു?", options: ["സ്കെയിൽ", "പ്രൊജക്ടർ", "സ്കെയിലും പെൻസിലും", "സ്കാനർ"], answer: "സ്കെയിലും പെൻസിലും" } },
+            { en: { question: "Which tool lets you duplicate preset stamps like a leaf?", options: ["Selection Tool", "Clone Tool", "Brush Tool", "Transform Tool"], answer: "Brush Tool" }, ml: { question: "ഒരു ഇല പോലുള്ള പ്രീസെറ്റ് സ്റ്റാമ്പുകൾ ഡ്യൂപ്ലിക്കേറ്റ് ചെയ്യാൻ ഏത് ടൂൾ അനുവദിക്കുന്നു?", options: ["സെലക്ഷൻ ടൂൾ", "ക്ലോൺ ടൂൾ", "ബ്രഷ് ടൂൾ", "ട്രാൻസ്ഫോം ടൂൾ"], answer: "ബ്രഷ് ടൂൾ" } },
+            { en: { question: "You want to draw a cartoon for your class wall using Krita. What should you do first?", options: ["Export to .jpg", "Choose a preset brush", "Create a new project file with proper dimensions", "Open Layer Docker"], answer: "Create a new project file with proper dimensions" }, ml: { question: "ക്രിറ്റ ഉപയോഗിച്ച് നിങ്ങളുടെ ക്ലാസ്സ് ചുവരിൽ ഒരു കാർട്ടൂൺ വരയ്ക്കണമെങ്കിൽ, ആദ്യം എന്തു ചെയ്യണം?", options: [".jpg-ലേക്ക് എക്സ്പോർട്ട് ചെയ്യുക", "ഒരു പ്രീസെറ്റ് ബ്രഷ് തിരഞ്ഞെടുക്കുക", "ശരിയായ അളവുകളുള്ള ഒരു പുതിയ പ്രോജക്റ്റ് ഫയൽ സൃഷ്ടിക്കുക", "ലെയർ ഡോക്കർ തുറക്കുക"], answer: "ശരിയായ അളവുകളുള്ള ഒരു പുതിയ പ്രോജക്റ്റ് ഫയൽ സൃഷ്ടിക്കുക" } },
+            { en: { question: "Your drawing has overlapping elements that need adjustment. What’s the best way?", options: ["Merge layers", "Use Bezier Tool", "Keep each part on a separate layer", "Draw in one layer"], answer: "Keep each part on a separate layer" }, ml: { question: "നിങ്ങളുടെ ഡ്രോയിംഗിൽ ക്രമീകരിക്കേണ്ട ഓവർലാപ്പുചെയ്യുന്ന ഘടകങ്ങളുണ്ട്. ഏറ്റവും നല്ല മാർഗം ഏതാണ്?", options: ["ലെയറുകൾ ലയിപ്പിക്കുക", "ബെസിയർ ടൂൾ ഉപയോഗിക്കുക", "ഓരോ ഭാഗവും ഒരു പ്രത്യേക ലെയറിൽ സൂക്ഷിക്കുക", "ഒരു ലെയറിൽ വരയ്ക്കുക"], answer: "ഓരോ ഭാഗവും ഒരു പ്രത്യേക ലെയറിൽ സൂക്ഷിക്കുക" } },
+            { en: { question: "You drew a leaf using Bezier Tool. What is the next step to replicate it across the branch?", options: ["Resize it", "Convert it into a preset stamp brush", "Copy-paste it manually", "Group it"], answer: "Convert it into a preset stamp brush" }, ml: { question: "ബെസിയർ ടൂൾ ഉപയോഗിച്ച് നിങ്ങൾ ഒരു ഇല വരച്ചു. ശാഖയിലുടനീളം അത് ആവർത്തിക്കാനുള്ള അടുത്ത ഘട്ടം എന്താണ്?", options: ["അതിന്റെ വലുപ്പം മാറ്റുക", "അതിനെ ഒരു പ്രീസെറ്റ് സ്റ്റാമ്പ് ബ്രഷാക്കി മാറ്റുക", "അത് നേരിട്ട് കോപ്പി-പേസ്റ്റ് ചെയ്യുക", "അതിനെ ഗ്രൂപ്പ് ചെയ്യുക"], answer: "അതിനെ ഒരു പ്രീസെറ്റ് സ്റ്റാമ്പ് ബ്രഷാക്കി മാറ്റുക" } },
+            { en: { question: "While painting the wall, your grid doesn’t match the print. What should you check?", options: ["Projector angle", "Brush size", "Grid proportions", "Image resolution"], answer: "Grid proportions" }, ml: { question: "ചുവരിൽ പെയിന്റ് ചെയ്യുമ്പോൾ, നിങ്ങളുടെ ഗ്രിഡ് പ്രിന്റുമായി പൊരുത്തപ്പെടുന്നില്ല. നിങ്ങൾ എന്തു പരിശോധിക്കണം?", options: ["പ്രൊജക്ടർ ആംഗിൾ", "ബ്രഷ് വലുപ്പം", "ഗ്രിഡ് അനുപാതം", "ചിത്രത്തിന്റെ റെസലൂഷൻ"], answer: "ഗ്രിഡ് അനുപാതം" } },
+            { en: { question: "You want to give a 3D appearance to the background. Which method helps?", options: ["Add shadows using darker brushes", "Resize canvas", "Use eraser", "Print the image"], answer: "Add shadows using darker brushes" }, ml: { question: "പശ്ചാത്തലത്തിന് ഒരു 3D രൂപം നൽകാൻ ഏത് രീതിയാണ് സഹായിക്കുന്നത്?", options: ["ഇരുണ്ട ബ്രഷുകൾ ഉപയോഗിച്ച് നിഴലുകൾ ചേർക്കുക", "ക്യാൻവാസിന്റെ വലുപ്പം മാറ്റുക", "ഇറേസർ ഉപയോഗിക്കുക", "ചിത്രം പ്രിന്റ് ചെയ്യുക"], answer: "ഇരുണ്ട ബ്രഷുകൾ ഉപയോഗിച്ച് നിഴലുകൾ ചേർക്കുക" } },
+            { en: { question: "You added a background but it hides the bird. What’s the likely reason?", options: ["Wrong tool used", "Background layer is above other layers", "Bird layer not saved", "Image is locked"], answer: "Background layer is above other layers" }, ml: { question: "നിങ്ങൾ ഒരു പശ്ചാത്തലം ചേർത്തപ്പോൾ അത് പക്ഷിയെ മറയ്ക്കുന്നു. എന്തായിരിക്കാം കാരണം?", options: ["തെറ്റായ ടൂൾ ഉപയോഗിച്ചു", "പശ്ചാത്തല ലെയർ മറ്റ് ലെയറുകൾക്ക് മുകളിലാണ്", "പക്ഷിയുടെ ലെയർ സേവ് ചെയ്തിട്ടില്ല", "ചിത്രം ലോക്ക് ചെയ്തിരിക്കുന്നു"], answer: "പശ്ചാത്തല ലെയർ മറ്റ് ലെയറുകൾക്ക് മുകളിലാണ്" } },
+            { en: { question: "Which brush setting will allow you to rotate leaf angles while stamping?", options: ["Opacity", "Angle", "Size", "Hardness"], answer: "Angle" }, ml: { question: "സ്റ്റാമ്പ് ചെയ്യുമ്പോൾ ഇലയുടെ കോണുകൾ തിരിക്കാൻ ഏത് ബ്രഷ് ക്രമീകരണം അനുവദിക്കും?", options: ["ഒപ്പാസിറ്റി", "ആംഗിൾ", "സൈസ്", "ഹാർഡ്നസ്"], answer: "ആംഗിൾ" } },
+            { en: { question: "You want to transfer the Krita image to a wall using the projector. What’s the key step?", options: ["Fill background color", "Project and trace image", "Export to PNG", "Add animation"], answer: "Project and trace image" }, ml: { question: "പ്രൊജക്ടർ ഉപയോഗിച്ച് ക്രിറ്റ ചിത്രം ഒരു ചുവരിലേക്ക് പകർത്താൻ പ്രധാന ഘട്ടം എന്താണ്?", options: ["പശ്ചാത്തല നിറം നൽകുക", "ചിത്രം പ്രൊജക്റ്റ് ചെയ്ത് ട്രേസ് ചെയ്യുക", "PNG-ലേക്ക് എക്സ്പോർട്ട് ചെയ്യുക", "ആനിമേഷൻ ചേർക്കുക"], answer: "ചിത്രം പ്രൊജക്റ്റ് ചെയ്ത് ട്രേസ് ചെയ്യുക" } },
+            { en: { question: "You want to color a bird’s wing in multiple shades. Which tools help most?", options: ["Fill Tool only", "Gradient and Brush Tool", "Text Tool and Bucket", "Transform and Eraser"], answer: "Gradient and Brush Tool" }, ml: { question: "ഒരു പക്ഷിയുടെ ചിറകിന് ഒന്നിലധികം ഷേഡുകളിൽ നിറം നൽകാൻ ഏത് ടൂളുകളാണ് ഏറ്റവും കൂടുതൽ സഹായിക്കുന്നത്?", options: ["ഫിൽ ടൂൾ മാത്രം", "ഗ്രേഡിയന്റ്, ബ്രഷ് ടൂൾ", "ടെക്സ്റ്റ് ടൂൾ, ബക്കറ്റ്", "ട്രാൻസ്ഫോം, ഇറേസർ"], answer: "ഗ്രേഡിയന്റ്, ബ്രഷ് ടൂൾ" } },
+            { en: { question: "While adjusting bird's tail position, which tool is best?", options: ["Fill Tool", "Text Tool", "Move Tool", "Ellipse Tool"], answer: "Move Tool" }, ml: { question: "പക്ഷിയുടെ വാലിന്റെ സ്ഥാനം ക്രമീകരിക്കുമ്പോൾ ഏത് ടൂളാണ് ഏറ്റവും മികച്ചത്?", options: ["ഫിൽ ടൂൾ", "ടെക്സ്റ്റ് ടൂൾ", "മൂവ് ടൂൾ", "എലിപ്സ് ടൂൾ"], answer: "മൂവ് ടൂൾ" } },
+            { en: { question: "You want to create a greeting card using Krita. What should you consider first?", options: ["Use vector brushes", "Create layers for background, text, and design", "Add animations", "Print directly"], answer: "Create layers for background, text, and design" }, ml: { question: "ക്രിറ്റ ഉപയോഗിച്ച് ഒരു ആശംസാ കാർഡ് നിർമ്മിക്കാൻ ആദ്യം എന്തു പരിഗണിക്കണം?", options: ["വെക്റ്റർ ബ്രഷുകൾ ഉപയോഗിക്കുക", "പശ്ചാത്തലം, ടെക്സ്റ്റ്, ഡിസൈൻ എന്നിവയ്ക്കായി ലെയറുകൾ സൃഷ്ടിക്കുക", "ആനിമേഷനുകൾ ചേർക്കുക", "നേരിട്ട് പ്രിന്റ് ചെയ്യുക"], answer: "പശ്ചാത്തലം, ടെക്സ്റ്റ്, ഡിസൈൻ എന്നിവയ്ക്കായി ലെയറുകൾ സൃഷ്ടിക്കുക" } },
+            { en: { question: "You used Shift key while drawing with Ellipse Tool. What does this do?", options: ["Zooms canvas", "Creates perfect circle", "Fills with color", "Deletes layer"], answer: "Creates perfect circle" }, ml: { question: "എലിപ്സ് ടൂൾ ഉപയോഗിച്ച് വരയ്ക്കുമ്പോൾ നിങ്ങൾ Shift കീ ഉപയോഗിച്ചു. ഇത് എന്തു ചെയ്യുന്നു?", options: ["ക്യാൻവാസ് സൂം ചെയ്യുന്നു", "കൃത്യമായ വൃത്തം സൃഷ്ടിക്കുന്നു", "നിറം നൽകുന്നു", "ലെയർ ഇല്ലാതാക്കുന്നു"], answer: "കൃത്യമായ വൃത്തം സൃഷ്ടിക്കുന്നു" } },
+            { en: { question: "You see white gaps in your Fill Tool result. What should you do?", options: ["Use Move Tool", "Increase Fill Tool threshold", "Use Gradient Tool", "Export file"], answer: "Increase Fill Tool threshold" }, ml: { question: "നിങ്ങളുടെ ഫിൽ ടൂൾ ഫലത്തിൽ വെളുത്ത വിടവുകൾ കാണുന്നു. നിങ്ങൾ എന്തു ചെയ്യണം?", options: ["മൂവ് ടൂൾ ഉപയോഗിക്കുക", "ഫിൽ ടൂളിന്റെ ത്രെഷോൾഡ് വർദ്ധിപ്പിക്കുക", "ഗ്രേഡിയന്റ് ടൂൾ ഉപയോഗിക്കുക", "ഫയൽ എക്സ്പോർട്ട് ചെയ്യുക"], answer: "ഫിൽ ടൂളിന്റെ ത്രെഷോൾഡ് വർദ്ധിപ്പിക്കുക" } },
+            { en: { question: "Your stamp brush appears blurry. What's the cause?", options: ["Small canvas", "Low-resolution stamp image", "Wrong selection", "Grid mismatch"], answer: "Low-resolution stamp image" }, ml: { question: "നിങ്ങളുടെ സ്റ്റാമ്പ് ബ്രഷ് മങ്ങിയതായി കാണുന്നു. എന്താണ് കാരണം?", options: ["ചെറിയ ക്യാൻവാസ്", "കുറഞ്ഞ റെസലൂഷനുള്ള സ്റ്റാമ്പ് ചിത്രം", "തെറ്റായ തിരഞ്ഞെടുപ്പ്", "ഗ്രിഡ് പൊരുത്തക്കേട്"], answer: "കുറഞ്ഞ റെസലൂഷനുള്ള സ്റ്റാമ്പ് ചിത്രം" } },
+            { en: { question: "You want to add your bird image to a New Year greeting card. What should you do?", options: ["Use projector", "Trace with pencil", "Copy the Krita image into the greeting card file", "Take photo"], answer: "Copy the Krita image into the greeting card file" }, ml: { question: "നിങ്ങളുടെ പക്ഷിയുടെ ചിത്രം ഒരു പുതുവത്സരാശംസാ കാർഡിൽ ചേർക്കാൻ എന്തു ചെയ്യണം?", options: ["പ്രൊജക്ടർ ഉപയോഗിക്കുക", "പെൻസിൽ ഉപയോഗിച്ച് ട്രേസ് ചെയ്യുക", "ക്രിറ്റ ചിത്രം ആശംസാ കാർഡ് ഫയലിലേക്ക് പകർത്തുക", "ഫോട്ടോ എടുക്കുക"], answer: "ക്രിറ്റ ചിത്രം ആശംസാ കാർഡ് ഫയലിലേക്ക് പകർത്തുക" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 50-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-300">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-900/50' : 'bg-rose-900/50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-100">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+

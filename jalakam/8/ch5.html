@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Internet & Society</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new digital/internet theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0f9ff; /* Sky 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(8, 145, 178, 0.1);
+            border: 1px solid #e0f2fe; /* Sky 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #bae6fd; /* Sky 200 */
+        }
+        .option-btn:hover {
+             background-color: #f0f9ff; /* Sky 50 */
+        }
+        .option-btn.selected {
+            background-color: #0ea5e9; /* Sky 500 for selected */
+            color: white;
+            border-color: #0284c7; /* Sky 600 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #fb7185; /* Rose 400 for wrong */
+            color: #881337;
+            border-color: #f43f5e;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-sky-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-sky-800 mb-2">Digital World Test!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your Internet & Safety Knowledge!</p>
+            <img src="https://placehold.co/400x200/0ea5e9/ffffff?text=Ready+to+Explore%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Digital Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-rose-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3"></div>
+                
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                <h2 id="review-title" class="text-3xl font-black text-sky-800 mb-2">Test Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                <div class="bg-rose-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-rose-800"></span>
+                </div>
+                <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Digital World Test!", welcomeSubtitle: "Test Your Internet & Safety Knowledge!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "ഡിജിറ്റൽ ലോക ടെസ്റ്റ്!", welcomeSubtitle: "നിങ്ങളുടെ ഇന്റർനെറ്റ്, സുരക്ഷാ പരിജ്ഞാനം പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- Full Question Bank (50 questions) from the provided list ---
+        const fullQuizData = [
+            { en: { question: "What is the Internet often compared to, due to its vastness and connectivity?", options: ["A data card", "A small computer", "A digital repository", "A private server"], answer: "A digital repository" }, ml: { question: "ഇന്റർനെറ്റിന്റെ വ്യാപ്തിയും കണക്റ്റിവിറ്റിയും കാരണം അതിനെ എന്തുമായിട്ടാണ് പലപ്പോഴും താരതമ്യം ചെയ്യുന്നത്?", options: ["ഒരു ഡാറ്റാ കാർഡ്", "ഒരു ചെറിയ കമ്പ്യൂട്ടർ", "ഒരു ഡിജിറ്റൽ ശേഖരം", "ഒരു സ്വകാര്യ സെർവർ"], answer: "ഒരു ഡിജിറ്റൽ ശേഖരം" } },
+            { en: { question: "What made the 'Keyboard Cat' video an Internet sensation?", options: ["It was the first video ever recorded", "It had special effects", "It went viral on YouTube", "It was made by Google"], answer: "It went viral on YouTube" }, ml: { question: "'കീബോർഡ് ക്യാറ്റ്' വീഡിയോ ഒരു ഇന്റർനെറ്റ് സെൻസേഷനാകാൻ കാരണമെന്താണ്?", options: ["അത് ആദ്യമായി റെക്കോർഡ് ചെയ്ത വീഡിയോ ആയിരുന്നു", "അതിൽ പ്രത്യേക ഇഫക്റ്റുകൾ ഉണ്ടായിരുന്നു", "അത് യൂട്യൂബിൽ വൈറലായി", "അത് ഗൂഗിൾ നിർമ്മിച്ചതാണ്"], answer: "അത് യൂട്യൂബിൽ വൈറലായി" } },
+            { en: { question: "What is the role of a search engine?", options: ["To create content", "To provide internet security", "To find information from the internet", "To block viruses"], answer: "To find information from the internet" }, ml: { question: "ഒരു സെർച്ച് എഞ്ചിന്റെ പങ്ക് എന്താണ്?", options: ["ഉള്ളടക്കം സൃഷ്ടിക്കാൻ", "ഇന്റർനെറ്റ് സുരക്ഷ നൽകാൻ", "ഇന്റർനെറ്റിൽ നിന്ന് വിവരങ്ങൾ കണ്ടെത്താൻ", "വൈറസുകളെ തടയാൻ"], answer: "ഇന്റർനെറ്റിൽ നിന്ന് വിവരങ്ങൾ കണ്ടെത്താൻ" } },
+            { en: { question: "What does WWW stand for?", options: ["Wide Web World", "World Wide Web", "Wired Web World", "World Web Width"], answer: "World Wide Web" }, ml: { question: "WWW എന്നതിൻ്റെ പൂർണ്ണരൂപം എന്താണ്?", options: ["വൈഡ് വെബ് വേൾഡ്", "വേൾഡ് വൈഡ് വെബ്", "വയർഡ് വെബ് വേൾഡ്", "വേൾഡ് വെബ് വിഡ്ത്ത്"], answer: "വേൾഡ് വൈഡ് വെബ്" } },
+            { en: { question: "What is ARPANET known for?", options: ["A famous website", "The first email software", "The first public computer network", "A modern gaming app"], answer: "The first public computer network" }, ml: { question: "ARPANET എന്തിനാണ് അറിയപ്പെടുന്നത്?", options: ["ഒരു പ്രശസ്ത വെബ്സൈറ്റ്", "ആദ്യത്തെ ഇമെയിൽ സോഫ്റ്റ്‌വെയർ", "ആദ്യത്തെ പൊതു കമ്പ്യൂട്ടർ നെറ്റ്‌വർക്ക്", "ഒരു ആധുനിക ഗെയിമിംഗ് ആപ്പ്"], answer: "ആദ്യത്തെ പൊതു കമ്പ്യൂട്ടർ നെറ്റ്‌വർക്ക്" } },
+            { en: { question: "Which country introduced email in 1986?", options: ["USA", "UK", "China", "India"], answer: "India" }, ml: { question: "1986-ൽ ഇമെയിൽ അവതരിപ്പിച്ച രാജ്യം ഏതാണ്?", options: ["യുഎസ്എ", "യുകെ", "ചൈന", "ഇന്ത്യ"], answer: "ഇന്ത്യ" } },
+            { en: { question: "What does TCP/IP enable in computer networks?", options: ["Graphics creation", "Hardware connection", "Communication between devices", "Sound recording"], answer: "Communication between devices" }, ml: { question: "കമ്പ്യൂട്ടർ നെറ്റ്‌വർക്കുകളിൽ TCP/IP എന്ത് പ്രവർത്തനക്ഷമമാക്കുന്നു?", options: ["ഗ്രാഫിക്സ് നിർമ്മാണം", "ഹാർഡ്‌വെയർ കണക്ഷൻ", "ഉപകരണങ്ങൾക്കിടയിലുള്ള ആശയവിനിമയം", "ശബ്ദ റെക്കോർഡിംഗ്"], answer: "ഉപകരണങ്ങൾക്കിടയിലുള്ള ആശയവിനിമയം" } },
+            { en: { question: "Who developed the concept of the World Wide Web?", options: ["Bob Kahn", "Ray Tomlinson", "Vint Cerf", "Tim Berners-Lee"], answer: "Tim Berners-Lee" }, ml: { question: "വേൾഡ് വൈഡ് വെബ് എന്ന ആശയം വികസിപ്പിച്ചെടുത്തത് ആരാണ്?", options: ["ബോബ് കാൻ", "റേ ടോംലിൻസൺ", "വിന്റ് സെർഫ്", "ടിം ബർണേഴ്സ്-ലീ"], answer: "ടിം ബർണേഴ്സ്-ലീ" } },
+            { en: { question: "Which search engine was renamed as Google in 1998?", options: ["Mosaic", "Backrub", "Bing", "Mozilla"], answer: "Backrub" }, ml: { question: "1998-ൽ ഗൂഗിൾ എന്ന് പുനർനാമകരണം ചെയ്യപ്പെട്ട സെർച്ച് എഞ്ചിൻ ഏതാണ്?", options: ["മൊസൈക്ക്", "ബാക്ക്റബ്", "ബിംഗ്", "മോസില്ല"], answer: "ബാക്ക്റബ്" } },
+            { en: { question: "What was the significance of Mosaic?", options: ["It was the first email client", "It was the first web browser", "It was a virus protection tool", "It was a chat application"], answer: "It was the first web browser" }, ml: { question: "മൊസൈക്കിന്റെ പ്രാധാന്യം എന്തായിരുന്നു?", options: ["അത് ആദ്യത്തെ ഇമെയിൽ ക്ലയിന്റായിരുന്നു", "അത് ആദ്യത്തെ വെബ് ബ്രൗസറായിരുന്നു", "അതൊരു വൈറസ് സംരക്ഷണ ഉപകരണമായിരുന്നു", "അതൊരു ചാറ്റ് ആപ്ലിക്കേഷനായിരുന്നു"], answer: "അത് ആദ്യത്തെ വെബ് ബ്രൗസറായിരുന്നു" } },
+            { en: { question: "What is a node in computer networks?", options: ["A type of software", "A link between servers", "A connected device in the network", "A central server"], answer: "A connected device in the network" }, ml: { question: "കമ്പ്യൂട്ടർ നെറ്റ്‌വർക്കുകളിലെ ഒരു 'നോഡ്' എന്താണ്?", options: ["ഒരുതരം സോഫ്റ്റ്‌വെയർ", "സെർവറുകൾക്കിടയിലുള്ള ഒരു ലിങ്ക്", "നെറ്റ്‌വർക്കിൽ ബന്ധിപ്പിച്ചിട്ടുള്ള ഒരു ഉപകരണം", "ഒരു കേന്ദ്ര സെർവർ"], answer: "നെറ്റ്‌വർക്കിൽ ബന്ധിപ്പിച്ചിട്ടുള്ള ഒരു ഉപകരണം" } },
+            { en: { question: "What is the purpose of a network protocol?", options: ["To scan for viruses", "To connect printers", "To define rules for communication", "To update software"], answer: "To define rules for communication" }, ml: { question: "ഒരു നെറ്റ്‌വർക്ക് പ്രോട്ടോക്കോളിന്റെ ഉദ്ദേശ്യം എന്താണ്?", options: ["വൈറസുകൾക്കായി സ്കാൻ ചെയ്യാൻ", "പ്രിന്ററുകൾ ബന്ധിപ്പിക്കാൻ", "ആശയവിനിമയത്തിനുള്ള നിയമങ്ങൾ നിർവചിക്കാൻ", "സോഫ്റ്റ്‌വെയർ അപ്ഡേറ്റ് ചെയ്യാൻ"], answer: "ആശയവിനിമയത്തിനുള്ള നിയമങ്ങൾ നിർവചിക്കാൻ" } },
+            { en: { question: "What kind of content can a website include?", options: ["Only text", "Only images", "Text, images, videos, animations", "Only hyperlinks"], answer: "Text, images, videos, animations" }, ml: { question: "ഒരു വെബ്സൈറ്റിൽ ഏത് തരം ഉള്ളടക്കം ഉൾപ്പെടുത്താം?", options: ["ടെക്സ്റ്റ് മാത്രം", "ചിത്രങ്ങൾ മാത്രം", "ടെക്സ്റ്റ്, ചിത്രങ്ങൾ, വീഡിയോകൾ, ആനിമേഷനുകൾ", "ഹൈപ്പർലിങ്കുകൾ മാത്രം"], answer: "ടെക്സ്റ്റ്, ചിത്രങ്ങൾ, വീഡിയോകൾ, ആനിമേഷനുകൾ" } },
+            { en: { question: "What are ‘search snippets’?", options: ["Complete web pages", "Advertisements", "Preview content in search results", "Email headers"], answer: "Preview content in search results" }, ml: { question: "എന്താണ് 'സെർച്ച് സ്നിപ്പറ്റുകൾ'?", options: ["പൂർണ്ണമായ വെബ് പേജുകൾ", "പരസ്യങ്ങൾ", "തിരയൽ ഫലങ്ങളിലെ പ്രിവ്യൂ ഉള്ളടക്കം", "ഇമെയിൽ ഹെഡറുകൾ"], answer: "തിരയൽ ഫലങ്ങളിലെ പ്രിവ്യൂ ഉള്ളടക്കം" } },
+            { en: { question: "Why do different search engines show different results for the same search term?", options: ["They access different websites", "They have different logos", "They use different hardware", "They work only at night"], answer: "They access different websites" }, ml: { question: "ഒരേ തിരയൽ പദത്തിന് വ്യത്യസ്ത സെർച്ച് എഞ്ചിനുകൾ വ്യത്യസ്ത ഫലങ്ങൾ കാണിക്കുന്നത് എന്തുകൊണ്ട്?", options: ["അവ വ്യത്യസ്ത വെബ്സൈറ്റുകൾ ആക്സസ് ചെയ്യുന്നു", "അവയ്ക്ക് വ്യത്യസ്ത ലോഗോകളുണ്ട്", "അവ വ്യത്യസ്ത ഹാർഡ്‌വെയർ ഉപയോഗിക്കുന്നു", "അവ രാത്രിയിൽ മാത്രം പ്രവർത്തിക്കുന്നു"], answer: "അവ വ്യത്യസ്ത വെബ്സൈറ്റുകൾ ആക്സസ് ചെയ്യുന്നു" } },
+            { en: { question: "What is one reason why the Internet is considered useful?", options: ["It stores old machines", "It plays games only", "It helps in communication and knowledge sharing", "It replaces books"], answer: "It helps in communication and knowledge sharing" }, ml: { question: "ഇന്റർനെറ്റ് ഉപയോഗപ്രദമായി കണക്കാക്കാനുള്ള ഒരു കാരണം എന്താണ്?", options: ["അത് പഴയ യന്ത്രങ്ങൾ സൂക്ഷിക്കുന്നു", "അത് ഗെയിമുകൾ മാത്രം കളിക്കുന്നു", "അത് ആശയവിനിമയത്തിനും വിജ്ഞാനം പങ്കുവെക്കുന്നതിനും സഹായിക്കുന്നു", "അത് പുസ്തകങ്ങൾക്ക് പകരമാകുന്നു"], answer: "അത് ആശയവിനിമയത്തിനും വിജ്ഞാനം പങ്കുവെക്കുന്നതിനും സഹായിക്കുന്നു" } },
+            { en: { question: "What is a creative use of the Internet mentioned in the textbook?", options: ["Washing clothes", "Telemedicine", "Driving cars", "Writing exams"], answer: "Telemedicine" }, ml: { question: "പാഠപുസ്തകത്തിൽ പരാമർശിച്ചിരിക്കുന്ന ഇന്റർനെറ്റിന്റെ ഒരു ക്രിയാത്മക ഉപയോഗം എന്താണ്?", options: ["വസ്ത്രങ്ങൾ അലക്കൽ", "ടെലിമെഡിസിൻ", "കാറുകൾ ഓടിക്കൽ", "പരീക്ഷകൾ എഴുതൽ"], answer: "ടെലിമെഡിസിൻ" } },
+            { en: { question: "What does the term 'intent recognition' mean in internet search?", options: ["Tracking mouse movements", "Recognizing what the user wants to search", "Identifying the user’s device", "Copying search queries"], answer: "Recognizing what the user wants to search" }, ml: { question: "ഇന്റർനെറ്റ് തിരയലിൽ 'ഇന്റന്റ് റെക്കഗ്നിഷൻ' എന്ന പദത്തിന്റെ അർത്ഥമെന്താണ്?", options: ["മൗസ് ചലനങ്ങൾ ട്രാക്ക് ചെയ്യൽ", "ഉപയോക്താവ് എന്ത് തിരയാൻ ആഗ്രഹിക്കുന്നുവെന്ന് തിരിച്ചറിയൽ", "ഉപയോക്താവിന്റെ ഉപകരണം തിരിച്ചറിയൽ", "തിരയൽ ചോദ്യങ്ങൾ പകർത്തൽ"], answer: "ഉപയോക്താവ് എന്ത് തിരയാൻ ആഗ്രഹിക്കുന്നുവെന്ന് തിരിച്ചറിയൽ" } },
+            { en: { question: "Which of the following helps filter search results legally?", options: ["Click-and-drag", "Ad blocker", "Usage Rights filter", "Bookmark tool"], answer: "Usage Rights filter" }, ml: { question: "നിയമപരമായി തിരയൽ ഫലങ്ങൾ ഫിൽട്ടർ ചെയ്യാൻ താഴെ പറയുന്നവയിൽ ഏതാണ് സഹായിക്കുന്നത്?", options: ["ക്ലിക്ക് ആൻഡ് ഡ്രാഗ്", "ആഡ് ബ്ലോക്കർ", "ഉപയോഗാവകാശ ഫിൽട്ടർ", "ബുക്ക്മാർക്ക് ടൂൾ"], answer: "ഉപയോഗാവകാശ ഫിൽട്ടർ" } },
+            { en: { question: "Which license ensures only limited use of copyrighted material for education and research?", options: ["Copyleft", "Creative Commons", "Fair Use", "Proprietary License"], answer: "Fair Use" }, ml: { question: "വിദ്യാഭ്യാസത്തിനും ഗവേഷണത്തിനും പകർപ്പവകാശമുള്ള മെറ്റീരിയലിന്റെ പരിമിതമായ ഉപയോഗം മാത്രം ഉറപ്പാക്കുന്ന ലൈസൻസ് ഏതാണ്?", options: ["കോപ്പിലെഫ്റ്റ്", "ക്രിയേറ്റീവ് കോമൺസ്", "ഫെയർ യൂസ്", "പ്രൊപ്രൈറ്ററി ലൈസൻസ്"], answer: "ഫെയർ യൂസ്" } },
+            { en: { question: "What does the Copyleft license allow?", options: ["Unlimited commercial use", "Total restriction on use", "Free use and modification", "Private access only"], answer: "Free use and modification" }, ml: { question: "കോപ്പിലെഫ്റ്റ് ലൈസൻസ് എന്ത് അനുവദിക്കുന്നു?", options: ["അൺലിമിറ്റഡ് വാണിജ്യ ഉപയോഗം", "ഉപയോഗത്തിൽ പൂർണ്ണമായ നിയന്ത്രണം", "സൗജന്യ ഉപയോഗവും പരിഷ്കരണവും", "സ്വകാര്യ ആക്സസ് മാത്രം"], answer: "സൗജന്യ ഉപയോഗവും പരിഷ്കരണവും" } },
+            { en: { question: "Which version of the Web introduced user-generated content and social media?", options: ["Web 1.0", "Web 2.0", "Web 3.0", "Web 4.0"], answer: "Web 2.0" }, ml: { question: "വെബ്ബിന്റെ ഏത് പതിപ്പാണ് ഉപയോക്താക്കൾ സൃഷ്ടിച്ച ഉള്ളടക്കവും സോഷ്യൽ മീഡിയയും അവതരിപ്പിച്ചത്?", options: ["വെബ് 1.0", "വെബ് 2.0", "വെബ് 3.0", "വെബ് 4.0"], answer: "വെബ് 2.0" } },
+            { en: { question: "What are some examples of Web 3.0 features?", options: ["Static pages", "Hyperlinks only", "AI-based personalized search", "Print-friendly content"], answer: "AI-based personalized search" }, ml: { question: "വെബ് 3.0 സവിശേഷതകളുടെ ചില ഉദാഹരണങ്ങൾ ഏവ?", options: ["സ്റ്റാറ്റിക് പേജുകൾ", "ഹൈപ്പർലിങ്കുകൾ മാത്രം", "AI അടിസ്ഥാനമാക്കിയുള്ള വ്യക്തിഗത തിരയൽ", "പ്രിന്റ്-ഫ്രണ്ട്ലി ഉള്ളടക്കം"], answer: "AI അടിസ്ഥാനമാക്കിയുള്ള വ്യക്തിഗത തിരയൽ" } },
+            { en: { question: "Which web version integrates virtual reality and IoT?", options: ["Web 1.0", "Web 2.0", "Web 3.0", "Web 4.0"], answer: "Web 4.0" }, ml: { question: "ഏത് വെബ് പതിപ്പാണ് വെർച്വൽ റിയാലിറ്റിയും IoT-യും സംയോജിപ്പിക്കുന്നത്?", options: ["വെബ് 1.0", "വെബ് 2.0", "വെബ് 3.0", "വെബ് 4.0"], answer: "വെബ് 4.0" } },
+            { en: { question: "What does eSIM allow in smart devices?", options: ["Faster charging", "SIM removal", "Digital mobile network access without physical SIM", "Free calls"], answer: "Digital mobile network access without physical SIM" }, ml: { question: "സ്മാർട്ട് ഉപകരണങ്ങളിൽ eSIM എന്ത് അനുവദിക്കുന്നു?", options: ["വേഗതയേറിയ ചാർജിംഗ്", "സിം നീക്കംചെയ്യൽ", "ഫിസിക്കൽ സിം ഇല്ലാതെ ഡിജിറ്റൽ മൊബൈൽ നെറ്റ്‌വർക്ക് ആക്സസ്", "സൗജന്യ കോളുകൾ"], answer: "ഫിസിക്കൽ സിം ഇല്ലാതെ ഡിജിറ്റൽ മൊബൈൽ നെറ്റ്‌വർക്ക് ആക്സസ്" } },
+            { en: { question: "Which generation of mobile technology supports ultra-high-speed internet?", options: ["2G", "4G", "5G", "6G"], answer: "6G" }, ml: { question: "അൾട്രാ-ഹൈ-സ്പീഡ് ഇന്റർനെറ്റിനെ പിന്തുണയ്ക്കുന്ന മൊബൈൽ സാങ്കേതികവിദ്യയുടെ ഏത് തലമുറയാണ്?", options: ["2G", "4G", "5G", "6G"], answer: "6G" } },
+            { en: { question: "What is a screen magnifier used for?", options: ["Security", "Voice recognition", "Enlarging content for visibility", "Translation"], answer: "Enlarging content for visibility" }, ml: { question: "ഒരു സ്ക്രീൻ മാഗ്നിഫയർ എന്തിനാണ് ഉപയോഗിക്കുന്നത്?", options: ["സുരക്ഷ", "വോയിസ് റെക്കഗ്നിഷൻ", "കാഴ്ചയ്ക്കായി ഉള്ളടക്കം വലുതാക്കൽ", "വിവർത്തനം"], answer: "കാഴ്ചയ്ക്കായി ഉള്ളടക്കം വലുതാക്കൽ" } },
+            { en: { question: "What is the function of a subtitle tool?", options: ["Translate books", "Add headings to emails", "Provide captions for audio content", "Highlight menus"], answer: "Provide captions for audio content" }, ml: { question: "ഒരു സബ്ടൈറ്റിൽ ടൂളിന്റെ പ്രവർത്തനം എന്താണ്?", options: ["പുസ്തകങ്ങൾ വിവർത്തനം ചെയ്യുക", "ഇമെയിലുകളിലേക്ക് തലക്കെട്ടുകൾ ചേർക്കുക", "ഓഡിയോ ഉള്ളടക്കത്തിന് അടിക്കുറിപ്പുകൾ നൽകുക", "മെനുകൾ ഹൈലൈറ്റ് ചെയ്യുക"], answer: "ഓഡിയോ ഉള്ളടക്കത്തിന് അടിക്കുറിപ്പുകൾ നൽകുക" } },
+            { en: { question: "Which tool translates speech into text instantly?", options: ["Subtitle maker", "Translator app", "Real-time translator", "OCR scanner"], answer: "Real-time translator" }, ml: { question: "ഏത് ഉപകരണമാണ് സംഭാഷണത്തെ തൽക്ഷണം ടെക്സ്റ്റിലേക്ക് വിവർത്തനം ചെയ്യുന്നത്?", options: ["സബ്ടൈറ്റിൽ മേക്കർ", "ട്രാൻസ്ലേറ്റർ ആപ്പ്", "റിയൽ-ടൈം ട്രാൻസ്ലേറ്റർ", "OCR സ്കാനർ"], answer: "റിയൽ-ടൈം ട്രാൻസ്ലേറ്റർ" } },
+            { en: { question: "What is a smart assistant?", options: ["A digital drawing app", "AI-based helper that performs tasks", "Antivirus software", "A type of router"], answer: "AI-based helper that performs tasks" }, ml: { question: "എന്താണ് ഒരു സ്മാർട്ട് അസിസ്റ്റന്റ്?", options: ["ഒരു ഡിജിറ്റൽ ഡ്രോയിംഗ് ആപ്പ്", "ചുമതലകൾ നിർവഹിക്കുന്ന AI അടിസ്ഥാനമാക്കിയുള്ള സഹായി", "ആന്റിവൈറസ് സോഫ്റ്റ്‌വെയർ", "ഒരുതരം റൂട്ടർ"], answer: "ചുമതലകൾ നിർവഹിക്കുന്ന AI അടിസ്ഥാനമാക്കിയുള്ള സഹായി" } },
+            { en: { question: "Which is a common example of a virtual assistant?", options: ["VLC Player", "Amazon Alexa", "Google Chrome", "MS Paint"], answer: "Amazon Alexa" }, ml: { question: "ഒരു വെർച്വൽ അസിസ്റ്റന്റിന്റെ സാധാരണ ഉദാഹരണം ഏതാണ്?", options: ["വിഎൽസി പ്ലെയർ", "ആമസോൺ അലക്സ", "ഗൂഗിൾ ക്രോം", "എംഎസ് പെയിന്റ്"], answer: "ആമസോൺ അലക്സ" } },
+            { en: { question: "Which of these is an example of secure access to web platforms?", options: ["Printing documents", "OTP (One Time Password)", "Right-click menu", "Auto-save feature"], answer: "OTP (One Time Password)" }, ml: { question: "വെബ് പ്ലാറ്റ്‌ഫോമുകളിലേക്കുള്ള സുരക്ഷിതമായ ആക്‌സസ്സിന്റെ ഉദാഹരണം ഏതാണ്?", options: ["ഡോക്യുമെന്റുകൾ പ്രിന്റ് ചെയ്യൽ", "OTP (വൺ ടൈം പാസ്‌വേഡ്)", "റൈറ്റ്-ക്ലിക്ക് മെനു", "ഓട്ടോ-സേവ് ഫീച്ചർ"], answer: "OTP (വൺ ടൈം പാസ്‌വേഡ്)" } },
+            { en: { question: "What must you check before using online content?", options: ["Internet speed", "Author’s name", "License or usage rights", "Bookmark count"], answer: "License or usage rights" }, ml: { question: "ഓൺലൈൻ ഉള്ളടക്കം ഉപയോഗിക്കുന്നതിന് മുമ്പ് നിങ്ങൾ എന്ത് പരിശോധിക്കണം?", options: ["ഇന്റർനെറ്റ് വേഗത", "രചയിതാവിന്റെ പേര്", "ലൈസൻസ് അല്ലെങ്കിൽ ഉപയോഗാവകാശം", "ബുക്ക്മാർക്ക് എണ്ണം"], answer: "ലൈസൻസ് അല്ലെങ്കിൽ ഉപയോഗാവകാശം" } },
+            { en: { question: "Why is it risky to use copyrighted material without permission?", options: ["It slows down your device", "It changes the content", "It may lead to legal issues", "It gets deleted"], answer: "It may lead to legal issues" }, ml: { question: "അനുമതിയില്ലാതെ പകർപ്പവകാശമുള്ള മെറ്റീരിയൽ ഉപയോഗിക്കുന്നത് എന്തുകൊണ്ട് അപകടകരമാണ്?", options: ["അത് നിങ്ങളുടെ ഉപകരണത്തിന്റെ വേഗത കുറയ്ക്കുന്നു", "അത് ഉള്ളടക്കം മാറ്റുന്നു", "അത് നിയമപരമായ പ്രശ്നങ്ങളിലേക്ക് നയിച്ചേക്കാം", "അത് ഇല്ലാതാക്കപ്പെടുന്നു"], answer: "അത് നിയമപരമായ പ്രശ്നങ്ങളിലേക്ക് നയിച്ചേക്കാം" } },
+            { en: { question: "Which option best promotes safe internet use for children?", options: ["Share passwords", "Use social media freely", "Browse alone at night", "Use internet with parental knowledge"], answer: "Use internet with parental knowledge" }, ml: { question: "കുട്ടികൾക്ക് സുരക്ഷിതമായ ഇന്റർനെറ്റ് ഉപയോഗം പ്രോത്സാഹിപ്പിക്കുന്ന ഏറ്റവും മികച്ച ഓപ്ഷൻ ഏതാണ്?", options: ["പാസ്‌വേഡുകൾ പങ്കിടുക", "സോഷ്യൽ മീഡിയ സ്വതന്ത്രമായി ഉപയോഗിക്കുക", "രാത്രിയിൽ തനിച്ച് ബ്രൗസ് ചെയ്യുക", "മാതാപിതാക്കളുടെ അറിവോടെ ഇന്റർനെറ്റ് ഉപയോഗിക്കുക"], answer: "മാതാപിതാക്കളുടെ അറിവോടെ ഇന്റർനെറ്റ് ഉപയോഗിക്കുക" } },
+            { en: { question: "Which was the first public computer network?", options: ["Wi-Fi", "TCP/IP", "ARPANET", "Mosaic"], answer: "ARPANET" }, ml: { question: "ആദ്യത്തെ പൊതു കമ്പ്യൂട്ടർ നെറ്റ്‌വർക്ക് ഏതായിരുന്നു?", options: ["വൈ-ഫൈ", "TCP/IP", "ARPANET", "മൊസൈക്ക്"], answer: "ARPANET" } },
+            { en: { question: "Which country first declared Internet as a citizen’s right in India?", options: ["Tamil Nadu", "Maharashtra", "Kerala", "Karnataka"], answer: "Kerala" }, ml: { question: "ഇന്ത്യയിൽ ആദ്യമായി ഇന്റർനെറ്റ് ഒരു പൗരന്റെ അവകാശമായി പ്രഖ്യാപിച്ച സംസ്ഥാനം ഏതാണ്?", options: ["തമിഴ്നാട്", "മഹാരാഷ്ട്ര", "കേരളം", "കർണാടക"], answer: "കേരളം" } },
+            { en: { question: "Which Indian project aimed at enabling digital access through Akshaya centers?", options: ["e-Bharat", "Akshaya Project", "Smart India", "K-Internet"], answer: "Akshaya Project" }, ml: { question: "അക്ഷയ കേന്ദ്രങ്ങളിലൂടെ ഡിജിറ്റൽ പ്രവേശനം സാധ്യമാക്കാൻ ലക്ഷ്യമിട്ട ഇന്ത്യൻ പദ്ധതി ഏതാണ്?", options: ["ഇ-ഭാരത്", "അക്ഷയ പ്രോജക്ട്", "സ്മാർട്ട് ഇന്ത്യ", "കെ-ഇന്റർനെറ്റ്"], answer: "അക്ഷയ പ്രോജക്ട്" } },
+            { en: { question: "What does a 'Node' refer to in a computer network?", options: ["A wire", "A website", "A connected device", "A keyboard"], answer: "A connected device" }, ml: { question: "ഒരു കമ്പ്യൂട്ടർ നെറ്റ്‌വർക്കിൽ 'നോഡ്' എന്തിനെയാണ് സൂചിപ്പിക്കുന്നത്?", options: ["ഒരു വയർ", "ഒരു വെബ്സൈറ്റ്", "ബന്ധിപ്പിച്ച ഒരു ഉപകരണം", "ഒരു കീബോർഡ്"], answer: "ബന്ധിപ്പിച്ച ഒരു ഉപകരണം" } },
+            { en: { question: "Which of these is not a type of internet usage rights?", options: ["Copyright", "Copyleft", "Creative Commons", "Firewall"], answer: "Firewall" }, ml: { question: "ഇവയിൽ ഏതാണ് ഇന്റർനെറ്റ് ഉപയോഗാവകാശത്തിന്റെ ഒരു തരം അല്ലാത്തത്?", options: ["പകർപ്പവകാശം", "കോപ്പിലെഫ്റ്റ്", "ക്രിയേറ്റീവ് കോമൺസ്", "ഫയർവാൾ"], answer: "ഫയർവാൾ" } },
+            { en: { question: "Which tool helps the hearing impaired understand videos better?", options: ["OCR Reader", "Sub Title Tool", "Antivirus", "Smartwatch"], answer: "Sub Title Tool" }, ml: { question: "കേൾവിക്കുറവുള്ളവർക്ക് വീഡിയോകൾ നന്നായി മനസ്സിലാക്കാൻ ഏത് ഉപകരണം സഹായിക്കുന്നു?", options: ["OCR റീഡർ", "സബ്ടൈറ്റിൽ ടൂൾ", "ആന്റിവൈറസ്", "സ്മാർട്ട് വാച്ച്"], answer: "സബ്ടൈറ്റിൽ ടൂൾ" } },
+            { en: { question: "Which mobile network generation supports AR/VR and autonomous vehicles?", options: ["2G", "3G", "4G", "5G"], answer: "5G" }, ml: { question: "ഏത് മൊബൈൽ നെറ്റ്‌വർക്ക് തലമുറയാണ് AR/VR, ഓട്ടോണമസ് വാഹനങ്ങളെ പിന്തുണയ്ക്കുന്നത്?", options: ["2G", "3G", "4G", "5G"], answer: "5G" } },
+            { en: { question: "Which was the first web browser launched?", options: ["Chrome", "Firefox", "Mosaic", "Opera"], answer: "Mosaic" }, ml: { question: "ആദ്യമായി പുറത്തിറക്കിയ വെബ് ബ്രൗസർ ഏതായിരുന്നു?", options: ["ക്രോം", "ഫയർഫോക്സ്", "മൊസൈക്ക്", "ഓപ്പറ"], answer: "മൊസൈക്ക്" } },
+            { en: { question: "Which act governs digital rights in India?", options: ["IT Act", "Cyber Law", "Digital India Act", "e-Governance Act"], answer: "IT Act" }, ml: { question: "ഇന്ത്യയിലെ ഡിജിറ്റൽ അവകാശങ്ങളെ നിയന്ത്രിക്കുന്ന നിയമം ഏതാണ്?", options: ["ഐടി ആക്ട്", "സൈബർ നിയമം", "ഡിജിറ്റൽ ഇന്ത്യ ആക്ട്", "ഇ-ഗവേണൻസ് ആക്ട്"], answer: "ഐടി ആക്ട്" } },
+            { en: { question: "What is the purpose of a Creative Commons License?", options: ["Prevent all sharing", "Promote paid use", "Enable free use with conditions", "Allow copying without credit"], answer: "Enable free use with conditions" }, ml: { question: "ഒരു ക്രിയേറ്റീവ് കോമൺസ് ലൈസൻസിന്റെ ഉദ്ദേശ്യം എന്താണ്?", options: ["എല്ലാ പങ്കുവെക്കലും തടയുക", "പണമടച്ചുള്ള ഉപയോഗം പ്രോത്സാഹിപ്പിക്കുക", "വ്യവസ്ഥകളോടെ സൗജന്യ ഉപയോഗം സാധ്യമാക്കുക", "കടപ്പാടില്ലാതെ പകർത്താൻ അനുവദിക്കുക"], answer: "വ്യവസ്ഥകളോടെ സൗജന്യ ഉപയോഗം സാധ്യമാക്കുക" } },
+            { en: { question: "What is the main goal of assistive tools?", options: ["Entertainment", "Navigation", "Accessibility", "Gaming"], answer: "Accessibility" }, ml: { question: "സഹായക ഉപകരണങ്ങളുടെ പ്രധാന ലക്ഷ്യം എന്താണ്?", options: ["വിനോദം", "നാവിഗേഷൻ", "ലഭ്യത", "ഗെയിമിംഗ്"], answer: "ലഭ്യത" } },
+            { en: { question: "Which search engine was earlier named Backrub?", options: ["Yahoo", "Bing", "Google", "DuckDuckGo"], answer: "Google" }, ml: { question: "ഏത് സെർച്ച് എഞ്ചിനാണ് മുമ്പ് ബാക്ക്റബ് എന്ന് പേരിട്ടിരുന്നത്?", options: ["യാഹൂ", "ബിംഗ്", "ഗൂഗിൾ", "ഡക്ക്ഡക്ക്ഗോ"], answer: "ഗൂഗിൾ" } },
+            { en: { question: "Which search engine feature shows combined content previews?", options: ["Snippets", "Tags", "Meta titles", "Links"], answer: "Snippets" }, ml: { question: "ഏത് സെർച്ച് എഞ്ചിൻ ഫീച്ചറാണ് സംയോജിത ഉള്ളടക്ക പ്രിവ്യൂകൾ കാണിക്കുന്നത്?", options: ["സ്നിപ്പറ്റുകൾ", "ടാഗുകൾ", "മെറ്റാ ടൈറ്റിലുകൾ", "ലിങ്കുകൾ"], answer: "സ്നിപ്പറ്റുകൾ" } },
+            { en: { question: "How many generations of Web are mentioned in the textbook?", options: ["2", "3", "4", "5"], answer: "4" }, ml: { question: "പാഠപുസ്തകത്തിൽ വെബ്ബിന്റെ എത്ര തലമുറകളെക്കുറിച്ച് പരാമർശിക്കുന്നു?", options: ["2", "3", "4", "5"], answer: "4" } },
+            { en: { question: "Which tool magnifies text for low-vision users?", options: ["VoiceOver", "Screen Reader", "Screen Magnifier", "Auto Zoom"], answer: "Screen Magnifier" }, ml: { question: "കാഴ്ച കുറഞ്ഞ ഉപയോക്താക്കൾക്കായി ടെക്സ്റ്റ് വലുതാക്കുന്ന ഉപകരണം ഏതാണ്?", options: ["വോയിസ് ഓവർ", "സ്ക്രീൻ റീഡർ", "സ്ക്രീൻ മാഗ്നിഫയർ", "ഓട്ടോ സൂം"], answer: "സ്ക്രീൻ മാഗ്നിഫയർ" } },
+            { en: { question: "What does a Real-Time Translator help with?", options: ["Creating audio", "Converting spoken language live", "Screen reading", "Virus removal"], answer: "Converting spoken language live" }, ml: { question: "ഒരു റിയൽ-ടൈം ട്രാൻസ്ലേറ്റർ എന്തിന് സഹായിക്കുന്നു?", options: ["ഓഡിയോ സൃഷ്ടിക്കാൻ", "സംസാരിക്കുന്ന ഭാഷ തത്സമയം പരിവർത്തനം ചെയ്യാൻ", "സ്ക്രീൻ റീഡിംഗ്", "വൈറസ് നീക്കംചെയ്യൽ"], answer: "സംസാരിക്കുന്ന ഭാഷ തത്സമയം പരിവർത്തനം ചെയ്യാൻ" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 50-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-300">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-900/50' : 'bg-rose-900/50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-100">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+

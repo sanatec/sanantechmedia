@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Digital Literacy Test</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new digital/cyber theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f3e8ff; /* Purple 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(107, 33, 168, 0.1);
+            border: 1px solid #e9d5ff; /* Purple 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #d8b4fe; /* Purple 300 */
+        }
+        .option-btn:hover {
+             background-color: #f5f3ff; /* Violet 50 */
+        }
+        .option-btn.selected {
+            background-color: #8b5cf6; /* Violet 500 for selected */
+            color: white;
+            border-color: #7c3aed; /* Violet 600 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f43f5e; /* Rose 500 for wrong */
+            color: white;
+            border-color: #be123c;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-purple-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-purple-800 mb-2">Digital World Test!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your Internet & Safety Knowledge!</p>
+            <img src="https://placehold.co/400x200/8b5cf6/ffffff?text=Ready+to+Connect%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Digital Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-violet-500 hover:bg-violet-600 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-cyan-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3"></div>
+                
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-violet-500 hover:bg-violet-600 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                <h2 id="review-title" class="text-3xl font-black text-purple-800 mb-2">Test Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                <div class="bg-cyan-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-cyan-800"></span>
+                </div>
+                <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-violet-500 hover:bg-violet-600 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Digital World Test!", welcomeSubtitle: "Test Your Internet & Safety Knowledge!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "ഡിജിറ്റൽ ലോക ടെസ്റ്റ്!", welcomeSubtitle: "നിങ്ങളുടെ ഇന്റർനെറ്റ്, സുരക്ഷാ പരിജ്ഞാനം പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- Full Question Bank (50 questions) from the provided list ---
+        const fullQuizData = [
+            { en: { question: "What does the word 'Wiki' mean in Hawaiian?", options: ["Wisdom", "Share", "Goodness", "Quick"], answer: "Quick" }, ml: { question: "ഹവായിയൻ ഭാഷയിൽ 'വിക്കി' എന്ന വാക്കിന്റെ അർത്ഥമെന്താണ്?", options: ["ജ്ഞാനം", "പങ്കിടുക", "നന്മ", "വേഗത"], answer: "വേഗത" } },
+            { en: { question: "Who created the first wiki?", options: ["Tim Berners-Lee", "Ray Tomlinson", "Ward Cunningham", "Mark Zuckerberg"], answer: "Ward Cunningham" }, ml: { question: "ആരാണ് ആദ്യത്തെ വിക്കി സൃഷ്ടിച്ചത്?", options: ["ടിം ബർണേഴ്സ്-ലീ", "റേ ടോംലിൻസൺ", "വാർഡ് കണ്ണിംഗ്ഹാം", "മാർക്ക് സക്കർബർഗ്"], answer: "വാർഡ് കണ്ണിംഗ്ഹാം" } },
+            { en: { question: "Which of the following is a collaborative knowledge platform?", options: ["Instagram", "Wikipedia", "WhatsApp", "Facebook"], answer: "Wikipedia" }, ml: { question: "താഴെ പറയുന്നവയിൽ ഏതാണ് ഒരു സഹകരണ വിജ്ഞാന പ്ലാറ്റ്ഫോം?", options: ["ഇൻസ്റ്റാഗ്രാം", "വിക്കിപീഡിയ", "വാട്ട്‌സ്ആപ്പ്", "ഫേസ്ബുക്ക്"], answer: "വിക്കിപീഡിയ" } },
+            { en: { question: "Which software is used to create Schoolwiki and Wikipedia?", options: ["Wikiwiki", "Mediawiki", "Wikisoft", "OpenWiki"], answer: "Mediawiki" }, ml: { question: "സ്കൂൾവിക്കിയും വിക്കിപീഡിയയും നിർമ്മിക്കാൻ ഉപയോഗിക്കുന്ന സോഫ്റ്റ്‌വെയർ ഏതാണ്?", options: ["വിക്കിവിക്കി", "മീഡിയവിക്കി", "വിക്കിസോഫ്റ്റ്", "ഓപ്പൺവിക്കി"], answer: "മീഡിയവിക്കി" } },
+            { en: { question: "Which wiki platform is exclusive to Kerala schools?", options: ["Eduwiki", "Schoolpedia", "Schoolwiki", "Keralawiki"], answer: "Schoolwiki" }, ml: { question: "കേരളത്തിലെ സ്കൂളുകൾക്ക് മാത്രമുള്ള വിക്കി പ്ലാറ്റ്ഫോം ഏതാണ്?", options: ["എഡ്യൂവിക്കി", "സ്കൂൾപീഡിയ", "സ്കൂൾവിക്കി", "കേരളവിക്കി"], answer: "സ്കൂൾവിക്കി" } },
+            { en: { question: "What is required to become a Schoolwiki member?", options: ["Aadhaar number", "Phone number", "Email address", "OTP from school"], answer: "Email address" }, ml: { question: "സ്കൂൾവിക്കിയിൽ അംഗമാകാൻ എന്ത് ആവശ്യമാണ്?", options: ["ആധാർ നമ്പർ", "ഫോൺ നമ്പർ", "ഇമെയിൽ വിലാസം", "സ്കൂളിൽ നിന്നുള്ള OTP"], answer: "ഇമെയിൽ വിലാസം" } },
+            { en: { question: "Which feature in Schoolwiki is for editing practice?", options: ["Ezhuthuchan", "Wiki Lab", "Ezhuthukalari", "EditRoom"], answer: "Ezhuthukalari" }, ml: { question: "സ്കൂൾവിക്കിയിൽ എഡിറ്റിംഗ് പരിശീലനത്തിനുള്ള ഫീച്ചർ ഏതാണ്?", options: ["എഴുത്തുചാൻ", "വിക്കി ലാബ്", "എഴുത്തുകളരി", "എഡിറ്റ്റൂം"], answer: "എഴുത്തുകളരി" } },
+            { en: { question: "Who is known as the father of email?", options: ["Mark Zuckerberg", "Steve Jobs", "Ray Tomlinson", "Bill Gates"], answer: "Ray Tomlinson" }, ml: { question: "ഇമെയിലിന്റെ പിതാവ് എന്നറിയപ്പെടുന്നത് ആരാണ്?", options: ["മാർക്ക് സക്കർബർഗ്", "സ്റ്റീവ് ജോബ്സ്", "റേ ടോംലിൻസൺ", "ബിൽ ഗേറ്റ്സ്"], answer: "റേ ടോംലിൻസൺ" } },
+            { en: { question: "Which of the following is not a social media platform?", options: ["Youtube", "Schoolwiki", "Instagram", "WhatsApp"], answer: "Schoolwiki" }, ml: { question: "താഴെ പറയുന്നവയിൽ ഏതാണ് ഒരു സോഷ്യൽ മീഡിയ പ്ലാറ്റ്ഫോം അല്ലാത്തത്?", options: ["യൂട്യൂബ്", "സ്കൂൾവിക്കി", "ഇൻസ്റ്റാഗ്രാം", "വാട്ട്‌സ്ആപ്പ്"], answer: "സ്കൂൾവിക്കി" } },
+            { en: { question: "Which of the following is a professional networking site?", options: ["Twitter", "LinkedIn", "Instagram", "Snapchat"], answer: "LinkedIn" }, ml: { question: "താഴെ പറയുന്നവയിൽ ഏതാണ് ഒരു പ്രൊഫഷണൽ നെറ്റ്‌വർക്കിംഗ് സൈറ്റ്?", options: ["ട്വിറ്റർ", "ലിങ്ക്ഡ്ഇൻ", "ഇൻസ്റ്റാഗ്രാം", "സ്നാപ്ചാറ്റ്"], answer: "ലിങ്ക്ഡ്ഇൻ" } },
+            { en: { question: "What is the meaning of CAPTCHA?", options: ["A security password", "A form of math test", "Human verification method", "A search engine"], answer: "Human verification method" }, ml: { question: "ക്യാപ്ച്ച (CAPTCHA) എന്നതിൻ്റെ അർത്ഥമെന്താണ്?", options: ["ഒരു സുരക്ഷാ പാസ്‌വേഡ്", "ഒരുതരം ഗണിത പരീക്ഷ", "മനുഷ്യനാണോ എന്ന് ഉറപ്പുവരുത്തുന്ന രീതി", "ഒരു സെർച്ച് എഞ്ചിൻ"], answer: "മനുഷ്യനാണോ എന്ന് ഉറപ്പുവരുത്തുന്ന രീതി" } },
+            { en: { question: "In an email address, the part after “@” is called the:", options: ["Username", "Domain", "Extension", "Server"], answer: "Domain" }, ml: { question: "ഒരു ഇമെയിൽ വിലാസത്തിൽ, “@” ന് ശേഷമുള്ള ഭാഗത്തെ എന്തു പറയുന്നു?", options: ["യൂസർ നെയിം", "ഡൊമെയ്ൻ", "എക്സ്റ്റൻഷൻ", "സെർവർ"], answer: "ഡൊമെയ്ൻ" } },
+            { en: { question: "Which service is used for bill payments in Kerala?", options: ["Amazon", "OLX", "KSEB Quickpay", "SBI Card"], answer: "KSEB Quickpay" }, ml: { question: "കേരളത്തിൽ ബിൽ പേയ്‌മെന്റുകൾക്കായി ഉപയോഗിക്കുന്ന സേവനം ഏതാണ്?", options: ["ആമസോൺ", "OLX", "കെഎസ്ഇബി ക്വിക്ക്പേ", "എസ്ബിഐ കാർഡ്"], answer: "കെഎസ്ഇബി ക്വിക്ക്പേ" } },
+            { en: { question: "What is SAMAGRA Plus?", options: ["Social Media Platform", "Student Portal", "Digital Learning Portal", "Shopping Website"], answer: "Digital Learning Portal" }, ml: { question: "എന്താണ് സമഗ്ര പ്ലസ്?", options: ["സോഷ്യൽ മീഡിയ പ്ലാറ്റ്ഫോം", "വിദ്യാർത്ഥി പോർട്ടൽ", "ഡിജിറ്റൽ പഠന പോർട്ടൽ", "ഷോപ്പിംഗ് വെബ്സൈറ്റ്"], answer: "ഡിജിറ്റൽ പഠന പോർട്ടൽ" } },
+            { en: { question: "What are Podcasts?", options: ["Live TV", "Audio blogs", "Video games", "Web series"], answer: "Audio blogs" }, ml: { question: "എന്താണ് പോഡ്‌കാസ്റ്റുകൾ?", options: ["ലൈവ് ടിവി", "ഓഡിയോ ബ്ലോഗുകൾ", "വീഡിയോ ഗെയിമുകൾ", "വെബ് സീരീസ്"], answer: "ഓഡിയോ ബ്ലോഗുകൾ" } },
+            { en: { question: "Which of the following is a cybercrime?", options: ["Browsing", "Blogging", "Phishing", "Streaming"], answer: "Phishing" }, ml: { question: "താഴെ പറയുന്നവയിൽ ഏതാണ് ഒരു സൈബർ കുറ്റകൃത്യം?", options: ["ബ്രൗസിംഗ്", "ബ്ലോഗിംഗ്", "ഫിഷിംഗ്", "സ്ട്രീമിംഗ്"], answer: "ഫിഷിംഗ്" } },
+            { en: { question: "Which cybercrime involves stealing private videos through cameras?", options: ["Cyber stalking", "Camera hacking", "Malware", "Phishing"], answer: "Camera hacking" }, ml: { question: "ക്യാമറകളിലൂടെ സ്വകാര്യ വീഡിയോകൾ മോഷ്ടിക്കുന്നത് ഏത് സൈബർ കുറ്റകൃത്യത്തിൽ ഉൾപ്പെടുന്നു?", options: ["സൈബർ സ്റ്റോക്കിംഗ്", "ക്യാമറ ഹാക്കിംഗ്", "മാൽവെയർ", "ഫിഷിംഗ്"], answer: "ക്യാമറ ഹാക്കിംഗ്" } },
+            { en: { question: "What is the purpose of 2-Factor Authentication?", options: ["To enable faster login", "For secure file sharing", "For added security during login", "To block social media"], answer: "For added security during login" }, ml: { question: "2-ഫാക്ടർ ഓതന്റിക്കേഷന്റെ ഉദ്ദേശ്യം എന്താണ്?", options: ["വേഗത്തിൽ ലോഗിൻ ചെയ്യാൻ", "സുരക്ഷിതമായി ഫയലുകൾ പങ്കിടാൻ", "ലോഗിൻ സമയത്ത് അധിക സുരക്ഷയ്ക്കായി", "സോഷ്യൽ മീഡിയ തടയാൻ"], answer: "ലോഗിൻ സമയത്ത് അധിക സുരക്ഷയ്ക്കായി" } },
+            { en: { question: "Which platform connects job seekers and employers?", options: ["YouTube", "WhatsApp", "LinkedIn", "Telegram"], answer: "LinkedIn" }, ml: { question: "ഏത് പ്ലാറ്റ്ഫോമാണ് തൊഴിലന്വേഷകരെയും തൊഴിൽ ദാതാക്കളെയും ബന്ധിപ്പിക്കുന്നത്?", options: ["യൂട്യൂബ്", "വാട്ട്‌സ്ആപ്പ്", "ലിങ്ക്ഡ്ഇൻ", "ടെലിഗ്രാം"], answer: "ലിങ്ക്ഡ്ഇൻ" } },
+            { en: { question: "IoT stands for:", options: ["Internet of Technology", "Internet of Things", "Interface of Tech", "Internal Operating Tool"], answer: "Internet of Things" }, ml: { question: "IoT എന്നതിന്റെ പൂർണ്ണരൂപം:", options: ["ഇന്റർനെറ്റ് ഓഫ് ടെക്നോളജി", "ഇന്റർനെറ്റ് ഓഫ് തിംഗ്സ്", "ഇന്റർഫേസ് ഓഫ് ടെക്", "ഇന്റേണൽ ഓപ്പറേറ്റിംഗ് ടൂൾ"], answer: "ഇന്റർനെറ്റ് ഓഫ് തിംഗ്സ്" } },
+            { en: { question: "Which feature is used to edit Schoolwiki articles?", options: ["Pravesikkuka", "Thiruthuka", "EditPage", "BoldText"], answer: "Thiruthuka" }, ml: { question: "സ്കൂൾവിക്കി ലേഖനങ്ങൾ എഡിറ്റ് ചെയ്യാൻ ഉപയോഗിക്കുന്ന ഫീച്ചർ ഏതാണ്?", options: ["പ്രവേശിക്കുക", "തിരുത്തുക", "എഡിറ്റ്പേജ്", "ബോൾഡ്ടെക്സ്റ്റ്"], answer: "തിരുത്തുക" } },
+            { en: { question: "Which section in SAMAGRA Plus contains videos and assessments?", options: ["Dashboard", "Reports", "Learning Room", "Online Exams"], answer: "Learning Room" }, ml: { question: "സമഗ്ര പ്ലസിലെ ഏത് വിഭാഗത്തിലാണ് വീഡിയോകളും വിലയിരുത്തലുകളും അടങ്ങിയിരിക്കുന്നത്?", options: ["ഡാഷ്ബോർഡ്", "റിപ്പോർട്ടുകൾ", "ലേണിംഗ് റൂം", "ഓൺലൈൻ പരീക്ഷകൾ"], answer: "ലേണിംഗ് റൂം" } },
+            { en: { question: "What kind of threats are caused by fake messages and job offers?", options: ["Crypto mining", "Malware", "Phishing", "IoT breach"], answer: "Phishing" }, ml: { question: "വ്യാജ സന്ദേശങ്ങളും തൊഴിൽ വാഗ്ദാനങ്ങളും എങ്ങനെയുള്ള ഭീഷണികളാണ് ഉണ്ടാക്കുന്നത്?", options: ["ക്രിപ്റ്റോ മൈനിംഗ്", "മാൽവെയർ", "ഫിഷിംഗ്", "IoT ലംഘനം"], answer: "ഫിഷിംഗ്" } },
+            { en: { question: "Digital currencies use which technology?", options: ["Satellite", "Blockchain", "IP Addressing", "QR Code"], answer: "Blockchain" }, ml: { question: "ഡിജിറ്റൽ കറൻസികൾ ഏത് സാങ്കേതികവിദ്യയാണ് ഉപയോഗിക്കുന്നത്?", options: ["സാറ്റലൈറ്റ്", "ബ്ലോക്ക്ചെയിൻ", "ഐപി അഡ്രസ്സിംഗ്", "ക്യുആർ കോഡ്"], answer: "ബ്ലോക്ക്ചെയിൻ" } },
+            { en: { question: "Which one is NOT a benefit of social media?", options: ["Networking", "Resource exchange", "Offline sharing", "Real-time communication"], answer: "Offline sharing" }, ml: { question: "ഇവയിൽ ഏതാണ് സോഷ്യൽ മീഡിയയുടെ പ്രയോജനമല്ലാത്തത്?", options: ["നെറ്റ്‌വർക്കിംഗ്", "വിഭവ വിനിമയം", "ഓഫ്‌ലൈൻ പങ്കിടൽ", "തത്സമയ ആശയവിനിമയം"], answer: "ഓഫ്‌ലൈൻ പങ്കിടൽ" } },
+            { en: { question: "Which of the following is NOT a safe internet practice?", options: ["Using strong passwords", "Using public Wi-Fi for banking", "Reporting cybercrimes", "Keeping software updated"], answer: "Using public Wi-Fi for banking" }, ml: { question: "താഴെ പറയുന്നവയിൽ ഏതാണ് സുരക്ഷിതമല്ലാത്ത ഇന്റർനെറ്റ് ഉപയോഗരീതി?", options: ["ശക്തമായ പാസ്‌വേഡുകൾ ഉപയോഗിക്കുന്നത്", "ബാങ്കിംഗിനായി പൊതു വൈ-ഫൈ ഉപയോഗിക്കുന്നത്", "സൈബർ കുറ്റകൃത്യങ്ങൾ റിപ്പോർട്ട് ചെയ്യുന്നത്", "സോഫ്റ്റ്‌വെയർ അപ്ഡേറ്റ് ചെയ്യുന്നത്"], answer: "ബാങ്കിംഗിനായി പൊതു വൈ-ഫൈ ഉപയോഗിക്കുന്നത്" } },
+            { en: { question: "Which of the following is an online marketplace?", options: ["OLX", "Samagra", "Schoolwiki", "Zoom"], answer: "OLX" }, ml: { question: "താഴെ പറയുന്നവയിൽ ഏതാണ് ഒരു ഓൺലൈൻ വിപണനകേന്ദ്രം?", options: ["OLX", "സമഗ്ര", "സ്കൂൾവിക്കി", "സൂം"], answer: "OLX" } },
+            { en: { question: "Which of these emails is correctly formatted?", options: ["rajatgmail.com", "rajat@@gmail.com", "rajat@gmail.com", "rajat.gmail@com"], answer: "rajat@gmail.com" }, ml: { question: "ഈ ഇമെയിലുകളിൽ ഏതാണ് ശരിയായി ഫോർമാറ്റ് ചെയ്തിരിക്കുന്നത്?", options: ["rajatgmail.com", "rajat@@gmail.com", "rajat@gmail.com", "rajat.gmail@com"], answer: "rajat@gmail.com" } },
+            { en: { question: "Which crime is related to stealing cryptocurrency?", options: ["Crypto hacking", "Cyber bullying", "Camera hacking", "Spam messaging"], answer: "Crypto hacking" }, ml: { question: "ക്രിപ്‌റ്റോകറൻസി മോഷണവുമായി ബന്ധപ്പെട്ട കുറ്റകൃത്യം ഏതാണ്?", options: ["ക്രിപ്റ്റോ ഹാക്കിംഗ്", "സൈബർ ബുള്ളിയിംഗ്", "ക്യാമറ ഹാക്കിംഗ്", "സ്പാം സന്ദേശമയയ്ക്കൽ"], answer: "ക്രിപ്റ്റോ ഹാക്കിംഗ്" } },
+            { en: { question: "Fact-checking helps to:", options: ["Share memes", "Create viral content", "Avoid fake news", "Improve editing speed"], answer: "Avoid fake news" }, ml: { question: "വസ്തുതാ പരിശോധന എന്തിന് സഹായിക്കുന്നു?", options: ["മീമുകൾ പങ്കിടാൻ", "വൈറൽ ഉള്ളടക്കം സൃഷ്ടിക്കാൻ", "വ്യാജ വാർത്തകൾ ഒഴിവാക്കാൻ", "എഡിറ്റിംഗ് വേഗത മെച്ചപ്പെടുത്താൻ"], answer: "വ്യാജ വാർത്തകൾ ഒഴിവാക്കാൻ" } },
+            { en: { question: "What is the default Schoolwiki practice page called?", options: ["Prakriya", "Ezhuthupura", "Ezhuthukalari", "EditRoom"], answer: "Ezhuthukalari" }, ml: { question: "സ്കൂൾവിക്കിയിലെ ഡിഫോൾട്ട് പരിശീലന പേജിനെ എന്തു പറയുന്നു?", options: ["പ്രക്രിയ", "എഴുത്തുപുര", "എഴുത്തുകളരി", "എഡിറ്റ്റൂം"], answer: "എഴുത്തുകളരി" } },
+            { en: { question: "Which of the following cybercrimes gathers your data and threatens you?", options: ["Crypto hacking", "Malware", "Cyber stalking", "IoT attacks"], answer: "Cyber stalking" }, ml: { question: "താഴെ പറയുന്നവയിൽ ഏത് സൈബർ കുറ്റകൃത്യമാണ് നിങ്ങളുടെ ഡാറ്റ ശേഖരിച്ച് നിങ്ങളെ ഭീഷണിപ്പെടുത്തുന്നത്?", options: ["ക്രിപ്റ്റോ ഹാക്കിംഗ്", "മാൽവെയർ", "സൈബർ സ്റ്റോക്കിംഗ്", "IoT ആക്രമണങ്ങൾ"], answer: "സൈബർ സ്റ്റോക്കിംഗ്" } },
+            { en: { question: "What is used to add images in Schoolwiki pages?", options: ["Insert → File", "Click 'Chithrangalum Mediakalum'", "Paste image directly", "Media Extension Tool"], answer: "Click 'Chithrangalum Mediakalum'" }, ml: { question: "സ്കൂൾവിക്കി പേജുകളിൽ ചിത്രങ്ങൾ ചേർക്കാൻ എന്തുപയോഗിക്കുന്നു?", options: ["ഇൻസേർട്ട് → ഫയൽ", "'ചിത്രങ്ങളും മീഡിയകളും' ക്ലിക്ക് ചെയ്യുക", "ചിത്രം നേരിട്ട് ഒട്ടിക്കുക", "മീഡിയ എക്സ്റ്റൻഷൻ ടൂൾ"], answer: "'ചിത്രങ്ങളും മീഡിയകളും' ക്ലിക്ക് ചെയ്യുക" } },
+            { en: { question: "What is the main role of Wikipedia volunteers?", options: ["Designing", "Blocking users", "Monitoring and correcting content", "Advertising"], answer: "Monitoring and correcting content" }, ml: { question: "വിക്കിപീഡിയ വോളണ്ടിയർമാരുടെ പ്രധാന പങ്ക് എന്താണ്?", options: ["ഡിസൈനിംഗ്", "ഉപയോക്താക്കളെ തടയൽ", "ഉള്ളടക്കം നിരീക്ഷിക്കുകയും തിരുത്തുകയും ചെയ്യുക", "പരസ്യം ചെയ്യൽ"], answer: "ഉള്ളടക്കം നിരീക്ഷിക്കുകയും തിരുത്തുകയും ചെയ്യുക" } },
+            { en: { question: "Which of these is a secure way to use banking apps?", options: ["Using public Wi-Fi", "Sharing passwords", "2-Factor Authentication", "Leaving account logged in"], answer: "2-Factor Authentication" }, ml: { question: "ബാങ്കിംഗ് ആപ്പുകൾ ഉപയോഗിക്കാനുള്ള സുരക്ഷിതമായ മാർഗ്ഗം ഏതാണ്?", options: ["പൊതു വൈ-ഫൈ ഉപയോഗിക്കുന്നത്", "പാസ്‌വേഡുകൾ പങ്കിടുന്നത്", "2-ഫാക്ടർ ഓതന്റിക്കേഷൻ", "അക്കൗണ്ട് ലോഗിൻ ചെയ്ത് വെക്കുന്നത്"], answer: "2-ഫാക്ടർ ഓതന്റിക്കേഷൻ" } },
+            { en: { question: "You want to add your school’s historical info on Schoolwiki. What is required first?", options: ["Sign up with email", "Use a proxy browser", "Ask for OTP from admin", "Edit anonymously"], answer: "Sign up with email" }, ml: { question: "നിങ്ങളുടെ സ്കൂളിന്റെ ചരിത്രപരമായ വിവരങ്ങൾ സ്കൂൾവിക്കിയിൽ ചേർക്കാൻ ആദ്യം എന്തു ചെയ്യണം?", options: ["ഇമെയിൽ ഉപയോഗിച്ച് സൈൻ അപ്പ് ചെയ്യുക", "ഒരു പ്രോക്സി ബ്രൗസർ ഉപയോഗിക്കുക", "അഡ്മിനിൽ നിന്ന് OTP ചോദിക്കുക", "അജ്ഞാതമായി എഡിറ്റ് ചെയ്യുക"], answer: "ഇമെയിൽ ഉപയോഗിച്ച് സൈൻ അപ്പ് ചെയ്യുക" } },
+            { en: { question: "A student receives a mail claiming she won ₹1 Cr and asking ₹1500. What should she do?", options: ["Pay quickly", "Click the link", "Report it as phishing", "Share on social media"], answer: "Report it as phishing" }, ml: { question: "ഒരു വിദ്യാർത്ഥിനിക്ക് 1 കോടി രൂപ സമ്മാനം ലഭിച്ചുവെന്നും 1500 രൂപ അടയ്ക്കണമെന്നും പറഞ്ഞ് ഒരു മെയിൽ ലഭിച്ചു. അവൾ എന്തു ചെയ്യണം?", options: ["വേഗത്തിൽ പണമടയ്ക്കുക", "ലിങ്കിൽ ക്ലിക്ക് ചെയ്യുക", "അത് ഫിഷിംഗ് ആയി റിപ്പോർട്ട് ചെയ്യുക", "സോഷ്യൽ മീഡിയയിൽ പങ്കിടുക"], answer: "അത് ഫിഷിംഗ് ആയി റിപ്പോർട്ട് ചെയ്യുക" } },
+            { en: { question: "To edit your page in Ezhuthukalari, which option should you select after login?", options: ["'Create Page'", "'Chithrangalum Mediakalum'", "'Pravesikkuka'", "'Moolaroopam'"], answer: "'Pravesikkuka'" }, ml: { question: "എഴുത്തുകളരിയിൽ നിങ്ങളുടെ പേജ് എഡിറ്റ് ചെയ്യാൻ, ലോഗിൻ ചെയ്ത ശേഷം ഏത് ഓപ്ഷൻ തിരഞ്ഞെടുക്കണം?", options: ["'പേജ് നിർമ്മിക്കുക'", "'ചിത്രങ്ങളും മീഡിയകളും'", "'പ്രവേശിക്കുക'", "'മൂലരൂപം'"], answer: "'പ്രവേശിക്കുക'" } },
+            { en: { question: "Your email is required while filling which online form?", options: ["School admission", "Social media signup", "Schoolwiki membership", "Fee payment"], answer: "Schoolwiki membership" }, ml: { question: "ഏത് ഓൺലൈൻ ഫോം പൂരിപ്പിക്കുമ്പോഴാണ് നിങ്ങളുടെ ഇമെയിൽ ആവശ്യമായി വരുന്നത്?", options: ["സ്കൂൾ പ്രവേശനം", "സോഷ്യൽ മീഡിയ സൈൻഅപ്പ്", "സ്കൂൾവിക്കി അംഗത്വം", "ഫീസ് അടയ്ക്കൽ"], answer: "സ്കൂൾവിക്കി അംഗത്വം" } },
+            { en: { question: "Which security measure prevents fake account creation in Schoolwiki?", options: ["OTP", "CAPTCHA", "Firewall", "Fingerprint"], answer: "CAPTCHA" }, ml: { question: "സ്കൂൾവിക്കിയിൽ വ്യാജ അക്കൗണ്ടുകൾ ഉണ്ടാക്കുന്നത് തടയുന്ന സുരക്ഷാ നടപടി ഏതാണ്?", options: ["OTP", "ക്യാപ്ച്ച", "ഫയർവാൾ", "വിരലടയാളം"], answer: "ക്യാപ്ച്ച" } },
+            { en: { question: "You’re creating a poster for your Ezhuthukalari page. Which icon should you click to upload an image?", options: ["Save", "Chithrangalum Mediakalum", "Thiruthuka", "Pravesikkuka"], answer: "Chithrangalum Mediakalum" }, ml: { question: "നിങ്ങളുടെ എഴുത്തുകളരി പേജിനായി ഒരു പോസ്റ്റർ നിർമ്മിക്കുമ്പോൾ, ഒരു ചിത്രം അപ്‌ലോഡ് ചെയ്യാൻ ഏത് ഐക്കണിൽ ക്ലിക്ക് ചെയ്യണം?", options: ["സേവ്", "ചിത്രങ്ങളും മീഡിയകളും", "തിരുത്തുക", "പ്രവേശിക്കുക"], answer: "ചിത്രങ്ങളും മീഡിയകളും" } },
+            { en: { question: "While editing in Schoolwiki, you want to make text italic. What should you do?", options: ["Use Markdown", "Use the Italic button in formatting toolbar", "Use * on both sides", "Press Ctrl+I"], answer: "Use the Italic button in formatting toolbar" }, ml: { question: "സ്കൂൾവിക്കിയിൽ എഡിറ്റ് ചെയ്യുമ്പോൾ, ടെക്സ്റ്റ് ഇറ്റാലിക് ആക്കാൻ എന്തു ചെയ്യണം?", options: ["മാർക്ക്ഡൗൺ ഉപയോഗിക്കുക", "ഫോർമാറ്റിംഗ് ടൂൾബാറിലെ ഇറ്റാലിക് ബട്ടൺ ഉപയോഗിക്കുക", "ഇരുവശത്തും * ഉപയോഗിക്കുക", "Ctrl+I അമർത്തുക"], answer: "ഫോർമാറ്റിംഗ് ടൂൾബാറിലെ ഇറ്റാലിക് ബട്ടൺ ഉപയോഗിക്കുക" } },
+            { en: { question: "To start online shopping safely, which is recommended?", options: ["Use public Wi-Fi", "Use verified sites", "Disable firewall", "Ignore site URLs"], answer: "Use verified sites" }, ml: { question: "സുരക്ഷിതമായി ഓൺലൈൻ ഷോപ്പിംഗ് ആരംഭിക്കാൻ എന്തു ചെയ്യാനാണ് ശുപാർശ ചെയ്യുന്നത്?", options: ["പൊതു വൈ-ഫൈ ഉപയോഗിക്കുക", "പരിശോധിച്ചുറപ്പിച്ച സൈറ്റുകൾ ഉപയോഗിക്കുക", "ഫയർവാൾ പ്രവർത്തനരഹിതമാക്കുക", "സൈറ്റ് URL-കൾ അവഗണിക്കുക"], answer: "പരിശോധിച്ചുറപ്പിച്ച സൈറ്റുകൾ ഉപയോഗിക്കുക" } },
+            { en: { question: "You want to prevent malware entry via email. What should you avoid?", options: ["Opening official mail", "Downloading unknown attachments", "Checking inbox regularly", "Deleting spam"], answer: "Downloading unknown attachments" }, ml: { question: "ഇമെയിൽ വഴി മാൽവെയർ പ്രവേശിക്കുന്നത് തടയാൻ നിങ്ങൾ എന്ത് ഒഴിവാക്കണം?", options: ["ഔദ്യോഗിക മെയിൽ തുറക്കുന്നത്", "അജ്ഞാത അറ്റാച്ച്‌മെന്റുകൾ ഡൗൺലോഡ് ചെയ്യുന്നത്", "ഇൻബോക്സ് പതിവായി പരിശോധിക്കുന്നത്", "സ്പാം ഡിലീറ്റ് ചെയ്യുന്നത്"], answer: "അജ്ഞാത അറ്റാച്ച്‌മെന്റുകൾ ഡൗൺലോഡ് ചെയ്യുന്നത്" } },
+            { en: { question: "A student adds harmful info to Schoolwiki. What could happen?", options: ["Reward", "Page promotion", "Permanent ban", "Wiki bonus points"], answer: "Permanent ban" }, ml: { question: "ഒരു വിദ്യാർത്ഥി സ്കൂൾവിക്കിയിൽ ദോഷകരമായ വിവരങ്ങൾ ചേർത്താൽ എന്ത് സംഭവിക്കാം?", options: ["പ്രതിഫലം", "പേജ് പ്രൊമോഷൻ", "സ്ഥിരമായ നിരോധനം", "വിക്കി ബോണസ് പോയിന്റുകൾ"], answer: "സ്ഥിരമായ നിരോധനം" } },
+            { en: { question: "What is the purpose of Learning Room in SAMAGRA?", options: ["Chat with students", "Play games", "Access learning materials", "Buy textbooks"], answer: "Access learning materials" }, ml: { question: "സമഗ്രയിലെ ലേണിംഗ് റൂമിന്റെ ഉദ്ദേശ്യം എന്താണ്?", options: ["വിദ്യാർത്ഥികളുമായി ചാറ്റ് ചെയ്യുക", "ഗെയിമുകൾ കളിക്കുക", "പഠന സാമഗ്രികൾ ആക്സസ് ചെയ്യുക", "പാഠപുസ്തകങ്ങൾ വാങ്ങുക"], answer: "പഠന സാമഗ്രികൾ ആക്സസ് ചെയ്യുക" } },
+            { en: { question: "A person receives OTP after login. Which security method is being used?", options: ["Password only", "2FA", "Biometric", "CAPTCHA"], answer: "2FA" }, ml: { question: "ലോഗിൻ ചെയ്ത ശേഷം ഒരാൾക്ക് OTP ലഭിക്കുന്നു. ഏത് സുരക്ഷാ രീതിയാണ് ഉപയോഗിക്കുന്നത്?", options: ["പാസ്‌വേഡ് മാത്രം", "2FA", "ബയോമെട്രിക്", "ക്യാപ്ച്ച"], answer: "2FA" } },
+            { en: { question: "You want to check if a viral news is real. What should you do first?", options: ["Ignore it", "Share it", "Verify using official sources", "Comment on it"], answer: "Verify using official sources" }, ml: { question: "ഒരു വൈറൽ വാർത്ത യഥാർത്ഥമാണോ എന്ന് പരിശോധിക്കാൻ നിങ്ങൾ ആദ്യം എന്തു ചെയ്യണം?", options: ["അത് അവഗണിക്കുക", "അത് പങ്കിടുക", "ഔദ്യോഗിക ഉറവിടങ്ങൾ ഉപയോഗിച്ച് പരിശോധിക്കുക", "അതിൽ അഭിപ്രായം പറയുക"], answer: "ഔദ്യോഗിക ഉറവിടങ്ങൾ ഉപയോഗിച്ച് പരിശോധിക്കുക" } },
+            { en: { question: "If you create a page in Ezhuthukalari, can others edit it?", options: ["Yes", "Only admins", "No, it's a private practice page", "Yes, after publishing"], answer: "No, it's a private practice page" }, ml: { question: "എഴുത്തുകളരിയിൽ നിങ്ങൾ ഒരു പേജ് സൃഷ്ടിച്ചാൽ, മറ്റുള്ളവർക്ക് അത് എഡിറ്റ് ചെയ്യാൻ കഴിയുമോ?", options: ["അതെ", "അഡ്മിൻമാർക്ക് മാത്രം", "ഇല്ല, ഇത് ഒരു സ്വകാര്യ പരിശീലന പേജാണ്", "അതെ, പ്രസിദ്ധീകരിച്ച ശേഷം"], answer: "ഇല്ല, ഇത് ഒരു സ്വകാര്യ പരിശീലന പേജാണ്" } },
+            { en: { question: "You notice someone being disrespectful online. What should you do?", options: ["Share the message", "Report and block the user", "Ignore it", "Reply rudely"], answer: "Report and block the user" }, ml: { question: "ആരെങ്കിലും ഓൺലൈനിൽ അനാദരവ് കാണിക്കുന്നത് ശ്രദ്ധയിൽപ്പെട്ടാൽ നിങ്ങൾ എന്തു ചെയ്യണം?", options: ["സന്ദേശം പങ്കിടുക", "ഉപയോക്താവിനെ റിപ്പോർട്ട് ചെയ്യുകയും ബ്ലോക്ക് ചെയ്യുകയും ചെയ്യുക", "അത് അവഗണിക്കുക", "പരുഷമായി മറുപടി നൽകുക"], answer: "ഉപയോക്താവിനെ റിപ്പോർട്ട് ചെയ്യുകയും ബ്ലോക്ക് ചെയ്യുകയും ചെയ്യുക" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 50-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-300">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-900/50' : 'bg-rose-900/50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-100">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+

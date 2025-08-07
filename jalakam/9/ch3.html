@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: PictoBlox & Coding Test</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: 'Nunito' for a friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new tech dark mode theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #0f172a; /* Slate 900 background */
+            color: #e2e8f0; /* Slate 200 text */
+        }
+        .quiz-container {
+            background: #1e293b; /* Slate 800 */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155; /* Slate 700 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .option-btn {
+            background-color: #334155; /* Slate 700 */
+            border: 2px solid #475569; /* Slate 600 */
+        }
+        .option-btn:hover {
+             background-color: #475569;
+        }
+        .option-btn.selected {
+            background-color: #2563eb; /* Blue 600 for selected */
+            color: white;
+            border-color: #3b82f6; /* Blue 500 */
+        }
+        .option-btn.correct {
+            background-color: #16a34a; /* Green 600 for correct */
+            color: white;
+            border-color: #22c55e;
+        }
+        .option-btn.wrong {
+            background-color: #dc2626; /* Red 600 for wrong */
+            color: white;
+            border-color: #ef4444;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-emerald-400 mb-2">Coding Skills Test!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-400 mb-6">Test Your PictoBlox & Python Knowledge!</p>
+            <img src="https://placehold.co/400x200/0d9488/e0f2fe?text=Ready+to+Code%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Coding Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-300">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <!-- Header with Progress -->
+                <div class="mb-4">
+                    <p class="text-sm text-slate-400"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-700 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-emerald-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h2 id="question-text" class="text-2xl font-bold text-slate-100 mb-6 min-h-[120px]"></h2>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3"></div>
+                
+                <!-- Feedback Message -->
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                <h2 id="review-title" class="text-3xl font-black text-emerald-400 mb-2">Test Complete!</h2>
+                <p id="review-subtitle" class="text-lg text-slate-400 mb-4">Great job! Here's your score:</p>
+                <div class="bg-slate-700 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span id="final-score" class="text-4xl font-bold text-emerald-300"></span>
+                </div>
+                <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                Play Again
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Coding Skills Test!", welcomeSubtitle: "Test Your PictoBlox & Python Knowledge!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "കോഡിംഗ് സ്കിൽസ് ടെസ്റ്റ്!", welcomeSubtitle: "നിങ്ങളുടെ PictoBlox, പൈത്തൺ പരിജ്ഞാനം പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- Full Question Bank (50 questions) from the provided list ---
+        const fullQuizData = [
+            { en: { question: "Which programming paradigm does PictoBlox primarily use?", options: ["Text-based coding", "Block-based coding", "Database programming", "Web scripting"], answer: "Block-based coding" }, ml: { question: "PictoBlox പ്രധാനമായും ഏത് പ്രോഗ്രാമിംഗ് രീതിയാണ് ഉപയോഗിക്കുന്നത്?", options: ["ടെക്സ്റ്റ്-ബേസ്ഡ് കോഡിംഗ്", "ബ്ലോക്ക്-ബേസ്ഡ് കോഡിംഗ്", "ഡാറ്റാബേസ് പ്രോഗ്രാമിംഗ്", "വെബ് സ്ക്രിപ്റ്റിംഗ്"], answer: "ബ്ലോക്ക്-ബേസ്ഡ് കോഡിംഗ്" } },
+            { en: { question: "What is a ‘sprite’ in PictoBlox?", options: ["A song", "A character or object on the stage", "A code block", "A background image"], answer: "A character or object on the stage" }, ml: { question: "PictoBlox-ലെ 'സ്പ്രൈറ്റ്' എന്താണ്?", options: ["ഒരു പാട്ട്", "സ്റ്റേജിലെ ഒരു കഥാപാത്രം അല്ലെങ്കിൽ വസ്തു", "ഒരു കോഡ് ബ്ലോക്ക്", "ഒരു പശ്ചാത്തല ചിത്രം"], answer: "സ്റ്റേജിലെ ഒരു കഥാപാത്രം അല്ലെങ്കിൽ വസ്തു" } },
+            { en: { question: "Which block category contains mathematical and logical operations in PictoBlox?", options: ["Looks", "Operators", "Events", "Variables"], answer: "Operators" }, ml: { question: "PictoBlox-ൽ ഗണിതപരവും യുക്തിപരവുമായ പ്രവർത്തനങ്ങൾ അടങ്ങുന്ന ബ്ലോക്ക് വിഭാഗം ഏതാണ്?", options: ["ലുക്ക്സ്", "ഓപ്പറേറ്റേഴ്സ്", "ഇവന്റ്സ്", "വേരിയബിൾസ്"], answer: "ഓപ്പറേറ്റേഴ്സ്" } },
+            { en: { question: "How many degrees does the second hand move per second in a clock with 60 seconds?", options: ["10 degrees", "360 degrees", "6 degrees", "1 degree"], answer: "6 degrees" }, ml: { question: "60 സെക്കൻഡുള്ള ഒരു ക്ലോക്കിൽ സെക്കൻഡ് സൂചി ഒരു സെക്കൻഡിൽ എത്ര ഡിഗ്രി നീങ്ങുന്നു?", options: ["10 ഡിഗ്രി", "360 ഡിഗ്രി", "6 ഡിഗ്രി", "1 ഡിഗ്രി"], answer: "6 ഡിഗ്രി" } },
+            { en: { question: "What is the default angle of a full circle in the context of the clock discussed?", options: ["90°", "180°", "360°", "720°"], answer: "360°" }, ml: { question: "ചർച്ച ചെയ്ത ക്ലോക്കിന്റെ പശ്ചാത്തലത്തിൽ ഒരു പൂർണ്ണ വൃത്തത്തിന്റെ ഡിഫോൾട്ട് കോണളവ് എത്രയാണ്?", options: ["90°", "180°", "360°", "720°"], answer: "360°" } },
+            { en: { question: "Which feature in PictoBlox is used to collect user input?", options: ["“ask and wait” block", "“join” block", "“set color” block", "“repeat” block"], answer: "“ask and wait” block" }, ml: { question: "ഉപയോക്താവിൽ നിന്ന് ഇൻപുട്ട് ശേഖരിക്കാൻ PictoBlox-ൽ ഏത് ഫീച്ചറാണ് ഉപയോഗിക്കുന്നത്?", options: ["“ask and wait” ബ്ലോക്ക്", "“join” ബ്ലോക്ക്", "“set color” ബ്ലോക്ക്", "“repeat” ബ്ലോക്ക്"], answer: "“ask and wait” ബ്ലോക്ക്" } },
+            { en: { question: "Which section in PictoBlox can you find the block to get the computer’s current time?", options: ["Sound", "Motion", "Sensing", "Control"], answer: "Sensing" }, ml: { question: "കമ്പ്യൂട്ടറിന്റെ നിലവിലെ സമയം ലഭിക്കുന്നതിനുള്ള ബ്ലോക്ക് PictoBlox-ലെ ഏത് വിഭാഗത്തിലാണ് കാണുന്നത്?", options: ["സൗണ്ട്", "മോഷൻ", "സെൻസിംഗ്", "കൺട്രോൾ"], answer: "സെൻസിംഗ്" } },
+            { en: { question: "A variable in PictoBlox can store:", options: ["Only numbers", "Only text", "Both numbers and text", "Both images and sound"], answer: "Both numbers and text" }, ml: { question: "PictoBlox-ലെ ഒരു വേരിയബിളിന് എന്ത് സംഭരിക്കാൻ കഴിയും?", options: ["സംഖ്യകൾ മാത്രം", "ടെക്സ്റ്റ് മാത്രം", "സംഖ്യകളും ടെക്സ്റ്റും", "ചിത്രങ്ങളും ശബ്ദവും"], answer: "സംഖ്യകളും ടെക്സ്റ്റും" } },
+            { en: { question: "To play a sound in PictoBlox, you must go to the:", options: ["Costumes tab", "Sounds tab", "Events tab", "Operators tab"], answer: "Sounds tab" }, ml: { question: "PictoBlox-ൽ ഒരു ശബ്ദം പ്ലേ ചെയ്യാൻ, നിങ്ങൾ എവിടെ പോകണം?", options: ["കോസ്റ്റ്യൂംസ് ടാബ്", "സൗണ്ട്സ് ടാബ്", "ഇവന്റ്സ് ടാബ്", "ഓപ്പറേറ്റേഴ്സ് ടാബ്"], answer: "സൗണ്ട്സ് ടാബ്" } },
+            { en: { question: "Which programming languages are mentioned as text-based alternatives in the chapter?", options: ["Scratch and PictoBlox", "Java, Python, and C++", "HTML and CSS", "SQL and PHP"], answer: "Java, Python, and C++" }, ml: { question: "അധ്യായത്തിൽ ടെക്സ്റ്റ്-ബേസ്ഡ് ബദലുകളായി ഏതൊക്കെ പ്രോഗ്രാമിംഗ് ഭാഷകളാണ് പരാമർശിച്ചിരിക്കുന്നത്?", options: ["സ്ക്രാച്ച്, PictoBlox", "ജാവ, പൈത്തൺ, സി++", "HTML, CSS", "SQL, PHP"], answer: "ജാവ, പൈത്തൺ, സി++" } },
+            { en: { question: "Who created the Python programming language?", options: ["Dennis Ritchie", "Guido van Rossum", "Tim Berners-Lee", "Linus Torvalds"], answer: "Guido van Rossum" }, ml: { question: "പൈത്തൺ പ്രോഗ്രാമിംഗ് ഭാഷ സൃഷ്ടിച്ചത് ആരാണ്?", options: ["ഡെന്നിസ് റിച്ചി", "ഗൈഡോ വാൻ റോസ്സം", "ടിം ബർണേഴ്സ്-ലീ", "ലിനസ് ടോർവാൾഡ്സ്"], answer: "ഗൈഡോ വാൻ റോസ്സം" } },
+            { en: { question: "What is 'syntax' in programming?", options: ["The speed of code", "The correct grammar and structure of the code", "The color of text", "The length of code"], answer: "The correct grammar and structure of the code" }, ml: { question: "പ്രോഗ്രാമിംഗിലെ 'സിന്റാക്സ്' എന്നാൽ എന്താണ്?", options: ["കോഡിന്റെ വേഗത", "കോഡിന്റെ ശരിയായ വ്യാകരണവും ഘടനയും", "ടെക്സ്റ്റിന്റെ നിറം", "കോഡിന്റെ നീളം"], answer: "കോഡിന്റെ ശരിയായ വ്യാകരണവും ഘടനയും" } },
+            { en: { question: "What does the “go to front layer” block do in PictoBlox?", options: ["Hides a sprite", "Brings the sprite above all others", "Changes color", "Decreases size"], answer: "Brings the sprite above all others" }, ml: { question: "PictoBlox-ലെ “go to front layer” ബ്ലോക്ക് എന്തു ചെയ്യുന്നു?", options: ["ഒരു സ്പ്രൈറ്റിനെ മറയ്ക്കുന്നു", "സ്പ്രൈറ്റിനെ മറ്റെല്ലാറ്റിനും മുകളിൽ കൊണ്ടുവരുന്നു", "നിറം മാറ്റുന്നു", "വലുപ്പം കുറയ്ക്കുന്നു"], answer: "സ്പ്രൈറ്റിനെ മറ്റെല്ലാറ്റിനും മുകളിൽ കൊണ്ടുവരുന്നു" } },
+            { en: { question: "Which tab in PictoBlox do you use to change a sprite’s visual appearance?", options: ["Motion", "Costumes", "Sound", "Events"], answer: "Costumes" }, ml: { question: "ഒരു സ്പ്രൈറ്റിന്റെ രൂപം മാറ്റാൻ PictoBlox-ലെ ഏത് ടാബാണ് നിങ്ങൾ ഉപയോഗിക്കുന്നത്?", options: ["മോഷൻ", "കോസ്റ്റ്യൂംസ്", "സൗണ്ട്", "ഇവന്റ്സ്"], answer: "കോസ്റ്റ്യൂംസ്" } },
+            { en: { question: "You want to move a sprite Earth counter-clockwise by 5 degrees every second. Which block will you use?", options: ["move 5 steps", "turn anti-clockwise 5 degrees", "change color effect", "wait 5 seconds"], answer: "turn anti-clockwise 5 degrees" }, ml: { question: "ഒരു സ്പ്രൈറ്റ് എർത്ത് ഓരോ സെക്കൻഡിലും 5 ഡിഗ്രി എതിർ ഘടികാരദിശയിൽ ചലിപ്പിക്കണമെങ്കിൽ ഏത് ബ്ലോക്ക് ഉപയോഗിക്കും?", options: ["move 5 steps", "turn anti-clockwise 5 degrees", "change color effect", "wait 5 seconds"], answer: "turn anti-clockwise 5 degrees" } },
+            { en: { question: "If your minute hand is jumping 6 degrees every second instead of every minute, what’s wrong with your logic?", options: ["The variable is not set", "The time input is not connected", "The repeat block is based on seconds, not minutes", "The costume is not correct"], answer: "The repeat block is based on seconds, not minutes" }, ml: { question: "നിങ്ങളുടെ മിനിറ്റ് സൂചി ഓരോ മിനിറ്റിനും പകരം ഓരോ സെക്കൻഡിലും 6 ഡിഗ്രി നീങ്ങുന്നുവെങ്കിൽ, നിങ്ങളുടെ ലോജിക്കിൽ എന്താണ് തെറ്റ്?", options: ["വേരിയബിൾ സെറ്റ് ചെയ്തിട്ടില്ല", "സമയ ഇൻപുട്ട് ബന്ധിപ്പിച്ചിട്ടില്ല", "റിപ്പീറ്റ് ബ്ലോക്ക് മിനിറ്റിന് പകരം സെക്കൻഡിനെ അടിസ്ഥാനമാക്കിയുള്ളതാണ്", "കോസ്റ്റ്യൂം ശരിയല്ല"], answer: "റിപ്പീറ്റ് ബ്ലോക്ക് മിനിറ്റിന് പകരം സെക്കൻഡിനെ അടിസ്ഥാനമാക്കിയുള്ളതാണ്" } },
+            { en: { question: "To create an input field for alarm time, you should:", options: ["Use a variable", "Use ask and wait block", "Draw a textbox", "Add a sound file"], answer: "Use ask and wait block" }, ml: { question: "അലാറം സമയത്തിനായി ഒരു ഇൻപുട്ട് ഫീൽഡ് സൃഷ്ടിക്കാൻ എന്തു ചെയ്യണം?", options: ["ഒരു വേരിയബിൾ ഉപയോഗിക്കുക", "ask and wait ബ്ലോക്ക് ഉപയോഗിക്കുക", "ഒരു ടെക്സ്റ്റ് ബോക്സ് വരയ്ക്കുക", "ഒരു സൗണ്ട് ഫയൽ ചേർക്കുക"], answer: "ask and wait ബ്ലോക്ക് ഉപയോഗിക്കുക" } },
+            { en: { question: "You want to activate the alarm when the system’s hour and minute match the user’s input. Which block conjunction do you use?", options: ["OR", "AND", "NOT", "FOREVER"], answer: "AND" }, ml: { question: "സിസ്റ്റത്തിന്റെ മണിക്കൂറും മിനിറ്റും ഉപയോക്താവിന്റെ ഇൻപുട്ടുമായി പൊരുത്തപ്പെടുമ്പോൾ അലാറം പ്രവർത്തിപ്പിക്കണമെങ്കിൽ, ഏത് ബ്ലോക്ക് ഉപയോഗിക്കണം?", options: ["OR", "AND", "NOT", "FOREVER"], answer: "AND" } },
+            { en: { question: "A school wants to adjust the bell volume based on time (louder at noon, softer in morning). What concept do you use?", options: ["Operators for math and control volume by time", "Randomize sound", "Change costume", "Move sprite"], answer: "Operators for math and control volume by time" }, ml: { question: "ഒരു സ്കൂൾ ബെല്ലിന്റെ ശബ്ദം സമയത്തിനനുസരിച്ച് ക്രമീകരിക്കണമെങ്കിൽ (ഉച്ചയ്ക്ക് ഉച്ചത്തിൽ, രാവിലെ മൃദുവായി) എന്തു ചെയ്യണം?", options: ["ഗണിതത്തിനായി ഓപ്പറേറ്ററുകളും സമയത്തിനനുസരിച്ച് ശബ്ദം നിയന്ത്രിക്കാനും ഉപയോഗിക്കുക", "ശബ്ദം ക്രമരഹിതമാക്കുക", "കോസ്റ്റ്യൂം മാറ്റുക", "സ്പ്രൈറ്റ് നീക്കുക"], answer: "ഗണിതത്തിനായി ഓപ്പറേറ്ററുകളും സമയത്തിനനുസരിച്ച് ശബ്ദം നിയന്ത്രിക്കാനും ഉപയോഗിക്കുക" } },
+            { en: { question: "If your student alarm plays sound at the wrong time, what should you first check?", options: ["If the sprite is visible", "If the “wait” block is before the sound block", "If your comparison between system time and alarm time is correct", "The color of the sprite"], answer: "If your comparison between system time and alarm time is correct" }, ml: { question: "നിങ്ങളുടെ സ്റ്റുഡന്റ് അലാറം തെറ്റായ സമയത്ത് ശബ്ദമുണ്ടാക്കുന്നുവെങ്കിൽ, ആദ്യം എന്തു പരിശോധിക്കണം?", options: ["സ്പ്രൈറ്റ് ദൃശ്യമാണോ എന്ന്", "ശബ്ദ ബ്ലോക്കിന് മുമ്പ് “wait” ബ്ലോക്ക് ഉണ്ടോ എന്ന്", "സിസ്റ്റം സമയവും അലാറം സമയവും തമ്മിലുള്ള താരതമ്യം ശരിയാണോ എന്ന്", "സ്പ്രൈറ്റിന്റെ നിറം"], answer: "സിസ്റ്റം സമയവും അലാറം സമയവും തമ്മിലുള്ള താരതമ്യം ശരിയാണോ എന്ന്" } },
+            { en: { question: "You want to add multiple bells that move when alarm sounds. You should:", options: ["Duplicate the bell sprite and animate them using scripts", "Only add bell images", "Play multiple sounds only", "Change the background"], answer: "Duplicate the bell sprite and animate them using scripts" }, ml: { question: "അലാറം ശബ്ദിക്കുമ്പോൾ ചലിക്കുന്ന ഒന്നിലധികം ബെല്ലുകൾ ചേർക്കാൻ എന്തു ചെയ്യണം?", options: ["ബെൽ സ്പ്രൈറ്റ് ഡ്യൂപ്ലിക്കേറ്റ് ചെയ്ത് സ്ക്രിപ്റ്റുകൾ ഉപയോഗിച്ച് ആനിമേറ്റ് ചെയ്യുക", "ബെൽ ചിത്രങ്ങൾ മാത്രം ചേർക്കുക", "ഒന്നിലധികം ശബ്ദങ്ങൾ മാത്രം പ്ലേ ചെയ്യുക", "പശ്ചാത്തലം മാറ്റുക"], answer: "ബെൽ സ്പ്രൈറ്റ് ഡ്യൂപ്ലിക്കേറ്റ് ചെയ്ത് സ്ക്രിപ്റ്റുകൾ ഉപയോഗിച്ച് ആനിമേറ്റ് ചെയ്യുക" } },
+            { en: { question: "A student wants the clock to run automatically at fixed intervals. Which code block will be most useful?", options: ["forever loop with wait interval", "on click event only", "Random number generator", "AND block"], answer: "forever loop with wait interval" }, ml: { question: "ഒരു കുട്ടിക്ക് ക്ലോക്ക് നിശ്ചിത ഇടവേളകളിൽ സ്വയമേവ പ്രവർത്തിപ്പിക്കണമെങ്കിൽ, ഏത് കോഡ് ബ്ലോക്കാണ് ഏറ്റവും ഉപയോഗപ്രദം?", options: ["forever ലൂപ്പും wait ഇടവേളയും", "on click ഇവന്റ് മാത്രം", "ക്രമരഹിത സംഖ്യാ ജനറേറ്റർ", "AND ബ്ലോക്ക്"], answer: "forever ലൂപ്പും wait ഇടവേളയും" } },
+            { en: { question: "You notice that your second hand is moving in the reverse direction. Which change will fix it?", options: ["Add 6 degrees instead of subtract 6 degrees", "Change color effect", "Delete the sprite", "Use turn clockwise block"], answer: "Use turn clockwise block" }, ml: { question: "നിങ്ങളുടെ സെക്കൻഡ് സൂചി വിപരീത ദിശയിലാണ് നീങ്ങുന്നതെങ്കിൽ, ഏത് മാറ്റം അത് പരിഹരിക്കും?", options: ["6 ഡിഗ്രി കുറയ്ക്കുന്നതിന് പകരം 6 ഡിഗ്രി കൂട്ടുക", "കളർ ഇഫക്റ്റ് മാറ്റുക", "സ്പ്രൈറ്റ് ഡിലീറ്റ് ചെയ്യുക", "turn clockwise ബ്ലോക്ക് ഉപയോഗിക്കുക"], answer: "turn clockwise ബ്ലോക്ക് ഉപയോഗിക്കുക" } },
+            { en: { question: "You need to update the display of time every second. Which control block helps you run a set of operations repeatedly?", options: ["forever", "if", "when green flag clicked", "play sound until done"], answer: "forever" }, ml: { question: "ഓരോ സെക്കൻഡിലും സമയം അപ്ഡേറ്റ് ചെയ്യണം. ഒരു കൂട്ടം പ്രവർത്തനങ്ങൾ ആവർത്തിച്ച് പ്രവർത്തിപ്പിക്കാൻ ഏത് കൺട്രോൾ ബ്ലോക്ക് സഹായിക്കും?", options: ["forever", "if", "when green flag clicked", "play sound until done"], answer: "forever" } },
+            { en: { question: "If a prompt for alarm time accepts invalid input (like letters), what must your program include to make it foolproof?", options: ["Color picker", "Input validation using operators", "Operator + Looks blocks", "Only sound block"], answer: "Input validation using operators" }, ml: { question: "അലാറം സമയത്തിനായുള്ള ഒരു പ്രോംപ്റ്റ് അസാധുവായ ഇൻപുട്ട് (അക്ഷരങ്ങൾ പോലുള്ളവ) സ്വീകരിക്കുന്നുവെങ്കിൽ, പ്രോഗ്രാം കുറ്റമറ്റതാക്കാൻ എന്തുൾപ്പെടുത്തണം?", options: ["കളർ പിക്കർ", "ഓപ്പറേറ്ററുകൾ ഉപയോഗിച്ചുള്ള ഇൻപുട്ട് മൂല്യനിർണ്ണയം", "ഓപ്പറേറ്റർ + ലുക്ക്സ് ബ്ലോക്കുകൾ", "സൗണ്ട് ബ്ലോക്ക് മാത്രം"], answer: "ഓപ്പറേറ്ററുകൾ ഉപയോഗിച്ചുള്ള ഇൻപുട്ട് മൂല്യനിർണ്ണയം" } },
+            { en: { question: "To store and retrieve the alarm hour in PictoBlox, you should use:", options: ["Files", "Variables", "Lists only", "Sounds"], answer: "Variables" }, ml: { question: "PictoBlox-ൽ അലാറം മണിക്കൂർ സംഭരിക്കാനും വീണ്ടെടുക്കാനും എന്തുപയോഗിക്കണം?", options: ["ഫയലുകൾ", "വേരിയബിളുകൾ", "ലിസ്റ്റുകൾ മാത്രം", "ശബ്ദങ്ങൾ"], answer: "വേരിയബിളുകൾ" } },
+            { en: { question: "In PictoBlox, if you want the clock face to always be at the back of all other sprites, you should:", options: ["Use go to back layer block", "Use move 10 steps", "Use switch costume", "Use play sound"], answer: "Use go to back layer block" }, ml: { question: "PictoBlox-ൽ, ക്ലോക്കിന്റെ മുഖം എപ്പോഴും മറ്റ് സ്പ്രൈറ്റുകൾക്ക് പിന്നിലായിരിക്കണമെങ്കിൽ എന്തു ചെയ്യണം?", options: ["go to back layer ബ്ലോക്ക് ഉപയോഗിക്കുക", "move 10 steps ഉപയോഗിക്കുക", "switch costume ഉപയോഗിക്കുക", "play sound ഉപയോഗിക്കുക"], answer: "go to back layer ബ്ലോക്ക് ഉപയോഗിക്കുക" } },
+            { en: { question: "For a clock that works in both AM and PM, how could you display time using PictoBlox blocks?", options: ["Use an if-else block to check if hour >= 12, then set an AM/PM label", "Use only minute hand", "Change background", "Hide all sprites"], answer: "Use an if-else block to check if hour >= 12, then set an AM/PM label" }, ml: { question: "AM, PM സമയക്രമങ്ങളിൽ പ്രവർത്തിക്കുന്ന ഒരു ക്ലോക്കിനായി, PictoBlox ബ്ലോക്കുകൾ ഉപയോഗിച്ച് സമയം എങ്ങനെ പ്രദർശിപ്പിക്കാം?", options: ["മണിക്കൂർ >= 12 ആണോ എന്ന് പരിശോധിക്കാൻ if-else ബ്ലോക്ക് ഉപയോഗിക്കുക, തുടർന്ന് AM/PM ലേബൽ സജ്ജമാക്കുക", "മിനിറ്റ് സൂചി മാത്രം ഉപയോഗിക്കുക", "പശ്ചാത്തലം മാറ്റുക", "എല്ലാ സ്പ്രൈറ്റുകളും മറയ്ക്കുക"], answer: "മണിക്കൂർ >= 12 ആണോ എന്ന് പരിശോധിക്കാൻ if-else ബ്ലോക്ക് ഉപയോഗിക്കുക, തുടർന്ന് AM/PM ലേബൽ സജ്ജമാക്കുക" } },
+            { en: { question: "If you want to repeat the alarm sound five times, your block logic should include:", options: ["repeat 5 times block with play sound inside", "forever block", "play sound until done", "next costume block"], answer: "repeat 5 times block with play sound inside" }, ml: { question: "അലാറം ശബ്ദം അഞ്ച് തവണ ആവർത്തിക്കണമെങ്കിൽ, നിങ്ങളുടെ ബ്ലോക്ക് ലോജിക്കിൽ എന്തുൾപ്പെടുത്തണം?", options: ["play sound ഉള്ള repeat 5 times ബ്ലോക്ക്", "forever ബ്ലോക്ക്", "play sound until done", "next costume ബ്ലോക്ക്"], answer: "play sound ഉള്ള repeat 5 times ബ്ലോക്ക്" } },
+            { en: { question: "A user wants to show different animations for alarm ON and alarm OFF. What approach is best?", options: ["Use costume and broadcast blocks to switch animations", "Use sounds only", "Change the time variable", "Use go to back layer block"], answer: "Use costume and broadcast blocks to switch animations" }, ml: { question: "അലാറം ഓൺ, ഓഫ് അവസ്ഥകൾക്ക് വ്യത്യസ്ത ആനിമേഷനുകൾ കാണിക്കാൻ ഏത് സമീപനമാണ് ഏറ്റവും മികച്ചത്?", options: ["ആനിമേഷനുകൾ മാറ്റാൻ കോസ്റ്റ്യൂമും ബ്രോഡ്കാസ്റ്റ് ബ്ലോക്കുകളും ഉപയോഗിക്കുക", "ശബ്ദങ്ങൾ മാത്രം ഉപയോഗിക്കുക", "സമയ വേരിയബിൾ മാറ്റുക", "go to back layer ബ്ലോക്ക് ഉപയോഗിക്കുക"], answer: "ആനിമേഷനുകൾ മാറ്റാൻ കോസ്റ്റ്യൂമും ബ്രോഡ്കാസ്റ്റ് ബ്ലോക്കുകളും ഉപയോഗിക്കുക" } },
+            { en: { question: "If you need to create a new clock layout, what steps should you follow?", options: ["Delete default sprite, add new clock face, set pivot of hands, and arrange layers", "Only change the background", "Add new sound", "Use only variables"], answer: "Delete default sprite, add new clock face, set pivot of hands, and arrange layers" }, ml: { question: "ഒരു പുതിയ ക്ലോക്ക് ലേഔട്ട് സൃഷ്ടിക്കണമെങ്കിൽ, നിങ്ങൾ എന്തു നടപടികൾ സ്വീകരിക്കണം?", options: ["ഡിഫോൾട്ട് സ്പ്രൈറ്റ് ഡിലീറ്റ് ചെയ്യുക, പുതിയ ക്ലോക്ക് ഫെയ്സ് ചേർക്കുക, സൂചികളുടെ പിവോട്ട് സജ്ജമാക്കുക, ലെയറുകൾ ക്രമീകരിക്കുക", "പശ്ചാത്തലം മാത്രം മാറ്റുക", "പുതിയ ശബ്ദം ചേർക്കുക", "വേരിയബിളുകൾ മാത്രം ഉപയോഗിക്കുക"], answer: "ഡിഫോൾട്ട് സ്പ്രൈറ്റ് ഡിലീറ്റ് ചെയ്യുക, പുതിയ ക്ലോക്ക് ഫെയ്സ് ചേർക്കുക, സൂചികളുടെ പിവോട്ട് സജ്ജമാക്കുക, ലെയറുകൾ ക്രമീകരിക്കുക" } },
+            { en: { question: "In the Python tab of PictoBlox, you want to move a sprite 10 steps forward. Which code is correct?", options: ["sprite.move(10)", "move(10)", "sprite.move_steps(10)", "sprite.step(10)"], answer: "sprite.move_steps(10)" }, ml: { question: "PictoBlox-ലെ പൈത്തൺ ടാബിൽ, ഒരു സ്പ്രൈറ്റിനെ 10 സ്റ്റെപ്പ് മുന്നോട്ട് നീക്കാൻ ഏത് കോഡാണ് ശരി?", options: ["sprite.move(10)", "move(10)", "sprite.move_steps(10)", "sprite.step(10)"], answer: "sprite.move_steps(10)" } },
+            { en: { question: "To start a new project in PictoBlox’s Python mode, you should:", options: ["Click the Python tab directly or open from the start window", "Only change the extension", "Add sounds first", "Export image"], answer: "Click the Python tab directly or open from the start window" }, ml: { question: "PictoBlox-ന്റെ പൈത്തൺ മോഡിൽ ഒരു പുതിയ പ്രോജക്റ്റ് ആരംഭിക്കാൻ എന്തു ചെയ്യണം?", options: ["നേരിട്ട് പൈത്തൺ ടാബിൽ ക്ലിക്ക് ചെയ്യുക അല്ലെങ്കിൽ സ്റ്റാർട്ട് വിൻഡോയിൽ നിന്ന് തുറക്കുക", "എക്സ്റ്റൻഷൻ മാത്രം മാറ്റുക", "ആദ്യം ശബ്ദങ്ങൾ ചേർക്കുക", "ചിത്രം എക്സ്പോർട്ട് ചെയ്യുക"], answer: "നേരിട്ട് പൈത്തൺ ടാബിൽ ക്ലിക്ക് ചെയ്യുക അല്ലെങ്കിൽ സ്റ്റാർട്ട് വിൻഡോയിൽ നിന്ന് തുറക്കുക" } },
+            { en: { question: "Which Python feature is essential for working with loops and blocks in PictoBlox?", options: ["Indentation", "Comment symbols", "Only semicolons", "Costume scripts"], answer: "Indentation" }, ml: { question: "PictoBlox-ൽ ലൂപ്പുകളും ബ്ലോക്കുകളും ഉപയോഗിച്ച് പ്രവർത്തിക്കാൻ അത്യാവശ്യമായ പൈത്തൺ ഫീച്ചർ ഏതാണ്?", options: ["ഇൻഡന്റേഷൻ", "കമന്റ് ചിഹ്നങ്ങൾ", "സെമികോളനുകൾ മാത്രം", "കോസ്റ്റ്യൂം സ്ക്രിപ്റ്റുകൾ"], answer: "ഇൻഡന്റേഷൻ" } },
+            { en: { question: "You want to make your clock display a message when it’s lunch time (12:30 PM). Which structure would you use?", options: ["An if block checking hour = 12 and minute = 30", "forever loop only", "go to front layer", "Broadcast message"], answer: "An if block checking hour = 12 and minute = 30" }, ml: { question: "ഉച്ചഭക്ഷണ സമയത്ത് (12:30 PM) നിങ്ങളുടെ ക്ലോക്ക് ഒരു സന്ദേശം പ്രദർശിപ്പിക്കണമെങ്കിൽ ഏത് ഘടന ഉപയോഗിക്കും?", options: ["മണിക്കൂർ = 12, മിനിറ്റ് = 30 എന്ന് പരിശോധിക്കുന്ന ഒരു if ബ്ലോക്ക്", "forever ലൂപ്പ് മാത്രം", "go to front layer", "ബ്രോഡ്കാസ്റ്റ് മെസേജ്"], answer: "മണിക്കൂർ = 12, മിനിറ്റ് = 30 എന്ന് പരിശോധിക്കുന്ന ഒരു if ബ്ലോക്ക്" } },
+            { en: { question: "Suppose you want the alarm to go off every hour automatically without resetting. Your best approach is:", options: ["Use forever loop with time equal to every hour", "When flag clicked block only", "Hide sprite on alarm", "Only use motion blocks"], answer: "Use forever loop with time equal to every hour" }, ml: { question: "റീസെറ്റ് ചെയ്യാതെ ഓരോ മണിക്കൂറിലും അലാറം മുഴങ്ങണമെങ്കിൽ, നിങ്ങളുടെ ഏറ്റവും നല്ല സമീപനം ഏതാണ്?", options: ["ഓരോ മണിക്കൂറിലും സമയം തുല്യമാകുന്ന forever ലൂപ്പ് ഉപയോഗിക്കുക", "When flag clicked ബ്ലോക്ക് മാത്രം", "അലാറത്തിൽ സ്പ്രൈറ്റ് മറയ്ക്കുക", "മോഷൻ ബ്ലോക്കുകൾ മാത്രം ഉപയോഗിക്കുക"], answer: "ഓരോ മണിക്കൂറിലും സമയം തുല്യമാകുന്ന forever ലൂപ്പ് ഉപയോഗിക്കുക" } },
+            { en: { question: "If a sprite does not rotate around its visual center, to correct this you should:", options: ["Adjust the pivot point in the costume editor", "Swap costumes", "Move the entire sprite", "Add sound"], answer: "Adjust the pivot point in the costume editor" }, ml: { question: "ഒരു സ്പ്രൈറ്റ് അതിന്റെ ദൃശ്യ കേന്ദ്രത്തിന് ചുറ്റും തിരിയുന്നില്ലെങ്കിൽ, അത് ശരിയാക്കാൻ എന്തു ചെയ്യണം?", options: ["കോസ്റ്റ്യൂം എഡിറ്ററിൽ പിവോട്ട് പോയിന്റ് ക്രമീകരിക്കുക", "കോസ്റ്റ്യൂമുകൾ മാറ്റുക", "മുഴുവൻ സ്പ്രൈറ്റും നീക്കുക", "ശബ്ദം ചേർക്കുക"], answer: "കോസ്റ്റ്യൂം എഡിറ്ററിൽ പിവോട്ട് പോയിന്റ് ക്രമീകരിക്കുക" } },
+            { en: { question: "You want to prevent the user from setting an alarm in the past. Which logic must you check?", options: ["If alarm time > current time", "If alarm time = current time", "If variable exists", "If sound is available"], answer: "If alarm time > current time" }, ml: { question: "കഴിഞ്ഞുപോയ സമയത്ത് അലാറം സജ്ജീകരിക്കുന്നത് തടയാൻ, നിങ്ങൾ ഏത് ലോജിക് പരിശോധിക്കണം?", options: ["അലാറം സമയം > നിലവിലെ സമയം എങ്കിൽ", "അലാറം സമയം = നിലവിലെ സമയം എങ്കിൽ", "വേരിയബിൾ നിലവിലുണ്ടെങ്കിൽ", "ശബ്ദം ലഭ്യമാണെങ്കിൽ"], answer: "അലാറം സമയം > നിലവിലെ സമയം എങ്കിൽ" } },
+            { en: { question: "For a class schedule bell, if your schedule is in a list, how would you check the current time against the list for the next alarm?", options: ["Use a ‘for’ or ‘repeat’ loop to check each time in the list", "Only compare current time to single variable", "Use ask and wait only", "Use play sound only"], answer: "Use a ‘for’ or ‘repeat’ loop to check each time in the list" }, ml: { question: "ഒരു ക്ലാസ് ഷെഡ്യൂൾ ബെല്ലിനായി, നിങ്ങളുടെ ഷെഡ്യൂൾ ഒരു ലിസ്റ്റിലാണെങ്കിൽ, അടുത്ത അലാറത്തിനായി നിലവിലെ സമയം ലിസ്റ്റുമായി എങ്ങനെ പരിശോധിക്കും?", options: ["ലിസ്റ്റിലെ ഓരോ സമയവും പരിശോധിക്കാൻ ഒരു ‘for’ അല്ലെങ്കിൽ ‘repeat’ ലൂപ്പ് ഉപയോഗിക്കുക", "നിലവിലെ സമയം ഒരൊറ്റ വേരിയബിളുമായി മാത്രം താരതമ്യം ചെയ്യുക", "ask and wait മാത്രം ഉപയോഗിക്കുക", "play sound മാത്രം ഉപയോഗിക്കുക"], answer: "ലിസ്റ്റിലെ ഓരോ സമയവും പരിശോധിക്കാൻ ഒരു ‘for’ അല്ലെങ്കിൽ ‘repeat’ ലൂപ്പ് ഉപയോഗിക്കുക" } },
+            { en: { question: "To allow the clock hands to be adjusted by the user (manual override), you need:", options: ["Input blocks, variables, and math operations", "Only motion blocks", "Only sound blocks", "Only costume blocks"], answer: "Input blocks, variables, and math operations" }, ml: { question: "ഉപയോക്താവിന് ക്ലോക്ക് സൂചികൾ ക്രമീകരിക്കാൻ (മാനുവൽ ഓവർറൈഡ്) അനുവദിക്കുന്നതിന്, നിങ്ങൾക്ക് എന്ത് വേണം?", options: ["ഇൻപുട്ട് ബ്ലോക്കുകൾ, വേരിയബിളുകൾ, ഗണിത പ്രവർത്തനങ്ങൾ", "മോഷൻ ബ്ലോക്കുകൾ മാത്രം", "സൗണ്ട് ബ്ലോക്കുകൾ മാത്രം", "കോസ്റ്റ്യൂം ബ്ലോക്കുകൾ മാത്രം"], answer: "ഇൻപുട്ട് ബ്ലോക്കുകൾ, വേരിയബിളുകൾ, ഗണിത പ്രവർത്തനങ്ങൾ" } },
+            { en: { question: "If your clock uses a 24-hour format but you want to show 12-hour format, what should your code do?", options: ["Use operators to map hours > 12 to (hour - 12) and set AM/PM toggle", "Just print the hour variable", "Use timer blocks", "Switch background"], answer: "Use operators to map hours > 12 to (hour - 12) and set AM/PM toggle" }, ml: { question: "നിങ്ങളുടെ ക്ലോക്ക് 24-മണിക്കൂർ ഫോർമാറ്റ് ഉപയോഗിക്കുന്നു, എന്നാൽ 12-മണിക്കൂർ ഫോർമാറ്റ് കാണിക്കണമെങ്കിൽ, നിങ്ങളുടെ കോഡ് എന്തു ചെയ്യണം?", options: ["മണിക്കൂർ > 12 ആണെങ്കിൽ (മണിക്കൂർ - 12) ആക്കാനും AM/PM ടോഗിൾ സജ്ജമാക്കാനും ഓപ്പറേറ്ററുകൾ ഉപയോഗിക്കുക", "മണിക്കൂർ വേരിയബിൾ പ്രിന്റ് ചെയ്യുക", "ടൈമർ ബ്ലോക്കുകൾ ഉപയോഗിക്കുക", "പശ്ചാത്തലം മാറ്റുക"], answer: "മണിക്കൂർ > 12 ആണെങ്കിൽ (മണിക്കൂർ - 12) ആക്കാനും AM/PM ടോഗിൾ സജ്ജമാക്കാനും ഓപ്പറേറ്ററുകൾ ഉപയോഗിക്കുക" } },
+            { en: { question: "Design an alert so different weekday and weekend bells ring at different times. Which PictoBlox features help most?", options: ["Use lists for schedule, conditionals for day checks, and variables for tracking days", "Only forever loop", "Sound tab only", "Hide sprite"], answer: "Use lists for schedule, conditionals for day checks, and variables for tracking days" }, ml: { question: "പ്രവൃത്തിദിവസങ്ങളിലും വാരാന്ത്യങ്ങളിലും വ്യത്യസ്ത സമയങ്ങളിൽ വ്യത്യസ്ത ബെല്ലുകൾ മുഴങ്ങുന്ന രീതിയിൽ ഒരു അലേർട്ട് രൂപകൽപ്പന ചെയ്യാൻ ഏത് PictoBlox ഫീച്ചറുകളാണ് ഏറ്റവും കൂടുതൽ സഹായിക്കുന്നത്?", options: ["ഷെഡ്യൂളിനായി ലിസ്റ്റുകൾ, ദിവസങ്ങൾ പരിശോധിക്കാൻ കണ്ടീഷണലുകൾ, ദിവസങ്ങൾ ട്രാക്ക് ചെയ്യാൻ വേരിയബിളുകൾ എന്നിവ ഉപയോഗിക്കുക", "forever ലൂപ്പ് മാത്രം", "സൗണ്ട് ടാബ് മാത്രം", "സ്പ്രൈറ്റ് മറയ്ക്കുക"], answer: "ഷെഡ്യൂളിനായി ലിസ്റ്റുകൾ, ദിവസങ്ങൾ പരിശോധിക്കാൻ കണ്ടീഷണലുകൾ, ദിവസങ്ങൾ ട്രാക്ക് ചെയ്യാൻ വേരിയബിളുകൾ എന്നിവ ഉപയോഗിക്കുക" } },
+            { en: { question: "You want to add animation when the alarm rings using Python in PictoBlox. Which Python concept is crucial?", options: ["Loops for frame/control, sprite costume changes", "Only print statements", "Only sound.play()", "goto statements"], answer: "Loops for frame/control, sprite costume changes" }, ml: { question: "PictoBlox-ൽ പൈത്തൺ ഉപയോഗിച്ച് അലാറം മുഴങ്ങുമ്പോൾ ആനിമേഷൻ ചേർക്കാൻ, ഏത് പൈത്തൺ ആശയമാണ് നിർണ്ണായകം?", options: ["ഫ്രെയിം/നിയന്ത്രണത്തിനുള്ള ലൂപ്പുകൾ, സ്പ്രൈറ്റ് കോസ്റ്റ്യൂം മാറ്റങ്ങൾ", "പ്രിന്റ് സ്റ്റേറ്റ്മെന്റുകൾ മാത്രം", "sound.play() മാത്രം", "goto സ്റ്റേറ്റ്മെന്റുകൾ"], answer: "ഫ്രെയിം/നിയന്ത്രണത്തിനുള്ള ലൂപ്പുകൾ, സ്പ്രൈറ്റ് കോസ്റ്റ്യൂം മാറ്റങ്ങൾ" } },
+            { en: { question: "Why is it important to set the correct rotation center in hands of the clock?", options: ["Ensure the hands rotate properly and show correct time", "For coloring only", "To add sound", "No impact"], answer: "Ensure the hands rotate properly and show correct time" }, ml: { question: "ക്ലോക്കിന്റെ സൂചികളിൽ ശരിയായ റൊട്ടേഷൻ സെന്റർ സജ്ജീകരിക്കുന്നത് പ്രധാനമായിരിക്കുന്നത് എന്തുകൊണ്ട്?", options: ["സൂചികൾ ശരിയായി തിരിയുന്നുവെന്നും ശരിയായ സമയം കാണിക്കുന്നുവെന്നും ഉറപ്പാക്കാൻ", "നിറം നൽകാൻ മാത്രം", "ശബ്ദം ചേർക്കാൻ", "ഒരു സ്വാധീനവുമില്ല"], answer: "സൂചികൾ ശരിയായി തിരിയുന്നുവെന്നും ശരിയായ സമയം കാണിക്കുന്നുവെന്നും ഉറപ്പാക്കാൻ" } },
+            { en: { question: "If the bell should ring exactly at the changes of periods and at lunch, how to structure the logic?", options: ["Use a list of all alert times and check at every minute", "Ask user every time", "Use hide/show blocks only", "Variable for sounds"], answer: "Use a list of all alert times and check at every minute" }, ml: { question: "പീരിയഡുകൾ മാറുമ്പോഴും ഉച്ചഭക്ഷണ സമയത്തും കൃത്യമായി ബെൽ മുഴങ്ങണമെങ്കിൽ, ലോജിക് എങ്ങനെ ഘടനാപരമാക്കാം?", options: ["എല്ലാ അലേർട്ട് സമയങ്ങളുടെയും ഒരു ലിസ്റ്റ് ഉപയോഗിക്കുകയും ഓരോ മിനിറ്റിലും പരിശോധിക്കുകയും ചെയ്യുക", "ഓരോ തവണയും ഉപയോക്താവിനോട് ചോദിക്കുക", "hide/show ബ്ലോക്കുകൾ മാത്രം ഉപയോഗിക്കുക", "ശബ്ദങ്ങൾക്കായി വേരിയബിൾ"], answer: "എല്ലാ അലേർട്ട് സമയങ്ങളുടെയും ഒരു ലിസ്റ്റ് ഉപയോഗിക്കുകയും ഓരോ മിനിറ്റിലും പരിശോധിക്കുകയും ചെയ്യുക" } },
+            { en: { question: "To turn the project into a binary clock (showing time using lights for 1s and 0s), you would use:", options: ["Variables for time, conditionals to set which light sprite is on/off for each digit", "Sound blocks only", "Motion blocks only", "Use broadcast only"], answer: "Variables for time, conditionals to set which light sprite is on/off for each digit" }, ml: { question: "പ്രോജക്റ്റിനെ ഒരു ബൈനറി ക്ലോക്ക് ആക്കി മാറ്റാൻ (1-ഉം 0-ഉം ഉപയോഗിച്ച് ലൈറ്റുകൾ വഴി സമയം കാണിക്കാൻ), നിങ്ങൾ എന്തുപയോഗിക്കും?", options: ["സമയത്തിനായി വേരിയബിളുകൾ, ഓരോ അക്കത്തിനും ഏത് ലൈറ്റ് സ്പ്രൈറ്റ് ഓൺ/ഓഫ് ചെയ്യണമെന്ന് സജ്ജമാക്കാൻ കണ്ടീഷണലുകൾ", "സൗണ്ട് ബ്ലോക്കുകൾ മാത്രം", "മോഷൻ ബ്ലോക്കുകൾ മാത്രം", "ബ്രോഡ്കാസ്റ്റ് മാത്രം ഉപയോഗിക്കുക"], answer: "സമയത്തിനായി വേരിയബിളുകൾ, ഓരോ അക്കത്തിനും ഏത് ലൈറ്റ് സ്പ്രൈറ്റ് ഓൺ/ഓഫ് ചെയ്യണമെന്ന് സജ്ജമാക്കാൻ കണ്ടീഷണലുകൾ" } },
+            { en: { question: "A student wants the alarm to select random tones for each new alert. Which block will help?", options: ["pick random (Operators)", "ask [sound] and wait", "forever block", "set volume"], answer: "pick random (Operators)" }, ml: { question: "ഓരോ പുതിയ അലേർട്ടിനും അലാറം ക്രമരഹിതമായ ടോണുകൾ തിരഞ്ഞെടുക്കണമെങ്കിൽ, ഏത് ബ്ലോക്ക് സഹായിക്കും?", options: ["pick random (ഓപ്പറേറ്റേഴ്സ്)", "ask [sound] and wait", "forever ബ്ലോക്ക്", "set volume"], answer: "pick random (ഓപ്പറേറ്റേഴ്സ്)" } },
+            { en: { question: "You want to add a digital display of the time (as text) on the clock. What should be used?", options: ["Looks blocks to update sprite text for time variables", "Sound block only", "Costume tab", "Timer block only"], answer: "Looks blocks to update sprite text for time variables" }, ml: { question: "ക്ലോക്കിൽ സമയത്തിന്റെ ഒരു ഡിജിറ്റൽ ഡിസ്പ്ലേ (ടെക്സ്റ്റായി) ചേർക്കാൻ എന്തുപയോഗിക്കണം?", options: ["സമയ വേരിയബിളുകൾക്കായി സ്പ്രൈറ്റ് ടെക്സ്റ്റ് അപ്ഡേറ്റ് ചെയ്യാൻ ലുക്ക്സ് ബ്ലോക്കുകൾ", "സൗണ്ട് ബ്ലോക്ക് മാത്രം", "കോസ്റ്റ്യൂം ടാബ്", "ടൈമർ ബ്ലോക്ക് മാത്രം"], answer: "സമയ വേരിയബിളുകൾക്കായി സ്പ്രൈറ്റ് ടെക്സ്റ്റ് അപ്ഡേറ്റ് ചെയ്യാൻ ലുക്ക്സ് ബ്ലോക്കുകൾ" } },
+            { en: { question: "Suppose you’re exporting your PictoBlox water bell for web use. Which format does the chapter mention?", options: [".html", ".csv", ".mp3", ".docx"], answer: ".html" }, ml: { question: "നിങ്ങളുടെ PictoBlox വാട്ടർ ബെൽ വെബ് ഉപയോഗത്തിനായി എക്സ്പോർട്ട് ചെയ്യുമ്പോൾ, അധ്യായത്തിൽ ഏത് ഫോർമാറ്റാണ് പരാമർശിക്കുന്നത്?", options: [".html", ".csv", ".mp3", ".docx"], answer: ".html" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 50-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-300">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-900/50' : 'bg-rose-900/50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-100">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : '✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
+
