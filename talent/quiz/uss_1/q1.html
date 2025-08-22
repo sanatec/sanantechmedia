@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USS Talent Urdu Quiz</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <!-- Preconnect to Google Fonts for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Urdu Fonts - Noto Nastaleeq Urdu as primary -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Noto Naskh Urdu', 'Segoe UI', serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 600px;
+            overflow: hidden;
+            position: relative;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 4px solid gold;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 30px;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .timer {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 18px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #ddd;
+            margin: 10px 0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: #4caf50;
+            width: 0;
+            transition: width 0.3s ease;
+        }
+
+        .screen {
+            padding: 30px;
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .active {
+            display: block;
+        }
+
+        .question-number {
+            color: #6a11cb;
+            font-size: 18px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .question-text {
+            font-size: 24px;
+            margin-bottom: 25px;
+            color: #333;
+            line-height: 1.4;
+            font-weight: 600;
+            text-align: center;
+            animation: fadeInText 0.5s ease;
+        }
+
+        @keyframes fadeInText {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .options-container {
+            margin-bottom: 30px;
+        }
+
+        .option {
+            background-color: #f5f5f5;
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 18px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option:hover {
+            background-color: #e9e9e9;
+            border-color: #6a11cb;
+            transform: scale(1.02);
+        }
+
+        .option.selected {
+            background-color: #6a11cb;
+            color: white;
+            border-color: #6a11cb;
+            animation: pulse 0.3s ease;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .option.correct {
+            background-color: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+
+        .option.wrong {
+            background-color: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background-color: #2575fc;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 48%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+
+        .nav-btn:hover::after {
+            width: 200px;
+            height: 200px;
+        }
+
+        .nav-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background-color: #6a11cb;
+            transform: translateY(-2px);
+        }
+
+        #result-screen {
+            text-align: center;
+        }
+
+        .result-title {
+            color: #2575fc;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .score-text {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .score-value {
+            font-size: 64px;
+            font-weight: bold;
+            color: #6a11cb;
+            margin: 20px 0;
+            animation: bounceIn 0.5s ease;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+
+        .high-score {
+            font-size: 20px;
+            color: #4caf50;
+            margin-bottom: 20px;
+        }
+
+        .review-btn {
+            background-color: #ff9800;
+        }
+
+        .review-btn:hover {
+            background-color: #f57c00;
+        }
+
+        .review-item {
+            background-color: #f9f9f9;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .review-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .review-question {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #333;
+            text-align: center;
+        }
+
+        .review-answer {
+            font-size: 16px;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        .review-correct {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .review-wrong {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @media (max-width: 500px) {
+            .container {
+                border-radius: 15px;
+                max-width: 95%;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .screen {
+                padding: 20px;
+            }
+
+            .question-text {
+                font-size: 20px;
+            }
+
+            .option {
+                font-size: 16px;
+                padding: 12px;
+            }
+
+            .nav-btn {
+                font-size: 14px;
+                padding: 10px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>USS Talent Urdu Quiz</h1>
+            <p>Test your knowledge of Urdu language</p>
+            <div class="timer" id="timer">Time: 00:00</div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+
+        <div id="quiz-screen" class="screen active">
+            <div class="question-number">
+                <i class="fas fa-question-circle"></i>
+                Question <span id="current-question">1</span> / <span id="total-questions">25</span>
+            </div>
+            <div class="question-text" id="question-text">Question will appear here</div>
+            <div class="options-container" id="options-container"></div>
+            <div class="navigation-buttons">
+                <button id="prev-btn" class="nav-btn"><i class="fas fa-arrow-left"></i> Previous</button>
+                <button id="next-btn" class="nav-btn">Next <i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <div id="result-screen" class="screen">
+            <h2 class="result-title">Quiz Completed!</h2>
+            <p class="score-text">Your Score</p>
+            <div class="score-value" id="score-value">0</div>
+            <p class="high-score" id="high-score">High Score: 0</p>
+            <p class="score-text" id="score-message"></p>
+            <div class="navigation-buttons">
+                <button id="review-btn" class="nav-btn review-btn"><i class="fas fa-book"></i> Review Answers</button>
+                <button id="restart-btn" class="nav-btn"><i class="fas fa-redo"></i> Try Again</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen">
+            <h2 class="result-title">Your Answers Review</h2>
+            <div id="review-container"></div>
+            <button id="back-to-result-btn" class="nav-btn"><i class="fas fa-arrow-left"></i> Back to Results</button>
+        </div>
+    </div>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <script>
+        const quizData = [
+            {
+                question: "ہمارے وطن کا نام کیا ہے؟",
+                options: ["کیرلا", "ہندوستان", "راجھستان", "دہلی"],
+                correct: 1
+            },
+            {
+                question: "ناریل کے پیڑ کے نام  سے مشہور ہے ؟",
+                options: ["بنگال", "گجرات", "کیرلا", "دہلی"],
+                correct: 2
+            },
+            {
+                question: "لفظ نیاری کا ہم آواز لفظ ہے ؟",
+                options: ["ہریالی", "پیاری", "کیسی", "حالی"],
+                correct: 1
+            },
+            {
+                question: "گروہ سے نا مناسب چن کر لکھیے۔",
+                options: ["کاجو", "ناریل", "سپاری", "کھجور"],
+                correct: 3
+            },
+            {
+                question: "کیرلا کی ایک ندی ہے ؟",
+                options: ["گنگا", "جمنا", "پریار", "کاویری"],
+                correct: 2
+            },
+            {
+                question: "کیرلا کے ریاستی پرندہ کون سا ہے ؟",
+                options: ["کبوتر", "پپیہا", "مرغا", "بکرا"],
+                correct: 1
+            },
+            {
+                question: "کیرلا کے ایک فن کے نام چن لیجیے؟",
+                options: ["کتھا کلی", "کچی پڑی", "اوڈیسی", "موہنیاٹم"],
+                correct: 0
+            },
+            {
+                question: "ان میں رنگوں کا تہوار کون سا ہے؟",
+                options: ["عید", "ہولی", "دیوالی", "اونم"],
+                correct: 2
+            },
+            {
+                question: "ایک کلو سونا پاپڑی کا دام ایک سو پچاس ہےتو دو کلو کے لیے کتنے ہیں ؟",
+                options: ["دو سو", "دو سو پچاس", "تین سو", "تین سو پچاس"],
+                correct: 2
+            },
+            {
+                question: "یومِ جمہوریہ جشن کے موقع پر وزیرِ اعظم کہاں ترنگا جھنڈا لہراتے ہیں؟",
+                options: ["تاج محل", "لال قلعہ", "چار مینار", "آگرہ قلعہ"],
+                correct: 1
+            },
+            {
+                question: "جھانسی کی رانی کا اصل نام کیا ہے؟",
+                options: ["پتھلی بھائی", "سروجنی نائڈو", "منی کرنکا", "بی اماں"],
+                correct: 2
+            },
+            {
+                question: "ہماری قومی جانور کون سا ہے؟",
+                options: ["ہاتھی", "بھالو", "باگھ", "چیتا"],
+                correct: 2
+            },
+            {
+                question: "مشہور نعرہ انقلاب زندہ باد کا بانی کون ہے؟",
+                options: ["علامہ اقبال", "حسرت موہانی", "بھگت سنگھ", "گاندھی جی"],
+                correct: 1
+            },
+            {
+                question: "نیتاجی کے نام سے کون مشہور ہیں؟",
+                options: ["مرزا غالب", "جھانسی رانی", "ابوالکلام آزاد", "سبھاش چندر بوس"],
+                correct: 3
+            },
+            {
+                question: "ہمارے قومی جھنڈا کس نے بنائے؟",
+                options: ["پنگلی وینگیّ", "گاندھی جی", "جواہر لال نہرو", "ابوالکلام آزاد"],
+                correct: 0
+            },
+            {
+                question: "گروہ میں قومی نشانیات نہیں ہے ؟",
+                options: ["آم", "باگھ", "کنول", "کٹہل"],
+                correct: 3
+            },
+            {
+                question: "دنیا کا سب سے بڑا پھل کون سا ہے ؟",
+                options: ["آم", "انار", "کٹہل", "اننّاس"],
+                correct: 2
+            },
+            {
+                question: "خدا کی اپنی بستی کے نام سے مشہور ہے ؟",
+                options: ["تامل ناڈو", "کرناٹک", "کیرلا", "کاشمیر"],
+                correct: 2
+            },
+            {
+                question: "ہندوستاں ہے ہمارا وطن۔ یہ شعر کا شاعر کون ہے ؟",
+                options: ["برج نرائن چکبست", "میر", "جگر", "جوش"],
+                correct: 0
+            },
+            {
+                question: "ہمارے قومی پرندہ کون سا ہے ؟",
+                options: ["مور", "مرغی", "کبوتر", "الوّ"],
+                correct: 0
+            },
+            {
+                question: "14 / نومبر کی خصوصیت ہے ؟",
+                options: ["یومِ آزادی", "یومِ جمہوریہ", "یومِ اطفال", "یومِ تعلیم"],
+                correct: 2
+            },
+            {
+                question: "19 / جون کی خصوصیت ہے ؟",
+                options: ["یومِ آزادی", "یومِ جمہوریہ", "یومِ ماحولیات", "یومِ مطالعہ"],
+                correct: 3
+            },
+            {
+                question: "15 / اگست کی خصوصیت ہے ؟",
+                options: ["یومِ آزادی", "یومِ جمہوریہ", "یومِ آب", "یومِ اطفال"],
+                correct: 0
+            },
+            {
+                question: "26 / جنوری کی خصوصیت ہے ؟",
+                options: ["یومِ آزادی", "یومِ جمہوریہ", "یومِ اطفال", "یومِ پیدائش"],
+                correct: 1
+            },
+            {
+                question: "30 / جنوری کی خصوصیت ہے ؟",
+                options: ["یومِ شہادت", "یومِ جمہوریہ", "یومِ اطفال", "یومِ پیدائش"],
+                correct: 0
+            }
+        ];
+
+        // App state
+        let state = {
+            currentQuestionIndex: 0,
+            userAnswers: Array(quizData.length).fill(null),
+            userScore: 0,
+            highScore: localStorage.getItem('urduQuizHighScore') || 0,
+            timeLeft: 30 * quizData.length, // 30 seconds per question
+            timerId: null
+        };
+
+        // DOM elements
+        const elements = {
+            quizScreen: document.getElementById('quiz-screen'),
+            resultScreen: document.getElementById('result-screen'),
+            reviewScreen: document.getElementById('review-screen'),
+            prevBtn: document.getElementById('prev-btn'),
+            nextBtn: document.getElementById('next-btn'),
+            reviewBtn: document.getElementById('review-btn'),
+            restartBtn: document.getElementById('restart-btn'),
+            backToResultBtn: document.getElementById('back-to-result-btn'),
+            currentQuestion: document.getElementById('current-question'),
+            totalQuestions: document.getElementById('total-questions'),
+            questionText: document.getElementById('question-text'),
+            optionsContainer: document.getElementById('options-container'),
+            scoreValue: document.getElementById('score-value'),
+            scoreMessage: document.getElementById('score-message'),
+            highScore: document.getElementById('high-score'),
+            reviewContainer: document.getElementById('review-container'),
+            timer: document.getElementById('timer'),
+            progress: document.getElementById('progress')
+        };
+
+        // Sound effects (using data URLs for portability)
+        const sounds = {
+            correct: new Audio('sound/co.mp3'), // Replace with actual base64-encoded correct sound
+            wrong: new Audio('sound/wr.mp3'),  // Replace with actual base64-encoded wrong sound
+            click: new Audio('data:audio/mp3;base64,...'),  // Replace with actual base64-encoded click sound
+            complete: new Audio('data:audio/mp3;base64,...') // Replace with actual base64-encoded complete sound
+        };
+
+        // Initialize quiz
+        function initQuiz() {
+            elements.totalQuestions.textContent = quizData.length;
+            elements.highScore.textContent = `High Score: ${state.highScore}`;
+            startTimer();
+            showQuestion(0);
+            updateProgress();
+        }
+
+        // Start timer
+        function startTimer() {
+            state.timerId = setInterval(() => {
+                state.timeLeft--;
+                updateTimer();
+                if (state.timeLeft <= 0) {
+                    clearInterval(state.timerId);
+                    showResults();
+                }
+            }, 1000);
+        }
+
+        // Update timer display
+        function updateTimer() {
+            const minutes = Math.floor(state.timeLeft / 60);
+            const seconds = state.timeLeft % 60;
+            elements.timer.textContent = `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            if (state.timeLeft <= 10) {
+                elements.timer.style.color = '#f44336';
+            }
+        }
+
+        // Update progress bar
+        function updateProgress() {
+            const progressPercent = ((state.currentQuestionIndex + 1) / quizData.length) * 100;
+            elements.progress.style.width = `${progressPercent}%`;
+        }
+
+        // Show question
+        function showQuestion(index) {
+            state.currentQuestionIndex = index;
+            const question = quizData[index];
+
+            elements.currentQuestion.textContent = index + 1;
+            elements.questionText.textContent = question.question;
+            elements.optionsContainer.innerHTML = '';
+
+            question.options.forEach((option, optionIndex) => {
+                const optionElement = document.createElement('div');
+                optionElement.classList.add('option');
+                if (state.userAnswers[index] === optionIndex) {
+                    optionElement.classList.add('selected');
+                }
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => {
+                    sounds.click.play();
+                    selectOption(optionIndex, optionElement);
+                });
+                elements.optionsContainer.appendChild(optionElement);
+            });
+
+            updateNavigationButtons();
+            updateProgress();
+        }
+
+        // Handle option selection
+        function selectOption(selectedOptionIndex, optionElement) {
+            elements.optionsContainer.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+                opt.style.pointerEvents = 'none';
+            });
+
+            optionElement.classList.add('selected');
+            state.userAnswers[state.currentQuestionIndex] = selectedOptionIndex;
+
+            const correctAnswerIndex = quizData[state.currentQuestionIndex].correct;
+            const isCorrect = selectedOptionIndex === correctAnswerIndex;
+
+            if (isCorrect) {
+                sounds.correct.play();
+                showConfetti();
+                optionElement.classList.add('correct');
+            } else {
+                sounds.wrong.play();
+                optionElement.classList.add('wrong');
+                elements.optionsContainer.querySelectorAll('.option').forEach((opt, idx) => {
+                    if (idx === correctAnswerIndex) {
+                        opt.classList.add('correct');
+                    }
+                });
+            }
+
+            elements.nextBtn.disabled = false;
+        }
+
+        // Update navigation buttons
+        function updateNavigationButtons() {
+            elements.prevBtn.disabled = state.currentQuestionIndex === 0;
+            elements.nextBtn.disabled = state.userAnswers[state.currentQuestionIndex] === null;
+            elements.nextBtn.textContent = state.currentQuestionIndex === quizData.length - 1 ? 'Finish' : 'Next';
+        }
+
+        // Show confetti
+        function showConfetti() {
+            confetti({
+                particleCount: 200,
+                spread: 90,
+                origin: { y: 0.6 },
+                colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'],
+                shapes: ['star', 'circle'],
+                scalar: 1.2
+            });
+        }
+
+        // Show results
+        function showResults() {
+            clearInterval(state.timerId);
+            state.userScore = state.userAnswers.reduce((score, answer, index) => {
+                return answer === quizData[index].correct ? score + 1 : score;
+            }, 0);
+
+            elements.scoreValue.textContent = `${state.userScore} / ${quizData.length}`;
+            if (state.userScore > state.highScore) {
+                state.highScore = state.userScore;
+                localStorage.setItem('urduQuizHighScore', state.highScore);
+                elements.highScore.textContent = `New High Score: ${state.highScore}!`;
+            } else {
+                elements.highScore.textContent = `High Score: ${state.highScore}`;
+            }
+
+            const percentage = (state.userScore / quizData.length) * 100;
+            elements.scoreMessage.textContent = percentage >= 80 ? 'Excellent! You have great knowledge of Urdu and Indian culture.' :
+                percentage >= 50 ? 'Good effort! You have decent knowledge of Urdu and Indian culture.' :
+                'Keep learning! Try again to improve your score.';
+
+            if (percentage >= 80) {
+                sounds.complete.play();
+                showConfetti();
+            }
+
+            elements.quizScreen.classList.remove('active');
+            elements.resultScreen.classList.add('active');
+        }
+
+        // Show review
+        function showReview() {
+            elements.reviewContainer.innerHTML = '';
+
+            quizData.forEach((question, index) => {
+                const reviewItem = document.createElement('div');
+                reviewItem.classList.add('review-item');
+
+                const questionElement = document.createElement('div');
+                questionElement.classList.add('review-question');
+                questionElement.textContent = `${index + 1}. ${question.question}`;
+
+                const userAnswerElement = document.createElement('div');
+                userAnswerElement.classList.add('review-answer');
+
+                const isCorrect = state.userAnswers[index] === question.correct;
+                const userAnswerIndex = state.userAnswers[index];
+
+                if (isCorrect) {
+                    userAnswerElement.classList.add('review-correct');
+                    userAnswerElement.textContent = `Your answer: ${question.options[userAnswerIndex]} ✓`;
+                } else {
+                    userAnswerElement.classList.add('review-wrong');
+                    userAnswerElement.textContent = userAnswerIndex !== null ?
+                        `Your answer: ${question.options[userAnswerIndex]} ✗` :
+                        `Your answer: Not answered ✗`;
+
+                    const correctAnswerElement = document.createElement('div');
+                    correctAnswerElement.classList.add('review-answer', 'review-correct');
+                    correctAnswerElement.textContent = `Correct answer: ${question.options[question.correct]}`;
+                    reviewItem.appendChild(correctAnswerElement);
+                }
+
+                reviewItem.appendChild(questionElement);
+                reviewItem.appendChild(userAnswerElement);
+                elements.reviewContainer.appendChild(reviewItem);
+            });
+
+            elements.resultScreen.classList.remove('active');
+            elements.reviewScreen.classList.add('active');
+        }
+
+        // Event listeners
+        elements.prevBtn.addEventListener('click', () => {
+            sounds.click.play();
+            if (state.currentQuestionIndex > 0) {
+                showQuestion(state.currentQuestionIndex - 1);
+            }
+        });
+
+        elements.nextBtn.addEventListener('click', () => {
+            sounds.click.play();
+            if (state.currentQuestionIndex < quizData.length - 1) {
+                showQuestion(state.currentQuestionIndex + 1);
+            } else {
+                showResults();
+            }
+        });
+
+        elements.reviewBtn.addEventListener('click', () => {
+            sounds.click.play();
+            showReview();
+        });
+
+        elements.restartBtn.addEventListener('click', () => {
+            sounds.click.play();
+            state = {
+                currentQuestionIndex: 0,
+                userAnswers: Array(quizData.length).fill(null),
+                userScore: 0,
+                highScore: state.highScore,
+                timeLeft: 30 * quizData.length,
+                timerId: null
+            };
+            elements.resultScreen.classList.remove('active');
+            elements.reviewScreen.classList.remove('active');
+            elements.quizScreen.classList.add('active');
+            initQuiz();
+        });
+
+        elements.backToResultBtn.addEventListener('click', () => {
+            sounds.click.play();
+            elements.reviewScreen.classList.remove('active');
+            elements.resultScreen.classList.add('active');
+        });
+
+        // Initialize quiz
+        window.onload = initQuiz;
+    </script>
+</body>
+</html>
