@@ -1,5 +1,5 @@
 body {
-  font-family:'Arial', sans-serif;
+  font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Noto Naskh Urdu', 'Segoe UI', serif;
   margin: 0;
   background: linear-gradient(to bottom, #ffd89b, #19547b);
   display: flex;
@@ -54,6 +54,7 @@ h1 {
   display: flex;
   justify-content: center;
   align-items: center;
+  font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Noto Naskh Urdu', 'Segoe UI', serif;
   font-size: 20px;
   font-weight: bold;
   cursor: pointer;
