@@ -30,7 +30,7 @@ body {
   color: white;
   border: none;
   border-radius: 5px;
-  font-family:'Arial', serif;
+  font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Noto Naskh Urdu', 'Segoe UI', serif;
   font-size: 24px;
   cursor: pointer;
   transition: background 0.3s;
