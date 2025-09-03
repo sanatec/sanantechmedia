@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اردو ورڈ ہنٹ گیم</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Nastaliq Urdu', Arial, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+            padding: 10px;
+            direction: rtl;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border: 2px solid #ff6b9d;
+            position: relative;
+            z-index: 2;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            background: white;
+            border-radius: 23px;
+            z-index: -1;
+            animation: borderGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes borderGlow {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .title {
+            background: linear-gradient(45deg, #ff6b9d, #4d9de0, #9b59b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: clamp(20px, 5vw, 26px);
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            animation: titleBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes titleBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .score-display {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            background: linear-gradient(45deg, #6bcf7f, #4d9de0);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: clamp(14px, 3.5vw, 16px);
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            animation: scoreGlow 2s ease-in-out infinite alternate;
+            display: inline-block;
+            z-index: 2;
+        }
+
+        @keyframes scoreGlow {
+            0% { box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+            100% { box-shadow: 0 4px 18px rgba(107, 207, 127, 0.5); }
+        }
+
+        .words-to-find {
+            background: linear-gradient(135deg, #fff5f8 0%, #e8f4fd 100%);
+            border-radius: 15px;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 2px solid #ff6b9d;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .words-to-find h3 {
+            color: #2d3748;
+            font-size: clamp(16px, 4.5vw, 18px);
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .word-item {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            padding: 6px 12px;
+            border-radius: 18px;
+            font-size: clamp(16px, 5vw, 18px);
+            color: #4a5568;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .word-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+            transition: left 0.5s;
+            z-index: 1;
+        }
+
+        .word-item:hover::before {
+            left: 100%;
+        }
+
+        .word-item.found {
+            background: linear-gradient(145deg, #48bb78, #38a169);
+            color: white;
+            text-decoration: line-through;
+            transform: scale(0.95);
+            animation: foundWordPulse 0.6s ease-in-out;
+        }
+
+        @keyframes foundWordPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(0.95); }
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            background: linear-gradient(145deg, #ff6b9d, #4d9de0);
+            border-radius: 15px;
+            padding: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 350px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(18px, 4.5vw, 24px);
+            font-weight: bold;
+            color: #4a5568;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            min-height: 45px;
+            touch-action: manipulation;
+        }
+
+        .cell::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .cell:hover::before {
+            width: 100%;
+            height: 100%;
+        }
+
+        .cell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .cell.selected {
+            background: linear-gradient(145deg, #4299e1, #3182ce);
+            color: white;
+            border-color: #2b6cb0;
+            animation: selectedPulse 0.5s ease-in-out;
+        }
+
+        @keyframes selectedPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .cell.found {
+            background: linear-gradient(145deg, #48bb78, #38a169);
+            color: white;
+            border-color: #2f855a;
+            animation: foundCellSpin 0.8s ease-in-out;
+        }
+
+        @keyframes foundCellSpin {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(180deg); }
+            100% { transform: rotateY(360deg); }
+        }
+
+        .controls {
+            display: none;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: clamp(12px, 3vw, 14px);
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            touch-action: manipulation;
+            min-width: 100px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+            z-index: 1;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(145deg, #4299e1, #3182ce);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(145deg, #3182ce, #2c5282);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(145deg, #e2e8f0, #cbd5e0);
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(145deg, #cbd5e0, #a0aec0);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+        }
+
+        /* Centered message styling */
+        .message-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .message {
+            text-align: center;
+            padding: 20px 30px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: clamp(16px, 4vw, 20px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 80%;
+            transform: translateY(-50px);
+            opacity: 0;
+            transition: all 0.4s ease;
+            pointer-events: none;
+            z-index: 101;
+        }
+
+        .message.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .success {
+            background: linear-gradient(145deg, #c6f6d5, #9ae6b4);
+            color: #22543d;
+            border: 2px solid #48bb78;
+            animation: successShine 1s ease-in-out;
+        }
+
+        @keyframes successShine {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(0) scale(1.05); }
+        }
+
+        .congratulations {
+            background: linear-gradient(145deg, #fed7d7, #fbb6ce);
+            color: #742a2a;
+            border: 2px solid #e53e3e;
+            animation: congratsBounce 1s ease-in-out infinite;
+        }
+
+        @keyframes congratsBounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-8px); }
+            60% { transform: translateY(-4px); }
+        }
+
+        .fireworks {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 99;
+        }
+
+        .firework {
+            position: absolute;
+            border-radius: 50%;
+            animation: explode 1.5s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(6);
+                opacity: 0;
+            }
+        }
+
+        .sound-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(145deg, #ffd93d, #ffb347);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            touch-action: manipulation;
+        }
+
+        .sound-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .sound-toggle.muted {
+            background: linear-gradient(145deg, #e2e8f0, #cbd5e0);
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            
+            .container {
+                padding: 12px;
+                border-radius: 15px;
+                max-width: 100%;
+            }
+            
+            .score-display {
+                left: 10px;
+                top: 10px;
+                padding: 6px 12px;
+                font-size: clamp(12px, 3vw, 14px);
+            }
+            
+            .grid-container {
+                padding: 8px;
+                gap: 3px;
+                max-width: 100%;
+            }
+            
+            .cell {
+                min-height: 40px;
+            }
+            
+            .controls {
+                gap: 8px;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                min-width: 80px;
+            }
+            
+            .sound-toggle {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+                top: 8px;
+                right: 8px;
+            }
+            
+            .message {
+                padding: 15px 20px;
+                max-width: 90%;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .container {
+                padding: 8px;
+            }
+            
+            .score-display {
+                left: 8px;
+                top: 8px;
+                padding: 5px 10px;
+            }
+            
+            .grid-container {
+                padding: 6px;
+                gap: 2px;
+            }
+            
+            .cell {
+                min-height: 35px;
+            }
+            
+            .btn {
+                padding: 8px 12px;
+                min-width: 70px;
+            }
+        }
+
+        /* Landscape mobile optimization */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .container {
+                max-width: 90vw;
+            }
+            
+            .header {
+                margin-bottom: 8px;
+            }
+            
+            .words-to-find {
+                margin-bottom: 8px;
+            }
+            
+            .grid-container {
+                margin-bottom: 8px;
+            }
+            
+            .message {
+                padding: 12px 18px;
+                font-size: clamp(14px, 3vw, 16px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</button>
+        
+        <div class="score-display">Score: <span id="score">0</span></div>
+        
+        <div class="header">
+            <h1 class="title">Word Hunt</h1>
+        </div>
+
+        <div class="words-to-find">
+            <h3>Find these words(Drag letters)</h3>
+            <div class="word-list" id="wordList"></div>
+        </div>
+
+        <div class="grid-container" id="gameGrid"></div>
+
+        <div class="message-overlay" id="messageOverlay">
+            <div class="message" id="message"></div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="newGame()">نیا گیم</button>
+            <button class="btn btn-secondary" onclick="clearSelection()">صاف کریں</button>
+        </div>
+    </div>
+
+    <div class="fireworks" id="fireworks"></div>
+
+    <script>
+        // Sound system
+        let soundEnabled = true;
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Create sound effects using Web Audio API
+        function playSound(frequency, duration, type = 'sine', volume = 0.1) {
+            if (!soundEnabled) return;
+            
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+
+        function playSuccess() {
+            playSound(523, 0.2, 'sine', 0.15); // C note
+            setTimeout(() => playSound(659, 0.2, 'sine', 0.15), 100); // E note
+            setTimeout(() => playSound(784, 0.3, 'sine', 0.15), 200); // G note
+        }
+
+        function playClick() {
+            playSound(800, 0.1, 'square', 0.05);
+        }
+
+        function playWin() {
+            const notes = [523, 659, 784, 1047, 1319]; // C, E, G, C, E
+            notes.forEach((note, index) => {
+                setTimeout(() => playSound(note, 0.3, 'sine', 0.2), index * 150);
+            });
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const button = document.getElementById('soundToggle');
+            if (soundEnabled) {
+                button.innerHTML = '🔊';
+                button.classList.remove('muted');
+                playClick();
+            } else {
+                button.innerHTML = '🔇';
+                button.classList.add('muted');
+            }
+            
+            if (soundEnabled && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+
+        // Game state
+        let gameGrid = [];
+        let wordsToFind = [];
+        let foundWords = [];
+        let selectedCells = [];
+        let isSelecting = false;
+        let startCell = null;
+        let score = 0;
+        let usedWords = [];
+        const GRID_SIZE = 5;
+        const NUM_WORDS = 3;
+
+        // Urdu words for kids (simple and common words)
+        const urduWords = [
+            'کتاب', 'قلم', 'گھر', 'کھانا', 'پانی',
+            'بچہ', 'ماں', 'باپ', 'دوست', 'کھیل',
+            'رنگ', 'پھل', 'درخت', 'چاند', 'سورج',
+            'بلی', 'کتا', 'گائے', 'بکری', 'مرغی',
+            'سکول', 'استاد', 'تتلی', 'سبق', 'گلاب'
+        ];
+
+        // Urdu alphabet for filling empty spaces
+        const urduLetters = [
+            'ا', 'ب', 'پ', 'ت', 'ٹ', 'ث', 'ج', 'چ', 'ح', 'خ',
+            'د', 'ڈ', 'ذ', 'ر', 'ڑ', 'ز', 'ژ', 'س', 'ش', 'ص',
+            'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل',
+            'م', 'ن', 'و', 'ہ', 'ی'
+        ];
+
+        // Initialize the game
+        function initGame() {
+            createGrid();
+            selectRandomWords();
+            placeWordsInGrid();
+            fillEmptyCells();
+            displayWordsToFind();
+            updateScore();
+            playClick();
+        }
+
+        // Create 5x5 grid
+        function createGrid() {
+            gameGrid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(''));
+            const gridElement = document.getElementById('gameGrid');
+            gridElement.innerHTML = '';
+            gridElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
+
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('mousedown', startSelection);
+                    cell.addEventListener('mouseover', continueSelection);
+                    cell.addEventListener('mouseup', endSelection);
+                    cell.addEventListener('touchstart', handleTouch);
+                    cell.addEventListener('touchmove', handleTouchMove);
+                    cell.addEventListener('touchend', handleTouchEnd);
+                    gridElement.appendChild(cell);
+                }
+            }
+        }
+
+        // Select random words for the game
+        function selectRandomWords() {
+            // If all words have been used, reset the used words list
+            if (usedWords.length >= urduWords.length - NUM_WORDS) {
+                usedWords = [];
+            }
+            
+            // Filter out words that have already been used
+            const availableWords = urduWords.filter(word => !usedWords.includes(word));
+            
+            // Select new random words
+            const shuffled = [...availableWords].sort(() => 0.5 - Math.random());
+            wordsToFind = shuffled.slice(0, NUM_WORDS);
+            
+            // Add these words to the used words list
+            usedWords = [...usedWords, ...wordsToFind];
+            
+            foundWords = [];
+        }
+
+        // Place words randomly in the grid
+        function placeWordsInGrid() {
+            wordsToFind.forEach(word => {
+                let placed = false;
+                let attempts = 0;
+                
+                while (!placed && attempts < 100) {
+                    const direction = Math.floor(Math.random() * 8);
+                    const startRow = Math.floor(Math.random() * GRID_SIZE);
+                    const startCol = Math.floor(Math.random() * GRID_SIZE);
+                    
+                    if (canPlaceWord(word, startRow, startCol, direction)) {
+                        placeWord(word, startRow, startCol, direction);
+                        placed = true;
+                    }
+                    attempts++;
+                }
+            });
+        }
+
+        // Check if word can be placed at position
+        function canPlaceWord(word, row, col, direction) {
+            const directions = [
+                [-1, -1], [-1, 0], [-1, 1],
+                [0, -1],          [0, 1],
+                [1, -1],  [1, 0],  [1, 1]
+            ];
+            
+            const [dRow, dCol] = directions[direction];
+            
+            for (let i = 0; i < word.length; i++) {
+                const newRow = row + (dRow * i);
+                const newCol = col + (dCol * i);
+                
+                if (newRow < 0 || newRow >= GRID_SIZE || newCol < 0 || newCol >= GRID_SIZE) {
+                    return false;
+                }
+                
+                if (gameGrid[newRow][newCol] !== '' && gameGrid[newRow][newCol] !== word[i]) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        // Place word in the grid
+        function placeWord(word, row, col, direction) {
+            const directions = [
+                [-1, -1], [-1, 0], [-1, 1],
+                [0, -1],          [0, 1],
+                [1, -1],  [1, 0],  [1, 1]
+            ];
+            
+            const [dRow, dCol] = directions[direction];
+            
+            for (let i = 0; i < word.length; i++) {
+                const newRow = row + (dRow * i);
+                const newCol = col + (dCol * i);
+                gameGrid[newRow][newCol] = word[i];
+            }
+        }
+
+        // Fill empty cells with random letters
+        function fillEmptyCells() {
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    if (gameGrid[i][j] === '') {
+                        gameGrid[i][j] = urduLetters[Math.floor(Math.random() * urduLetters.length)];
+                    }
+                }
+            }
+            
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach((cell, index) => {
+                const row = Math.floor(index / GRID_SIZE);
+                const col = index % GRID_SIZE;
+                cell.textContent = gameGrid[row][col];
+            });
+        }
+
+        // Display words to find
+        function displayWordsToFind() {
+            const wordList = document.getElementById('wordList');
+            wordList.innerHTML = '';
+            
+            wordsToFind.forEach(word => {
+                const wordItem = document.createElement('div');
+                wordItem.className = 'word-item';
+                wordItem.textContent = word;
+                wordItem.id = `word-${word}`;
+                wordList.appendChild(wordItem);
+            });
+        }
+
+        // Selection handling
+        function startSelection(e) {
+            e.preventDefault();
+            playClick();
+            isSelecting = true;
+            startCell = {
+                row: parseInt(e.target.dataset.row),
+                col: parseInt(e.target.dataset.col)
+            };
+            clearSelection();
+            selectCell(e.target);
+        }
+
+        function continueSelection(e) {
+            if (!isSelecting || !startCell) return;
+            
+            const currentRow = parseInt(e.target.dataset.row);
+            const currentCol = parseInt(e.target.dataset.col);
+            
+            clearSelection();
+            selectLineCells(startCell.row, startCell.col, currentRow, currentCol);
+        }
+
+        function endSelection(e) {
+            if (!isSelecting) return;
+            
+            isSelecting = false;
+            const selectedWord = getSelectedWord();
+            checkWord(selectedWord);
+        }
+
+        // Touch handling for mobile
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (element && element.classList.contains('cell')) {
+                startSelection({ target: element, preventDefault: () => {} });
+            }
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (element && element.classList.contains('cell')) {
+                continueSelection({ target: element });
+            }
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            endSelection(e);
+        }
+
+        // Select cells in a line
+        function selectLineCells(startRow, startCol, endRow, endCol) {
+            const deltaRow = endRow - startRow;
+            const deltaCol = endCol - startCol;
+            
+            if (deltaRow !== 0 && deltaCol !== 0 && Math.abs(deltaRow) !== Math.abs(deltaCol)) {
+                return;
+            }
+            
+            const steps = Math.max(Math.abs(deltaRow), Math.abs(deltaCol));
+            const stepRow = steps === 0 ? 0 : deltaRow / steps;
+            const stepCol = steps === 0 ? 0 : deltaCol / steps;
+            
+            for (let i = 0; i <= steps; i++) {
+                const row = startRow + Math.round(stepRow * i);
+                const col = startCol + Math.round(stepCol * i);
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                if (cell) {
+                    selectCell(cell);
+                }
+            }
+        }
+
+        function selectCell(cell) {
+            cell.classList.add('selected');
+            selectedCells.push(cell);
+        }
+
+        function clearSelection() {
+            selectedCells.forEach(cell => cell.classList.remove('selected'));
+            selectedCells = [];
+        }
+
+        function getSelectedWord() {
+            return selectedCells.map(cell => cell.textContent).join('');
+        }
+
+        // Check if selected word is correct
+        function checkWord(word) {
+            if (wordsToFind.includes(word) && !foundWords.includes(word)) {
+                foundWords.push(word);
+                selectedCells.forEach(cell => cell.classList.add('found'));
+                document.getElementById(`word-${word}`).classList.add('found');
+                
+                score += 10;
+                updateScore();
+                playSuccess();
+                showMessage(`بہترین! آپ نے "${word}" تلاش کیا!`, 'success');
+                
+                if (foundWords.length === wordsToFind.length) {
+                    setTimeout(() => {
+                        showMessage('مبارک ہو! آپ نے تمام الفاظ تلاش کر لیے!', 'congratulations');
+                        playWin();
+                        createFireworks();
+                        
+                        // Automatically start a new game after 3 seconds
+                        setTimeout(() => {
+                            newGame();
+                        }, 3000);
+                    }, 500);
+                }
+            }
+            
+            clearSelection();
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+        }
+
+        function showMessage(text, type) {
+            const messageElement = document.getElementById('message');
+            const messageOverlay = document.getElementById('messageOverlay');
+            
+            messageElement.textContent = text;
+            messageElement.className = `message ${type}`;
+            
+            // Show the message with animation
+            setTimeout(() => {
+                messageElement.classList.add('show');
+            }, 10);
+            
+            // Hide the message after 3 seconds
+            setTimeout(() => {
+                messageElement.classList.remove('show');
+            }, 3000);
+        }
+
+        function createFireworks() {
+            const fireworksContainer = document.getElementById('fireworks');
+            const colors = ['#ff6b9d', '#ffd93d', '#6bcf7f', '#4d9de0', '#9b59b6'];
+            
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const firework = document.createElement('div');
+                    firework.className = 'firework';
+                    firework.style.left = Math.random() * 100 + '%';
+                    firework.style.top = Math.random() * 100 + '%';
+                    firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    firework.style.width = '15px';
+                    firework.style.height = '15px';
+                    
+                    fireworksContainer.appendChild(firework);
+                    
+                    setTimeout(() => {
+                        firework.remove();
+                    }, 1500);
+                }, i * 150);
+            }
+        }
+
+        function newGame() {
+            selectedCells = [];
+            foundWords = [];
+            isSelecting = false;
+            startCell = null;
+            
+            // Clear all cell classes
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('selected', 'found');
+            });
+            
+            // Clear message
+            const messageElement = document.getElementById('message');
+            messageElement.textContent = '';
+            messageElement.className = 'message';
+            messageElement.classList.remove('show');
+            
+            initGame();
+        }
+
+        // Prevent context menu on long press
+        document.addEventListener('contextmenu', e => e.preventDefault());
+
+        // Initialize audio context on first user interaction
+        document.addEventListener('touchstart', () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }, { once: true });
+        
+        document.addEventListener('click', () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }, { once: true });
+
+        // Initialize game when page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
