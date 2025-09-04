@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urdu Adjectives Learning App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nastaliq+Nastaleeq&family=Noto+Nastaliq+Urdu&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Nastaliq Urdu', 'Nastaliq Nastaleeq', serif;
+            background: linear-gradient(135deg, #fff5e6 0%, #ffebcd 100%);
+            color: #5a3e36;
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            background: linear-gradient(135deg, #d35400 0%, #e67e22 100%);
+            color: white;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .english-subtitle {
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            direction: ltr;
+            display: inline-block;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            justify-content: space-around;
+            background-color: white;
+            border-radius: 50px;
+            padding: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-tab {
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-align: center;
+            flex: 1;
+            margin: 0 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #5a3e36;
+            font-size: 1rem;
+        }
+        
+        .nav-tab i {
+            margin-left: 8px;
+        }
+        
+        .nav-tab.active {
+            background: linear-gradient(135deg, #d35400 0%, #e67e22 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .content-section {
+            background-color: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h2 {
+            color: #d35400;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+        
+        h3 {
+            color: #e67e22;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #ffefd5;
+            padding-bottom: 8px;
+        }
+        
+        .card {
+            background: #fffaf0;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #e67e22;
+        }
+        
+        .urdu-text {
+            font-family: 'Nastaliq Nastaleeq', 'Noto Nastaliq Urdu', serif;
+            font-size: 1.3rem;
+            line-height: 1.8;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .english-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #7f8c8d;
+            text-align: center;
+            direction: ltr;
+            display: block;
+            letter-spacing: 0.3px;
+        }
+        
+        .definition-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 400;
+            color: #5a3e36;
+            text-align: center;
+            direction: ltr;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .type-description {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            color: #5a3e36;
+            text-align: justify;
+            direction: ltr;
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        
+        .example {
+            padding: 15px;
+            background: #ffefd5;
+            border-radius: 12px;
+            margin: 10px 0;
+            border-right: 3px solid #d35400;
+        }
+        
+        .example .urdu-text {
+            margin-bottom: 5px;
+            color: #5a3e36;
+            font-weight: 600;
+        }
+        
+        .example .english-text {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            text-align: left;
+            margin-top: 5px;
+        }
+        
+        .exercise-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .exercise-button {
+            padding: 12px 20px;
+            background: #ffefd5;
+            border: 2px solid #d35400;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #5a3e36;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+        }
+        
+        .exercise-button i {
+            margin-left: 8px;
+        }
+        
+        .exercise-button.active {
+            background: linear-gradient(135deg, #d35400 0%, #e67e22 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Quiz Styles */
+        .quiz-container {
+            text-align: center;
+            display: none;
+        }
+        
+        .quiz-container.active {
+            display: block;
+        }
+        
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-progress {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #d35400;
+        }
+        
+        .quiz-score {
+            background: #d35400;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quiz-question {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            background: #ffefd5;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px dashed #e67e22;
+        }
+        
+        .quiz-question .english-text {
+            font-size: 1.1rem;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .quiz-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-option {
+            padding: 18px;
+            background: #fffaf0;
+            border: 2px solid #e67e22;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .quiz-option:hover {
+            background: #ffebcd;
+            transform: translateX(-5px);
+        }
+        
+        .quiz-option.correct {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .quiz-option.incorrect {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .option-indicator {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e67e22;
+            color: white;
+            margin-left: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .quiz-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        .quiz-button {
+            padding: 12px 25px;
+            background: #d35400;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .quiz-button:hover {
+            background: #e67e22;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quiz-button i {
+            margin-left: 8px;
+        }
+        
+        .quiz-button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .result-container {
+            text-align: center;
+            padding: 30px;
+            display: none;
+            background: #fffaf0;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-container.active {
+            display: block;
+        }
+        
+        .result-icon {
+            font-size: 5rem;
+            color: #d35400;
+            margin-bottom: 20px;
+        }
+        
+        .result-score {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #d35400;
+            margin: 20px 0;
+        }
+        
+        .result-message {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            color: #5a3e36;
+        }
+        
+        .result-message-english {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            direction: ltr;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: #ffefd5;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(135deg, #d35400 0%, #e67e22 100%);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        /* Fill in the Blanks */
+        .blank-question {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            line-height: 2.5;
+        }
+        
+        .blank-instructions {
+            background: #ffefd5;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .blank-instructions .english-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: #7f8c8d;
+            direction: ltr;
+            margin-top: 5px;
+        }
+        
+        .blank-input {
+            width: 120px;
+            padding: 8px 15px;
+            border: 2px solid #d35400;
+            border-radius: 8px;
+            font-family: 'Noto Nastaliq Urdu', serif;
+            font-size: 1.2rem;
+            text-align: center;
+            background: #fffaf0;
+            transition: all 0.3s ease;
+        }
+        
+        .blank-input:focus {
+            outline: none;
+            border-color: #e67e22;
+            box-shadow: 0 0 10px rgba(211, 84, 0, 0.2);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            direction: ltr;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .nav-tab {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .nav-tab i {
+                display: none;
+            }
+            
+            .urdu-text {
+                font-size: 1.4rem;
+            }
+            
+            .english-text {
+                font-size: 0.9rem;
+            }
+            
+            .exercise-selector {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .exercise-button {
+                width: 100%;
+                max-width: 250px;
+            }
+            
+            .quiz-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .content-section {
+                padding: 20px;
+            }
+            
+            .urdu-text {
+                font-size: 1.3rem;
+            }
+            
+            .english-text {
+                font-size: 0.85rem;
+            }
+            
+            .quiz-question {
+                font-size: 1.3rem;
+            }
+            
+            .blank-input {
+                width: 100px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="urdu-text">صفت سیکھیں</h1>
+            <p class="english-subtitle">Learn Urdu Adjectives</p>
+        </header>
+        
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-target="definition">
+                <i class="fas fa-info-circle"></i> تعریف
+            </div>
+            <div class="nav-tab" data-target="types">
+                <i class="fas fa-layer-group"></i> اقسام
+            </div>
+            <div class="nav-tab" data-target="examples">
+                <i class="fas fa-list"></i> مثالیں
+            </div>
+            <div class="nav-tab" data-target="practice">
+                <i class="fas fa-pen"></i> مشق
+            </div>
+        </div>
+        
+        <div class="content-section active" id="definition">
+            <h2>صفت کی تعریف</h2>
+            <div class="card">
+                <p class="urdu-text">صفت وہ لفظ ہے جو اسم کی خصوصیت بیان کرتا ہے۔</p>
+                <p class="definition-text">An adjective is a word that describes or modifies a noun or pronoun.</p>
+            </div>
+            <div class="card">
+                <h3>صفت کی مثالیں:</h3>
+                <div class="example">
+                    <p class="urdu-text">خوبصورت</p>
+                    <p class="english-text">Beautiful (Describes appearance)</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">بڑا</p>
+                    <p class="english-text">Big (Describes size)</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">تیز</p>
+                    <p class="english-text">Fast (Describes quality)</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">میٹھا</p>
+                    <p class="english-text">Sweet (Describes taste)</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-section" id="types">
+            <h2>صفت کی اقسام</h2>
+            <div class="card">
+                <h3>معیاری صفت (Qualitative Adjective)</h3>
+                <p class="urdu-text">یہ صفت کسی چیز کے معیار یا خوبی کو بیان کرتی ہے۔</p>
+                <p class="type-description">Describes the quality or characteristics of a noun, such as good, bad, beautiful, etc.</p>
+                <div class="example">
+                    <p class="urdu-text">وہ ایک اچھا لڑکا ہے۔</p>
+                    <p class="english-text">He is a good boy.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">یہ کھانا مزیدار ہے۔</p>
+                    <p class="english-text">This food is delicious.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>مقداری صفت (Quantitative Adjective)</h3>
+                <p class="urdu-text">یہ صفت کسی چیز کی مقدار کو بیان کرتی ہے۔</p>
+                <p class="type-description">Describes the quantity or amount of a noun, such as some, much, little, etc.</p>
+                <div class="example">
+                    <p class="urdu-text">میرے پاس کچھ کتابیں ہیں۔</p>
+                    <p class="english-text">I have some books.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">اس کے پاس زیادہ پیسے ہیں۔</p>
+                    <p class="english-text">He has more money.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>تعداد کی صفت (Numeral Adjective)</h3>
+                <p class="urdu-text">یہ صفت کسی چیز کی تعداد کو بیان کرتی ہے۔</p>
+                <p class="type-description">Describes the number or order of a noun, such as one, two, first, second, etc.</p>
+                <div class="example">
+                    <p class="urdu-text">میرے دو بھائی ہیں۔</p>
+                    <p class="english-text">I have two brothers.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">پہلا نمبر آپ کا ہے۔</p>
+                    <p class="english-text">The first number is yours.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-section" id="examples">
+            <h2>مثالیں</h2>
+            <div class="card">
+                <h3>رنگ کی صفتوں کی مثالیں:</h3>
+                <div class="example">
+                    <p class="urdu-text">سرخ گلاب</p>
+                    <p class="english-text">Red rose</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">نیلا آسمان</p>
+                    <p class="english-text">Blue sky</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">سبز درخت</p>
+                    <p class="english-text">Green tree</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">سیاہ بادل</p>
+                    <p class="english-text">Black cloud</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>جسامت کی صفتوں کی مثالیں:</h3>
+                <div class="example">
+                    <p class="urdu-text">لمبا آدمی</p>
+                    <p class="english-text">Tall man</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">چھوٹا بچہ</p>
+                    <p class="english-text">Small child</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">موٹا شخص</p>
+                    <p class="english-text">Fat person</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">پتلی لڑکی</p>
+                    <p class="english-text">Thin girl</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>خصوصیات کی صفتوں کی مثالیں:</h3>
+                <div class="example">
+                    <p class="urdu-text">ہوشیار طالب علم</p>
+                    <p class="english-text">Intelligent student</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">مہربان عورت</p>
+                    <p class="english-text">Kind woman</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">مضبوط کرسی</p>
+                    <p class="english-text">Strong chair</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">کمزور روشنی</p>
+                    <p class="english-text">Weak light</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-section" id="practice">
+            <h2>مشق</h2>
+            
+            <div class="exercise-selector">
+                <div class="exercise-button active" data-exercise="multiple-choice">
+                    <i class="fas fa-tasks"></i> Multiple Choice
+                </div>
+                <div class="exercise-button" data-exercise="fill-blanks">
+                    <i class="fas fa-edit"></i> Fill in Blanks
+                </div>
+            </div>
+            
+            <!-- Multiple Choice Quiz -->
+            <div class="quiz-container active" id="multiple-choice">
+                <div class="quiz-header">
+                    <div class="quiz-progress">سوال 1/5</div>
+                    <div class="quiz-score">اسکور: 0</div>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress" id="quiz-progress"></div>
+                </div>
+                
+                <div class="quiz-question">
+                    <p class="urdu-text">مندرجہ ذیل میں سے کون سی صفت ہے؟</p>
+                    <p class="english-text">Which of the following is an adjective?</p>
+                </div>
+                
+                <div class="quiz-options">
+                    <div class="quiz-option">
+                        <div class="option-indicator">الف</div>
+                        <p class="urdu-text">چلنا</p>
+                    </div>
+                    <div class="quiz-option">
+                        <div class="option-indicator">ب</div>
+                        <p class="urdu-text">خوبصورت</p>
+                    </div>
+                    <div class="quiz-option">
+                        <div class="option-indicator">ج</div>
+                        <p class="urdu-text">تیزی سے</p>
+                    </div>
+                    <div class="quiz-option">
+                        <div class="option-indicator">د</div>
+                        <p class="urdu-text">کتاب</p>
+                    </div>
+                </div>
+                
+                <div class="quiz-footer">
+                    <button class="quiz-button" id="prev-question" disabled><i class="fas fa-arrow-right"></i> پچھلا</button>
+                    <button class="quiz-button" id="next-question">اگلا <i class="fas fa-arrow-left"></i></button>
+                </div>
+            </div>
+            
+            <!-- Fill in the Blanks -->
+            <div class="quiz-container" id="fill-blanks">
+                <div class="blank-instructions">
+                    <p class="urdu-text">خالی جگہ پر صحیح صفت لکھیں</p>
+                    <p class="english-text">Fill in the blanks with correct adjectives</p>
+                </div>
+                
+                <div class="blank-question">
+                    <p class="urdu-text">گلاب <input type="text" class="blank-input" data-answer="سرخ"> ہے۔</p>
+                    <p class="urdu-text">وہ ایک <input type="text" class="blank-input" data-answer="اچھا"> لڑکا ہے۔</p>
+                    <p class="urdu-text">یہ کھانا <input type="text" class="blank-input" data-answer="مزیدار"> ہے۔</p>
+                </div>
+                
+                <div class="quiz-footer">
+                    <button class="quiz-button" id="check-blanks">جواب چیک کریں</button>
+                    <button class="quiz-button" id="reset-blanks">دوبارہ کریں</button>
+                </div>
+            </div>
+            
+            <!-- Results Screen -->
+            <div class="result-container" id="quiz-result">
+                <div class="result-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h2>مبارک ہو!</h2>
+                <p>آپ نے مشق مکمل کر لی ہے</p>
+                <div class="result-score">اسکور: <span id="final-score">0</span>/5</div>
+                <div class="result-message" id="result-message">بہت خوب!</div>
+                <div class="result-message-english" id="result-message-english">Excellent work!</div>
+                <button class="quiz-button" id="try-again">دوبارہ کریں</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2023 Urdu Adjectives Learning App - Professional Educational Tool</p>
+    </footer>
+
+    <script>
+        // Tab navigation
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and sections
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding section
+                tab.classList.add('active');
+                const target = tab.getAttribute('data-target');
+                document.getElementById(target).classList.add('active');
+            });
+        });
+        
+        // Exercise selection
+        document.querySelectorAll('.exercise-button').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons and containers
+                document.querySelectorAll('.exercise-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.quiz-container').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding container
+                button.classList.add('active');
+                const exercise = button.getAttribute('data-exercise');
+                document.getElementById(exercise).classList.add('active');
+            });
+        });
+        
+        // Multiple Choice Quiz Logic
+        const questions = [
+            {
+                question: "مندرجہ ذیل میں سے کون سی صفت ہے؟",
+                englishQuestion: "Which of the following is an adjective?",
+                options: ["چلنا", "خوبصورت", "تیزی سے", "کتاب"],
+                correct: 1
+            },
+            {
+                question: 'جملہ "وہ ایک لمبا آدمی ہے" میں صفت کون سی ہے؟',
+                englishQuestion: 'In the sentence "He is a tall man", which is the adjective?',
+                options: ["وہ", "لمبا", "آدمی", "ہے"],
+                correct: 1
+            },
+            {
+                question: "کون سی صفت رنگ کو بیان کرتی ہے؟",
+                englishQuestion: "Which adjective describes color?",
+                options: ["بڑا", "نیلا", "تیز", "مہربان"],
+                correct: 1
+            },
+            {
+                question: "کون سی صفت جسامت کو بیان کرتی ہے؟",
+                englishQuestion: "Which adjective describes size?",
+                options: ["سرخ", "میٹھا", "چھوٹا", "ہوشیار"],
+                correct: 2
+            },
+            {
+                question: 'جملہ "یہ کھانا مزیدار ہے" میں صفت کون سی ہے؟',
+                englishQuestion: 'In the sentence "This food is delicious", which is the adjective?',
+                options: ["یہ", "کھانا", "مزیدار", "ہے"],
+                correct: 2
+            }
+        ];
+        
+        let currentQuestion = 0;
+        let score = 0;
+        
+        function loadQuestion() {
+            const question = questions[currentQuestion];
+            document.querySelector('#multiple-choice .quiz-question .urdu-text').textContent = question.question;
+            document.querySelector('#multiple-choice .quiz-question .english-text').textContent = question.englishQuestion;
+            
+            const options = document.querySelectorAll('#multiple-choice .quiz-option');
+            options.forEach((option, index) => {
+                option.querySelector('.urdu-text').textContent = question.options[index];
+                option.classList.remove('correct', 'incorrect');
+            });
+            
+            document.querySelector('#multiple-choice .quiz-progress').textContent = `سوال ${currentQuestion + 1}/${questions.length}`;
+            document.querySelector('#multiple-choice .quiz-score').textContent = `اسکور: ${score}`;
+            document.getElementById('quiz-progress').style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+            
+            document.getElementById('prev-question').disabled = currentQuestion === 0;
+        }
+        
+        document.querySelectorAll('#multiple-choice .quiz-option').forEach((option, index) => {
+            option.addEventListener('click', () => {
+                const correctIndex = questions[currentQuestion].correct;
+                
+                // Mark correct answer
+                document.querySelectorAll('#multiple-choice .quiz-option')[correctIndex].classList.add('correct');
+                
+                // Mark incorrect if wrong
+                if (index !== correctIndex) {
+                    option.classList.add('incorrect');
+                } else {
+                    score++;
+                    document.querySelector('#multiple-choice .quiz-score').textContent = `اسکور: ${score}`;
+                }
+                
+                // Disable all options after selection
+                document.querySelectorAll('#multiple-choice .quiz-option').forEach(opt => {
+                    opt.style.pointerEvents = 'none';
+                });
+                
+                // Enable next button
+                document.getElementById('next-question').disabled = false;
+            });
+        });
+        
+        document.getElementById('next-question').addEventListener('click', () => {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+                
+                // Re-enable options
+                document.querySelectorAll('#multiple-choice .quiz-option').forEach(opt => {
+                    opt.style.pointerEvents = 'auto';
+                });
+                
+                // Disable next button until an option is selected
+                document.getElementById('next-question').disabled = true;
+            } else {
+                // Show results
+                document.getElementById('multiple-choice').classList.remove('active');
+                document.getElementById('quiz-result').classList.add('active');
+                document.getElementById('final-score').textContent = score;
+                
+                // Set message based on score
+                const message = document.getElementById('result-message');
+                const englishMessage = document.getElementById('result-message-english');
+                if (score === questions.length) {
+                    message.textContent = "بہت عمدہ! آپ نے تمام سوالات کے صحیح جوابات دیے۔";
+                    englishMessage.textContent = "Perfect! You answered all questions correctly!";
+                } else if (score >= questions.length / 2) {
+                    message.textContent = "اچھا کام! جاری رکھیں۔";
+                    englishMessage.textContent = "Good job! Keep up the great work!";
+                } else {
+                    message.textContent = "مزید مشق کی ضرورت ہے۔";
+                    englishMessage.textContent = "More practice needed. Try again!";
+                }
+            }
+        });
+        
+        document.getElementById('prev-question').addEventListener('click', () => {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                loadQuestion();
+                
+                // Re-enable options
+                document.querySelectorAll('#multiple-choice .quiz-option').forEach(opt => {
+                    opt.style.pointerEvents = 'auto';
+                });
+            }
+        });
+        
+        document.getElementById('try-again').addEventListener('click', () => {
+            currentQuestion = 0;
+            score = 0;
+            loadQuestion();
+            document.getElementById('quiz-result').classList.remove('active');
+            document.getElementById('multiple-choice').classList.add('active');
+        });
+        
+        // Initialize the first question
+        loadQuestion();
+        document.getElementById('next-question').disabled = true;
+        
+        // Fill in the Blanks Logic
+        document.getElementById('check-blanks').addEventListener('click', () => {
+            const inputs = document.querySelectorAll('.blank-input');
+            let correctCount = 0;
+            
+            inputs.forEach(input => {
+                const answer = input.getAttribute('data-answer');
+                if (input.value.trim().toLowerCase() === answer.toLowerCase()) {
+                    input.style.backgroundColor = '#d4edda';
+                    input.style.borderColor = '#c3e6cb';
+                    correctCount++;
+                } else {
+                    input.style.backgroundColor = '#f8d7da';
+                    input.style.borderColor = '#f5c6cb';
+                }
+            });
+            
+            alert(`آپ نے ${correctCount} میں سے ${inputs.length} خالی جگہیں درست بھری ہیں۔\nYou filled ${correctCount} out of ${inputs.length} blanks correctly.`);
+        });
+        
+        document.getElementById('reset-blanks').addEventListener('click', () => {
+            document.querySelectorAll('.blank-input').forEach(input => {
+                input.value = '';
+                input.style.backgroundColor = '#fffaf0';
+                input.style.borderColor = '#d35400';
+            });
+        });
+    </script>
+</body>
+</html>

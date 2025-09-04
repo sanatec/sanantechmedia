@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urdu Verb Learning App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nastaliq+Nastaleeq&family=Noto+Nastaliq+Urdu&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Nastaliq Urdu', 'Nastaliq Nastaleeq', serif;
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6e6fa 100%);
+            color: #4b0082;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            background: linear-gradient(135deg, #9370db 0%, #8a2be2 100%);
+            color: white;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .english-subtitle {
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            direction: ltr;
+            display: inline-block;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            justify-content: space-around;
+            background-color: white;
+            border-radius: 50px;
+            padding: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-tab {
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-align: center;
+            flex: 1;
+            margin: 0 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4b0082;
+            font-size: 1rem;
+        }
+        
+        .nav-tab i {
+            margin-left: 8px;
+        }
+        
+        .nav-tab.active {
+            background: linear-gradient(135deg, #9370db 0%, #8a2be2 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .content-section {
+            background-color: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        h2 {
+            color: #8a2be2;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+        
+        h3 {
+            color: #9370db;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .card {
+            background: #fafafa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #9370db;
+        }
+        
+        .urdu-text {
+            font-family: 'Nastaliq Nastaleeq', 'Noto Nastaliq Urdu', serif;
+            font-size: 1.3rem;
+            line-height: 1.8;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .english-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #7f8c8d;
+            text-align: center;
+            direction: ltr;
+            display: block;
+            letter-spacing: 0.3px;
+        }
+        
+        .definition-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 400;
+            color: #4b0082;
+            text-align: center;
+            direction: ltr;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .type-description {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            color: #4b0082;
+            text-align: justify;
+            direction: ltr;
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        
+        .example {
+            padding: 15px;
+            background: #f5f0ff;
+            border-radius: 12px;
+            margin: 10px 0;
+            border-right: 3px solid #8a2be2;
+        }
+        
+        .example .urdu-text {
+            margin-bottom: 5px;
+            color: #4b0082;
+            font-weight: 600;
+        }
+        
+        .example .english-text {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            text-align: left;
+            margin-top: 5px;
+        }
+        
+        .exercise-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .exercise-button {
+            padding: 12px 20px;
+            background: #f5f0ff;
+            border: 2px solid #8a2be2;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4b0082;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+        }
+        
+        .exercise-button i {
+            margin-left: 8px;
+        }
+        
+        .exercise-button.active {
+            background: linear-gradient(135deg, #9370db 0%, #8a2be2 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quiz-container {
+            text-align: center;
+            display: none;
+        }
+        
+        .quiz-container.active {
+            display: block;
+        }
+        
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-progress {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #8a2be2;
+        }
+        
+        .quiz-score {
+            background: #8a2be2;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .quiz-question {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            background: #f5f0ff;
+            padding: 20px;
+            border-radius: 15px;
+        }
+        
+        .quiz-question .english-text {
+            font-size: 1.1rem;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .quiz-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-option {
+            padding: 18px;
+            background: #fafafa;
+            border: 2px solid #9370db;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .quiz-option:hover {
+            background: #e6e6fa;
+        }
+        
+        .quiz-option.correct {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .quiz-option.incorrect {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .option-indicator {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #9370db;
+            color: white;
+            margin-left: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .quiz-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        .quiz-button {
+            padding: 12px 25px;
+            background: #8a2be2;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .quiz-button:hover {
+            background: #9370db;
+        }
+        
+        .quiz-button i {
+            margin-left: 8px;
+        }
+        
+        .quiz-button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .result-container {
+            text-align: center;
+            padding: 30px;
+            display: none;
+            background: #fafafa;
+            border-radius: 20px;
+        }
+        
+        .result-container.active {
+            display: block;
+        }
+        
+        .result-icon {
+            font-size: 5rem;
+            color: #8a2be2;
+            margin-bottom: 20px;
+        }
+        
+        .result-score {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #8a2be2;
+            margin: 20px 0;
+        }
+        
+        .result-message {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            color: #4b0082;
+        }
+        
+        .result-message-english {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            direction: ltr;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: #f5f0ff;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(135deg, #9370db 0%, #8a2be2 100%);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .blank-question {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            line-height: 2.5;
+        }
+        
+        .blank-instructions {
+            background: #f5f0ff;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .blank-instructions .english-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: #7f8c8d;
+            direction: ltr;
+            margin-top: 5px;
+        }
+        
+        .blank-input {
+            width: 120px;
+            padding: 8px 15px;
+            border: 2px solid #8a2be2;
+            border-radius: 8px;
+            font-family: 'Noto Nastaliq Urdu', serif;
+            font-size: 1.2rem;
+            text-align: center;
+            background: #fafafa;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            direction: ltr;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-tab {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .nav-tab i {
+                display: none;
+            }
+            
+            .exercise-selector {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .exercise-button {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="urdu-text">فعل سیکھیں</h1>
+            <p class="english-subtitle">Learn Urdu Verbs</p>
+        </header>
+        
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-target="definition">
+                <i class="fas fa-info-circle"></i> تعریف
+            </div>
+            <div class="nav-tab" data-target="types">
+                <i class="fas fa-layer-group"></i> اقسام
+            </div>
+            <div class="nav-tab" data-target="examples">
+                <i class="fas fa-list"></i> مثالیں
+            </div>
+            <div class="nav-tab" data-target="practice">
+                <i class="fas fa-pen"></i> مشق
+            </div>
+        </div>
+        
+        <div class="content-section active" id="definition">
+            <h2>فعل کی تعریف</h2>
+            <div class="card">
+                <p class="urdu-text">فعل وہ لفظ ہے جو کسی کام کے کرنے یا ہونے کا بیان ہو۔</p>
+                <p class="definition-text">A verb is a word that expresses an action, occurrence, or state of being</p>
+            </div>
+            <div class="card">
+                <h3>فعل کی مثالیں:</h3>
+                <div class="example">
+                    <p class="urdu-text">کھانا</p>
+                    <p class="english-text">To eat (Action verb)</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">پینا</p>
+                    <p class="english-text">To drink (Action verb)</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">سونا</p>
+                    <p class="english-text">To sleep (Action verb)</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">ہونا</p>
+                    <p class="english-text">To be (State of being verb)</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-section" id="types">
+            <h2>فعل کی اقسام</h2>
+            <div class="card">
+                <h3>فعل ماضی (Past Tense Verb)</h3>
+                <p class="urdu-text">یہ فعل ماضی کے کام کو بیان کرتا ہے۔</p>
+                <p class="type-description">Describes an action that happened in the past and has been completed.</p>
+                <div class="example">
+                    <p class="urdu-text">وہ کھانا کھا چکا ہے۔</p>
+                    <p class="english-text">He has eaten food.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">میں نے کتاب پڑھی۔</p>
+                    <p class="english-text">I read the book.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>فعل حال (Present Tense Verb)</h3>
+                <p class="urdu-text">یہ فعل حال کے کام کو بیان کرتا ہے۔</p>
+                <p class="type-description">Describes an action that is happening now or occurs regularly.</p>
+                <div class="example">
+                    <p class="urdu-text">وہ کھانا کھا رہا ہے۔</p>
+                    <p class="english-text">He is eating food.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">میں کتاب پڑھتا ہوں۔</p>
+                    <p class="english-text">I read books.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>فعل مستقبل (Future Tense Verb)</h3>
+                <p class="urdu-text">یہ فعل مستقبل کے کام کو بیان کرتا ہے۔</p>
+                <p class="type-description">Describes an action that will happen in the future.</p>
+                <div class="example">
+                    <p class="urdu-text">وہ کھانا کھائے گا۔</p>
+                    <p class="english-text">He will eat food.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">میں کتاب پڑھوں گا۔</p>
+                    <p class="english-text">I will read the book.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-section" id="examples">
+            <h2>مثالیں</h2>
+            <div class="card">
+                <h3>فعل ماضی کی مثالیں:</h3>
+                <div class="example">
+                    <p class="urdu-text">اس نے کھانا پکایا۔</p>
+                    <p class="english-text">She cooked food.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">ہم سینما گئے۔</p>
+                    <p class="english-text">We went to the cinema.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">تم نے میری مدد کی۔</p>
+                    <p class="english-text">You helped me.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">انہوں نے فلم دیکھی۔</p>
+                    <p class="english-text">They watched a movie.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>فعل حال کی مثالیں:</h3>
+                <div class="example">
+                    <p class="urdu-text">وہ کھانا پکا رہی ہے۔</p>
+                    <p class="english-text">She is cooking food.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">ہم پڑھ رہے ہیں۔</p>
+                    <p class="english-text">We are studying.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">تم کھیل رہے ہو۔</p>
+                    <p class="english-text">You are playing.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">وہ سوتے ہیں۔</p>
+                    <p class="english-text">They sleep.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>فعل مستقبل کی مثالیں:</h3>
+                <div class="example">
+                    <p class="urdu-text">وہ کل آئے گی۔</p>
+                    <p class="english-text">She will come tomorrow.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">ہم پارک جائیں گے۔</p>
+                    <p class="english-text">We will go to the park.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">تم یہ کام کرو گے۔</p>
+                    <p class="english-text">You will do this work.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">وہ امتحان پاس کریں گے۔</p>
+                    <p class="english-text">They will pass the exam.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-section" id="practice">
+            <h2>مشق</h2>
+            
+            <div class="exercise-selector">
+                <div class="exercise-button active" data-exercise="multiple-choice">
+                    <i class="fas fa-tasks"></i> Multiple Choice
+                </div>
+                <div class="exercise-button" data-exercise="fill-blanks">
+                    <i class="fas fa-edit"></i> Fill in Blanks
+                </div>
+            </div>
+            
+            <div class="quiz-container active" id="multiple-choice">
+                <div class="quiz-header">
+                    <div class="quiz-progress">سوال 1/5</div>
+                    <div class="quiz-score">اسکور: 0</div>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress" id="quiz-progress"></div>
+                </div>
+                
+                <div class="quiz-question">
+                    <p class="urdu-text">مندرجہ ذیل میں سے کون سا فعل ہے؟</p>
+                    <p class="english-text">Which of the following is a verb?</p>
+                </div>
+                
+                <div class="quiz-options">
+                    <div class="quiz-option">
+                        <div class="option-indicator">الف</div>
+                        <p class="urdu-text">کتاب</p>
+                    </div>
+                    <div class="quiz-option">
+                        <div class="option-indicator">ب</div>
+                        <p class="urdu-text">پڑھنا</p>
+                    </div>
+                    <div class="quiz-option">
+                        <div class="option-indicator">ج</div>
+                        <p class="urdu-text">خوبصورت</p>
+                    </div>
+                    <div class="quiz-option">
+                        <div class="option-indicator">د</div>
+                        <p class="urdu-text">تیزی سے</p>
+                    </div>
+                </div>
+                
+                <div class="quiz-footer">
+                    <button class="quiz-button" id="prev-question" disabled><i class="fas fa-arrow-right"></i> پچھلا</button>
+                    <button class="quiz-button" id="next-question" disabled>اگلا <i class="fas fa-arrow-left"></i></button>
+                </div>
+            </div>
+            
+            <div class="quiz-container" id="fill-blanks">
+                <div class="blank-instructions">
+                    <p class="urdu-text">خالی جگہ پر صحیح فعل لکھیں</p>
+                    <p class="english-text">Fill in the blanks with correct verbs</p>
+                </div>
+                
+                <div class="blank-question">
+                    <p class="urdu-text">وہ کتاب <input type="text" class="blank-input" data-answer="پڑھ"> رہا ہے۔</p>
+                    <p class="urdu-text">ہم کھانا <input type="text" class="blank-input" data-answer="کھا"> رہے ہیں۔</p>
+                    <p class="urdu-text">تم کل اسکول <input type="text" class="blank-input" data-answer="جاؤ"> گے۔</p>
+                </div>
+                
+                <div class="quiz-footer">
+                    <button class="quiz-button" id="check-blanks">جواب چیک کریں</button>
+                    <button class="quiz-button" id="reset-blanks">دوبارہ کریں</button>
+                </div>
+            </div>
+            
+            <div class="result-container" id="quiz-result">
+                <div class="result-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h2>مبارک ہو!</h2>
+                <p>آپ نے مشق مکمل کر لی ہے</p>
+                <div class="result-score">اسکور: <span id="final-score">0</span>/5</div>
+                <div class="result-message" id="result-message">بہت خوب!</div>
+                <div class="result-message-english" id="result-message-english">Excellent work!</div>
+                <button class="quiz-button" id="try-again">دوبارہ کریں</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2023 Urdu Verbs Learning App - Professional Educational Tool</p>
+    </footer>
+
+    <script>
+        // Tab navigation
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const target = tab.getAttribute('data-target');
+                document.getElementById(target).classList.add('active');
+            });
+        });
+        
+        // Exercise selection
+        document.querySelectorAll('.exercise-button').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('.exercise-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.quiz-container').forEach(c => c.classList.remove('active'));
+                
+                button.classList.add('active');
+                const exercise = button.getAttribute('data-exercise');
+                document.getElementById(exercise).classList.add('active');
+            });
+        });
+        
+        // Quiz questions
+        const questions = [
+            {
+                question: "مندرجہ ذیل میں سے کون سا فعل ہے؟",
+                englishQuestion: "Which of the following is a verb?",
+                options: ["کتاب", "پڑھنا", "خوبصورت", "تیزی سے"],
+                correct: 1
+            },
+            {
+                question: 'جملہ "وہ کھانا کھا رہا ہے" میں فعل کون سا ہے؟',
+                englishQuestion: 'In the sentence "He is eating food", which is the verb?',
+                options: ["وہ", "کھانا", "کھا", "رہا ہے"],
+                correct: 2
+            },
+            {
+                question: "کون سا فعل مستقبل کی طرف اشارہ کرتا ہے؟",
+                englishQuestion: "Which verb indicates future tense?",
+                options: ["کھایا", "کھا رہا ہے", "کھائے گا", "کھاتا ہے"],
+                correct: 2
+            },
+            {
+                question: "کون سا فعل ماضی کی طرف اشارہ کرتا ہے؟",
+                englishQuestion: "Which verb indicates past tense?",
+                options: ["پڑھے گا", "پڑھ رہا ہے", "پڑھتا ہے", "پڑھا"],
+                correct: 3
+            },
+            {
+                question: 'جملہ "تم نے میری مدد کی" میں فعل کون سا ہے؟',
+                englishQuestion: 'In the sentence "You helped me", which is the verb?',
+                options: ["تم", "میری", "مدد", "کی"],
+                correct: 3
+            }
+        ];
+        
+        let currentQuestion = 0;
+        let score = 0;
+        
+        function loadQuestion() {
+            const question = questions[currentQuestion];
+            document.querySelector('#multiple-choice .quiz-question .urdu-text').textContent = question.question;
+            document.querySelector('#multiple-choice .quiz-question .english-text').textContent = question.englishQuestion;
+            
+            const options = document.querySelectorAll('#multiple-choice .quiz-option');
+            options.forEach((option, index) => {
+                option.querySelector('.urdu-text').textContent = question.options[index];
+                option.classList.remove('correct', 'incorrect');
+                option.style.pointerEvents = 'auto';
+            });
+            
+            document.querySelector('#multiple-choice .quiz-progress').textContent = `سوال ${currentQuestion + 1}/${questions.length}`;
+            document.querySelector('#multiple-choice .quiz-score').textContent = `اسکور: ${score}`;
+            document.getElementById('quiz-progress').style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+            
+            document.getElementById('prev-question').disabled = currentQuestion === 0;
+            document.getElementById('next-question').disabled = true;
+        }
+        
+        // Quiz option click handlers
+        document.querySelectorAll('#multiple-choice .quiz-option').forEach((option, index) => {
+            option.addEventListener('click', function() {
+                const correctIndex = questions[currentQuestion].correct;
+                
+                // Mark correct answer
+                document.querySelectorAll('#multiple-choice .quiz-option')[correctIndex].classList.add('correct');
+                
+                // Mark incorrect if wrong
+                if (index !== correctIndex) {
+                    option.classList.add('incorrect');
+                } else {
+                    score++;
+                    document.querySelector('#multiple-choice .quiz-score').textContent = `اسکور: ${score}`;
+                }
+                
+                // Disable all options after selection
+                document.querySelectorAll('#multiple-choice .quiz-option').forEach(opt => {
+                    opt.style.pointerEvents = 'none';
+                });
+                
+                // Enable next button
+                document.getElementById('next-question').disabled = false;
+            });
+        });
+        
+        // Next question button
+        document.getElementById('next-question').addEventListener('click', function() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+            } else {
+                // Show results
+                document.getElementById('multiple-choice').classList.remove('active');
+                document.getElementById('quiz-result').classList.add('active');
+                document.getElementById('final-score').textContent = score;
+                
+                // Set message based on score
+                const message = document.getElementById('result-message');
+                const englishMessage = document.getElementById('result-message-english');
+                if (score === questions.length) {
+                    message.textContent = "بہت عمدہ! آپ نے تمام سوالات کے صحیح جوابات دیے۔";
+                    englishMessage.textContent = "Perfect! You answered all questions correctly!";
+                } else if (score >= questions.length / 2) {
+                    message.textContent = "اچھا کام! جاری رکھیں۔";
+                    englishMessage.textContent = "Good job! Keep up the great work!";
+                } else {
+                    message.textContent = "مزید مشق کی ضرورت ہے۔";
+                    englishMessage.textContent = "More practice needed. Try again!";
+                }
+            }
+        });
+        
+        // Previous question button
+        document.getElementById('prev-question').addEventListener('click', function() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                loadQuestion();
+            }
+        });
+        
+        // Try again button
+        document.getElementById('try-again').addEventListener('click', function() {
+            currentQuestion = 0;
+            score = 0;
+            loadQuestion();
+            document.getElementById('quiz-result').classList.remove('active');
+            document.getElementById('multiple-choice').classList.add('active');
+        });
+        
+        // Fill in the Blanks Logic
+        document.getElementById('check-blanks').addEventListener('click', function() {
+            const inputs = document.querySelectorAll('.blank-input');
+            let correctCount = 0;
+            
+            inputs.forEach(input => {
+                const answer = input.getAttribute('data-answer');
+                if (input.value.trim().toLowerCase() === answer.toLowerCase()) {
+                    input.style.backgroundColor = '#d4edda';
+                    input.style.borderColor = '#c3e6cb';
+                    correctCount++;
+                } else {
+                    input.style.backgroundColor = '#f8d7da';
+                    input.style.borderColor = '#f5c6cb';
+                }
+            });
+            
+            alert(`آپ نے ${correctCount} میں سے ${inputs.length} خالی جگہیں درست بھری ہیں۔\nYou filled ${correctCount} out of ${inputs.length} blanks correctly.`);
+        });
+        
+        document.getElementById('reset-blanks').addEventListener('click', function() {
+            document.querySelectorAll('.blank-input').forEach(input => {
+                input.value = '';
+                input.style.backgroundColor = '#fafafa';
+                input.style.borderColor = '#8a2be2';
+            });
+        });
+        
+        // Initialize the quiz
+        loadQuestion();
+    </script>
+</body>
+</html>
