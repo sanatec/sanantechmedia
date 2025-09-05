@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urdu Past Tense Learning App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nastaliq+Nastaleeq&family=Noto+Nastaliq+Urdu&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Nastaliq Urdu', 'Nastaliq Nastaleeq', serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .english-subtitle {
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            direction: ltr;
+            display: inline-block;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            justify-content: space-around;
+            background-color: white;
+            border-radius: 50px;
+            padding: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-tab {
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-align: center;
+            flex: 1;
+            margin: 0 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        
+        .nav-tab i {
+            margin-left: 8px;
+        }
+        
+        .nav-tab.active {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .content-section {
+            background-color: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h2 {
+            color: #6a11cb;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+        
+        h3 {
+            color: #2575fc;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #eef4ff;
+            padding-bottom: 8px;
+        }
+        
+        .card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .urdu-text {
+            font-family: 'Nastaliq Nastaleeq', 'Noto Nastaliq Urdu', serif;
+            font-size: 1.3rem;
+            line-height: 1.8;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .english-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #6c757d;
+            text-align: center;
+            direction: ltr;
+            display: block;
+            letter-spacing: 0.3px;
+        }
+        
+        .definition-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 400;
+            color: #495057;
+            text-align: center;
+            direction: ltr;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .example {
+            padding: 15px;
+            background: #eef4ff;
+            border-radius: 12px;
+            margin: 10px 0;
+            border-left: 4px solid #6a11cb;
+        }
+        
+        .example .urdu-text {
+            margin-bottom: 5px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .example .english-text {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            text-align: left;
+            margin-top: 5px;
+        }
+        
+        .type-description {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            color: #495057;
+            text-align: justify;
+            direction: ltr;
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        
+        .verb-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .verb-table th, .verb-table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+        
+        .verb-table th {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .verb-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .verb-table tr:hover {
+            background-color: #eef4ff;
+        }
+        
+        .exercise-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .exercise-button {
+            padding: 12px 20px;
+            background: #eef4ff;
+            border: 2px solid #6a11cb;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+        }
+        
+        .exercise-button i {
+            margin-left: 8px;
+            font-size: 16px;
+        }
+        
+        .exercise-button.active {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Quiz Styles */
+        .quiz-container {
+            text-align: center;
+            display: none;
+        }
+        
+        .quiz-container.active {
+            display: block;
+        }
+        
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-progress {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #6a11cb;
+        }
+        
+        .quiz-score {
+            background: #6a11cb;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .quiz-question {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            background: #eef4ff;
+            padding: 20px;
+            border-radius: 15px;
+        }
+        
+        .quiz-question .english-text {
+            font-size: 1.1rem;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .quiz-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-option {
+            padding: 18px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .quiz-option:hover {
+            background: #e9ecef;
+            transform: translateX(-5px);
+        }
+        
+        .quiz-option.correct {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .quiz-option.incorrect {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .quiz-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        .quiz-button {
+            padding: 12px 25px;
+            background: #6a11cb;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .quiz-button:hover {
+            background: #2575fc;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quiz-button i {
+            margin-left: 8px;
+        }
+        
+        .quiz-button:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .result-container {
+            text-align: center;
+            padding: 30px;
+            display: none;
+        }
+        
+        .result-container.active {
+            display: block;
+        }
+        
+        .result-icon {
+            font-size: 5rem;
+            color: #6a11cb;
+            margin-bottom: 20px;
+        }
+        
+        .result-score {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #6a11cb;
+            margin: 20px 0;
+        }
+        
+        .result-message {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+        
+        .result-message-english {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            color: #6c757d;
+            direction: ltr;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: #eef4ff;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        /* Matching Game Styles */
+        .matching-game {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .matching-item {
+            padding: 20px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .matching-item.english {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            direction: ltr;
+        }
+        
+        .matching-item.selected {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            transform: scale(0.95);
+        }
+        
+        .matching-item.matched {
+            background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+            opacity: 0.7;
+            cursor: default;
+        }
+        
+        .matching-game-container {
+            text-align: center;
+        }
+        
+        .matching-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .matching-instructions {
+            background: #eef4ff;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .matching-instructions .english-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: #6c757d;
+            direction: ltr;
+            margin-top: 5px;
+        }
+        
+        /* Conjugation Exercise Styles */
+        .conjugation-exercise {
+            background: #eef4ff;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .conjugation-form {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .conjugation-label {
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        
+        .conjugation-input {
+            padding: 12px;
+            border: 2px solid #6a11cb;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-family: 'Noto Nastaliq Urdu', serif;
+            direction: rtl;
+        }
+        
+        .conjugation-feedback {
+            margin-top: 15px;
+            font-weight: bold;
+            min-height: 24px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            direction: ltr;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .nav-tab {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .nav-tab i {
+                display: none;
+            }
+            
+            .urdu-text {
+                font-size: 1.4rem;
+            }
+            
+            .english-text {
+                font-size: 0.9rem;
+            }
+            
+            .exercise-selector {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .exercise-button {
+                width: 100%;
+                max-width: 250px;
+            }
+            
+            .matching-game {
+                grid-template-columns: 1fr;
+            }
+            
+            .quiz-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .verb-table {
+                font-size: 0.9rem;
+            }
+            
+            .conjugation-form {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .content-section {
+                padding: 20px;
+            }
+            
+            .urdu-text {
+                font-size: 1.3rem;
+            }
+            
+            .english-text {
+                font-size: 0.85rem;
+            }
+            
+            .quiz-question {
+                font-size: 1.3rem;
+            }
+            
+            .verb-table {
+                font-size: 0.8rem;
+            }
+            
+            .conjugation-input {
+                padding: 10px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="urdu-text">زمانہ ماضی سیکھیں</h1>
+            <p class="english-subtitle">Learn Urdu Past Tense</p>
+        </header>
+        
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-target="definition">
+                <i class="fas fa-info-circle"></i> تعریف
+            </div>
+            <div class="nav-tab" data-target="structure">
+                <i class="fas fa-layer-group"></i> ساخت
+            </div>
+            <div class="nav-tab" data-target="examples">
+                <i class="fas fa-list"></i> مثالیں
+            </div>
+            <div class="nav-tab" data-target="practice">
+                <i class="fas fa-pen"></i> مشق
+            </div>
+        </div>
+        
+        <div class="content-section active" id="definition">
+            <h2>زمانہ ماضی کی تعریف</h2>
+            <div class="card">
+                <p class="urdu-text">زمانہ ماضی گزرے ہوئے وقت میں ہونے والے کام کو ظاہر کرتا ہے۔</p>
+                <p class="definition-text">The past tense indicates an action that happened in the past.</p>
+            </div>
+            <div class="card">
+                <h3>زمانہ ماضی کی اقسام:</h3>
+                <div class="example">
+                    <p class="urdu-text">ماضی مطلق (Simple Past)</p>
+                    <p class="english-text">Used for completed actions in the past</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">ماضی استمراری (Past Continuous)</p>
+                    <p class="english-text">Used for ongoing actions in the past</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">ماضی قریب (Recent Past)</p>
+                    <p class="english-text">Used for actions completed recently</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">ماضی بعید (Distant Past)</p>
+                    <p class="english-text">Used for actions completed long time ago</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-section" id="structure">
+            <h2>زمانہ ماضی کی ساخت</h2>
+            <div class="card">
+                <h3>ماضی مطلق (Simple Past)</h3>
+                <p class="urdu-text">فعل کی بنیادی شکل کے ساتھ 'ا'، 'ی'، 'ے' کا اضافہ کیا جاتا ہے۔</p>
+                <p class="type-description">The basic form of the verb with suffixes that indicate gender and number.</p>
+                
+                <table class="verb-table">
+                    <tr>
+                        <th>فعل</th>
+                        <th>مذکر واحد</th>
+                        <th>مؤنث واحد</th>
+                        <th>جمع</th>
+                        <th>انگریزی</th>
+                    </tr>
+                    <tr>
+                        <td>پڑھنا</td>
+                        <td>پڑھا</td>
+                        <td>پڑھی</td>
+                        <td>پڑھے</td>
+                        <td>Read</td>
+                    </tr>
+                    <tr>
+                        <td>لکھنا</td>
+                        <td>لکھا</td>
+                        <td>لکھی</td>
+                        <td>لکھے</td>
+                        <td>Wrote</td>
+                    </tr>
+                    <tr>
+                        <td>کھانا</td>
+                        <td>کھایا</td>
+                        <td>کھائی</td>
+                        <td>کھائے</td>
+                        <td>Ate</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="card">
+                <h3>ماضی استمراری (Past Continuous)</h3>
+                <p class="urdu-text">فعل کے ساتھ 'رہا تھا'، 'رہی تھی'، 'رہے تھے' کا اضافہ کیا جاتا ہے۔</p>
+                <p class="type-description">The verb root with 'rahā thā', 'rahī thī', or 'rahe the' to indicate ongoing past action.</p>
+                
+                <table class="verb-table">
+                    <tr>
+                        <th>فعل</th>
+                        <th>مذکر واحد</th>
+                        <th>مؤنث واحد</th>
+                        <th>جمع</th>
+                        <th>انگریزی</th>
+                    </tr>
+                    <tr>
+                        <td>پڑھنا</td>
+                        <td>پڑھ رہا تھا</td>
+                        <td>پڑھ رہی تھی</td>
+                        <td>پڑھ رہے تھے</td>
+                        <td>Was reading</td>
+                    </tr>
+                    <tr>
+                        <td>لکھنا</td>
+                        <td>لکھ رہا تھا</td>
+                        <td>لکھ رہی تھی</td>
+                        <td>لکھ رہے تھے</td>
+                        <td>Was writing</td>
+                    </tr>
+                    <tr>
+                        <td>کھانا</td>
+                        <td>کھا رہا تھا</td>
+                        <td>کھا رہی تھی</td>
+                        <td>کھا رہے تھے</td>
+                        <td>Was eating</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="content-section" id="examples">
+            <h2>مثالیں</h2>
+            <div class="card">
+                <h3>ماضی مطلق کی مثالیں:</h3>
+                <div class="example">
+                    <p class="urdu-text">میں کل سکول گیا۔</p>
+                    <p class="english-text">I went to school yesterday.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">اس نے کتاب پڑھی۔</p>
+                    <p class="english-text">She read the book.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">ہم نے کھانا کھایا۔</p>
+                    <p class="english-text">We ate food.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">تم نے خط لکھا۔</p>
+                    <p class="english-text">You wrote a letter.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>ماضی استمراری کی مثالیں:</h3>
+                <div class="example">
+                    <p class="urdu-text">وہ کتاب پڑھ رہا تھا۔</p>
+                    <p class="english-text">He was reading a book.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">میں خط لکھ رہی تھی۔</p>
+                    <p class="english-text">I was writing a letter.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">بچے کھیل رہے تھے۔</p>
+                    <p class="english-text">Children were playing.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">وہ سوتے رہے تھے۔</p>
+                    <p class="english-text">They kept sleeping.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>ماضی قریب کی مثالیں:</h3>
+                <div class="example">
+                    <p class="urdu-text">میں ابھی ابھی آیا ہوں۔</p>
+                    <p class="english-text">I have just come.</p>
+                </div>
+                <div class="example">
+                    <p class="urdu-text">اس نے ابھی کھانا کھایا ہے۔</p>
+                    <p class="english-text">He has just eaten food.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-section" id="practice">
+            <h2>مشق</h2>
+            
+            <div class="exercise-selector">
+                <div class="exercise-button active" data-exercise="multiple-choice">
+                    <i class="fas fa-tasks"></i> Multiple Choice
+                </div>
+                <div class="exercise-button" data-exercise="matching">
+                    <i class="fas fa-object-group"></i> Matching Game
+                </div>
+                <div class="exercise-button" data-exercise="conjugation">
+                    <i class="fas fa-edit"></i> Conjugation
+                </div>
+            </div>
+            
+            <!-- Multiple Choice Quiz -->
+            <div class="quiz-container active" id="multiple-choice">
+                <div class="quiz-header">
+                    <div class="quiz-progress">سوال 1/5</div>
+                    <div class="quiz-score">اسکور: 0</div>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress" id="quiz-progress"></div>
+                </div>
+                
+                <div class="quiz-question">
+                    <p class="urdu-text">جملہ 'میں کل سکول ______' میں صحیح فعل کونسا ہے؟</p>
+                    <p class="english-text">Which is the correct verb for 'I ______ to school yesterday'?</p>
+                </div>
+                
+                <div class="quiz-options">
+                    <div class="quiz-option">
+                        <p class="urdu-text">جاتا ہوں</p>
+                    </div>
+                    <div class="quiz-option">
+                        <p class="urdu-text">گیا</p>
+                    </div>
+                    <div class="quiz-option">
+                        <p class="urdu-text">جاؤں گا</p>
+                    </div>
+                    <div class="quiz-option">
+                        <p class="urdu-text">جا رہا تھا</p>
+                    </div>
+                </div>
+                
+                <div class="quiz-footer">
+                    <button class="quiz-button" id="prev-question" disabled><i class="fas fa-arrow-right"></i> پچھلا</button>
+                    <button class="quiz-button" id="next-question">اگلا <i class="fas fa-arrow-left"></i></button>
+                </div>
+            </div>
+            
+            <!-- Matching Game -->
+            <div class="quiz-container matching-game-container" id="matching">
+                <div class="matching-header">
+                    <div class="quiz-progress">میلان کا کھیل</div>
+                    <div class="quiz-score">جوڑے: <span id="pairs-matched">0</span>/5</div>
+                </div>
+                
+                <div class="matching-instructions">
+                    <p class="urdu-text">اردو جملوں سے انگریزی ترجمہ میلان کریں</p>
+                    <p class="english-text">Match the Urdu sentences with their English translations</p>
+                </div>
+                
+                <div class="matching-game">
+                    <div class="matching-item" data-type="read">اس نے کتاب پڑھی</div>
+                    <div class="matching-item" data-type="write">میں نے خط لکھا</div>
+                    <div class="matching-item" data-type="eat">ہم نے کھانا کھایا</div>
+                    <div class="matching-item" data-type="play">بچے کھیل رہے تھے</div>
+                    <div class="matching-item" data-type="go">تم سکول گئے</div>
+                    
+                    <div class="matching-item english" data-type="read">She read the book</div>
+                    <div class="matching-item english" data-type="write">I wrote a letter</div>
+                    <div class="matching-item english" data-type="eat">We ate food</div>
+                    <div class="matching-item english" data-type="play">Children were playing</div>
+                    <div class="matching-item english" data-type="go">You went to school</div>
+                </div>
+                
+                <div class="quiz-footer">
+                    <button class="quiz-button" id="check-matching">جواب چیک کریں</button>
+                    <button class="quiz-button" id="reset-matching">دوبارہ کریں</button>
+                </div>
+            </div>
+            
+            <!-- Conjugation Exercise -->
+            <div class="quiz-container" id="conjugation">
+                <div class="matching-header">
+                    <div class="quiz-progress">فعل کی گردان</div>
+                    <div class="quiz-score">اسکور: <span id="conjugation-score">0</span>/4</div>
+                </div>
+                
+                <div class="matching-instructions">
+                    <p class="urdu-text">فعل 'لکھنا' کی زمانہ ماضی میں گردان کریں</p>
+                    <p class="english-text">Conjugate the verb 'to write' in past tense</p>
+                </div>
+                
+                <div class="conjugation-exercise">
+                    <div class="conjugation-form">
+                        <div class="conjugation-label">میں (مذکر):</div>
+                        <input type="text" class="conjugation-input" id="conjugation1" placeholder="لکھیں">
+                    </div>
+                    
+                    <div class="conjugation-form">
+                        <div class="conjugation-label">وہ (مؤنث):</div>
+                        <input type="text" class="conjugation-input" id="conjugation2" placeholder="لکھیں">
+                    </div>
+                    
+                    <div class="conjugation-form">
+                        <div class="conjugation-label">تم (جمع):</div>
+                        <input type="text" class="conjugation-input" id="conjugation3" placeholder="لکھیں">
+                    </div>
+                    
+                    <div class="conjugation-form">
+                        <div class="conjugation-label">ہم (جمع، ماضی استمراری):</div>
+                        <input type="text" class="conjugation-input" id="conjugation4" placeholder="لکھیں">
+                    </div>
+                    
+                    <div class="conjugation-feedback" id="conjugation-feedback"></div>
+                    
+                    <div class="quiz-footer">
+                        <button class="quiz-button" id="check-conjugation">جواب چیک کریں</button>
+                        <button class="quiz-button" id="reset-conjugation">دوبارہ کریں</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results Screen -->
+            <div class="result-container" id="quiz-result">
+                <div class="result-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h2>مبارک ہو!</h2>
+                <p>آپ نے مشق مکمل کر لی ہے</p>
+                <div class="result-score">اسکور: <span id="final-score">0</span>/5</div>
+                <div class="result-message" id="result-message">بہت خوب!</div>
+                <div class="result-message-english" id="result-message-english">Excellent work!</div>
+                <button class="quiz-button" id="try-again">دوبارہ کریں</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2025 Pyari Urdu App</p>
+    </footer>
+
+    <script>
+        // Tab navigation
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and sections
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding section
+                tab.classList.add('active');
+                const target = tab.getAttribute('data-target');
+                document.getElementById(target).classList.add('active');
+            });
+        });
+        
+        // Exercise selection
+        document.querySelectorAll('.exercise-button').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons and containers
+                document.querySelectorAll('.exercise-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.quiz-container').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding container
+                button.classList.add('active');
+                const exercise = button.getAttribute('data-exercise');
+                document.getElementById(exercise).classList.add('active');
+            });
+        });
+        
+        // Multiple Choice Quiz Logic
+        const questions = [
+            {
+                question: "جملہ 'میں کل سکول ______' میں صحیح فعل کونسا ہے؟",
+                englishQuestion: "Which is the correct verb for 'I ______ to school yesterday'?",
+                options: ["جاتا ہوں", "گیا", "جاؤں گا", "جا رہا تھا"],
+                correct: 1
+            },
+            {
+                question: "جملہ 'وہ کتاب ______' میں صحیح فعل کونسا ہے؟",
+                englishQuestion: "Which is the correct verb for 'She ______ the book'?",
+                options: ["پڑھتی ہے", "پڑھے گی", "پڑھی", "پڑھ رہی تھی"],
+                correct: 2
+            },
+            {
+                question: "جملہ 'بچے پارک میں ______' میں صحیح فعل کونسا ہے؟",
+                englishQuestion: "Which is the correct verb for 'Children ______ in the park'?",
+                options: ["کھیلتے ہیں", "کھیلیں گے", "کھیلے", "کھیل رہے تھے"],
+                correct: 3
+            },
+            {
+                question: "جملہ 'تم نے خط ______' میں صحیح فعل کونسا ہے؟",
+                englishQuestion: "Which is the correct verb for 'You ______ a letter'?",
+                options: ["لکھا", "لکھو گے", "لکھتے ہو", "لکھ رہے تھے"],
+                correct: 0
+            },
+            {
+                question: "زمانہ ماضی کی کتنی اقسام ہیں؟",
+                englishQuestion: "How many types of past tense are there?",
+                options: ["دو", "تین", "چار", "پانچ"],
+                correct: 2
+            }
+        ];
+        
+        let currentQuestion = 0;
+        let score = 0;
+        
+        function loadQuestion() {
+            const question = questions[currentQuestion];
+            document.querySelector('#multiple-choice .quiz-question .urdu-text').textContent = question.question;
+            document.querySelector('#multiple-choice .quiz-question .english-text').textContent = question.englishQuestion;
+            
+            const options = document.querySelectorAll('#multiple-choice .quiz-option');
+            options.forEach((option, index) => {
+                option.querySelector('.urdu-text').textContent = question.options[index];
+                option.classList.remove('correct', 'incorrect');
+            });
+            
+            document.querySelector('#multiple-choice .quiz-progress').textContent = `سوال ${currentQuestion + 1}/${questions.length}`;
+            document.querySelector('#multiple-choice .quiz-score').textContent = `اسکور: ${score}`;
+            document.getElementById('quiz-progress').style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+            
+            document.getElementById('prev-question').disabled = currentQuestion === 0;
+        }
+        
+        document.querySelectorAll('#multiple-choice .quiz-option').forEach((option, index) => {
+            option.addEventListener('click', () => {
+                const correctIndex = questions[currentQuestion].correct;
+                
+                // Mark correct answer
+                document.querySelectorAll('#multiple-choice .quiz-option')[correctIndex].classList.add('correct');
+                
+                // Mark incorrect if wrong
+                if (index !== correctIndex) {
+                    option.classList.add('incorrect');
+                } else {
+                    score++;
+                    document.querySelector('#multiple-choice .quiz-score').textContent = `اسکور: ${score}`;
+                }
+                
+                // Disable all options after selection
+                document.querySelectorAll('#multiple-choice .quiz-option').forEach(opt => {
+                    opt.style.pointerEvents = 'none';
+                });
+                
+                // Enable next button
+                document.getElementById('next-question').disabled = false;
+            });
+        });
+        
+        document.getElementById('next-question').addEventListener('click', () => {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+                
+                // Re-enable options
+                document.querySelectorAll('#multiple-choice .quiz-option').forEach(opt => {
+                    opt.style.pointerEvents = 'auto';
+                });
+                
+                // Disable next button until an option is selected
+                document.getElementById('next-question').disabled = true;
+            } else {
+                // Show results
+                document.getElementById('multiple-choice').classList.remove('active');
+                document.getElementById('quiz-result').classList.add('active');
+                document.getElementById('final-score').textContent = score;
+                
+                // Set message based on score
+                const message = document.getElementById('result-message');
+                const englishMessage = document.getElementById('result-message-english');
+                if (score === questions.length) {
+                    message.textContent = "بہت عمدہ! آپ نے تمام سوالات کے صحیح جوابات دیے۔";
+                    englishMessage.textContent = "Perfect! You answered all questions correctly!";
+                } else if (score >= questions.length / 2) {
+                    message.textContent = "اچھا کام! جاری رکھیں۔";
+                    englishMessage.textContent = "Good job! Keep up the great work!";
+                } else {
+                    message.textContent = "مزید مشق کی ضرورت ہے۔";
+                    englishMessage.textContent = "More practice needed. Try again!";
+                }
+            }
+        });
+        
+        document.getElementById('prev-question').addEventListener('click', () => {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                loadQuestion();
+                
+                // Re-enable options
+                document.querySelectorAll('#multiple-choice .quiz-option').forEach(opt => {
+                    opt.style.pointerEvents = 'auto';
+                });
+            }
+        });
+        
+        document.getElementById('try-again').addEventListener('click', () => {
+            currentQuestion = 0;
+            score = 0;
+            loadQuestion();
+            document.getElementById('quiz-result').classList.remove('active');
+            document.getElementById('multiple-choice').classList.add('active');
+        });
+        
+        // Initialize the first question
+        loadQuestion();
+        document.getElementById('next-question').disabled = true;
+        
+        // Matching Game Logic
+        let selectedItems = [];
+        let matchedPairs = 0;
+        
+        document.querySelectorAll('#matching .matching-item').forEach(item => {
+            item.addEventListener('click', () => {
+                if (!item.classList.contains('matched') && selectedItems.length < 2) {
+                    item.classList.add('selected');
+                    selectedItems.push(item);
+                    
+                    if (selectedItems.length === 2) {
+                        const firstType = selectedItems[0].getAttribute('data-type');
+                        const secondType = selectedItems[1].getAttribute('data-type');
+                        
+                        if (firstType === secondType) {
+                            // Match found
+                            setTimeout(() => {
+                                selectedItems.forEach(i => {
+                                    i.classList.add('matched');
+                                    i.classList.remove('selected');
+                                });
+                                
+                                matchedPairs++;
+                                document.getElementById('pairs-matched').textContent = matchedPairs;
+                                
+                                // Check if all pairs are matched
+                                if (matchedPairs === 5) {
+                                    setTimeout(() => {
+                                        alert('مبارک ہو! آپ نے تمام میلان درست کیے ہیں۔\nCongratulations! You matched all pairs correctly!');
+                                    }, 500);
+                                }
+                                
+                                selectedItems = [];
+                            }, 500);
+                        } else {
+                            // No match
+                            setTimeout(() => {
+                                selectedItems.forEach(i => {
+                                    i.classList.remove('selected');
+                                });
+                                selectedItems = [];
+                            }, 1000);
+                        }
+                    }
+                }
+            });
+        });
+        
+        document.getElementById('check-matching').addEventListener('click', () => {
+            if (matchedPairs === 5) {
+                alert('مبارک ہو! آپ نے تمام میلان درست کیے ہیں۔\nCongratulations! You matched all pairs correctly!');
+            } else {
+                alert(`آپ نے ${matchedPairs} میں سے 5 میلان درست کیے ہیں۔\nYou matched ${matchedPairs} out of 5 pairs correctly.`);
+            }
+        });
+        
+        document.getElementById('reset-matching').addEventListener('click', () => {
+            document.querySelectorAll('#matching .matching-item').forEach(item => {
+                item.classList.remove('selected', 'matched');
+            });
+            selectedItems = [];
+            matchedPairs = 0;
+            document.getElementById('pairs-matched').textContent = "0";
+        });
+        
+        // Conjugation Exercise Logic
+        const conjugationAnswers = ["لکھا", "لکھی", "لکھے", "لکھ رہے تھے"];
+        let conjugationScore = 0;
+        
+        document.getElementById('check-conjugation').addEventListener('click', () => {
+            conjugationScore = 0;
+            const feedback = document.getElementById('conjugation-feedback');
+            
+            // Check each conjugation
+            for (let i = 0; i < 4; i++) {
+                const userAnswer = document.getElementById(`conjugation${i+1}`).value.trim();
+                if (userAnswer.toLowerCase() === conjugationAnswers[i].toLowerCase()) {
+                    conjugationScore++;
+                    document.getElementById(`conjugation${i+1}`).style.borderColor = '#4caf50';
+                } else {
+                    document.getElementById(`conjugation${i+1}`).style.borderColor = '#f44336';
+                }
+            }
+            
+            // Update score
+            document.getElementById('conjugation-score').textContent = conjugationScore;
+            
+            // Provide feedback
+            if (conjugationScore === 4) {
+                feedback.textContent = "بہت عمدہ! تمام گردان درست ہیں۔";
+                feedback.style.color = '#4caf50';
+            } else {
+                feedback.textContent = `آپ کے ${conjugationScore} صحیح جوابات ہیں۔ دوبارہ کوشش کریں!`;
+                feedback.style.color = '#f44336';
+            }
+        });
+        
+        document.getElementById('reset-conjugation').addEventListener('click', () => {
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`conjugation${i}`).value = "";
+                document.getElementById(`conjugation${i}`).style.borderColor = '#6a11cb';
+            }
+            document.getElementById('conjugation-score').textContent = "0";
+            document.getElementById('conjugation-feedback').textContent = "";
+            conjugationScore = 0;
+        });
+    </script>
+</body>
+</html>
