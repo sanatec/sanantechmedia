@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Word Maker Game</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap');
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Noto Nastaliq Urdu', serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      overflow: hidden;
+    }
+    
+    .game-container {
+      background: white;
+      border-radius: 25px;
+      padding: 25px;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      position: relative;
+      z-index: 10;
+      border: 3px solid #FFD700;
+    }
+    
+    header {
+      background: linear-gradient(to right, #FF6B6B, #FF8E53);
+      color: white;
+      padding: 18px;
+      font-size: 24px;
+      font-weight: bold;
+      border-radius: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .level-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: linear-gradient(to right, #4ECDC4, #556270);
+      border-radius: 18px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      color: white;
+    }
+    
+    .level-display {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    
+    .score {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    
+    .question {
+      font-size: 36px;
+      margin: 25px auto;
+      padding: 20px;
+      background: linear-gradient(to right, #A8FF78, #78FFD6);
+      border-radius: 20px;
+      display: inline-block;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+      border: 2px solid #38EF7D;
+      color: #333;
+    }
+    
+    .options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-top: 25px;
+    }
+    
+    .option {
+      font-size: 26px;
+      font-family: 'Noto Nastaliq Urdu', serif;
+      padding: 18px 12px;
+      background: linear-gradient(to bottom, #FFEB3B, #FFC107);
+      color: #333;
+      border: none;
+      border-radius: 18px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.15);
+      font-weight: bold;
+    }
+    
+    .option:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+      background: linear-gradient(to bottom, #FFD600, #FFAB00);
+    }
+    
+    .feedback {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 42px;
+      font-weight: bold;
+      color: #E65100;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px 45px;
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      z-index: 100;
+      display: none;
+      animation: popIn 0.5s ease-out;
+      border: 3px solid #FFD700;
+    }
+    
+    @keyframes popIn {
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+    
+    .level-selector {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    
+    .level-btn {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 18px;
+      font-family: 'Noto Nastaliq Urdu', serif;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.15);
+      font-size: 16px;
+      min-width: 85px;
+      color: white;
+    }
+    
+    .level-btn.level1 { background: orange; }
+    .level-btn.level2 { background: black; }
+    .level-btn.level3 { background: red; }
+    .level-btn.level4 { background: green; }
+    .level-btn.level5 { background: blue; }
+    
+    .level-btn.active {
+      transform: scale(1.1);
+      box-shadow: 0 0 0 3px white, 0 0 0 5px currentColor;
+    }
+    
+    .star {
+      position: absolute;
+      background-color: #FFD700;
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+      z-index: 5;
+    }
+    
+    @media (max-width: 480px) {
+      .question { font-size: 30px; padding: 18px; }
+      .option { font-size: 22px; padding: 15px 10px; }
+      .feedback { font-size: 32px; padding: 20px 35px; }
+      header { font-size: 22px; padding: 15px; }
+      .level-display { font-size: 16px; }
+      .score { font-size: 16px; }
+      .level-btn { font-size: 14px; padding: 10px 14px; min-width: 75px; }
+    }
+    
+    @media (max-width: 360px) {
+      .question { font-size: 26px; }
+      .option { font-size: 20px; }
+      .options { gap: 10px; }
+      .level-btn { min-width: 65px; padding: 8px 12px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <header>✨ Word Maker Game ✨</header>
+    
+    <div class="level-info">
+      <div class="level-display" id="level-display">Level 1 - بنیادی حروف</div>
+      <div class="score">Score: <span id="score">0</span></div>
+    </div>
+
+    <div class="level-selector">
+      <button class="level-btn level1 active" onclick="changeLevel(0)">Level 1</button>
+      <button class="level-btn level2" onclick="changeLevel(1)">Level 2</button>
+      <button class="level-btn level3" onclick="changeLevel(2)">Level 3</button>
+      <button class="level-btn level4" onclick="changeLevel(3)">Level 4</button>
+      <button class="level-btn level5" onclick="changeLevel(4)">Level 5</button>
+    </div>
+
+    <div class="question" id="question">--- </div>
+    <div class="options" id="options"></div>
+    
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <script>
+    // Word puzzles for different levels - all words from your project
+    const levels = [
+      {
+        name: "Level 1 - بنیادی حروف",
+        puzzles: [
+          { q: "ک + ا = ؟", answer: "کا", choices: ["کی","کا","کو","کہ"], audio: "ka.wav" },
+          { q: "ب + ی = ؟", answer: "بی", choices: ["بو","بی","با","بے"], audio: "bi.wav" },
+          { q: "ت + و = ؟", answer: "تو", choices: ["تی","تا","تو","تہ"], audio: "to.wav" },
+          { q: "ا + ا = ؟", answer: "آ", choices:  ["آ","او","ای","ئے"], audio: "aa.wav" },
+          { q: "ک + ے = ؟", answer: "کے", choices: ["کے","کو","کی","کا"], audio: "ke.wav" },
+          { q: "ر + ا = ؟", answer: "را", choices: ["رے","رو","ری","را"], audio: "ra.wav" },
+          { q: "پ + ا = ؟", answer: "پا", choices: ["پے","پو","پی","پا"], audio: "pa.wav" },
+          { q: "پ + ی = ؟", answer: "پی", choices: ["پے","پو","پی","پا"], audio: "pi.wav" },
+          { q: "پ + و = ؟", answer: "پو", choices: ["پے","پو","پی","پا"], audio: "po.wav" },
+          { q: "پ + ے = ؟", answer: "پے", choices: ["پے","پو","پی","پا"], audio: "pe.wav" },
+          { q: "ٹ + ا = ؟", answer: "ٹا", choices: ["ٹے","ٹو","ٹی","ٹا"], audio: "ta.wav" },
+          { q: "ٹ + ی = ؟", answer: "ٹی", choices: ["ٹے","ٹو","ٹی","ٹا"], audio: "ti.wav" },
+          { q: "ٹ + و = ؟", answer: "ٹو", choices: ["ٹے","ٹو","ٹی","ٹا"], audio: "tto.wav" },
+          { q: "ٹ + ے = ؟", answer: "ٹے", choices: ["ٹے","ٹو","ٹی","ٹا"], audio: "te.wav" },
+          { q: "چ + ا = ؟", answer: "چا", choices: ["چے","چو","چی","چا"], audio: "cha.wav" },
+          { q: "چ + ی = ؟", answer: "چی", choices: ["چے","چو","چی","چا"], audio: "chi.wav" },
+          { q: "چ + و = ؟", answer: "چو", choices: ["چے","چو","چی","چا"], audio: "chu.wav" },
+          { q: "چ + ے = ؟", answer: "چے", choices: ["چے","چو","چی","چا"], audio: "che.wav" },
+          { q: "س + ا = ؟", answer: "سا", choices: ["سے","سو","سی","سا"], audio: "sa.wav" },
+          { q: "س + ی = ؟", answer: "سی", choices: ["سے","سو","سی","سا"], audio: "si.wav" },
+          { q: "س + و = ؟", answer: "سو", choices: ["سے","سو","سی","سا"], audio: "su.wav" },
+          { q: "س + ے = ؟", answer: "سے", choices: ["سے","سو","سی","سا"], audio: "se.wav" },
+          { q: "ل + ا = ؟", answer: "لا", choices:  ["لے","لو","لی","لا"], audio: "la.wav" },
+          { q: "ل + ی = ؟", answer: "لی", choices: ["لے","لو","لی","لا"], audio: "li.wav" },
+          { q: "ل + و = ؟", answer: "لو", choices: ["لے","لو","لی","لا"], audio: "lu.wav" },
+          { q: "ل + ے = ؟", answer: "لے", choices: ["لے","لو","لی","لا"], audio: "le.wav" },
+          { q: "ف + ا = ؟", answer: "فا", choices: ["فے","فو","فی","فا"], audio: "fa.wav" },
+          { q: "ف + ی = ؟", answer: "فی", choices: ["فے","فو","فی","فا"], audio: "fi.wav" },
+          { q: "ف + و = ؟", answer: "فو", choices: ["فے","فو","فی","فا"], audio: "fu.wav" },
+          { q: "ف + ے = ؟", answer: "فے", choices: ["فے","فو","فی","فا"], audio: "fe.wav" },
+          { q: "م + ا = ؟", answer: "ما", choices: ["مے","مو","می","ما"], audio: "ma.wav" },
+          { q: "م + ی = ؟", answer: "می", choices: ["مے","مو","می","ما"], audio: "mi.wav" },
+          { q: "م + و = ؟", answer: "مو", choices: ["مے","مو","می","ما"], audio: "mu.wav" },
+          { q: "م + ے = ؟", answer: "مے", choices: ["مے","مو","می","ما"], audio: "me.wav" },       
+          { q: "گ + و = ؟", answer: "گو", choices: ["گا","گو","گی","گے"], audio: "go.wav" }
+        ]
+      },
+      {
+        name: "Level 2 - تین حروف",
+        puzzles: [
+          { q: "ب + ا + ل = ؟", answer: "بال", choices: ["بال","بار","باز","بام"], audio: "baal.wav" },
+          { q: "گ + ھ + ر = ؟", answer: "گھر", choices: ["گھر","گہر","گار","گیر"], audio: "ghar.wav" },
+          { q: "ک + ا + م = ؟", answer: "کام", choices: ["کام","کال","کار","کاپ"], audio: "kaam.wav" },
+          { q: "پ + ا + ن = ؟", answer: "پان", choices: ["پان","پال","پار","پاک"], audio: "paan.wav" },
+          { q: "چ + ا + ر = ؟", answer: "چار", choices: ["چار","چال","چاپ","چاک"], audio: "chaar.wav" },
+          { q: "د + و + ر = ؟", answer: "دور", choices: ["دور","دال","دار","داغ"], audio: "door.wav" },
+          { q: "ن + ا + م = ؟", answer: "نام", choices: ["نام","نال","نار","ناک"], audio: "naam.wav" },
+          { q: "ر + ا + ت = ؟", answer: "رات", choices: ["رات","راز","راہ","رام"], audio: "raat.wav" },
+          { q: "د + ا + ل = ؟", answer: "دال", choices: ["دال","دار","دام","داغ"], audio: "daal.wav" },
+          { q: "آ + گ + ۔ = ؟", answer: "آگ", choices: ["آگ","آپ","آم","آج"], audio: "aag.wav" },
+          { q: "ب + ا + غ = ؟", answer: "باغ", choices: ["باغ","بار","باز","بام"], audio: "baagh.wav" },
+          { q: "م + ا + ں = ؟", answer: "ماں", choices: ["ماں","مان","مال","مار"], audio: "maan.wav" }
+        ]
+      },
+      {
+        name: "Level 3 - چار حروف",
+        puzzles: [
+          { q: "ک + ت + ا + ب = ؟", answer: "کتاب", choices: ["کتاب","کمال","کلام","کمان"], audio: "kitaab.wav" },
+          { q: "پ + ا + ن + ی = ؟", answer: "پانی", choices: ["پانی","پالک","پارک","پاکی"], audio: "paani.wav" },
+          { q: "آ + د + م + ی = ؟", answer: "آدمی", choices: ["آدمی","آرام","آواز","آنکھ"], audio: "aadmi.wav" },
+          { q: "س + ب + ز + ی = ؟", answer: "سبزی", choices: ["سبزی","سردی","سالی","سمجھ"], audio: "sabzi.wav" },
+          { q: "م + ک + ا + ن = ؟", answer: "مکان", choices: ["مکان","مہان","ملان","مدان"], audio: "makaan.wav" },
+          { q: "د + و + س + ت = ؟", answer: "دوست", choices: ["دوست","درست","دولت","دنیا"], audio: "dost.wav" },
+          { q: "پ + ھ + و + ل = ؟", answer: "پھول", choices: ["پھول","پہول","پلول","پکول"], audio: "phool.wav" },
+          { q: "چ + ا + ن + د = ؟", answer: "چاند", choices: ["چاند","چالد","چارد","چاکد"], audio: "chaand.wav" },
+          { q: "پ + ر + ن + د = ؟", answer: "پرند", choices: ["پرند","پلند","پکند","پہند"], audio: "parind.wav" },
+          { q: "س + و + ر + ج = ؟", answer: "سورج", choices: ["سورج","سالج","سارج","سیرج"], audio: "suraj.wav" },
+          { q: "م + چ + ھ + ر = ؟", answer: "مچھر", choices: ["مچھر","محھر","ملھر","مکھر"], audio: "machar.wav" },
+          { q: "ب + چ + ھ + ا = ؟", answer: "بچھا", choices: ["بچھا","بلھا","بکھا","بہھا"], audio: "bachha.wav" }
+        ]
+      },
+      {
+        name: "Level 4 - پانچ حروف",
+        puzzles: [
+          { q: "ت + ع + ل + ی + م = ؟", answer: "تعلیم", choices: ["تعلیم","تکلیم","تسلیم","تحلیم"], audio: "taleem.wav" },
+          { q: "م + ب + ا +ر + ک = ؟", answer: "مبارک", choices: ["مبارک","مابرک","مبراک","مباکر"], audio: "mohabbat.wav" },
+          { q: "ا + ن + س + ا + ن = ؟", answer: "انسان", choices: ["انسان","اہسان","امسان","الشان"], audio: "insaan.wav" },
+          { q: "م + د + ر + س + ہ = ؟", answer: "مدرسہ", choices: ["مدرسہ","مہرسہ","ملرسہ","مررسہ"], audio: "madrasa.wav" },
+          { q: "خ + و + ش + ی + ۔ = ؟", answer: "خوشی", choices: ["خوشی","خرشی","خیشی","خاشی"], audio: "khushi.wav" },
+          { q: "م + ش + ک + ل + ۔ = ؟", answer: "مشکل", choices: ["مشکل","مہکل","ملکل","مرکل"], audio: "mushkil.wav" },
+          { q: "ت + ا + ر + ی + خ = ؟", answer: "تاریخ", choices: ["تاریخ","تہریخ","تیریخ","تاہیخ"], audio: "tareekh.wav" },
+          { q: "م + ق + ا + ل + ہ = ؟", answer: "مقالہ", choices: ["مقالہ","مہالہ","میالہ","مرالہ"], audio: "maqala.wav" },
+          { q: "ح + ا + ل + ا + ت = ؟", answer: "حالات", choices: ["حالات","ہالات","خالات","جالات"], audio: "haalaat.wav" },
+          { q: "م + س + ا + ئ + ل = ؟", answer: "مسائل", choices: ["مسائل","مہائل","میائل","مرائل"], audio: "masail.wav" }
+        ]
+      },
+      {
+        name: "Level 5 - چھ حروف",
+        puzzles: [
+          { q: "ت + ر + ب + ی + ت + ۔ = ؟", answer: "تربیت", choices: ["تربیت","ترہیت","تریبت","تربیہ"], audio: "tarbiyat.wav" },
+          { q: "م + خ + ص + و + ص + ۔ = ؟", answer: "مخصوص", choices: ["مخصوص","محصوص","ملصوص","مرصوص"], audio: "makhsoos.wav" },
+          { q: "ح + ک + و + م + ت + ۔ = ؟", answer: "حکومت", choices: ["حکومت","حہومت","حلومت","حرومت"], audio: "hukumat.wav" },
+          { q: "ت + ج + ر + ب + ہ + ۔ = ؟", answer: "تجربہ", choices: ["تجربہ","تہربہ","تلربہ","ترربہ"], audio: "tajurba.wav" },
+          { q: "م + ع + ا + ش + ر + ہ = ؟", answer: "معاشرہ", choices: ["معاشرہ","مہاشرہ","میاشرہ","مراشرہ"], audio: "muashira.wav" },
+          { q: "ا + ح + ت + ر + ا + م = ؟", answer: "احترام", choices: ["احترام","اہترام","ایترام","ارترام"], audio: "ehtram.wav" },
+          { q: "م + ق + ص + د + ی + ت = ؟", answer: "مقصدیت", choices: ["مقصدیت","مہصدیت","ملصدیت","مرصدیت"], audio: "maqsadiyat.wav" },
+          { q: "آ + ز + ا + د + ی + ۔ = ؟", answer: "آزادی", choices: ["آزادی","آہادی","آلادی","آرادی"], audio: "azaadi.wav" },
+          { q: "م + ہ + ر + ب + ا + ن = ؟", answer: "مہربان", choices: ["مہربان","محربان","ملربان","مرربان"], audio: "mehrbaan.wav" },
+          { q: "ا + ن + ت + ظ + ا + ر = ؟", answer: "انتظار", choices: ["انتظار","اہتظار","ایتظار","ارتظار"], audio: "intezaar.wav" }
+        ]
+      }
+    ];
+
+    let currentLevelIndex = 0;
+    let currentPuzzle = 0;
+    let score = 0;
+
+    function updateDisplay() {
+      document.getElementById("level-display").innerText = levels[currentLevelIndex].name;
+      document.getElementById("score").innerText = score;
+      
+      // Update level buttons
+      document.querySelectorAll('.level-btn').forEach((btn, index) => {
+        if (index === currentLevelIndex) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    function changeLevel(levelIndex) {
+      currentLevelIndex = levelIndex;
+      currentPuzzle = 0;
+      loadPuzzle();
+      updateDisplay();
+    }
+
+    function loadPuzzle() {
+      document.getElementById("feedback").style.display = "none";
+      
+      let puzzle = levels[currentLevelIndex].puzzles[currentPuzzle];
+      document.getElementById("question").innerText = puzzle.q;
+      let optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
+
+      // Shuffle choices for more variety
+      let shuffledChoices = [...puzzle.choices].sort(() => Math.random() - 0.5);
+
+      shuffledChoices.forEach(choice => {
+        let btn = document.createElement("button");
+        btn.className = "option";
+        btn.innerText = choice;
+        btn.onclick = () => checkAnswer(choice);
+        optionsDiv.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(choice) {
+      let puzzle = levels[currentLevelIndex].puzzles[currentPuzzle];
+      if (choice === puzzle.answer) {
+        // Show feedback in the middle of the screen
+        const feedback = document.getElementById("feedback");
+        feedback.innerText = "🎉 شاباش! 🎉";
+        feedback.style.display = "block";
+        
+        score += (currentLevelIndex + 1) * 20;
+        
+        // Create star fireworks effect
+        createStarFireworks();
+        
+        // Play word audio
+        if (puzzle.audio) {
+          let audio = new Audio(puzzle.audio);
+          audio.play().catch(() => {});
+        }
+
+        setTimeout(() => {
+          feedback.style.display = "none";
+          currentPuzzle++;
+          if (currentPuzzle >= levels[currentLevelIndex].puzzles.length) {
+            currentPuzzle = 0; // Restart level if completed
+          }
+          loadPuzzle();
+          updateDisplay();
+        }, 2000);
+      } else {
+        // Show wrong answer feedback
+        const feedback = document.getElementById("feedback");
+        feedback.innerText = "❌ دوبارہ کوشش کریں";
+        feedback.style.display = "block";
+        
+        setTimeout(() => {
+          feedback.style.display = "none";
+        }, 1500);
+      }
+    }
+
+    function createStarFireworks() {
+      const colors = ['#FFD700', '#FFA500', '#FFFF00', '#FF8C00', '#FF6347', '#FF4500'];
+      
+      for (let i = 0; i < 30; i++) {
+        setTimeout(() => {
+          const star = document.createElement('div');
+          star.className = 'star';
+          
+          // Random size between 10 and 25px
+          const size = Math.random() * 15 + 10;
+          star.style.width = `${size}px`;
+          star.style.height = `${size}px`;
+          
+          // Random color from the colors array
+          star.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          
+          // Start from the middle of the screen
+          star.style.left = '50%';
+          star.style.top = '50%';
+          
+          document.body.appendChild(star);
+          
+          // Animate star from middle to top with random horizontal movement
+          const endX = (Math.random() - 0.5) * 300; // Random horizontal movement
+          const endY = -200; // Move upward
+          
+          const animation = star.animate([
+            { 
+              transform: 'translate(-50%, -50%)',
+              opacity: 1
+            },
+            { 
+              transform: `translate(${endX}%, ${endY}%)`,
+              opacity: 0
+            }
+          ], {
+            duration: Math.random() * 1000 + 1500,
+            easing: 'cubic-bezier(0.1, 0.8, 0.1, 1)'
+          });
+          
+          animation.onfinish = () => {
+            star.remove();
+          };
+        }, i * 100);
+      }
+    }
+
+    // Start the game
+    updateDisplay();
+    loadPuzzle();
+  </script>
+</body>
+</html>
