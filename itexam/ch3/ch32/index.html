@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Responsive Quiz with Review</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="quiz-container">
+  <!-- Progress Bar -->
+  <div class="progress-bar">
+    <div class="progress" id="progress"></div>
+  </div>
+
+  <div class="question" id="question">Question will go here</div>
+  <div class="options" id="options"></div>
+  
+  <!-- Navigation Buttons -->
+  <div class="navigation">
+    <button id="back-btn" onclick="prevQuestion()" disabled>Back</button>
+    <button id="next-btn" onclick="nextQuestion()">Next</button>
+  </div>
+  
+  <div class="score">Score: <span id="score">0</span></div>
+</div>
+
+<!-- Results Modal -->
+<div class="modal" id="results-modal">
+  <div class="modal-content">
+    <h2 id="results-message">Congratulations!</h2>
+    <p>Total Correct: <span id="correct-count">0</span></p>
+    <p>Total Incorrect: <span id="incorrect-count">0</span></p>
+    <button onclick="restartQuiz()">Restart Quiz</button>
+    <button onclick="reviewAnswers()">Review Answers</button>
+  </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal" id="review-modal">
+  <div class="modal-content">
+    <h2>Review Your Answers</h2>
+    <div id="review-question-container" class="review-container">
+      <div id="review-question" class="review-question"></div>
+      <div id="review-answer" class="review-answer"></div>
+    </div>
+    <button onclick="prevReview()">Back</button>
+    <button onclick="nextReview()">Next</button>
+    <button onclick="closeReview()">Close</button>
+  </div>
+</div>
+
+<!-- Canvas for Confetti -->
+<canvas id="star-canvas"></canvas>
+
+<!-- Sound Effects -->
+<audio id="correct-sound" src="sound/co.mp3"></audio>
+<audio id="incorrect-sound" src="sound/wr.mp3"></audio>
+
+<script src="script.js"></script>
+</body>
+</html>
