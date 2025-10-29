@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Multi-Response Quiz</title>
+    <link rel="stylesheet" href="style.css">
+    </head>
+<body>
+
+    <canvas id="star-canvas"></canvas>
+
+    <div class="app-container">
+        <header class="quiz-header">
+            <div id="chapter-name"><h2>കമ്പ്യൂട്ടറിലെ പരീക്ഷണശാല</h2></div>
+            <div class="header-info">
+                <h3 id="question-counter">Question 1/5</h3>
+                <div id="score-display">Score: 0</div>
+            </div>
+        </header>
+
+        <main class="quiz-main">
+            <div id="quiz-screen" class="screen active">
+                <h2 id="question-text"></h2>
+                <div id="options-container" class="options-container">
+                </div>
+                <p id="feedback-message" class="feedback-message"></p>
+            </div>
+
+            <div id="review-screen" class="screen">
+                <h2>Quiz Review</h2>
+                <div id="review-details">
+                </div>
+            </div>
+        </main>
+
+        <footer class="quiz-footer">
+            <button id="back-button" class="nav-button" disabled>Back</button>
+            <button id="next-button" class="nav-button">Submit</button>
+        </footer>
+    </div>
+
+    <audio id="correct-sound" preload="auto">
+        <source src="sound/co.mp3" type="audio/mp3">
+    </audio>
+    <audio id="wrong-sound" preload="auto">
+        <source src="sound/wr.mp3" type="audio/mp3">
+    </audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
