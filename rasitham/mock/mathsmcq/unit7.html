@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Multiplication</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the new green/nature theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0fdf4; /* Light green background */
+        }
+        .quiz-container {
+            background: linear-gradient(135deg, #ffffff, #dcfce7);
+            box-shadow: 0 10px 25px rgba(15, 95, 48, 0.1);
+            border: 1px solid #bbf7d0;
+        }
+        .quiz-container:hover {
+            transform: translateY(-5px);
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid transparent;
+        }
+        .option-btn.selected {
+            background-color: #86efac; /* A light green for selected */
+            color: #14532d;
+            border-color: #22c55e;
+        }
+        .option-btn.correct {
+            background-color: #22c55e; /* Green for correct */
+            color: white;
+            border-color: #15803d;
+        }
+        .option-btn.wrong {
+            background-color: #f43f5e; /* Rose for wrong */
+            color: white;
+            border-color: #be123c;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        /* Animation for screen transitions */
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-green-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-green-700 mb-2">MCQ Adventure!</h1>
+            <p id="welcome-subtitle" class="text-lg text-stone-600 mb-6">Let's learn about Shapes!</p>
+            <img src="https://placehold.co/400x200/22c55e/ffffff?text=Multiplication+Quiz&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Multiplication Adventure Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-stone-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                     <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                     <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-stone-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-lime-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-stone-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3">
+                    </div>
+
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6 text-center">
+                 <h2 id="review-title" class="text-3xl font-black text-green-800 mb-2">Quiz Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-stone-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-lime-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-lime-800"></span>
+                 </div>
+             </div>
+             <div id="review-content" class="mt-6 space-y-4">
+                 </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        
+        // --- UI Text Elements for Translation ---
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual Data ---
+        const uiText = {
+            en: {
+                welcomeTitle: "Multiplication Makes Perfect",
+                welcomeSubtitle: "Let's practice the 'പെരുക്കൽപ്പെരുമ' chapter!",
+                startBtn: "Start Quiz",
+                questionLabel: "Question",
+                ofLabel: "of",
+                backBtn: "Back",
+                nextBtn: "Next",
+                submitBtn: "Submit",
+                reviewTitle: "Quiz Complete!",
+                reviewSubtitle: "Great job! Here's your score:",
+                reviewHeader: "Your Review",
+                yourAnswer: "Your answer:",
+                correctAnswer: "Correct answer:",
+                notAnswered: "Not answered",
+                playAgainBtn: "Play Again",
+                correctFeedback: "Correct! 🎉",
+            },
+            ml: {
+                welcomeTitle: "പെരുക്കൽപ്പെരുമ",
+                welcomeSubtitle: "നമുക്ക് പാഠഭാഗം പരിശീലിക്കാം!",
+                startBtn: "ക്വിസ് ആരംഭിക്കുക",
+                questionLabel: "ചോദ്യം",
+                ofLabel: "/",
+                backBtn: "പുറകോട്ട്",
+                nextBtn: "അടുത്തത്",
+                submitBtn: "സമർപ്പിക്കുക",
+                reviewTitle: "ക്വിസ് പൂർത്തിയായി!",
+                reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:",
+                reviewHeader: "നിങ്ങളുടെ അവലോകനം",
+                yourAnswer: "നിങ്ങളുടെ ഉത്തരം:",
+                correctAnswer: "ശരിയായ ഉത്തരം:",
+                notAnswered: "ഉത്തരം നൽകിയില്ല",
+                playAgainBtn: "വീണ്ടും കളിക്കുക",
+                correctFeedback: "ശരിയാണ്! 🎉",
+            }
+        };
+
+        const quizData = [
+            { en: { question: "In the Ayanimala School, what learning tool were the children, teachers, and parents making?", options: ["Map", "Math-box (കണക്കുപെട്ടി)", "Abacus", "Clock"], answer: "Math-box (കണക്കുപെട്ടി)" }, ml: { question: "അയനിമല സ്കൂളിൽ കുട്ടികളും അധ്യാപകരും രക്ഷിതാക്കളും ചേർന്ന് എന്ത് പഠനോപകരണമാണ് തയ്യാറാക്കുന്നത്?", options: ["ഭൂപടം", "കണക്കുപെട്ടി", "അബാക്കസ്", "ക്ലോക്ക്"], answer: "കണക്കുപെട്ടി" } },
+            { en: { question: "The repeated addition '8 + 8 + 8' is the same as which multiplication?", options: ["8 x 8", "3 x 3", "3 x 8", "8 + 3"], answer: "3 x 8" }, ml: { question: "'8 + 8 + 8' എന്ന ആവർത്തന സങ്കലനം, ഏത് ഗുണനത്തിന് തുല്യമാണ്?", options: ["8 x 8", "3 x 3", "3 x 8", "8 + 3"], answer: "3 x 8" } },
+            { en: { question: "According to the chapter, 3 times 8 ('3 x 8') is equal to 8 times 3 ('8 x 3'). What is the answer?", options: ["11", "24", "16", "38"], answer: "24" }, ml: { question: "പാഠഭാഗം അനുസരിച്ച്, 3 തവണ 8 ('3 x 8') ഉം 8 തവണ 3 ('8 x 3') ഉം തുല്യമാണ്. ഉത്തരം എത്ര?", options: ["11", "24", "16", "38"], answer: "24" } },
+            { en: { question: "How can '3 x 8' also be written by factoring 8?", options: ["3 x 2 x 4", "3 x 3 x 3", "3 x 8 x 1", "3 x 4 x 4"], answer: "3 x 2 x 4" }, ml: { question: "8-നെ ഘടകങ്ങളാക്കി '3 x 8' നെ എങ്ങനെ എഴുതാം?", options: ["3 x 2 x 4", "3 x 3 x 3", "3 x 8 x 1", "3 x 4 x 4"], answer: "3 x 2 x 4" } },
+            { en: { question: "If there are 4 rows with 8 tokens each, what is the total number of tokens?", options: ["12", "24", "32", "48"], answer: "32" }, ml: { question: "8 ടോക്കൺ വീതമുള്ള 4 വരികൾ ഉണ്ടെങ്കിൽ, ആകെ ടോക്കണുകളുടെ എണ്ണം എത്ര?", options: ["12", "24", "32", "48"], answer: "32" } },
+            { en: { question: "How is '12 x 8' calculated by splitting the number 12?", options: ["(12 x 4) + (12 x 4)", "(10 x 8) + (2 x 8)", "(12 x 10) + (12 x 2)", "(6 x 8) + (2 x 8)"], answer: "(10 x 8) + (2 x 8)" }, ml: { question: "12 എന്ന സംഖ്യയെ വിഭജിച്ച് '12 x 8' എങ്ങനെയാണ് കണക്കാക്കുന്നത്?", options: ["(12 x 4) + (12 x 4)", "(10 x 8) + (2 x 8)", "(12 x 10) + (12 x 2)", "(6 x 8) + (2 x 8)"], answer: "(10 x 8) + (2 x 8)" } },
+            { en: { question: "What is the total of (10 x 8) + (2 x 8)?", options: ["82", "108", "96", "160"], answer: "96" }, ml: { question: "(10 x 8) + (2 x 8) ആകെ എത്രയാണ്?", options: ["82", "108", "96", "160"], answer: "96" } },
+            { en: { question: "Calculate 13 x 5 using the splitting method.", options: ["(10 x 5) + (3 x 5) = 50 + 15 = 65", "(10 x 3) + (5 x 3) = 30 + 15 = 45", "(13 x 1) + (13 x 5) = 13 + 65 = 78", "(10 x 5) x 3 = 50 x 3 = 150"], answer: "(10 x 5) + (3 x 5) = 50 + 15 = 65" }, ml: { question: "വിഭജിച്ചു ഗുണിക്കൽ രീതി ഉപയോഗിച്ച് 13 x 5 കണക്കാക്കുക.", options: ["(10 x 5) + (3 x 5) = 50 + 15 = 65", "(10 x 3) + (5 x 3) = 30 + 15 = 45", "(13 x 1) + (13 x 5) = 13 + 65 = 78", "(10 x 5) x 3 = 50 x 3 = 150"], answer: "(10 x 5) + (3 x 5) = 50 + 15 = 65" } },
+            { en: { question: "Fill in the blank: 18 x 5 = (10 x 5) + (___ x 5)", options: ["18", "10", "8", "5"], answer: "8" }, ml: { question: "പൂരിപ്പിക്കുക: 18 x 5 = (10 x 5) + (___ x 5)", options: ["18", "10", "8", "5"], answer: "8" } },
+            { en: { question: "If 15 x 3 = 45, what is 15 x 30?", options: ["45", "450", "4500", "75"], answer: "450" }, ml: { question: "15 x 3 = 45 ആണെങ്കിൽ, 15 x 30 എത്രയാണ്?", options: ["45", "450", "4500", "75"], answer: "450" } },
+            { en: { question: "What is 40 x 30?", options: ["120", "70", "1200", "12000"], answer: "1200" }, ml: { question: "40 x 30 എത്രയാണ്?", options: ["120", "70", "1200", "12000"], answer: "1200" } },
+            { en: { question: "Which of these multiplication pairs DOES NOT equal 24?", options: ["3 x 8", "8 x 3", "4 x 6", "5 x 5"], answer: "5 x 5" }, ml: { question: "താഴെ പറയുന്നവയിൽ 24 ഉത്തരം കിട്ടാത്ത ഗുണനം ഏതാണ്?", options: ["3 x 8", "8 x 3", "4 x 6", "5 x 5"], answer: "5 x 5" } },
+            { en: { question: "How many items are in 'one dozen'?", options: ["6", "10", "12", "20"], answer: "12" }, ml: { question: "'ഒരു ഡസൻ' എന്നാൽ എത്ര എണ്ണമാണ്?", options: ["6", "10", "12", "20"], answer: "12" } },
+            { en: { question: "How many items are in 'half a dozen' (അരഡസൻ)?", options: ["12", "6", "10", "5"], answer: "6" }, ml: { question: "'അരഡസൻ' എന്നാൽ എത്ര എണ്ണമാണ്?", options: ["12", "6", "10", "5"], answer: "6" } },
+            { en: { question: "The Gram Panchayat gave 21 boxes of glasses. Each box has 'half a dozen' (6) glasses. How many glasses in total?", options: ["27", "126", "210", "62"], answer: "126" }, ml: { question: "ഗ്രാമപഞ്ചായത്ത് 21 പെട്ടി ഗ്ലാസ് നൽകി. ഓരോ പെട്ടിയിലും 'അരഡസൻ' (6) ഗ്ലാസുകൾ ഉണ്ട്. ആകെ എത്ര ഗ്ലാസുകൾ?", options: ["27", "126", "210", "62"], answer: "126" } },
+            { en: { question: "At Mitra's school, 1 desk gets 4 chairs. How many chairs are needed for 8 desks?", options: ["12", "48", "32", "16"], answer: "32" }, ml: { question: "മിത്രയുടെ സ്കൂളിൽ ഒരു ഡെസ്കിന് 4 കസേര വീതം നൽകി. 8 ഡെസ്കുകൾക്ക് ആകെ എത്ര കസേര വേണം?", options: ["12", "48", "32", "16"], answer: "32" } },
+            { en: { question: "Desks were given to classes 1 (8), 2 (7), 3 (9), and 4 (5). What is the total number of desks given?", options: ["29", "25", "30", "34"], answer: "29" }, ml: { question: "ക്ലാസ് 1 (8), 2 (7), 3 (9), 4 (5) എന്നിങ്ങനെയാണ് ഡെസ്കുകൾ നൽകിയത്. ആകെ എത്ര ഡെസ്കുകൾ നൽകി?", options: ["29", "25", "30", "34"], answer: "29" } },
+            { en: { question: "Based on the previous question (29 desks total) and 4 chairs per desk, what is the total number of chairs?", options: ["116", "106", "126", "294"], answer: "116" }, ml: { question: "മുമ്പത്തെ ചോദ്യം (ആകെ 29 ഡെസ്കുകൾ) അനുസരിച്ച്, ഒരു ഡെസ്കിന് 4 കസേര എന്ന കണക്കിൽ ആകെ എത്ര കസേരകൾ നൽകി?", options: ["116", "106", "126", "294"], answer: "116" } },
+            { en: { question: "Follow the pattern: (1 x 9) + 1 = 10, (2 x 9) + 2 = 20, (3 x 9) + 3 = 30. What is (15 x 9) + 15?", options: ["135", "150", "165", "159"], answer: "150" }, ml: { question: "പാറ്റേൺ തുടരൂ: (1 x 9) + 1 = 10, (2 x 9) + 2 = 20, (3 x 9) + 3 = 30. എങ്കിൽ (15 x 9) + 15 എത്ര?", options: ["135", "150", "165", "159"], answer: "150" } },
+            { en: { question: "If 11 x 10 = 110, what is 11 x 20?", options: ["1100", "120", "220", "210"], answer: "220" }, ml: { question: "11 x 10 = 110 ആണെങ്കിൽ, 11 x 20 എത്രയാണ്?", options: ["1100", "120", "220", "210"], answer: "220" } },
+            { en: { question: "From the 'School Bazaar' price list, what is the price of one 'Notebook'?", options: ["10 Rs", "12 Rs", "15 Rs", "25 Rs"], answer: "15 Rs" }, ml: { question: "'സ്കൂൾ ബസാർ' വിലവിവരപ്പട്ടിക അനുസരിച്ച്, ഒരു 'നോട്ട് ബുക്കി'ന്റെ വില എത്ര?", options: ["10 രൂപ", "12 രൂപ", "15 രൂപ", "25 രൂപ"], answer: "15 രൂപ" } },
+            { en: { question: "From the 'School Bazaar' price list, what is the price of one 'Box'?", options: ["15 Rs", "25 Rs", "30 Rs", "12 Rs"], answer: "25 Rs" }, ml: { question: "'സ്കൂൾ ബസാർ' വിലവിവരപ്പട്ടിക അനുസരിച്ച്, ഒരു 'ബോക്സി'ന്റെ വില എത്ര?", options: ["15 രൂപ", "25 രൂപ", "30 രൂപ", "12 രൂപ"], answer: "25 രൂപ" } },
+            { en: { question: "From Bill-1: What is the total cost of 2 Boxes (25 Rs each) and 4 Scales (12 Rs each)?", options: ["(2x25) + (4x12) = 50 + 48 = 98 Rs", "(2x12) + (4x25) = 24 + 100 = 124 Rs", "(2+4) x (25+12) = 6 x 37 = 222 Rs", "(2x25) + (4x10) = 50 + 40 = 90 Rs"], answer: "(2x25) + (4x12) = 50 + 48 = 98 Rs" }, ml: { question: "ബിൽ-1 പ്രകാരം: 2 ബോക്സും (ഒന്നിന് 25 രൂപ) 4 സ്കെയിലും (ഒന്നിന് 12 രൂപ) വാങ്ങിയാൽ ആകെ എത്ര രൂപയാകും?", options: ["(2x25) + (4x12) = 50 + 48 = 98 രൂപ", "(2x12) + (4x25) = 24 + 100 = 124 രൂപ", "(2+4) x (25+12) = 6 x 37 = 222 രൂപ", "(2x25) + (4x10) = 50 + 40 = 90 രൂപ"], answer: "(2x25) + (4x12) = 50 + 48 = 98 രൂപ" } },
+            { en: { question: "Minha puts 5 pencils in 1 packet. How many pencils are in 4 packets?", options: ["5", "9", "20", "45"], answer: "20" }, ml: { question: "മിൻഹ ഒരു പായ്ക്കറ്റിൽ 5 പെൻസിലുകൾ വയ്ക്കുന്നു. 4 പായ്ക്കറ്റുകളിൽ ആകെ എത്ര പെൻസിലുകൾ?", options: ["5", "9", "20", "45"], answer: "20" } },
+            { en: { question: "Minha puts 4 packets (of 5 pencils each) into 1 box. How many pencils are in 1 box?", options: ["20", "9", "25", "45"], answer: "20" }, ml: { question: "മിൻഹ 4 പായ്ക്കറ്റുകൾ (ഓരോന്നിലും 5 പെൻസിലുകൾ) ഒരു പെട്ടിയിലാക്കി. 1 പെട്ടിയിൽ ആകെ എത്ര പെൻസിലുകൾ?", options: ["20", "9", "25", "45"], answer: "20" } },
+            { en: { question: "How many pencils are in 6 boxes, if 1 box has 20 pencils?", options: ["26", "12", "120", "200"], answer: "120" }, ml: { question: "1 പെട്ടിയിൽ 20 പെൻസിലുകൾ ഉണ്ടെങ്കിൽ, 6 പെട്ടികളിൽ ആകെ എത്ര പെൻസിലുകൾ?", options: ["26", "12", "120", "200"], answer: "120" } },
+            { en: { question: "If one pencil costs 5 Rs, what is the total cost of 1 box of pencils (which contains 20 pencils)?", options: ["20 Rs", "25 Rs", "100 Rs", "50 Rs"], answer: "100 Rs" }, ml: { question: "ഒരു പെൻസിലിന് 5 രൂപയാണ് വിലയെങ്കിൽ, 1 പെട്ടി പെൻസിലിന്റെ (20 പെൻസിലുകൾ) ആകെ വില എത്ര?", options: ["20 രൂപ", "25 രൂപ", "100 രൂപ", "50 രൂപ"], answer: "100 രൂപ" } },
+            { en: { question: "Shyamala's wage for cooking is 600 Rs per day. What is her total wage for 20 days?", options: ["620 Rs", "1200 Rs", "12000 Rs", "6000 Rs"], answer: "12000 Rs" }, ml: { question: "ഭക്ഷണം പാകം ചെയ്യുന്ന ശ്യാമളച്ചേച്ചിക്ക് ഒരു ദിവസം 600 രൂപയാണ് കൂലി. 20 ദിവസം ജോലി ചെയ്തപ്പോൾ ആകെ എത്ര രൂപ കിട്ടി?", options: ["620 രൂപ", "1200 രൂപ", "12000 രൂപ", "6000 രൂപ"], answer: "12000 Rs" } },
+            { en: { question: "What is 12 x 200?", options: ["240", "2400", "24000", "2200"], answer: "2400" }, ml: { question: "12 x 200 എത്രയാണ്?", options: ["240", "2400", "24000", "2200"], answer: "2400" } },
+            { en: { question: "For the study tour, 40 students (50 Rs ticket each) and 5 adults (100 Rs ticket each) went. What is the total ticket cost?", options: ["40x50 + 5x100 = 2000 + 500 = 2500 Rs", "40x100 + 5x50 = 4000 + 250 = 4250 Rs", "45 x 100 = 4500 Rs", "45 x 50 = 2250 Rs"], answer: "40x50 + 5x100 = 2000 + 500 = 2500 Rs" }, ml: { question: "പഠനയാത്രയ്ക്ക് 40 കുട്ടികളും (ടിക്കറ്റ് 50 രൂപ) 5 മുതിർന്നവരും (ടിക്കറ്റ് 100 രൂപ) പോയി. ആകെ ടിക്കറ്റിന് എത്ര രൂപയാകും?", options: ["40x50 + 5x100 = 2000 + 500 = 2500 രൂപ", "40x100 + 5x50 = 4000 + 250 = 4250 രൂപ", "45 x 100 = 4500 രൂപ", "45 x 50 = 2250 രൂപ"], answer: "40x50 + 5x100 = 2000 + 500 = 2500 Rs" } },
+            { en: { question: "For the wall construction, bricks are stacked 5 in a row, in 3 rows. This forms one stack. How many bricks in 4 such stacks?", options: ["(5+3) x 4 = 32", "(5x3) + 4 = 19", "5 x 3 x 4 = 60", "5 + 3 + 4 = 12"], answer: "5 x 3 x 4 = 60" }, ml: { question: "മതിൽ കെട്ടാൻ, ഒരു വരിയിൽ 5 കല്ല് വീതം 3 വരിയായി അടുക്കി. ഇതുപോലെ 4 അടുക്ക് കല്ല് ഉണ്ട്. ആകെ എത്ര കല്ല്?", options: ["(5+3) x 4 = 32", "(5x3) + 4 = 19", "5 x 3 x 4 = 60", "5 + 3 + 4 = 12"], answer: "5 x 3 x 4 = 60" } },
+            { en: { question: "What is the product of the digits in the number 123?", options: ["6", "5", "123", "12"], answer: "6" }, ml: { question: "123 എന്ന സംഖ്യയിലെ അക്കങ്ങൾ തമ്മിൽ ഗുണിച്ചാൽ കിട്ടുന്ന ഗുണനഫലം എത്ര?", options: ["6", "5", "123", "12"], answer: "6" } },
+            { en: { question: "Mitra's mom got 3 bundles of 50 Rs notes. Each bundle has 100 notes. What is the total amount of money?", options: ["(100+50) x 3 = 450 Rs", "3 x 100 + 50 = 350 Rs", "3 x 100 x 50 = 15000 Rs", "100 x 50 = 5000 Rs"], answer: "3 x 100 x 50 = 15000 Rs" }, ml: { question: "മിത്രയുടെ അമ്മയ്ക്ക് 50 രൂപയുടെ 3 കെട്ട് നോട്ട് കിട്ടി. ഓരോ കെട്ടിലും 100 നോട്ടുണ്ട്. ആകെ എത്ര രൂപ കിട്ടി?", options: ["(100+50) x 3 = 450 രൂപ", "3 x 100 + 50 = 350 രൂപ", "3 x 100 x 50 = 15000 രൂപ", "100 x 50 = 5000 രൂപ"], answer: "3 x 100 x 50 = 15000 Rs" } },
+            { en: { question: "Look at the pattern: 1+3 = 4, 1+3+5 = 9. What is 1+3+5+7?", options: ["16", "15", "14", "20"], answer: "16" }, ml: { question: "സംഖ്യാ പാറ്റേൺ നോക്കൂ: 1+3 = 4, 1+3+5 = 9. എങ്കിൽ 1+3+5+7 എത്രയാണ്?", options: ["16", "15", "14", "20"], answer: "16" } },
+            { en: { question: "Look at the pattern: 2+4 = 6, 2+4+6 = 12. What is 2+4+6+8?", options: ["18", "20", "22", "24"], answer: "20" }, ml: { question: "സംഖ്യാ പാറ്റേൺ നോക്കൂ: 2+4 = 6, 2+4+6 = 12. എങ്കിൽ 2+4+6+8 എത്രയാണ്?", options: ["18", "20", "22", "24"], answer: "20" } }
+        ];
+
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             currentQuestionIndex = 0;
+             userAnswers.fill(null);
+             score = 0;
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            // Reset userAnswers array for the new quiz length
+            userAnswers = new Array(quizData.length).fill(null);
+            totalQuestionsEl.textContent = quizData.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            const questionData = quizData[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / quizData.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn bg-white hover:bg-green-100 rounded-lg shadow-sm border-2 border-stone-200';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = quizData[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-green-600';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-600';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === quizData.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${quizData.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-stone-700">${text.reviewHeader}</h3>`;
+            quizData.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-green-100' : 'bg-rose-100'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-stone-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-green-800' : 'text-rose-800'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect && userAnswer ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : (isCorrect ? '✅' : '')}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>

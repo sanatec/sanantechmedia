@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Pictograms</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0fdf4; /* Light green background */
+        }
+        .quiz-container {
+            background: linear-gradient(135deg, #ffffff, #dcfce7);
+            box-shadow: 0 10px 25px rgba(15, 95, 48, 0.1);
+            border: 1px solid #bbf7d0;
+        }
+        .quiz-container:hover {
+            transform: translateY(-5px);
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid transparent;
+        }
+        .option-btn.selected {
+            background-color: #86efac; /* A light green for selected */
+            color: #14532d;
+            border-color: #22c55e;
+        }
+        .option-btn.correct {
+            background-color: #22c55e; /* Green for correct */
+            color: white;
+            border-color: #15803d;
+        }
+        .option-btn.wrong {
+            background-color: #f43f5e; /* Rose for wrong */
+            color: white;
+            border-color: #be123c;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        /* Animation for screen transitions */
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-green-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-green-700 mb-2">MCQ Adventure!</h1>
+            <p id="welcome-subtitle" class="text-lg text-stone-600 mb-6">Let's learn about Shapes!</p>
+            <img src="https://placehold.co/400x200/22c55e/ffffff?text=Pictogram+Quiz&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Pictogram Adventure Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-stone-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                     <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                     <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-stone-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-lime-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-stone-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3">
+                    </div>
+
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6 text-center">
+                 <h2 id="review-title" class="text-3xl font-black text-green-800 mb-2">Quiz Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-stone-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-lime-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-lime-800"></span>
+                 </div>
+             </div>
+             <div id="review-content" class="mt-6 space-y-4">
+                 </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        
+        // --- UI Text Elements for Translation ---
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual Data ---
+        const uiText = {
+            en: {
+                welcomeTitle: "Pictures Tell Stories",
+                welcomeSubtitle: "Let's practice the 'ചിത്രങ്ങൾ കഥ പറയുന്നു' chapter!",
+                startBtn: "Start Quiz",
+                questionLabel: "Question",
+                ofLabel: "of",
+                backBtn: "Back",
+                nextBtn: "Next",
+                submitBtn: "Submit",
+                reviewTitle: "Quiz Complete!",
+                reviewSubtitle: "Great job! Here's your score:",
+                reviewHeader: "Your Review",
+                yourAnswer: "Your answer:",
+                correctAnswer: "Correct answer:",
+                notAnswered: "Not answered",
+                playAgainBtn: "Play Again",
+                correctFeedback: "Correct! 🎉",
+            },
+            ml: {
+                welcomeTitle: "ചിത്രങ്ങൾ കഥ പറയുന്നു",
+                welcomeSubtitle: "നമുക്ക് പാഠഭാഗം പരിശീലിക്കാം!",
+                startBtn: "ക്വിസ് ആരംഭിക്കുക",
+                questionLabel: "ചോദ്യം",
+                ofLabel: "/",
+                backBtn: "പുറകോട്ട്",
+                nextBtn: "അടുത്തത്",
+                submitBtn: "സമർപ്പിക്കുക",
+                reviewTitle: "ക്വിസ് പൂർത്തിയായി!",
+                reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:",
+                reviewHeader: "നിങ്ങളുടെ അവലോകനം",
+                yourAnswer: "നിങ്ങളുടെ ഉത്തരം:",
+                correctAnswer: "ശരിയായ ഉത്തരം:",
+                notAnswered: "ഉത്തരം നൽകിയില്ല",
+                playAgainBtn: "വീണ്ടും കളിക്കുക",
+                correctFeedback: "ശരിയാണ്! 🎉",
+            }
+        };
+
+        const quizData = [
+            { en: { question: "From the Agri Farm picture, how many Roosters (പൂവൻകോഴി) are there?", options: ["25", "36", "24", "9"], answer: "36" }, ml: { question: "അഗ്രിഫാം ചിത്രത്തിൽ, എത്ര പൂവൻകോഴികൾ ഉണ്ട്?", options: ["25", "36", "24", "9"], answer: "36" } },
+            { en: { question: "From the Agri Farm picture, how many Goats (ആട്) are there?", options: ["24", "36", "9", "6"], answer: "24" }, ml: { question: "അഗ്രിഫാം ചിത്രത്തിൽ, എത്ര ആടുകൾ ഉണ്ട്?", options: ["24", "36", "9", "6"], answer: "24" } },
+            { en: { question: "From the Agri Farm picture, how many Dogs (പട്ടി) are there?", options: ["4", "6", "9", "25"], answer: "4" }, ml: { question: "അഗ്രിഫാം ചിത്രത്തിൽ, എത്ര പട്ടികൾ ഉണ്ട്?", options: ["4", "6", "9", "25"], answer: "4" } },
+            { en: { question: "Which animal is the most numerous in the Agri Farm?", options: ["Goat (ആട്)", "Rooster (പൂവൻകോഴി)", "Duck (താറാവ്)", "Buffalo (പോത്ത്)"], answer: "Rooster (പൂവൻകോഴി)" }, ml: { question: "അഗ്രിഫാമിൽ ഏറ്റവും കൂടുതലുള്ള ജീവി ഏതാണ്?", options: ["ആട്", "പൂവൻകോഴി", "താറാവ്", "പോത്ത്"], answer: "പൂവൻകോഴി" } },
+            { en: { question: "Which animal is the least numerous in the Agri Farm?", options: ["Ox (കാള)", "Buffalo (പോത്ത്)", "Goat (ആട്)", "Dog (പട്ടി)"], answer: "Dog (പട്ടി)" }, ml: { question: "അഗ്രിഫാമിൽ ഏറ്റവും കുറവുള്ള ജീവി ഏതാണ്?", options: ["കാള", "പോത്ത്", "ആട്", "പട്ടി"], answer: "Dog (പട്ടി)" } },
+            { en: { question: "What is the total number of animals in the Agri Farm? (24+9+4+6+36+25)", options: ["100", "104", "110", "94"], answer: "104" }, ml: { question: "അഗ്രിഫാമിലെ ആകെ ജീവികളുടെ എണ്ണം എത്ര? (24+9+4+6+36+25)", options: ["100", "104", "110", "94"], answer: "104" } },
+            { en: { question: "In the school transport pictogram, what does one head symbol (തലയുടെ ചിത്രം) represent?", options: ["1 child", "5 children", "10 children", "100 children"], answer: "5 children" }, ml: { question: "സ്കൂൾ വാഹന പട്ടികയിൽ, ഒരു തലയുടെ ചിത്രം എന്തിനെ സൂചിപ്പിക്കുന്നു?", options: ["1 കുട്ടി", "5 കുട്ടികൾ", "10 കുട്ടികൾ", "100 കുട്ടികൾ"], answer: "5 കുട്ടികൾ" } },
+            { en: { question: "How many girls come to school by Auto-rickshaw?", options: ["5", "15", "20", "25"], answer: "25" }, ml: { question: "ഓട്ടോറിക്ഷയിൽ സ്കൂളിൽ വരുന്നത് എത്ര പെൺകുട്ടികളാണ്?", options: ["5", "15", "20", "25"], answer: "25" } },
+            { en: { question: "How many boys come to school by Cycle?", options: ["4", "10", "20", "40"], answer: "20" }, ml: { question: "സൈക്കിളിൽ വരുന്നത് എത്ര ആൺകുട്ടികളാണ്?", options: ["4", "10", "20", "40"], answer: "20" } },
+            { en: { question: "How many boys come to school by Bus?", options: ["12", "50", "60", "100"], answer: "60" }, ml: { question: "ബസ്സിൽ വരുന്നത് എത്ര ആൺകുട്ടികളാണ്?", options: ["12", "50", "60", "100"], answer: "60" } },
+            { en: { question: "How many children come to school by Walking in total (Boys and Girls)?", options: ["10", "30", "50", "100"], answer: "50" }, ml: { question: "ആകെ എത്ര കുട്ടികളാണ് നടന്നുവരുന്നത് (ആൺകുട്ടികളും പെൺകുട്ടികളും)?", options: ["10", "30", "50", "100"], answer: "50" } },
+            { en: { question: "What is the most common way for children to come to school?", options: ["Walk (നടന്ന്)", "Auto (ഓട്ടോ)", "Bus (ബസ്)", "Cycle (സൈക്കിൾ)"], answer: "Bus (ബസ്)" }, ml: { question: "ഏറ്റവും കൂടുതൽ കുട്ടികൾ സ്കൂളിൽ വരുന്നത് എങ്ങനെയാണ്?", options: ["നടന്ന്", "ഓട്ടോ", "ബസ്", "സൈക്കിൾ"], answer: "Bus (ബസ്)" } },
+            { en: { question: "What is the total number of girls listed in the transport chart?", options: ["19", "85", "95", "100"], answer: "95" }, ml: { question: "വാഹന പട്ടികയിൽ ആകെ എത്ര പെൺകുട്ടികൾ ഉണ്ട്?", options: ["19", "85", "95", "100"], answer: "95" } },
+            { en: { question: "What is the total number of boys listed in the transport chart?", options: ["25", "100", "125", "150"], answer: "125" }, ml: { question: "വാഹന പട്ടികയിൽ ആകെ എത്ര ആൺകുട്ടികൾ ഉണ്ട്?", options: ["25", "100", "125", "150"], answer: "125" } },
+            { en: { question: "In the tree planting pictogram, what does one tree symbol (ചെടിയുടെ ചിത്രം) represent?", options: ["1 sapling", "5 saplings", "10 saplings", "50 saplings"], answer: "10 saplings" }, ml: { question: "വൃക്ഷത്തൈ പട്ടികയിൽ, ഒരു ചെടിയുടെ ചിത്രം എന്തിനെ സൂചിപ്പിക്കുന്നു?", options: ["1 തൈ", "5 തൈകൾ", "10 തൈകൾ", "50 തൈകൾ"], answer: "10 തൈകൾ" } },
+            { en: { question: "How many Jackfruit (പ്ലാവ്) saplings are there?", options: ["8", "10", "80", "100"], answer: "80" }, ml: { question: "ആകെ എത്ര പ്ലാവിൻതൈ ഉണ്ട്?", options: ["8", "10", "80", "100"], answer: "80" } },
+            { en: { question: "How many Teak (തേക്ക്) saplings are there?", options: ["5", "10", "50", "100"], answer: "50" }, ml: { question: "ആകെ എത്ര തേക്കിൻതൈ ഉണ്ട്?", options: ["5", "10", "50", "100"], answer: "50" } },
+            { en: { question: "How many tree symbols should be drawn for 60 Kanikkonna (കണിക്കൊന്ന) saplings?", options: ["10", "60", "5", "6"], answer: "6" }, ml: { question: "60 കണിക്കൊന്ന തൈകൾക്ക്, എത്ര ചെടിയുടെ ചിത്രം വരയ്ക്കണം?", options: ["10", "60", "5", "6"], answer: "6" } },
+            { en: { question: "If 4 tree symbols are drawn for Tamarind (പുളി), how many saplings are there?", options: ["4", "10", "40", "14"], answer: "40" }, ml: { question: "പുളിക്ക് 4 ചെടിയുടെ ചിത്രം വരച്ചാൽ, ആകെ എത്ര തൈകൾ ഉണ്ട്?", options: ["4", "10", "40", "14"], answer: "40" } },
+            { en: { question: "Which sapling is the most numerous in the chart?", options: ["Mango (മാവ്)", "Jackfruit (പ്ലാവ്)", "Teak (തേക്ക്)", "Kanikkonna (കണിക്കൊന്ന)"], answer: "Jackfruit (പ്ലാവ്)" }, ml: { question: "ഏറ്റവും കൂടുതലുള്ള വൃക്ഷത്തൈ ഏതാണ്?", options: ["മാവ്", "പ്ലാവ്", "തേക്ക്", "കണിക്കൊന്ന"], answer: "പ്ലാവ്" } },
+            { en: { question: "In the math quiz, what does a tally mark group with a cross line (റ്റാലി അടയാളം) represent?", options: ["1 point", "4 points", "5 points", "10 points"], answer: "5 points" }, ml: { question: "ഗണിത ക്വിസിൽ, കുറുകെ വരച്ച റ്റാലി അടയാളം എത്ര പോയിന്റിനെ സൂചിപ്പിക്കുന്നു?", options: ["1 പോയിന്റ്", "4 പോയിന്റ്", "5 പോയിന്റ്", "10 പോയിന്റ്"], answer: "5 പോയിന്റ്" } },
+            { en: { question: "What is Anas's (അനസ്) score from the tally chart?", options: ["10", "15", "20", "3"], answer: "15" }, ml: { question: "റ്റാലി ചാർട്ട് അനുസരിച്ച് അനസിന്റെ പോയിന്റ് എത്ര?", options: ["10", "15", "20", "3"], answer: "15" } },
+            { en: { question: "What is Amrith's (അമൃത്) score from the tally chart?", options: ["15", "18", "13", "20"], answer: "18" }, ml: { question: "റ്റാലി ചാർട്ട് അനുസരിച്ച് അമൃതിൻ്റെ പോയിന്റ് എത്ര?", options: ["15", "18", "13", "20"], answer: "18" } },
+            { en: { question: "What is Gopu's (ഗോപു) score from the tally chart?", options: ["5", "10", "15", "2"], answer: "10" }, ml: { question: "റ്റാലി ചാർട്ട് അനുസരിച്ച് ഗോപുവിന്റെ പോയിന്റ് എത്ര?", options: ["5", "10", "15", "2"], answer: "10" } },
+            { en: { question: "What is Karan's (കരൺ) score from the tally chart?", options: ["15", "18", "19", "20"], answer: "19" }, ml: { question: "റ്റാലി ചാർട്ട് അനുസരിച്ച് കരണിന്റെ പോയിന്റ് എത്ര?", options: ["15", "18", "19", "20"], answer: "19" } },
+            { en: { question: "Who got the highest score in the math quiz?", options: ["Amrith (അമൃത്)", "Karan (കരൺ)", "Sanu (സനു)", "Jishi (ജിഷി)"], answer: "Sanu (സനു)" }, ml: { question: "ഗണിത ക്വിസിൽ ആർക്കാണ് ഏറ്റവും കൂടുതൽ പോയിന്റ്?", options: ["അമൃത്", "കരൺ", "സനു", "ജിഷി"], answer: "സനു" } },
+            { en: { question: "What was the highest score in the math quiz?", options: ["15", "18", "19", "20"], answer: "20" }, ml: { question: "ഗണിത ക്വിസിലെ ഏറ്റവും ഉയർന്ന പോയിന്റ് എത്ര?", options: ["15", "18", "19", "20"], answer: "20" } },
+            { en: { question: "In the library book pictogram, what does one book symbol represent?", options: ["1 book", "5 books", "10 books", "20 books"], answer: "10 books" }, ml: { question: "ലൈബ്രറി പുസ്തക പട്ടികയിൽ, ഒരു പുസ്തകത്തിന്റെ ചിത്രം എന്തിനെ സൂചിപ്പിക്കുന്നു?", options: ["1 പുസ്തകം", "5 പുസ്തകങ്ങൾ", "10 പുസ്തകങ്ങൾ", "20 പുസ്തകങ്ങൾ"], answer: "10 പുസ്തകങ്ങൾ" } },
+            { en: { question: "How many books did Group 2 collect?", options: ["5", "10", "50", "60"], answer: "50" }, ml: { question: "രണ്ടാമത്തെ ഗ്രൂപ്പ് എത്ര പുസ്തകങ്ങൾ ശേഖരിച്ചു?", options: ["5", "10", "50", "60"], answer: "50" } },
+            { en: { question: "How many books did Group 6 collect?", options: ["7", "10", "60", "70"], answer: "70" }, ml: { question: "ആറാമത്തെ ഗ്രൂപ്പ് എത്ര പുസ്തകങ്ങൾ ശേഖരിച്ചു?", options: ["7", "10", "60", "70"], answer: "70" } },
+            { en: { question: "Which two groups collected the same number of books?", options: ["Group 1 & 2", "Group 2 & 4", "Group 3 & 5", "Group 1 & 6"], answer: "Group 2 & 4" }, ml: { question: "ഏതൊക്കെ ഗ്രൂപ്പുകളാണ് ഒരേ എണ്ണം പുസ്തകം ശേഖരിച്ചത്?", options: ["ഗ്രൂപ്പ് 1 & 2", "ഗ്രൂപ്പ് 2 & 4", "ഗ്രൂപ്പ് 3 & 5", "ഗ്രൂപ്പ് 1 & 6"], answer: "Group 2 & 4" } },
+            { en: { question: "How many more books did Group 6 collect than Group 1?", options: ["30", "40", "70", "100"], answer: "40" }, ml: { question: "ഒന്നാമത്തെ ഗ്രൂപ്പിനെക്കാൾ എത്ര പുസ്തകമാണ് ആറാമത്തെ ഗ്രൂപ്പ് കൂടുതലായി ശേഖരിച്ചത്?", options: ["30", "40", "70", "100"], answer: "40" } },
+            { en: { question: "How many more books does Group 2 need to collect to equal Group 3?", options: ["10", "20", "50", "60"], answer: "10" }, ml: { question: "രണ്ടാമത്തെ ഗ്രൂപ്പ്, മൂന്നാമത്തെ ഗ്രൂപ്പിന് തുല്യമാകാൻ എത്ര പുസ്തകം കൂടി ശേഖരിക്കണം?", options: ["10", "20", "50", "60"], answer: "10" } },
+            { en: { question: "What is the total number of books collected by all 6 groups?", options: ["200", "250", "300", "350"], answer: "300" }, ml: { question: "6 ഗ്രൂപ്പുകളും കൂടി ആകെ എത്ര പുസ്തകം ശേഖരിച്ചു?", options: ["200", "250", "300", "350"], answer: "300" } },
+            { en: { question: "How many books did Group 5 collect?", options: ["4", "10", "40", "50"], answer: "40" }, ml: { question: "അഞ്ചാമത്തെ ഗ്രൂപ്പ് എത്ര പുസ്തകങ്ങൾ ശേഖരിച്ചു?", options: ["4", "10", "40", "50"], answer: "40" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             currentQuestionIndex = 0;
+             userAnswers.fill(null);
+             score = 0;
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            // Reset userAnswers array for the new quiz length
+            userAnswers = new Array(quizData.length).fill(null);
+            totalQuestionsEl.textContent = quizData.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            const questionData = quizData[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / quizData.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn bg-white hover:bg-green-100 rounded-lg shadow-sm border-2 border-stone-200';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = quizData[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-green-600';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-600';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === quizData.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${quizData.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-stone-700">${text.reviewHeader}</h3>`;
+            quizData.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-green-100' : 'bg-rose-100'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-stone-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-green-800' : 'text-rose-800'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect && userAnswer ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : (isCorrect ? '✅' : '')}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>

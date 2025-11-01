@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Equal Groups</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0fdf4; /* Light green background */
+        }
+        .quiz-container {
+            background: linear-gradient(135deg, #ffffff, #dcfce7);
+            box-shadow: 0 10px 25px rgba(15, 95, 48, 0.1);
+            border: 1px solid #bbf7d0;
+        }
+        .quiz-container:hover {
+            transform: translateY(-5px);
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid transparent;
+        }
+        .option-btn.selected {
+            background-color: #86efac; /* A light green for selected */
+            color: #14532d;
+            border-color: #22c55e;
+        }
+        .option-btn.correct {
+            background-color: #22c55e; /* Green for correct */
+            color: white;
+            border-color: #15803d;
+        }
+        .option-btn.wrong {
+            background-color: #f43f5e; /* Rose for wrong */
+            color: white;
+            border-color: #be123c;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        /* Animation for screen transitions */
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-green-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-green-700 mb-2">MCQ Adventure!</h1>
+            <p id="welcome-subtitle" class="text-lg text-stone-600 mb-6">Let's learn about Shapes!</p>
+            <img src="https://placehold.co/400x200/22c55e/ffffff?text=Equal+Groups+Quiz&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Equal Groups Adventure Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-stone-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                     <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                     <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-stone-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-lime-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-stone-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3">
+                    </div>
+
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6 text-center">
+                 <h2 id="review-title" class="text-3xl font-black text-green-800 mb-2">Quiz Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-stone-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-lime-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-lime-800"></span>
+                 </div>
+             </div>
+             <div id="review-content" class="mt-6 space-y-4">
+                 </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        
+        // --- UI Text Elements for Translation ---
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual Data ---
+        const uiText = {
+            en: {
+                welcomeTitle: "Equal Groups",
+                welcomeSubtitle: "Let's practice the 'തുല്യമായ കൂട്ടം' chapter!",
+                startBtn: "Start Quiz",
+                questionLabel: "Question",
+                ofLabel: "of",
+                backBtn: "Back",
+                nextBtn: "Next",
+                submitBtn: "Submit",
+                reviewTitle: "Quiz Complete!",
+                reviewSubtitle: "Great job! Here's your score:",
+                reviewHeader: "Your Review",
+                yourAnswer: "Your answer:",
+                correctAnswer: "Correct answer:",
+                notAnswered: "Not answered",
+                playAgainBtn: "Play Again",
+                correctFeedback: "Correct! 🎉",
+            },
+            ml: {
+                welcomeTitle: "തുല്യമായ കൂട്ടം",
+                welcomeSubtitle: "നമുക്ക് പാഠഭാഗം പരിശീലിക്കാം!",
+                startBtn: "ക്വിസ് ആരംഭിക്കുക",
+                questionLabel: "ചോദ്യം",
+                ofLabel: "/",
+                backBtn: "പുറകോട്ട്",
+                nextBtn: "അടുത്തത്",
+                submitBtn: "സമർപ്പിക്കുക",
+                reviewTitle: "ക്വിസ് പൂർത്തിയായി!",
+                reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:",
+                reviewHeader: "നിങ്ങളുടെ അവലോകനം",
+                yourAnswer: "നിങ്ങളുടെ ഉത്തരം:",
+                correctAnswer: "ശരിയായ ഉത്തരം:",
+                notAnswered: "ഉത്തരം നൽകിയില്ല",
+                playAgainBtn: "വീണ്ടും കളിക്കുക",
+                correctFeedback: "ശരിയാണ്! 🎉",
+            }
+        };
+
+        const quizData = [
+            { en: { question: "How many soap bars are shown in the first picture (6 rows of 6)?", options: ["12", "30", "36", "66"], answer: "36" }, ml: { question: "ആദ്യത്തെ ചിത്രത്തിൽ ആകെ എത്ര സോപ്പുകട്ടയുണ്ട് (6 വരികൾ, 6 നിരകൾ)?", options: ["12", "30", "36", "66"], answer: "36" } },
+            { en: { question: "If 36 soaps are packed into 2 equal boxes, how many soaps in one box?", options: ["12", "18", "34", "72"], answer: "18" }, ml: { question: "36 സോപ്പുകട്ട 2 തുല്യ പെട്ടിയിലാക്കിയാൽ, ഒരു പെട്ടിയിൽ എത്രയെണ്ണം?", options: ["12", "18", "34", "72"], answer: "18" } },
+            { en: { question: "If 36 soaps are packed into 3 equal boxes, how many soaps in one box?", options: ["12", "18", "9", "33"], answer: "12" }, ml: { question: "36 സോപ്പുകട്ട 3 തുല്യ പെട്ടിയിലാക്കിയാൽ, ഒരു പെട്ടിയിൽ എത്രയെണ്ണം?", options: ["12", "18", "9", "33"], answer: "12" } },
+            { en: { question: "If 36 soaps are packed into 4 equal boxes, how many soaps in one box?", options: ["40", "32", "9", "8"], answer: "9" }, ml: { question: "36 സോപ്പുകട്ട 4 തുല്യ പെട്ടിയിലാക്കിയാൽ, ഒരു പെട്ടിയിൽ എത്രയെണ്ണം?", options: ["40", "32", "9", "8"], answer: "9" } },
+            { en: { question: "If 36 soaps are packed into 6 equal boxes, how many soaps in one box?", options: ["6", "12", "30", "4"], answer: "6" }, ml: { question: "36 സോപ്പുകട്ട 6 തുല്യ പെട്ടിയിലാക്കിയാൽ, ഒരു പെട്ടിയിൽ എത്രയെണ്ണം?", options: ["6", "12", "30", "4"], answer: "6" } },
+            { en: { question: "If 36 soaps are packed into 9 equal boxes, how many soaps in one box?", options: ["3", "4", "5", "9"], answer: "4" }, ml: { question: "36 സോപ്പുകട്ട 9 തുല്യ പെട്ടിയിലാക്കിയാൽ, ഒരു പെട്ടിയിൽ എത്രയെണ്ണം?", options: ["3", "4", "5", "9"], answer: "4" } },
+            { en: { question: "Complete the fact: 4 x ___ = 36", options: ["6", "8", "9", "10"], answer: "9" }, ml: { question: "പൂരിപ്പിക്കുക: 4 x ___ = 36", options: ["6", "8", "9", "10"], answer: "9" } },
+            { en: { question: "Complete the fact: 6 x ___ = 36", options: ["6", "5", "7", "8"], answer: "6" }, ml: { question: "പൂരിപ്പിക്കുക: 6 x ___ = 36", options: ["6", "5", "7", "8"], answer: "6" } },
+            { en: { question: "What is the total number of soaps made from Monday to Friday (36+32+24+48+40)?", options: ["160", "170", "180", "200"], answer: "180" }, ml: { question: "തിങ്കൾ മുതൽ വെള്ളി വരെ ആകെ എത്ര സോപ്പുകൾ ഉണ്ടാക്കി (36+32+24+48+40)?", options: ["160", "170", "180", "200"], answer: "180" } },
+            { en: { question: "How many packs are needed if 32 soaps are packed with 4 soaps in each pack?", options: ["6", "7", "8", "9"], answer: "8" }, ml: { question: "32 സോപ്പുകൾ ഒരു പാക്കറ്റിൽ 4 എണ്ണം വീതം നിറച്ചാൽ എത്ര പാക്കറ്റുകൾ വേണം?", options: ["6", "7", "8", "9"], answer: "8" } },
+            { en: { question: "The club sells 180 soaps at 20 Rs each. What is the total amount earned?", options: ["360 Rs", "1800 Rs", "3600 Rs", "4000 Rs"], answer: "3600 Rs" }, ml: { question: "ക്ലബ്ബ് 180 സോപ്പുകൾ ഒന്നിന് 20 രൂപ നിരക്കിൽ വിറ്റാൽ ആകെ എത്ര രൂപ കിട്ടും?", options: ["360 രൂപ", "1800 രൂപ", "3600 രൂപ", "4000 രൂപ"], answer: "3600 രൂപ" } },
+            { en: { question: "If the total amount is 3600 Rs, how many 100 Rs notes is that?", options: ["36", "360", "3600", "100"], answer: "36" }, ml: { question: "ആകെ 3600 രൂപ കിട്ടിയെങ്കിൽ, അത് എത്ര 100 രൂപ നോട്ടുകളാണ്?", options: ["36", "360", "3600", "100"], answer: "36" } },
+            { en: { question: "If the total amount is 3600 Rs, how many 200 Rs notes is that?", options: ["18", "20", "36", "360"], answer: "18" }, ml: { question: "ആകെ 3600 രൂപ കിട്ടിയെങ്കിൽ, അത് എത്ര 200 രൂപ നോട്ടുകളാണ്?", options: ["18", "20", "36", "360"], answer: "18" } },
+            { en: { question: "What is 76 divided by 2? (Hint: 76 = 40 + 36)", options: ["38", "33", "40", "36"], answer: "38" }, ml: { question: "76 ഹരിക്കണം 2 എത്ര? (സൂചന: 76 = 40 + 36)", options: ["38", "33", "40", "36"], answer: "38" } },
+            { en: { question: "What is 76 divided by 4? (Hint: 76 = 40 + 36)", options: ["15", "20", "19", "25"], answer: "19" }, ml: { question: "76 ഹരിക്കണം 4 എത്ര? (സൂചന: 76 = 40 + 36)", options: ["15", "20", "19", "25"], answer: "19" } },
+            { en: { question: "48 dolls are packed equally into 6 boxes. How many dolls per box?", options: ["6", "7", "8", "9"], answer: "8" }, ml: { question: "48 പാവകൾ 6 പെട്ടിയിൽ തുല്യമായി വയ്ക്കുന്നു. ഒരു പെട്ടിയിൽ എത്ര പാവകൾ?", options: ["6", "7", "8", "9"], answer: "8" } },
+            { en: { question: "48 dolls are packed with 8 dolls in each box. How many boxes are needed?", options: ["5", "6", "7", "8"], answer: "6" }, ml: { question: "48 പാവകൾ ഒരു പെട്ടിയിൽ 8 എണ്ണം വീതം വയ്ക്കുന്നു. എത്ര പെട്ടികൾ വേണം?", options: ["5", "6", "7", "8"], answer: "6" } },
+            { en: { question: "48 oranges are given to 6 groups. First, 6 are given to each. How many oranges are given out?", options: ["12", "36", "48", "6"], answer: "36" }, ml: { question: "48 ഓറഞ്ച് 6 കൂട്ടത്തിന് നൽകുന്നു. ആദ്യം 6 എണ്ണം വീതം കൊടുത്തു. ആകെ എത്ര ഓറഞ്ച് കൊടുത്തു?", options: ["12", "36", "48", "6"], answer: "36" } },
+            { en: { question: "After giving 36 oranges (from 48), how many are left?", options: ["6", "10", "12", "0"], answer: "12" }, ml: { question: "48 ഓറഞ്ചിൽ നിന്ന് 36 എണ്ണം കൊടുത്താൽ ബാക്കി എത്ര?", options: ["6", "10", "12", "0"], answer: "12" } },
+            { en: { question: "The remaining 12 oranges are given to 6 groups. How many more does each group get?", options: ["1", "2", "3", "6"], answer: "2" }, ml: { question: "ബാക്കി 12 ഓറഞ്ച് 6 കൂട്ടത്തിന് വീതിച്ചാൽ ഓരോ കൂട്ടത്തിനും എത്രയെണ്ണം കൂടി കിട്ടും?", options: ["1", "2", "3", "6"], answer: "2" } },
+            { en: { question: "In total, how many oranges did each of the 6 groups get? (6 in the first round, 2 in the second)", options: ["6", "2", "8", "12"], answer: "8" }, ml: { question: "ആകെ, 6 കൂട്ടത്തിനും ഓറഞ്ച് കിട്ടിയപ്പോൾ ഒരാൾക്ക് എത്രയെണ്ണം കിട്ടി? (ആദ്യം 6, പിന്നെ 2)", options: ["6", "2", "8", "12"], answer: "8" } },
+            { en: { question: "9 boxes of chalk, with 10 chalks per box. How many chalks in total?", options: ["19", "90", "910", "109"], answer: "90" }, ml: { question: "10 ചോക്ക് വീതമുള്ള 9 പെട്ടി. ആകെ എത്ര ചോക്ക് ഉണ്ട്?", options: ["19", "90", "910", "109"], answer: "90" } },
+            { en: { question: "There are 90 chalks in boxes and 6 extra chalks. What is the total number of chalks?", options: ["96", "84", "60", "906"], answer: "96" }, ml: { question: "90 ചോക്ക് പെട്ടിയിലും 6 ചോക്ക് പുറത്തും. ആകെ എത്ര ചോക്ക് ഉണ്ട്?", options: ["96", "84", "60", "906"], answer: "96" } },
+            { en: { question: "96 chalks are shared equally among 8 classes. How many chalks per class?", options: ["10", "11", "12", "13"], answer: "12" }, ml: { question: "ആകെ 96 ചോക്ക് 8 ക്ലാസിലേക്ക് തുല്യമായി വീതിച്ചു. ഓരോ ക്ലാസിനും എത്ര ചോക്ക് കിട്ടി?", options: ["10", "11", "12", "13"], answer: "12" } },
+            { en: { question: "What is 96 ÷ 8? (Hint: 80 ÷ 8 and 16 ÷ 8)", options: ["10", "2", "12", "20"], answer: "12" }, ml: { question: "96 ÷ 8 എത്രയാണ്? (സൂചന: 80 ÷ 8 + 16 ÷ 8)", options: ["10", "2", "12", "20"], answer: "12" } },
+            { en: { question: "One color pencil costs 4 Rs. Ishan bought 20. How much did he spend?", options: ["80 Rs", "24 Rs", "16 Rs", "60 Rs"], answer: "80 Rs" }, ml: { question: "ഒരു കളർപെൻസിലിന് 4 രൂപയാണ് വില. ഇഷാൻ 20 എണ്ണം വാങ്ങി. ആകെ എത്ര രൂപ ചെലവായി?", options: ["80 രൂപ", "24 രൂപ", "16 രൂപ", "60 രൂപ"], answer: "80 രൂപ" } },
+            { en: { question: "One color pencil costs 4 Rs. Shraddha spent 76 Rs. How many pencils did she buy?", options: ["17", "18", "19", "20"], answer: "19" }, ml: { question: "ഒരു കളർപെൻസിലിന് 4 രൂപയാണ് വില. ശ്രദ്ധ 76 രൂപയ്ക്ക് പെൻസിൽ വാങ്ങി. ആകെ എത്ര പെൻസിൽ വാങ്ങി?", options: ["17", "18", "19", "20"], answer: "19" } },
+            { en: { question: "Mental Math: What is 84 ÷ 4?", options: ["20", "21", "22", "24"], answer: "21" }, ml: { question: "മനക്കണക്ക്: 84 ÷ 4 എത്രയാണ്?", options: ["20", "21", "22", "24"], answer: "21" } },
+            { en: { question: "Mental Math: What is 63 ÷ 3?", options: ["20", "21", "22", "30"], answer: "21" }, ml: { question: "മനക്കണക്ക്: 63 ÷ 3 എത്രയാണ്?", options: ["20", "21", "22", "30"], answer: "21" } },
+            { en: { question: "Mental Math: What is 72 ÷ 6?", options: ["10", "11", "12", "13"], answer: "12" }, ml: { question: "മനക്കണക്ക്: 72 ÷ 6 എത്രയാണ്?", options: ["10", "11", "12", "13"], answer: "12" } },
+            { en: { question: "From Siyuth's bill: 4 notebooks cost 72 Rs. What is the cost of 1 notebook?", options: ["18 Rs", "72 Rs", "20 Rs", "15 Rs"], answer: "18 Rs" }, ml: { question: "സിയൂത്തിന്റെ ബില്ലിൽ: 4 നോട്ടുബുക്കിന് 72 രൂപ. 1 നോട്ടുബുക്കിന്റെ വില എത്ര?", options: ["18 രൂപ", "72 രൂപ", "20 രൂപ", "15 രൂപ"], answer: "18 രൂപ" } },
+            { en: { question: "From Siyuth's bill: 8 pens cost 72 Rs. What is the cost of 1 pen?", options: ["8 Rs", "9 Rs", "10 Rs", "7 Rs"], answer: "9 Rs" }, ml: { question: "സിയൂത്തിന്റെ ബില്ലിൽ: 8 പേനയ്ക്ക് 72 രൂപ. 1 പേനയുടെ വില എത്ര?", options: ["8 രൂപ", "9 രൂപ", "10 രൂപ", "7 രൂപ"], answer: "9 രൂപ" } },
+            { en: { question: "From Siyuth's bill: 10 scales cost 60 Rs. What is the cost of 1 scale?", options: ["10 Rs", "60 Rs", "6 Rs", "5 Rs"], answer: "6 Rs" }, ml: { question: "സിയൂത്തിന്റെ ബില്ലിൽ: 10 സ്കെയിലിന് 60 രൂപ. 1 സ്കെയിലിന്റെ വില എത്ര?", options: ["10 രൂപ", "60 രൂപ", "6 രൂപ", "5 രൂപ"], answer: "6 രൂപ" } },
+            { en: { question: "Using the prices from Siyuth's bill, what is the cost for Aadi's 5 notebooks? (1 notebook = 18 Rs)", options: ["72 Rs", "90 Rs", "100 Rs", "80 Rs"], answer: "90 Rs" }, ml: { question: "സിയൂത്തിന്റെ ബില്ലിലെ വില അനുസരിച്ച്, ആദിയുടെ 5 നോട്ടുബുക്കിന് എന്ത് വിലയാകും? (1 നോട്ടുബുക്ക് = 18 രൂപ)", options: ["72 രൂപ", "90 രൂപ", "100 രൂപ", "80 രൂപ"], answer: "90 രൂപ" } },
+            { en: { question: "From the fruit stall: 35 apples are in 7 equal trays. How many apples per tray?", options: ["5", "6", "7", "8"], answer: "5" }, ml: { question: "പഴക്കടയിൽ: 35 ആപ്പിൾ 7 ട്രേയിൽ തുല്യമായി വച്ചു. ഒരു ട്രേയിൽ എത്ര ആപ്പിൾ ഉണ്ട്?", options: ["5", "6", "7", "8"], answer: "5" } },
+            { en: { question: "From the fruit stall: 36 oranges are packed with 6 per tray. How many trays are needed?", options: ["5", "6", "7", "8"], answer: "6" }, ml: { question: "പഴക്കടയിൽ: 36 ഓറഞ്ച് 6 എണ്ണം വീതം ട്രേയിൽ വച്ചു. എത്ര ട്രേകൾ വേണം?", options: ["5", "6", "7", "8"], answer: "6" } },
+            { en: { question: "From the fruit stall: 50 mangoes are in 5 equal groups. How many mangoes per group?", options: ["5", "10", "15", "50"], answer: "10" }, ml: { question: "പഴക്കടയിൽ: 50 മാമ്പഴം 5 തുല്യകൂട്ടമാക്കി വച്ചു. ഓരോ കൂട്ടത്തിലും എത്ര മാമ്പഴം ഉണ്ട്?", options: ["5", "10", "15", "50"], answer: "10" } },
+            { en: { question: "1 sack of rice is 50 kg. Each student gets 5 kg. How many students can be served from 1 sack?", options: ["5", "10", "25", "50"], answer: "10" }, ml: { question: "ഒരു ചാക്ക് അരി 50 കിലോ. ഒരു കുട്ടിക്ക് 5 കിലോ വീതം. 1 ചാക്കിൽ നിന്ന് എത്ര കുട്ടികൾക്ക് കൊടുക്കാം?", options: ["5", "10", "25", "50"], answer: "10" } },
+            { en: { question: "If 1 sack serves 10 students, how many students can be served from 37 sacks?", options: ["37", "100", "370", "3700"], answer: "370" }, ml: { question: "1 ചാക്ക് അരി 10 കുട്ടികൾക്ക് എങ്കിൽ, 37 ചാക്ക് അരി എത്ര കുട്ടികൾക്ക് കൊടുക്കാൻ കഴിയും?", options: ["37", "100", "370", "3700"], answer: "370" } },
+            { en: { question: "40 students total. 10 students did not get sweets. How many students got 4 sweets each?", options: ["10", "30", "40", "50"], answer: "30" }, ml: { question: "ആകെ 40 കുട്ടികൾ. 10 കുട്ടികൾക്ക് മിഠായി കിട്ടിയില്ല. 4 മിഠായി വീതം കിട്ടിയ കുട്ടികൾ എത്ര?", options: ["10", "30", "40", "50"], answer: "30" } },
+            { en: { question: "If 30 students got 4 sweets each, what was the total number of sweets?", options: ["34", "40", "120", "160"], answer: "120" }, ml: { question: "30 കുട്ടികൾക്ക് 4 മിഠായി വീതം കിട്ടിയെങ്കിൽ, ആകെ എത്ര മിഠായികൾ ഉണ്ടായിരുന്നു?", options: ["34", "40", "120", "160"], answer: "120" } },
+            { en: { question: "120 sweets are shared equally among 40 students. How many sweets does each student get?", options: ["3", "4", "5", "10"], answer: "3" }, ml: { question: "120 മിഠായികൾ 40 കുട്ടികൾക്ക് തുല്യമായി വീതിച്ചാൽ, ഓരോരുത്തർക്കും എത്ര മിഠായി വീതം കിട്ടി?", options: ["3", "4", "5", "10"], answer: "3" } },
+            { en: { question: "84 parents are seated with 6 chairs per row. How many rows are there?", options: ["10", "12", "14", "16"], answer: "14" }, ml: { question: "84 രക്ഷിതാക്കൾ ഒരു വരിയിൽ 6 പേർ വീതം ഇരുന്നു. ആകെ എത്ര വരിയുണ്ട്?", options: ["10", "12", "14", "16"], answer: "14" } },
+            { en: { question: "6 notebooks cost 72 Rs. What is the cost of 1 notebook?", options: ["6 Rs", "10 Rs", "12 Rs", "72 Rs"], answer: "12 Rs" }, ml: { question: "6 നോട്ടുബുക്കിന് 72 രൂപ. 1 നോട്ടുബുക്കിന്റെ വില എത്ര?", options: ["6 രൂപ", "10 രൂപ", "12 രൂപ", "72 രൂപ"], answer: "12 രൂപ" } },
+            { en: { question: "A pen's price is half a notebook's (12 Rs). A pencil's price is half the pen's. What is 1 pencil's price?", options: ["12 Rs", "6 Rs", "3 Rs", "2 Rs"], answer: "3 Rs" }, ml: { question: "പേനയുടെ വില നോട്ടുബുക്കിന്റെ (12 രൂപ) പകുതിയാണ്. പെൻസിലിന്റെ വില പേനയുടെ പകുതിയാണ്. 1 പെൻസിലിന്റെ വില എത്ര?", options: ["12 രൂപ", "6 രൂപ", "3 രൂപ", "2 രൂപ"], answer: "3 രൂപ" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             currentQuestionIndex = 0;
+             userAnswers.fill(null);
+             score = 0;
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            // Reset userAnswers array for the new quiz length
+            userAnswers = new Array(quizData.length).fill(null);
+            totalQuestionsEl.textContent = quizData.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            const questionData = quizData[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / quizData.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn bg-white hover:bg-green-100 rounded-lg shadow-sm border-2 border-stone-200';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = quizData[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-green-600';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-600';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === quizData.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${quizData.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-stone-700">${text.reviewHeader}</h3>`;
+            quizData.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-green-100' : 'bg-rose-100'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-stone-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-green-800' : 'text-rose-800'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect && userAnswer ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : (isCorrect ? '✅' : '')}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>

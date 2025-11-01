@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Measurement</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0fdf4; /* Light green background */
+        }
+        .quiz-container {
+            background: linear-gradient(135deg, #ffffff, #dcfce7);
+            box-shadow: 0 10px 25px rgba(15, 95, 48, 0.1);
+            border: 1px solid #bbf7d0;
+        }
+        .quiz-container:hover {
+            transform: translateY(-5px);
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid transparent;
+        }
+        .option-btn.selected {
+            background-color: #86efac; /* A light green for selected */
+            color: #14532d;
+            border-color: #22c55e;
+        }
+        .option-btn.correct {
+            background-color: #22c55e; /* Green for correct */
+            color: white;
+            border-color: #15803d;
+        }
+        .option-btn.wrong {
+            background-color: #f43f5e; /* Rose for wrong */
+            color: white;
+            border-color: #be123c;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        /* Animation for screen transitions */
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-green-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-green-700 mb-2">MCQ Adventure!</h1>
+            <p id="welcome-subtitle" class="text-lg text-stone-600 mb-6">Let's learn about Shapes!</p>
+            <img src="https://placehold.co/400x200/22c55e/ffffff?text=Measurement+Quiz&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Measurement Adventure Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-stone-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                     <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                     <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-stone-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-lime-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-stone-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3">
+                    </div>
+
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6 text-center">
+                 <h2 id="review-title" class="text-3xl font-black text-green-800 mb-2">Quiz Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-stone-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-lime-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-lime-800"></span>
+                 </div>
+             </div>
+             <div id="review-content" class="mt-6 space-y-4">
+                 </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        
+        // --- UI Text Elements for Translation ---
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual Data ---
+        const uiText = {
+            en: {
+                welcomeTitle: "Weighing and Measuring",
+                welcomeSubtitle: "Let's practice the 'അളന്നും തൂക്കിയും' chapter!",
+                startBtn: "Start Quiz",
+                questionLabel: "Question",
+                ofLabel: "of",
+                backBtn: "Back",
+                nextBtn: "Next",
+                submitBtn: "Submit",
+                reviewTitle: "Quiz Complete!",
+                reviewSubtitle: "Great job! Here's your score:",
+                reviewHeader: "Your Review",
+                yourAnswer: "Your answer:",
+                correctAnswer: "Correct answer:",
+                notAnswered: "Not answered",
+                playAgainBtn: "Play Again",
+                correctFeedback: "Correct! 🎉",
+            },
+            ml: {
+                welcomeTitle: "അളന്നും തൂക്കിയും",
+                welcomeSubtitle: "നമുക്ക് പാഠഭാഗം പരിശീലിക്കാം!",
+                startBtn: "ക്വിസ് ആരംഭിക്കുക",
+                questionLabel: "ചോദ്യം",
+                ofLabel: "/",
+                backBtn: "പുറകോട്ട്",
+                nextBtn: "അടുത്തത്",
+                submitBtn: "സമർപ്പിക്കുക",
+                reviewTitle: "ക്വിസ് പൂർത്തിയായി!",
+                reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:",
+                reviewHeader: "നിങ്ങളുടെ അവലോകനം",
+                yourAnswer: "നിങ്ങളുടെ ഉത്തരം:",
+                correctAnswer: "ശരിയായ ഉത്തരം:",
+                notAnswered: "ഉത്തരം നൽകിയില്ല",
+                playAgainBtn: "വീണ്ടും കളിക്കുക",
+                correctFeedback: "ശരിയാണ്! 🎉",
+            }
+        };
+
+        const quizData = [
+            { en: { question: "How many Kilograms (കിലോഗ്രാം) are in 1 Quintal (ക്വിന്റൽ)?", options: ["10", "100", "1000", "1"], answer: "100" }, ml: { question: "1 ക്വിന്റൽ എത്ര കിലോഗ്രാമാണ്?", options: ["10", "100", "1000", "1"], answer: "100" } },
+            { en: { question: "How many Kilograms (കിലോഗ്രാം) are in 1 Ton (ടൺ)?", options: ["10", "100", "1000", "1"], answer: "1000" }, ml: { question: "1 ടൺ എത്ര കിലോഗ്രാമാണ്?", options: ["10", "100", "1000", "1"], answer: "1000" } },
+            { en: { question: "How many Quintals (ക്വിന്റൽ) are in 1 Ton (ടൺ)?", options: ["1", "10", "100", "1000"], answer: "10" }, ml: { question: "1 ടൺ എത്ര ക്വിന്റലാണ്?", options: ["1", "10", "100", "1000"], answer: "10" } },
+            { en: { question: "The shop has 5 Tons of Rice. How many Kilograms is that?", options: ["50 kg", "500 kg", "5000 kg", "50000 kg"], answer: "5000 kg" }, ml: { question: "കടയിൽ 5 ടൺ അരി സ്റ്റോക്കുണ്ട്. ഇത് എത്ര കിലോഗ്രാം ആണ്?", options: ["50 കി.ഗ്രാം", "500 കി.ഗ്രാം", "5000 കി.ഗ്രാം", "50000 കി.ഗ്രാം"], answer: "5000 കി.ഗ്രാം" } },
+            { en: { question: "There are 2 Quintals of Uzhunnu. How many Kilograms is that?", options: ["20 kg", "200 kg", "2000 kg", "2 kg"], answer: "200 kg" }, ml: { question: "2 ക്വിന്റൽ ഉഴുന്ന് സ്റ്റോക്കുണ്ട്. ഇത് എത്ര കിലോഗ്രാം ആണ്?", options: ["20 കി.ഗ്രാം", "200 കി.ഗ്രാം", "2000 കി.ഗ്രാം", "2 കി.ഗ്രാം"], answer: "200 കി.ഗ്രാം" } },
+            { en: { question: "Half a Quintal (അര ക്വിന്റൽ) of Cashews is how many Kilograms?", options: ["5 kg", "50 kg", "500 kg", "100 kg"], answer: "50 kg" }, ml: { question: "അര ക്വിന്റൽ കശുവണ്ടിപ്പരിപ്പ് എത്ര കിലോഗ്രാമാണ്?", options: ["5 കി.ഗ്രാം", "50 കി.ഗ്രാം", "500 കി.ഗ്രാം", "100 കി.ഗ്രാം"], answer: "50 കി.ഗ്രാം" } },
+            { en: { question: "Quarter a Quintal (കാൽ ക്വിന്റൽ) of Raisins is how many Kilograms?", options: ["25 kg", "50 kg", "75 kg", "10 kg"], answer: "25 kg" }, ml: { question: "കാൽ ക്വിന്റൽ ഉണക്കമുന്തിരി എത്ര കിലോഗ്രാമാണ്?", options: ["25 കി.ഗ്രാം", "50 കി.ഗ്രാം", "75 കി.ഗ്രാം", "10 കി.ഗ്രാം"], answer: "25 കി.ഗ്രാം" } },
+            { en: { question: "How many 50 kg sacks are needed to make 1 Ton (1000 kg)?", options: ["10", "20", "50", "100"], answer: "20" }, ml: { question: "1 ടൺ (1000 കി.ഗ്രാം) ഭാരമാകാൻ 50 കിലോഭാരമുള്ള എത്ര ചാക്കുകൾ വേണം?", options: ["10", "20", "50", "100"], answer: "20" } },
+            { en: { question: "How many 25 kg sacks are needed to make 1 Ton (1000 kg)?", options: ["20", "25", "40", "50"], answer: "40" }, ml: { question: "1 ടൺ (1000 കി.ഗ്രാം) ഭാരമാകാൻ 25 കിലോഭാരമുള്ള എത്ര ചാക്കുകൾ വേണം?", options: ["20", "25", "40", "50"], answer: "40" } },
+            { en: { question: "What is the total weight of 40 sacks of rice, if each sack is 50 kg?", options: ["200 kg", "2000 kg", "20000 kg", "4050 kg"], answer: "2000 kg" }, ml: { question: "ഒരു ചാക്കിൽ 50 കി.ഗ്രാം അരി. 40 ചാക്കിൽ ആകെ എത്ര കിലോഗ്രാം?", options: ["200 കി.ഗ്രാം", "2000 കി.ഗ്രാം", "20000 കി.ഗ്രാം", "4050 കി.ഗ്രാം"], answer: "2000 കി.ഗ്രാം" } },
+            { en: { question: "20 sacks of sugar, each 50 kg, were delivered. What is the total weight in Quintals?", options: ["1 Quintal", "10 Quintals", "100 Quintals", "1000 Quintals"], answer: "10 Quintals" }, ml: { question: "50 കി.ഗ്രാം വീതമുള്ള 20 ചാക്ക് പഞ്ചസാര വന്നു. ആകെ തൂക്കം എത്ര ക്വിന്റലാണ്?", options: ["1 ക്വിന്റൽ", "10 ക്വിന്റൽ", "100 ക്വിന്റൽ", "1000 ക്വിന്റൽ"], answer: "10 ക്വിന്റൽ" } },
+            { en: { question: "250 g of Cardamom is bought from a 1 kg pack. How much is left?", options: ["250 g", "500 g", "750 g", "850 g"], answer: "750 g" }, ml: { question: "ഒരു കിലോ പായ്ക്കറ്റിൽ നിന്ന് 250 ഗ്രാം ഏലക്കായ വാങ്ങി. പായ്ക്കറ്റിൽ എത്ര ബാക്കിയുണ്ട്?", options: ["250 ഗ്രാം", "500 ഗ്രാം", "750 ഗ്രാം", "850 ഗ്രാം"], answer: "750 ഗ്രാം" } },
+            { en: { question: "750 g of Turmeric is bought from a 1 kg pack. How much is left?", options: ["150 g", "250 g", "500 g", "750 g"], answer: "250 g" }, ml: { question: "ഒരു കിലോ പായ്ക്കറ്റിൽ നിന്ന് 750 ഗ്രാം മഞ്ഞൾ വാങ്ങി. പായ്ക്കറ്റിൽ എത്ര ബാക്കിയുണ്ട്?", options: ["150 ഗ്രാം", "250 ഗ്രാം", "500 ഗ്രാം", "750 ഗ്രാം"], answer: "250 ഗ്രാം" } },
+            { en: { question: "A digital scale shows '13.070'. What is the weight?", options: ["13 kg 70 g", "13 kg 7 g", "13 kg 700 g", "130 kg 70 g"], answer: "13 kg 70 g" }, ml: { question: "ത്രാസിൽ '13.070' എന്ന് കാണിക്കുന്നു. ഇത് എത്ര ഭാരമാണ്?", options: ["13 കിലോ 70 ഗ്രാം", "13 കിലോ 7 ഗ്രാം", "13 കിലോ 700 ഗ്രാം", "130 കിലോ 70 ഗ്രാം"], answer: "13 കിലോ 70 ഗ്രാം" } },
+            { en: { question: "A digital scale shows '7.250'. What is the weight?", options: ["7 kg 25 g", "7 kg 250 g", "7 kg 2 g", "72 kg 50 g"], answer: "7 kg 250 g" }, ml: { question: "ത്രാസിൽ '7.250' എന്ന് കാണിക്കുന്നു. ഇത് എത്ര ഭാരമാണ്?", options: ["7 കിലോ 25 ഗ്രാം", "7 കിലോ 250 ഗ്രാം", "7 കിലോ 2 ഗ്രാം", "72 കിലോ 50 ഗ്രാം"], answer: "7 കിലോ 250 ഗ്രാം" } },
+            { en: { question: "A digital scale shows '0.500'. What is the weight?", options: ["50 g", "5 g", "500 g (Half kg)", "5 kg"], answer: "500 g (Half kg)" }, ml: { question: "ത്രാസിൽ '0.500' എന്ന് കാണിക്കുന്നു. ഇത് എത്ര ഭാരമാണ്?", options: ["50 ഗ്രാം", "5 ഗ്രാം", "500 ഗ്രാം (അര കിലോ)", "5 കിലോ"], answer: "500 g (Half kg)" } },
+            { en: { question: "A digital scale shows '1.005'. What is the weight?", options: ["1 kg 5 g", "1 kg 50 g", "1 kg 500 g", "10 kg 5 g"], answer: "1 kg 5 g" }, ml: { question: "ത്രാസിൽ '1.005' എന്ന് കാണിക്കുന്നു. ഇത് എത്ര ഭാരമാണ്?", options: ["1 കിലോ 5 ഗ്രാം", "1 കിലോ 50 ഗ്രാം", "1 കിലോ 500 ഗ്രാം", "10 കിലോ 5 ഗ്രാം"], answer: "1 കിലോ 5 ഗ്രാം" } },
+            { en: { question: "What is the total weight of 635 kg of groceries and 375 kg of vegetables?", options: ["900 kg", "1000 kg", "1010 kg", "910 kg"], answer: "1010 kg" }, ml: { question: "635 കിലോ പലചരക്ക് സാധനങ്ങളും 375 കിലോ പച്ചക്കറികളും. ആകെ ഭാരം എത്രയാണ്?", options: ["900 കി.ഗ്രാം", "1000 കി.ഗ്രാം", "1010 കി.ഗ്രാം", "910 കി.ഗ്രാം"], answer: "1010 കി.ഗ്രാം" } },
+            { en: { question: "What is the total water capacity of a 1000L, a 500L, and two 200L tanks?", options: ["1700 L", "1900 L", "2100 L", "1700 L"], answer: "1900 L" }, ml: { question: "1000 ലിറ്ററിന്റെയും 500 ലിറ്ററിന്റെയും ഓരോ ടാങ്കും 200 ലിറ്ററിന്റെ 2 ടാങ്കും. ആകെ എത്ര ലിറ്റർ വെള്ളം നിറയ്ക്കാം?", options: ["1700 ലിറ്റർ", "1900 ലിറ്റർ", "2100 ലിറ്റർ", "1700 ലിറ്റർ"], answer: "1900 ലിറ്റർ" } },
+            { en: { question: "A 2000 L tank needs 765 L to be full. How much water is currently in the tank?", options: ["1235 L", "1335 L", "1265 L", "2765 L"], answer: "1235 L" }, ml: { question: "2000 ലിറ്റർ ടാങ്ക് നിറയാൻ 765 ലിറ്റർ വെള്ളം കൂടി വേണം. ടാങ്കിൽ ഇപ്പോൾ എത്ര വെള്ളം ഉണ്ട്?", options: ["1235 ലിറ്റർ", "1335 ലിറ്റർ", "1265 ലിറ്റർ", "2765 ലിറ്റർ"], answer: "1235 ലിറ്റർ" } },
+            { en: { question: "60 sacks of rice, each 50 kg, are loaded. How many Tons of rice is this?", options: ["3 Tons", "30 Tons", "3000 Tons", "60 Tons"], answer: "3 Tons" }, ml: { question: "50 കിലോഗ്രാം വീതം 60 ചാക്ക് അരി ലോറിയിൽ കയറ്റി. ഇത് എത്ര ടൺ അരിയാണ്?", options: ["3 ടൺ", "30 ടൺ", "3000 ടൺ", "60 ടൺ"], answer: "3 ടൺ" } },
+            { en: { question: "Johnny harvested 2 Quintals and 65 kg of tapioca. How many kg is this in total?", options: ["265 kg", "2065 kg", "2650 kg", "85 kg"], answer: "265 kg" }, ml: { question: "ജോണിക്ക് 2 ക്വിന്റൽ 65 കിലോഗ്രാം മരച്ചീനി കിട്ടി. ഇത് ആകെ എത്ര കിലോഗ്രാം ആണ്?", options: ["265 കി.ഗ്രാം", "2065 കി.ഗ്രാം", "2650 കി.ഗ്രാം", "85 കി.ഗ്രാം"], answer: "265 കി.ഗ്രാം" } },
+            { en: { question: "1 kg of rice feeds 8 people. How many people can eat from 100 kg of rice?", options: ["80 people", "108 people", "800 people", "1800 people"], answer: "800 people" }, ml: { question: "1 കിലോഗ്രാം അരി 8 പേർക്ക് കഴിക്കാം. 100 കിലോ അരി കൊണ്ട് എത്ര പേർക്ക് ചോറുവയ്ക്കാം?", options: ["80 പേർ", "108 പേർ", "800 പേർ", "1800 പേർ"], answer: "800 പേർ" } },
+            { en: { question: "Payasam is served in 100 ml glasses. How many Liters are needed for 1000 people?", options: ["10 L", "100 L", "1000 L", "10000 L"], answer: "100 L" }, ml: { question: "100 മില്ലിലിറ്റർ ഗ്ലാസിലാണ് പായസം നൽകുന്നത്. 1000 ആളുകൾക്ക് എത്ര ലിറ്റർ പായസം വേണം?", options: ["10 ലിറ്റർ", "100 ലിറ്റർ", "1000 ലിറ്റർ", "10000 ലിറ്റർ"], answer: "100 ലിറ്റർ" } },
+            { en: { question: "How is 2500 grams written in kg and g?", options: ["250 kg 0 g", "25 kg 0 g", "2 kg 500 g", "2 kg 50 g"], answer: "2 kg 500 g" }, ml: { question: "2500 ഗ്രാം എന്നത് കിലോഗ്രാമിലും ഗ്രാമിലും എങ്ങനെ എഴുതാം?", options: ["250 കി.ഗ്രാം 0 ഗ്രാം", "25 കി.ഗ്രാം 0 ഗ്രാം", "2 കി.ഗ്രാം 500 ഗ്രാം", "2 കി.ഗ്രാം 50 ഗ്രാം"], answer: "2 കി.ഗ്രാം 500 ഗ്രാം" } },
+            { en: { question: "How is 3250 grams written in kg and g?", options: ["3 kg 250 g", "32 kg 50 g", "3 kg 25 g", "325 kg 0 g"], answer: "3 kg 250 g" }, ml: { question: "3250 ഗ്രാം എന്നത് കിലോഗ്രാമിലും ഗ്രാമിലും എങ്ങനെ എഴുതാം?", options: ["3 കി.ഗ്രാം 250 ഗ്രാം", "32 കി.ഗ്രാം 50 ഗ്രാം", "3 കി.ഗ്രാം 25 ഗ്രാം", "325 കി.ഗ്രാം 0 ഗ്രാം"], answer: "3 കി.ഗ്രാം 250 ഗ്രാം" } },
+            { en: { question: "How many grams is 4 kg 250 g?", options: ["425 g", "4250 g", "4025 g", "254 g"], answer: "4250 g" }, ml: { question: "4 കി.ഗ്രാം 250 ഗ്രാം എന്നത് ആകെ എത്ര ഗ്രാം ആണ്?", options: ["425 ഗ്രാം", "4250 ഗ്രാം", "4025 ഗ്രാം", "254 ഗ്രാം"], answer: "4250 ഗ്രാം" } },
+            { en: { question: "How many grams is 'One and three-quarter' kg (ഒന്നേമുക്കാൽ കി.ഗ്രാം)?", options: ["1250 g", "1500 g", "1750 g", "1340 g"], answer: "1750 g" }, ml: { question: "ഒന്നേമുക്കാൽ കിലോഗ്രാം എന്നത് എത്ര ഗ്രാം ആണ്?", options: ["1250 ഗ്രാം", "1500 ഗ്രാം", "1750 ഗ്രാം", "1340 ഗ്രാം"], answer: "1750 g" } },
+            { en: { question: "What is the total weight of 2 bags of 250 g (1/4 kg) and 3 bags of 500 g (1/2 kg)?", options: ["1500 g", "2000 g", "2500 g", "1750 g"], answer: "2000 g" }, ml: { question: "കാൽ കിലോയുടെ 2 പായ്ക്കറ്റും, അരക്കിലോയുടെ 3 പായ്ക്കറ്റും ചേർന്നാൽ ആകെ ഭാരം എത്ര?", options: ["1500 ഗ്രാം", "2000 ഗ്രാം", "2500 ഗ്രാം", "1750 ഗ്രാം"], answer: "2000 ഗ്രാം" } },
+            { en: { question: "How many 250 g (1/4 kg) packets are in 10 kg?", options: ["10", "20", "30", "40"], answer: "40" }, ml: { question: "10 കിലോഗ്രാമിൽ കാൽ കിലോയുടെ എത്ര പായ്ക്കറ്റുകൾ ഉണ്ടാകും?", options: ["10", "20", "30", "40"], answer: "40" } },
+            { en: { question: "How many 500 g (1/2 kg) packets are in 10 kg?", options: ["10", "20", "30", "40"], answer: "20" }, ml: { question: "10 കിലോഗ്രാമിൽ അരക്കിലോയുടെ എത്ര പായ്ക്കറ്റുകൾ ഉണ്ടാകും?", options: ["10", "20", "30", "40"], answer: "20" } },
+            { en: { question: "What is the total ghee bought: 2 bottles of 250 ml and 1 bottle of 500 ml?", options: ["500 ml", "750 ml", "1000 ml (1 L)", "1250 ml"], answer: "1000 ml (1 L)" }, ml: { question: "250 മില്ലിലിറ്ററിന്റെ 2 കുപ്പിയും 500 മില്ലിലിറ്ററിന്റെ 1 കുപ്പിയും. ആകെ എത്ര നെയ്യ് വാങ്ങി?", options: ["500 മില്ലി", "750 മില്ലി", "1000 മില്ലി (1 ലിറ്റർ)", "1250 മില്ലി"], answer: "1000 ml (1 L)" } },
+            { en: { question: "How many 100 ml bottles are needed for 1000 ml of ghee?", options: ["1", "10", "100", "1000"], answer: "10" }, ml: { question: "1000 മില്ലി നെയ്യ് നിറയ്ക്കാൻ 100 മില്ലിയുടെ എത്ര കുപ്പികൾ വേണം?", options: ["1", "10", "100", "1000"], answer: "10" } },
+            { en: { question: "How many 250 ml bottles are needed for 1000 ml of ghee?", options: ["2", "4", "5", "10"], answer: "4" }, ml: { question: "1000 മില്ലി നെയ്യ് നിറയ്ക്കാൻ 250 മില്ലിയുടെ എത്ര കുപ്പികൾ വേണം?", options: ["2", "4", "5", "10"], answer: "4" } },
+            { en: { question: "Binu's shopping: 2kg + 1500g + 250g + 250g + 500g + 500g + 500g + 500g + 2kg. What's the total weight?", options: ["6 kg", "7 kg", "8 kg", "9 kg"], answer: "8 kg" }, ml: { question: "ബിനുവിന്റെ ഷോപ്പിംഗ്: 2kg + 1500g + 250g + 250g + 500g + 500g + 500g + 500g + 2kg. ആകെ ഭാരം എത്ര?", options: ["6 കി.ഗ്രാം", "7 കി.ഗ്രാം", "8 കി.ഗ്രാം", "9 കി.ഗ്രാം"], answer: "8 kg" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             currentQuestionIndex = 0;
+             userAnswers.fill(null);
+             score = 0;
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            // Reset userAnswers array for the new quiz length
+            userAnswers = new Array(quizData.length).fill(null);
+            totalQuestionsEl.textContent = quizData.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            const questionData = quizData[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / quizData.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn bg-white hover:bg-green-100 rounded-lg shadow-sm border-2 border-stone-200';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = quizData[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-green-600';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-600';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === quizData.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${quizData.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-stone-700">${text.reviewHeader}</h3>`;
+            quizData.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-green-100' : 'bg-rose-100'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-stone-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-green-800' : 'text-rose-800'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect && userAnswer ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : (isCorrect ? '✅' : '')}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>

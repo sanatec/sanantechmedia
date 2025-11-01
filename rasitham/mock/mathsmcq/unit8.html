@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Measurement</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles for the theme */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0fdf4; /* Light green background */
+        }
+        .quiz-container {
+            background: linear-gradient(135deg, #ffffff, #dcfce7);
+            box-shadow: 0 10px 25px rgba(15, 95, 48, 0.1);
+            border: 1px solid #bbf7d0;
+        }
+        .quiz-container:hover {
+            transform: translateY(-5px);
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid transparent;
+        }
+        .option-btn.selected {
+            background-color: #86efac; /* A light green for selected */
+            color: #14532d;
+            border-color: #22c55e;
+        }
+        .option-btn.correct {
+            background-color: #22c55e; /* Green for correct */
+            color: white;
+            border-color: #15803d;
+        }
+        .option-btn.wrong {
+            background-color: #f43f5e; /* Rose for wrong */
+            color: white;
+            border-color: #be123c;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        /* Animation for screen transitions */
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-green-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-green-700 mb-2">MCQ Adventure!</h1>
+            <p id="welcome-subtitle" class="text-lg text-stone-600 mb-6">Let's learn about Shapes!</p>
+            <img src="https://placehold.co/400x200/22c55e/ffffff?text=Measurement+Quiz&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Measurement Adventure Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-stone-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                     <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                     <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Quiz
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-stone-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-lime-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-stone-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3">
+                    </div>
+
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6 text-center">
+                 <h2 id="review-title" class="text-3xl font-black text-green-800 mb-2">Quiz Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-stone-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-lime-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-lime-800"></span>
+                 </div>
+             </div>
+             <div id="review-content" class="mt-6 space-y-4">
+                 </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        
+        // --- UI Text Elements for Translation ---
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual Data ---
+        const uiText = {
+            en: {
+                welcomeTitle: "How to Measure",
+                welcomeSubtitle: "Let's practice the 'ഇങ്ങനെ അളക്കാം' chapter!",
+                startBtn: "Start Quiz",
+                questionLabel: "Question",
+                ofLabel: "of",
+                backBtn: "Back",
+                nextBtn: "Next",
+                submitBtn: "Submit",
+                reviewTitle: "Quiz Complete!",
+                reviewSubtitle: "Great job! Here's your score:",
+                reviewHeader: "Your Review",
+                yourAnswer: "Your answer:",
+                correctAnswer: "Correct answer:",
+                notAnswered: "Not answered",
+                playAgainBtn: "Play Again",
+                correctFeedback: "Correct! 🎉",
+            },
+            ml: {
+                welcomeTitle: "ഇങ്ങനെ അളക്കാം",
+                welcomeSubtitle: "നമുക്ക് പാഠഭാഗം പരിശീലിക്കാം!",
+                startBtn: "ക്വിസ് ആരംഭിക്കുക",
+                questionLabel: "ചോദ്യം",
+                ofLabel: "/",
+                backBtn: "പുറകോട്ട്",
+                nextBtn: "അടുത്തത്",
+                submitBtn: "സമർപ്പിക്കുക",
+                reviewTitle: "ക്വിസ് പൂർത്തിയായി!",
+                reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:",
+                reviewHeader: "നിങ്ങളുടെ അവലോകനം",
+                yourAnswer: "നിങ്ങളുടെ ഉത്തരം:",
+                correctAnswer: "ശരിയായ ഉത്തരം:",
+                notAnswered: "ഉത്തരം നൽകിയില്ല",
+                playAgainBtn: "വീണ്ടും കളിക്കുക",
+                correctFeedback: "ശരിയാണ്! 🎉",
+            }
+        };
+
+        const quizData = [
+            { en: { question: "How many millimeters (മില്ലിമീറ്റർ) are in 1 centimeter (സെന്റിമീറ്റർ)?", options: ["1", "10", "100", "1000"], answer: "10" }, ml: { question: "1 സെന്റിമീറ്റർ എത്ര മില്ലിമീറ്റർ ആണ്?", options: ["1", "10", "100", "1000"], answer: "10" } },
+            { en: { question: "What is the distance between two small lines on a ruler?", options: ["1 centimeter", "1 millimeter", "1 meter", "10 millimeters"], answer: "1 millimeter" }, ml: { question: "ഒരു സ്കെയിലിലെ ചെറിയ രണ്ടു വരകൾക്കിടയിലെ അകലം എത്രയാണ്?", options: ["1 സെന്റിമീറ്റർ", "1 മില്ലിമീറ്റർ", "1 മീറ്റർ", "10 മില്ലിമീറ്റർ"], answer: "1 മില്ലിമീറ്റർ" } },
+            { en: { question: "What is the length of the pencil in the first example on page 3?", options: ["13 cm 0 mm", "14 cm 0 mm", "13 cm 5 mm", "13 cm 9 mm"], answer: "13 cm 5 mm" }, ml: { question: "മൂന്നാം പേജിലെ ഉദാഹരണത്തിൽ, പെൻസിലിന്റെ നീളം എത്രയാണ്?", options: ["13 സെ.മീ 0 മി.മീ", "14 സെ.മീ 0 മി.മീ", "13 സെ.മീ 5 മി.മീ", "13 സെ.മീ 9 മി.മീ"], answer: "13 സെ.മീ 5 മി.മീ" } },
+            { en: { question: "A pencil on page 4 starts at 0 and ends at the 8th small line after 13. What is its length?", options: ["13 cm 8 mm", "14 cm 0 mm", "13 cm 5 mm", "13 cm 0 mm"], answer: "13 cm 8 mm" }, ml: { question: "പേജ് 4-ലെ ഒരു പെൻസിൽ 0-ൽ തുടങ്ങി 13-ന് ശേഷമുള്ള 8-ാമത്തെ ചെറിയ വരയിൽ അവസാനിക്കുന്നു. നീളം എത്ര?", options: ["13 സെ.മീ 8 മി.മീ", "14 സെ.മീ 0 മി.മീ", "13 സെ.മീ 5 മി.മീ", "13 സെ.മീ 0 മി.മീ"], answer: "13 സെ.മീ 8 മി.മീ" } },
+            { en: { question: "A pencil on page 4 starts at 6 cm and ends at the 9th small line after 13 cm. What is its length?", options: ["13 cm 9 mm", "6 cm 0 mm", "7 cm 9 mm", "8 cm 0 mm"], answer: "7 cm 9 mm" }, ml: { question: "പേജ് 4-ലെ ഒരു പെൻസിൽ 6 സെ.മീ-ൽ തുടങ്ങി 13 സെ.മീ-ക്ക് ശേഷമുള്ള 9-ാമത്തെ വരയിൽ അവസാനിക്കുന്നു. പെൻസിലിന്റെ നീളം എത്ര?", options: ["13 സെ.മീ 9 മി.മീ", "6 സെ.മീ 0 മി.മീ", "7 സെ.മീ 9 മി.മീ", "8 സെ.മീ 0 മി.മീ"], answer: "7 സെ.മീ 9 മി.മീ" } },
+            { en: { question: "A pencil on page 4 starts at 4 cm and ends at the 2nd small line after 7 cm. What is its length?", options: ["7 cm 2 mm", "4 cm 0 mm", "3 cm 2 mm", "3 cm 0 mm"], answer: "3 cm 2 mm" }, ml: { question: "പേജ് 4-ലെ ഒരു പെൻസിൽ 4 സെ.മീ-ൽ തുടങ്ങി 7 സെ.മീ-ക്ക് ശേഷമുള്ള 2-ാമത്തെ വരയിൽ അവസാനിക്കുന്നു. പെൻസിലിന്റെ നീളം എത്ര?", options: ["7 സെ.മീ 2 മി.മീ", "4 സെ.മീ 0 മി.മീ", "3 സെ.മീ 2 മി.മീ", "3 സെ.മീ 0 മി.മീ"], answer: "3 സെ.മീ 2 മി.മീ" } },
+            { en: { question: "How many centimeters are in 20 millimeters?", options: ["1 cm", "2 cm", "20 cm", "200 cm"], answer: "2 cm" }, ml: { question: "20 മില്ലിമീറ്റർ എത്ര സെന്റിമീറ്റർ ആണ്?", options: ["1 സെ.മീ", "2 സെ.മീ", "20 സെ.മീ", "200 സെ.മീ"], answer: "2 സെ.മീ" } },
+            { en: { question: "How many centimeters are in 70 millimeters?", options: ["7 cm", "70 cm", "0.7 cm", "700 cm"], answer: "7 cm" }, ml: { question: "70 മില്ലിമീറ്റർ എത്ര സെന്റിമീറ്റർ ആണ്?", options: ["7 സെ.മീ", "70 സെ.മീ", "0.7 സെ.മീ", "700 സെ.മീ"], answer: "7 സെ.മീ" } },
+            { en: { question: "How many millimeters are in 4 centimeters?", options: ["4 mm", "40 mm", "400 mm", "0.4 mm"], answer: "40 mm" }, ml: { question: "4 സെന്റിമീറ്റർ എത്ര മില്ലിമീറ്റർ ആണ്?", options: ["4 മി.മീ", "40 മി.മീ", "400 മി.മീ", "0.4 മി.മീ"], answer: "40 മി.മീ" } },
+            { en: { question: "How many millimeters are in 9 centimeters?", options: ["9 mm", "90 mm", "900 mm", "0.9 mm"], answer: "90 mm" }, ml: { question: "9 സെന്റിമീറ്റർ എത്ര മില്ലിമീറ്റർ ആണ്?", options: ["9 മി.മീ", "90 മി.മീ", "900 മി.മീ", "0.9 മി.മീ"], answer: "90 മി.മീ" } },
+            { en: { question: "A pencil is 5 cm 7 mm long. How is this written entirely in millimeters?", options: ["570 mm", "57 mm", "5.7 mm", "12 mm"], answer: "57 mm" }, ml: { question: "ഒരു പെൻസിലിന് 5 സെന്റിമീറ്റർ 7 മില്ലിമീറ്റർ നീളമുണ്ട്. ഇതിനെ മില്ലിമീറ്ററിൽ എങ്ങനെ എഴുതാം?", options: ["570 മി.മീ", "57 മി.മീ", "5.7 മി.മീ", "12 മി.മീ"], answer: "57 മി.മീ" } },
+            { en: { question: "5 centimeters is equal to...?", options: ["5 mm", "50 mm", "500 mm", "0.5 mm"], answer: "50 mm" }, ml: { question: "5 സെന്റിമീറ്റർ = ..... മില്ലിമീറ്റർ?", options: ["5 മി.മീ", "50 മി.മീ", "500 മി.മീ", "0.5 മി.മീ"], answer: "50 മി.മീ" } },
+            { en: { question: "How many millimeters is 1 cm 8 mm?", options: ["18 mm", "108 mm", "9 mm", "1.8 mm"], answer: "18 mm" }, ml: { question: "1 സെന്റിമീറ്റർ 8 മില്ലിമീറ്റർ = ..... മില്ലിമീറ്റർ?", options: ["18 മി.മീ", "108 മി.മീ", "9 മി.മീ", "1.8 മി.മീ"], answer: "18 മി.മീ" } },
+            { en: { question: "How many cm and mm is 24 mm?", options: ["2 cm 4 mm", "24 cm 0 mm", "0 cm 24 mm", "20 cm 4 mm"], answer: "2 cm 4 mm" }, ml: { question: "24 മില്ലിമീറ്റർ = ..... സെന്റിമീറ്റർ ..... മില്ലിമീറ്റർ?", options: ["2 സെ.മീ 4 മി.മീ", "24 സെ.മീ 0 മി.മീ", "0 സെ.മീ 24 മി.മീ", "20 സെ.മീ 4 മി.മീ"], answer: "2 സെ.മീ 4 മി.മീ" } },
+            { en: { question: "36 mm is equal to...?", options: ["36 cm 0 mm", "3 cm 6 mm", "30 cm 6 mm", "6 cm 3 mm"], answer: "3 cm 6 mm" }, ml: { question: "36 മില്ലിമീറ്റർ എത്ര സെന്റിമീറ്ററും മില്ലിമീറ്ററും ആണ്?", options: ["36 സെ.മീ 0 മി.മീ", "3 സെ.മീ 6 മി.മീ", "30 സെ.മീ 6 മി.മീ", "6 സെ.മീ 3 മി.മീ"], answer: "3 സെ.മീ 6 മി.മീ" } },
+            { en: { question: "Rani's ribbon is 16 cm 5 mm. What is this length in millimeters?", options: ["165 mm", "16.5 mm", "1605 mm", "21 mm"], answer: "165 mm" }, ml: { question: "റാണിയുടെ റിബൺ 16 സെന്റിമീറ്റർ 5 മില്ലിമീറ്റർ ആണ്. ഇത് ആകെ എത്ര മില്ലിമീറ്റർ?", options: ["165 മി.മീ", "16.5 മി.മീ", "1605 മി.മീ", "21 മി.മീ"], answer: "165 മി.മീ" } },
+            { en: { question: "Teenu's thread is 256 mm. What is this in cm and mm?", options: ["2 cm 56 mm", "25 cm 6 mm", "250 cm 6 mm", "256 cm 0 mm"], answer: "25 cm 6 mm" }, ml: { question: "ടീനുവിന്റെ ചണനൂല് 256 മില്ലിമീറ്റർ ആണ്. ഇത് എത്ര സെന്റിമീറ്ററും മില്ലിമീറ്ററും ആണ്?", options: ["2 സെ.മീ 56 മി.മീ", "25 സെ.മീ 6 മി.മീ", "250 സെ.മീ 6 മി.മീ", "256 സെ.മീ 0 മി.മീ"], answer: "25 സെ.മീ 6 മി.മീ" } },
+            { en: { question: "A thread is 140 mm long. What is this in cm and mm?", options: ["140 cm 0 mm", "1 cm 40 mm", "14 cm 0 mm", "10 cm 4 mm"], answer: "14 cm 0 mm" }, ml: { question: "ഒരു നൂല് 140 മില്ലിമീറ്റർ ആണ്. ഇത് എത്ര സെന്റിമീറ്ററും മില്ലിമീറ്ററും ആണ്?", options: ["140 സെ.മീ 0 മി.മീ", "1 സെ.മീ 40 മി.മീ", "14 സെ.മീ 0 മി.മീ", "10 സെ.മീ 4 മി.മീ"], answer: "14 സെ.മീ 0 മി.മീ" } },
+            { en: { question: "20 millimeters is equal to how many centimeters?", options: ["1 cm", "2 cm", "20 cm", "0.2 cm"], answer: "2 cm" }, ml: { question: "20 മില്ലിമീറ്റർ എത്ര സെന്റിമീറ്ററാണ്?", options: ["1 സെ.മീ", "2 സെ.മീ", "20 സെ.മീ", "0.2 സെ.മീ"], answer: "2 സെ.മീ" } },
+            { en: { question: "9 cm 5 mm is equal to how many millimeters?", options: ["95 mm", "905 mm", "14 mm", "9.5 mm"], answer: "95 mm" }, ml: { question: "9 സെന്റിമീറ്റർ 5 മില്ലിമീറ്റർ എത്ര മില്ലിമീറ്റർ ആണ്?", options: ["95 മി.മീ", "905 മി.മീ", "14 മി.മീ", "9.5 മി.മീ"], answer: "95 മി.മീ" } },
+            { en: { question: "What is 4 times 95 millimeters?", options: ["380 mm", "360 mm", "400 mm", "99 mm"], answer: "380 mm" }, ml: { question: "4 x 95 മില്ലിമീറ്റർ എത്രയാണ്?", options: ["380 മി.മീ", "360 മി.മീ", "400 മി.മീ", "99 മി.മീ"], answer: "380 മി.മീ" } },
+            { en: { question: "380 millimeters is equal to how many centimeters?", options: ["3.8 cm", "3800 cm", "38 cm", "380 cm"], answer: "38 cm" }, ml: { question: "380 മില്ലിമീറ്റർ എത്ര സെന്റിമീറ്റർ ആണ്?", options: ["3.8 സെ.മീ", "3800 സെ.മീ", "38 സെ.മീ", "380 സെ.മീ"], answer: "38 സെ.മീ" } },
+            { en: { question: "Teenu makes a square with 4 sides, each 9 cm 5 mm long. What is the total simplified length?", options: ["36 cm 20 mm", "38 cm 0 mm", "36 cm 5 mm", "95 mm"], answer: "38 cm 0 mm" }, ml: { question: "ടീനു 9 സെന്റിമീറ്റർ 5 മില്ലിമീറ്റർ വശമുള്ള ഒരു സമചതുരം ഉണ്ടാക്കുന്നു. ഉപയോഗിച്ച ഈർക്കിലിന്റെ ആകെ നീളം എത്ര?", options: ["36 സെ.മീ 20 മി.മീ", "38 സെ.മീ 0 മി.മീ", "36 സെ.മീ 5 മി.മീ", "95 മി.മീ"], answer: "38 സെ.മീ 0 മി.മീ" } },
+            { en: { question: "What is (7 cm 8 mm) + (5 cm 3 mm)?", options: ["12 cm 11 mm", "13 cm 1 mm", "12 cm 1 mm", "12 cm 5mm"], answer: "13 cm 1 mm" }, ml: { question: "(7 സെന്റീമീറ്റർ 8 മില്ലിമീറ്റർ) + (5 സെന്റിമീറ്റർ 3 മില്ലിമീറ്റർ) എത്രയാണ്?", options: ["12 സെ.മീ 11 മി.മീ", "13 സെ.മീ 1 മി.മീ", "12 സെ.മീ 1 മി.മീ", "12 സെ.മീ 5 മി.മീ"], answer: "13 സെ.മീ 1 മി.മീ" } },
+            { en: { question: "What is 78 mm + 53 mm?", options: ["131 mm", "121 mm", "128 mm", "25 mm"], answer: "131 mm" }, ml: { question: "78 മില്ലിമീറ്റർ + 53 മില്ലിമീറ്റർ എത്രയാണ്?", options: ["131 മി.മീ", "121 മി.മീ", "128 മി.മീ", "25 മി.മീ"], answer: "131 മി.മീ" } },
+            { en: { question: "What is 15 cm - (8 cm 4 mm)?", options: ["7 cm 6 mm", "7 cm 0 mm", "6 cm 6 mm", "6 cm 0 mm"], answer: "6 cm 6 mm" }, ml: { question: "15 സെന്റിമീറ്റർ - (8 സെന്റിമീറ്റർ 4 മില്ലിമീറ്റർ) എത്രയാണ്?", options: ["7 സെ.മീ 6 മി.മീ", "7 സെ.മീ 0 മി.മീ", "6 സെ.മീ 6 മി.മീ", "6 സെ.മീ 0 മി.മീ"], answer: "6 സെ.മീ 6 മി.മീ" } },
+            { en: { question: "What is 150 mm - 84 mm?", options: ["66 mm", "76 mm", "234 mm", "60 mm"], answer: "66 mm" }, ml: { question: "150 മില്ലിമീറ്റർ - 84 മില്ലിമീറ്റർ എത്രയാണ്?", options: ["66 മി.മീ", "76 മി.മീ", "234 മി.മീ", "60 മി.മീ"], answer: "66 മി.മീ" } },
+            { en: { question: "1 meter (മീറ്റർ) is equal to how many centimeters (സെന്റിമീറ്റർ)?", options: ["10 cm", "100 cm", "1000 cm", "1 cm"], answer: "100 cm" }, ml: { question: "1 മീറ്റർ എത്ര സെന്റിമീറ്റർ ആണ്?", options: ["10 സെ.മീ", "100 സെ.മീ", "1000 സെ.മീ", "1 സെ.മീ"], answer: "100 സെ.മീ" } },
+            { en: { question: "1 kilometer (കിലോമീറ്റർ) is equal to how many meters (മീറ്റർ)?", options: ["10 m", "100 m", "1000 m", "1 m"], answer: "1000 m" }, ml: { question: "1 കിലോമീറ്റർ എത്ര മീറ്ററാണ്?", options: ["10 മീറ്റർ", "100 മീറ്റർ", "1000 മീറ്റർ", "1 മീറ്റർ"], answer: "1000 മീറ്റർ" } },
+            { en: { question: "Chinnu's best jump was 2 m 46 cm. Her first jump was 1 m 96 cm. How much farther was her best jump?", options: ["50 cm", "1 m 50 cm", "4 m 42 cm", "1 m 0 cm"], answer: "50 cm" }, ml: { question: "ചിന്നുവിന്റെ മികച്ച ചാട്ടം 2 മീ 46 സെ മീ, ആദ്യ ചാട്ടം 1 മീ 96 സെ മീ. ആദ്യ ചാട്ടത്തെക്കാൾ എത്ര ദൂരം കൂടുതലാണ് മികച്ച ചാട്ടം?", options: ["50 സെ.മീ", "1 മീറ്റർ 50 സെ.മീ", "4 മീറ്റർ 42 സെ.മീ", "1 മീറ്റർ 0 സെ.മീ"], answer: "50 സെ.മീ" } },
+            { en: { question: "Half a kilometer (അര കിലോമീറ്റർ) is how many meters?", options: ["50 m", "500 m", "5000 m", "100 m"], answer: "500 m" }, ml: { question: "അര കിലോമീറ്റർ എത്ര മീറ്ററാണ്?", options: ["50 മീറ്റർ", "500 മീറ്റർ", "5000 മീറ്റർ", "100 മീറ്റർ"], answer: "500 മീറ്റർ" } },
+            { en: { question: "Quarter meter (കാൽ മീറ്റർ) is how many centimeters?", options: ["25 cm", "50 cm", "75 cm", "100 cm"], answer: "25 cm" }, ml: { question: "കാൽ മീറ്റർ എത്ര സെന്റിമീറ്റർ ആണ്?", options: ["25 സെ.മീ", "50 സെ.മീ", "75 സെ.മീ", "100 സെ.മീ"], answer: "25 സെ.മീ" } },
+            { en: { question: "Three-quarter kilometer (മുക്കാൽ കിലോമീറ്റർ) is how many meters?", options: ["250 m", "500 m", "750 m", "1000 m"], answer: "750 m" }, ml: { question: "മുക്കാൽ കിലോമീറ്റർ എത്ര മീറ്ററാണ്?", options: ["250 മീറ്റർ", "500 മീറ്റർ", "750 മീറ്റർ", "1000 മീറ്റർ"], answer: "750 മീറ്റർ" } },
+            { en: { question: "One and a half meters (ഒന്നര മീറ്റർ) is how many centimeters?", options: ["100 cm", "150 cm", "100.5 cm", "105 cm"], answer: "150 cm" }, ml: { question: "ഒന്നര മീറ്റർ എത്ര സെന്റിമീറ്റർ ആണ്?", options: ["100 സെ.മീ", "150 സെ.മീ", "100.5 സെ.മീ", "105 സെ.മീ"], answer: "150 സെ.മീ" } },
+            { en: { question: "2500 meters is equal to...?", options: ["2 km 500 m", "25 km 0 m", "2 km 50 m", "250 km 0 m"], answer: "2 km 500 m" }, ml: { question: "2500 മീറ്റർ എന്നത്...?", options: ["2 കി.മീ 500 മീ", "25 കി.മീ 0 മീ", "2 കി.മീ 50 മീ", "250 കി.മീ 0 മീ"], answer: "2 കി.മീ 500 മീ" } },
+            { en: { question: "3 km 800 m is equal to how many meters?", options: ["380 m", "3080 m", "3800 m", "3.8 m"], answer: "3800 m" }, ml: { question: "3 കിലോമീറ്റർ 800 മീറ്റർ ആകെ എത്ര മീറ്ററാണ്?", options: ["380 മീറ്റർ", "3080 മീറ്റർ", "3800 മീറ്റർ", "3.8 മീറ്റർ"], answer: "3800 മീറ്റർ" } },
+            { en: { question: "Four and a half kilometers (നാലര കിലോമീറ്റർ) is how many meters?", options: ["450 m", "4500 m", "4050 m", "4005 m"], answer: "4500 m" }, ml: { question: "നാലര കിലോമീറ്റർ ആകെ എത്ര മീറ്ററാണ്?", options: ["450 മീറ്റർ", "4500 മീറ്റർ", "4050 മീറ്റർ", "4005 മീറ്റർ"], answer: "4500 മീറ്റർ" } },
+            { en: { question: "Manu travels 2500 m to school and 2500 m back. What is the total distance in meters?", options: ["2500 m", "5000 m", "500 m", "4500 m"], answer: "5000 m" }, ml: { question: "മനു സ്കൂളിലേക്ക് 2500 മീറ്ററും തിരിച്ച് 2500 മീറ്ററും സഞ്ചരിക്കുന്നു. ആകെ ദൂരം മീറ്ററിൽ എത്ര?", options: ["2500 മീറ്റർ", "5000 മീറ്റർ", "500 മീറ്റർ", "4500 മീറ്റർ"], answer: "5000 മീറ്റർ" } },
+            { en: { question: "5000 meters is equal to how many kilometers?", options: ["5 km", "50 km", "500 km", "0.5 km"], answer: "5 km" }, ml: { question: "5000 മീറ്റർ എത്ര കിലോമീറ്റർ ആണ്?", options: ["5 കി.മീ", "50 കി.മീ", "500 കി.മീ", "0.5 കി.മീ"], answer: "5 കി.മീ" } },
+            { en: { question: "The zoo is 24.5 km away. The bus has traveled 17 km 260 m. How much distance is left?", options: ["7 km 240 m", "7 km 740 m", "6 km 240 m", "41 km 760 m"], answer: "7 km 240 m" }, ml: { question: "മൃഗശാലയിലേക്ക് 24.5 കി.മീ. ദൂരമുണ്ട്. ബസ് 17 കി.മീ. 260 മീറ്റർ ഓടി. ഇനി എത്ര ദൂരം പോകണം?", options: ["7 കി.മീ 240 മീ", "7 കി.മീ 740 മീ", "6 കി.മീ 240 മീ", "41 കി.മീ 760 മീ"], answer: "7 കി.മീ 240 മീ" } },
+            { en: { question: "Total cable needed is 20 km. 12 km 673 m is used. How much cable is left?", options: ["8 km 327 m", "7 km 327 m", "7 km 673 m", "8 km 673 m"], answer: "7 km 327 m" }, ml: { question: "20 കി.മീ. കേബിൾ വേണം. 12 കി.മീ. 673 മീറ്റർ വലിച്ചു. ഇനി എത്ര കേബിൾ വേണം?", options: ["8 കി.മീ 327 മീ", "7 കി.മീ 327 മീ", "7 കി.മീ 673 മീ", "8 കി.മീ 673 മീ"], answer: "7 കി.മീ 327 മീ" } },
+            { en: { question: "A 9 km 825 m road needs tarring. 4 km 300 m is completed. How much is left?", options: ["5 km 525 m", "5 km 825 m", "13 km 125 m", "5 km 300 m"], answer: "5 km 525 m" }, ml: { question: "9 കി.മീ. 825 മീറ്റർ റോഡ് ടാർ ചെയ്യണം. 4 കി.മീ. 300 മീറ്റർ കഴിഞ്ഞു. ഇനി എത്ര ബാക്കിയുണ്ട്?", options: ["5 കി.മീ 525 മീ", "5 കി.മീ 825 മീ", "13 കി.മീ 125 മീ", "5 കി.മീ 300 മീ"], answer: "5 കി.മീ 525 മീ" } },
+            { en: { question: "What is (6 km 700 m) + (8 km 300 m)?", options: ["14 km 0 m", "15 km 0 m", "14 km 1000 m", "15 km 100 m"], answer: "15 km 0 m" }, ml: { question: "(6 കി.മീ. 700 മീറ്റർ) + (8 കി.മീ. 300 മീറ്റർ) എത്രയാണ്?", options: ["14 കി.മീ 0 മീ", "15 കി.മീ 0 മീ", "14 കി.മീ 1000 മീ", "15 കി.മീ 100 മീ"], answer: "15 കി.മീ 0 മീ" } },
+            { en: { question: "A card's sides are 16 cm 8 mm and 9 cm 2 mm. What is the total length around the card (perimeter)?", options: ["52 cm 0 mm", "26 cm 0 mm", "50 cm 0 mm", "25 cm 10 mm"], answer: "52 cm 0 mm" }, ml: { question: "ഒരു കാർഡിന്റെ വശങ്ങൾ 16 സെ.മീ 8 മി.മീ, 9 സെ.മീ 2 മി.മീ ആണ്. കാർഡിന് ചുറ്റുമുള്ള ആകെ നീളം എത്ര?", options: ["52 സെ.മീ 0 മി.മീ", "26 സെ.മീ 0 മി.മീ", "50 സെ.മീ 0 മി.മീ", "25 സെ.മീ 10 മി.മീ"], answer: "52 സെ.മീ 0 മി.മീ" } },
+            { en: { question: "Faris's ribbon is 26 cm 7 mm. Hadia's is 21 cm 5 mm. How much longer is Faris's ribbon?", options: ["5 cm 2 mm", "4 cm 2 mm", "48 cm 2 mm", "5 cm 3 mm"], answer: "5 cm 2 mm" }, ml: { question: "ഫാരിസിന്റെ റിബൺ 26 സെ.മീ 7 മി.മീ. ഹാദിയയുടെ റിബൺ 21 സെ.മീ 5 മി.മീ. ഫാരിസിന്റെ റിബണിന് എത്ര നീളം കൂടുതലുണ്ട്?", options: ["5 സെ.മീ 2 മി.മീ", "4 സെ.മീ 2 മി.മീ", "48 സെ.മീ 2 മി.മീ", "5 സെ.മീ 3 മി.മീ"], answer: "5 സെ.മീ 2 മി.മീ" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             currentQuestionIndex = 0;
+             userAnswers.fill(null);
+             score = 0;
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            // Reset userAnswers array for the new quiz length
+            userAnswers = new Array(quizData.length).fill(null);
+            totalQuestionsEl.textContent = quizData.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.textContent = '';
+            optionsContainer.innerHTML = '';
+            
+            const questionData = quizData[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / quizData.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn bg-white hover:bg-green-100 rounded-lg shadow-sm border-2 border-stone-200';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = quizData[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-green-600';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-600';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === quizData.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${quizData.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-stone-700">${text.reviewHeader}</h3>`;
+            quizData.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-green-100' : 'bg-rose-100'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-stone-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-green-800' : 'text-rose-800'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect && userAnswer ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : (isCorrect ? '✅' : '')}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
