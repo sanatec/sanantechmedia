@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Glory of Multiplication</title>
+    <style>
+        /* --- General Styling & Fonts --- */
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap');
+        
+        :root {
+            --primary-color: #E91E63; /* Pink */
+            --secondary-color: #FF9800; /* Orange */
+            --background-color: #FCE4EC; /* Light Pink */
+            --text-color: #333;
+            --correct-color: #4CAF50; /* Green */
+            --wrong-color: #F44336; /* Red */
+            --white: #FFFFFF;
+            --font-main: 'Baloo 2', cursive;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Main App Container --- */
+        #app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 900px;
+            background: var(--white);
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 5px solid var(--white);
+        }
+
+        /* --- Header --- */
+        header {
+            background: linear-gradient(45deg, var(--primary-color), #C2185B);
+            color: var(--white);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        #lang-selector {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--white);
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            font-family: var(--font-main);
+            font-weight: 700;
+        }
+        #lang-selector option { color: black; }
+
+        /* --- Main Content Area --- */
+        main {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            text-align: center;
+            background: #FAFAFA;
+        }
+        
+        .module { display: none; }
+        .module.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h2 {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            font-size: 1.2em;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            color: #555;
+        }
+        
+        .question-counter {
+            font-size: 1em;
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+
+        /* --- Buttons & Inputs --- */
+        .btn, button {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--secondary-color), #F57C00);
+            color: var(--white);
+            font-family: var(--font-main);
+            padding: 14px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.3em;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 8px 5px;
+        }
+
+        .btn:hover, button:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(255,152,0,0.4);
+        }
+        
+        .main-menu-btn {
+            display: block;
+            width: 90%;
+            margin: 12px auto;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        .main-menu-btn:hover { background: var(--primary-color); color: var(--white); }
+        
+        .back-btn { background: #f1f1f1; color: #555; font-size: 1.1em; padding: 10px 25px; }
+        .back-btn:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+        input[type="number"], input[type="text"] {
+            width: 80%;
+            padding: 12px;
+            font-size: 1.8em;
+            font-weight: 700;
+            text-align: center;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            margin-top: 15px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .feedback { font-size: 1.3em; font-weight: 700; margin-top: 20px; height: 35px; transition: all 0.3s; }
+
+        /* --- Game-Specific Styles --- */
+        .game-emoji { font-size: 100px; margin-bottom: 15px; }
+        
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        
+        .option-btn {
+            width: 100%;
+            padding: 15px 10px;
+            font-size: 1.2em;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid #ddd;
+        }
+        .option-btn.correct { background: var(--correct-color); color: var(--white); border-color: var(--correct-color); animation: pulse 0.5s; }
+        .option-btn.wrong { background: var(--wrong-color); color: var(--white); border-color: var(--wrong-color); animation: shake 0.5s; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1 data-lang-key="app_title">The Glory of Multiplication</h1>
+            <select id="lang-selector">
+                <option value="en">English</option>
+                <option value="ml">മലയാളം</option>
+            </select>
+        </header>
+
+        <main>
+            <div id="welcome-screen" class="module active">
+                <h2 data-lang-key="welcome_title">Glory of Multiplication!</h2>
+                <div class="game-emoji">✨</div>
+                <p class="instruction" data-lang-key="welcome_subtitle">Choose a puzzle to begin!</p>
+                <button class="main-menu-btn" onclick="showModule('basic-multi-quiz')" data-lang-key="activity1_btn">Basic Facts 🧩</button>
+                <button class="main-menu-btn" onclick="showModule('splitting-puzzle')" data-lang-key="activity2_btn">Splitting Numbers 쪼</button>
+                <button class="main-menu-btn" onclick="showModule('tens-multi-quiz')" data-lang-key="activity3_btn">Multiply by 10s & 100s 🚀</button>
+                <button class="main-menu-btn" onclick="showModule('simple-puzzle')" data-lang-key="activity4_btn">Simple Word Problems ✏️</button>
+                <button class="main-menu-btn" onclick="showModule('advanced-puzzle')" data-lang-key="activity5_btn">Advanced Word Problems 🏦</button>
+            </div>
+
+            <div id="basic-multi-quiz" class="module">
+                <h2 data-lang-key="basic_multi_title">Basic Facts</h2>
+                <div class="question-counter" id="basic-multi-counter"></div>
+                <p id="basic-multi-question" class="instruction"></p>
+                <div id="basic-multi-options" class="options-grid"></div>
+                <div id="basic-multi-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+            
+            <div id="splitting-puzzle" class="module">
+                <h2 data-lang-key="splitting_title">Splitting Numbers</h2>
+                <div class="question-counter" id="splitting-counter"></div>
+                <p id="splitting-question" class="instruction"></p>
+                <input type="number" id="splitting-answer" placeholder="?">
+                <div id="splitting-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkFillInBlankAnswer('splitting')" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="tens-multi-quiz" class="module">
+                <h2 data-lang-key="tens_multi_title">Multiply by 10s & 100s</h2>
+                <div class="question-counter" id="tens-multi-counter"></div>
+                <p id="tens-multi-question" class="instruction"></p>
+                <div id="tens-multi-options" class="options-grid"></div>
+                <div id="tens-multi-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="simple-puzzle" class="module">
+                <h2 data-lang-key="simple_puzzle_title">Simple Word Problems</h2>
+                <div class="question-counter" id="simple-counter"></div>
+                <p id="simple-question" class="instruction"></p>
+                <input type="number" id="simple-answer" placeholder="?">
+                <div id="simple-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkFillInBlankAnswer('simple')" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="advanced-puzzle" class="module">
+                <h2 data-lang-key="advanced_puzzle_title">Advanced Word Problems</h2>
+                <div class="question-counter" id="advanced-counter"></div>
+                <p id="advanced-question" class="instruction"></p>
+                <input type="number" id="advanced-answer" placeholder="?">
+                <div id="advanced-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkFillInBlankAnswer('advanced')" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 1. LANGUAGE & TEXT DATA ---
+        const lang = {
+            'app_title': { en: 'Glory of Multiplication', ml: 'പെരുക്കൽപ്പെരുമ' },
+            'back_to_menu': { en: 'Menu', ml: 'മെനു' },
+            'check_btn': { en: 'Check', ml: 'പരിശോധിക്കുക' },
+            'welcome_title': { en: 'Glory of Multiplication!', ml: 'പെരുക്കൽപ്പെരുമ!' },
+            'welcome_subtitle': { en: 'Choose a puzzle to begin!', ml: 'ഒരു പ്രവർത്തനം തിരഞ്ഞെടുക്കൂ!' },
+            'correct_feedback': { en: 'Correct! 🎉', ml: 'ശരിയാണ്! 🎉' },
+            'wrong_feedback': { en: 'Try again! 🤔', ml: 'വീണ്ടും ശ്രമിക്കൂ! 🤔' },
+            'quiz_complete': { en: 'Quiz Complete! Great job!', ml: 'ക്വിസ് പൂർത്തിയായി! കൊള്ളാം!' },
+            'question_counter': { en: 'Question {current} of {total}', ml: 'ചോദ്യം {current} / {total}' },
+            
+            'activity1_btn': { en: 'Basic Facts 🧩', ml: 'അടിസ്ഥാന ഗുണനം 🧩' },
+            'activity2_btn': { en: 'Splitting Numbers 쪼', ml: 'വിഭജിച്ച് ഗുണിക്കാം 쪼' },
+            'activity3_btn': { en: 'Multiply by 10s & 100s 🚀', ml: '10, 100 കൊണ്ട് ഗുണിക്കാം 🚀' },
+            'activity4_btn': { en: 'Simple Word Problems ✏️', ml: 'ലഘുവായ കണക്കുകൾ ✏️' },
+            'activity5_btn': { en: 'Advanced Word Problems 🏦', ml: 'സങ്കീർണ്ണമായ കണക്കുകൾ 🏦' },
+
+            'basic_multi_title': { en: 'Basic Facts', ml: 'അടിസ്ഥാന ഗുണനം' },
+            'splitting_title': { en: 'Splitting Numbers', ml: 'വിഭജിച്ച് ഗുണിക്കാം' },
+            'tens_multi_title': { en: 'Multiply by 10s & 100s', ml: '10, 100 കൊണ്ട് ഗുണിക്കാം' },
+            'simple_puzzle_title': { en: 'Simple Word Problems', ml: 'ലഘുവായ കണക്കുകൾ' },
+            'advanced_puzzle_title': { en: 'Advanced Word Problems', ml: 'സങ്കീർണ്ണമായ കണക്കുകൾ' },
+        };
+
+        let currentLang = 'en';
+
+        // --- 2. QUIZ DATA ---
+
+        // Module 1: Basic Multiplication (Multiple Choice)
+        const basicMultiData = [
+            { q: { en: '3 × 8 = ?', ml: '3 × 8 = ?' }, a: '24', o: ['11', '21', '18'] },
+            { q: { en: '8 × 3 = ?', ml: '8 × 3 = ?' }, a: '24', o: ['11', '21', '18'] },
+            { q: { en: '4 × 6 = ?', ml: '4 × 6 = ?' }, a: '24', o: ['10', '20', '28'] },
+            { q: { en: '6 × 4 = ?', ml: '6 × 4 = ?' }, a: '24', o: ['10', '20', '28'] },
+            { q: { en: '2 × 12 = ?', ml: '2 × 12 = ?' }, a: '24', o: ['14', '22', '26'] },
+            { q: { en: '12 × 2 = ?', ml: '12 × 2 = ?' }, a: '24', o: ['14', '22', '26'] },
+            { q: { en: '9 × 4 = ?', ml: '9 × 4 = ?' }, a: '36', o: ['13', '27', '32'] },
+            { q: { en: '7 × 6 = ?', ml: '7 × 6 = ?' }, a: '42', o: ['13', '35', '48'] },
+            { q: { en: '6 × 5 = ?', ml: '6 × 5 = ?' }, a: '30', o: ['11', '25', '35'] },
+            { q: { en: '8 × 8 = ?', ml: '8 × 8 = ?' }, a: '64', o: ['16', '56', '72'] }
+        ];
+
+        // Module 2: Splitting Numbers (Fill-in-the-blank)
+        const splittingData = [
+            { q: { en: '12 × 8 = (10 × 8) + (2 × 8) = 80 + ?', ml: '12 × 8 = (10 × 8) + (2 × 8) = 80 + ?' }, a: '16' },
+            { q: { en: '(10 × 8) + (2 × 8) = 80 + 16 = ?', ml: '(10 × 8) + (2 × 8) = 80 + 16 = ?' }, a: '96' },
+            { q: { en: '13 × 5 = (10 × 5) + (3 × 5) = 50 + ?', ml: '13 × 5 = (10 × 5) + (3 × 5) = 50 + ?' }, a: '15' },
+            { q: { en: '13 × 5 = 50 + 15 = ?', ml: '13 × 5 = 50 + 15 = ?' }, a: '65' },
+            { q: { en: '23 × 5 = (20 × 5) + (3 × 5) = 100 + ?', ml: '23 × 5 = (20 × 5) + (3 × 5) = 100 + ?' }, a: '15' },
+            { q: { en: '23 × 5 = 100 + 15 = ?', ml: '23 × 5 = 100 + 15 = ?' }, a: '115' },
+            { q: { en: '18 × 5 = (10 × 5) + (8 × 5) = 50 + 40 = ?', ml: '18 × 5 = (10 × 5) + (8 × 5) = 50 + 40 = ?' }, a: '90' },
+            { q: { en: '16 × 5 = (? × 5) + (6 × 5) = 50 + 30', ml: '16 × 5 = (? × 5) + (6 × 5) = 50 + 30' }, a: '10' },
+            { q: { en: '(2 × 8) + (2 × 6) = 2 × ?', ml: '(2 × 8) + (2 × 6) = 2 × ?' }, a: '14' },
+            { q: { en: '(10 × 9) + (10 × 5) = 10 × ?', ml: '(10 × 9) + (10 × 5) = 10 × ?' }, a: '14' }
+        ];
+
+        // Module 3: Multiply by 10s & 100s (Multiple Choice)
+        const tensMultiData = [
+            { q: { en: '15 × 30 = ?', ml: '15 × 30 = ?' }, a: '450', o: ['1530', '45', '153'] },
+            { q: { en: '40 × 30 = ?', ml: '40 × 30 = ?' }, a: '1200', o: ['120', '70', '12000'] },
+            { q: { en: '70 × 70 = ?', ml: '70 × 70 = ?' }, a: '4900', o: ['140', '490', '49000'] },
+            { q: { en: '60 × 4 = ?', ml: '60 × 4 = ?' }, a: '240', o: ['64', '100', '2400'] },
+            { q: { en: '50 × 3 = ?', ml: '50 × 3 = ?' }, a: '150', o: ['53', '80', '1500'] },
+            { q: { en: '40 × 40 = ?', ml: '40 × 40 = ?' }, a: '1600', o: ['80', '160', '16000'] },
+            { q: { en: '11 × 20 = ?', ml: '11 × 20 = ?' }, a: '220', o: ['31', '1120', '2200'] },
+            { q: { en: '13 × 20 = ?', ml: '13 × 20 = ?' }, a: '260', o: ['33', '1320', '2600'] },
+            { q: { en: '12 × 100 = ?', ml: '12 × 100 = ?' }, a: '1200', o: ['112', '120', '12000'] },
+            { q: { en: '15 × 200 = ?', ml: '15 × 200 = ?' }, a: '3000', o: ['215', '300', '15200'] }
+        ];
+
+        // Module 4: Simple Word Problems (Fill-in-the-blank)
+        const simplePuzzleData = [
+            { q: { en: 'Half-dozen = 6. 21 boxes of 6 glasses. Total glasses? (21 × 6)', ml: 'അരഡസൻ = 6. 21 പെട്ടിയിൽ 6 ഗ്ലാസ് വീതം. ആകെ ഗ്ലാസുകൾ? (21 × 6)' }, a: '126' },
+            { q: { en: 'Dozen = 12. 9 boxes of 12 glasses. Total glasses? (9 × 12)', ml: 'ഡസൻ = 12. 9 പെട്ടിയിൽ 12 ഗ്ലാസ് വീതം. ആകെ ഗ്ലാസുകൾ? (9 × 12)' }, a: '108' },
+            { q: { en: '4 chairs per desk. Class 1 has 8 desks. How many chairs? (8 × 4)', ml: 'ഒരു ഡെസ്കിന് 4 കസേര. ക്ലാസ് 1-ൽ 8 ഡെസ്ക്. ആകെ കസേര? (8 × 4)' }, a: '32' },
+            { q: { en: '4 chairs per desk. Class 3 has 9 desks. How many chairs? (9 × 4)', ml: 'ഒരു ഡെസ്കിന് 4 കസേര. ക്ലാസ് 3-ൽ 9 ഡെസ്ക്. ആകെ കസേര? (9 × 4)' }, a: '36' },
+            { q: { en: 'Total desks in 4 classes: 8 + 7 + 9 + 5 = ?', ml: '4 ക്ലാസ്സുകളിലായി ആകെ ഡെസ്കുകൾ: 8 + 7 + 9 + 5 = ?' }, a: '29' },
+            { q: { en: 'Total chairs for 29 desks (4 chairs each): 29 × 4 = ?', ml: '29 ഡെസ്കുകൾക്ക് ആകെ കസേരകൾ (ഒന്നിന് 4 വീതം): 29 × 4 = ?' }, a: '116' },
+            { q: { en: 'Bazaar: 2 Boxes @ 25 rupees. Total? (2 × 25)', ml: 'ബസാർ: 2 ബോക്സ്, ഒന്നിന് 25 രൂപ. ആകെ? (2 × 25)' }, a: '50' },
+            { q: { en: 'Bazaar: 4 Scales @ 12 rupees. Total? (4 × 12)', ml: 'ബസാർ: 4 സ്കെയിൽ, ഒന്നിന് 12 രൂപ. ആകെ? (4 × 12)' }, a: '48' },
+            { q: { en: 'Bazaar Bill 1 Total: 50 + 48 = ?', ml: 'ബസാർ ബിൽ 1 ആകെ തുക: 50 + 48 = ?' }, a: '98' },
+            { q: { en: 'Tour: 40 kids @ 50 rupees each. Total for kids? (40 × 50)', ml: 'പഠനയാത്ര: 40 കുട്ടികൾ, ഒരാൾക്ക് 50 രൂപ. കുട്ടികൾക്ക് ആകെ? (40 × 50)' }, a: '2000' }
+        ];
+
+        // Module 5: Advanced Word Problems (Fill-in-the-blank)
+        const advancedPuzzleData = [
+            { q: { en: 'Tour: 3 teachers + 2 parents = 5 adults. 5 adults @ 100 rupees each. Total for adults? (5 × 100)', ml: 'പഠനയാത്ര: 3 അധ്യാപകർ + 2 രക്ഷിതാക്കൾ = 5 മുതിർന്നവർ. 5 മുതിർന്നവർക്ക് 100 രൂപ വീതം. മുതിർന്നവർക്ക് ആകെ? (5 × 100)' }, a: '500' },
+            { q: { en: 'Tour Total: 2000 (kids) + 500 (adults) = ?', ml: 'പഠനയാത്ര ആകെ: 2000 (കുട്ടികൾ) + 500 (മുതിർന്നവർ) = ?' }, a: '2500' },
+            { q: { en: 'Lunch: 600 rupees/day for 20 days (June). Total? (600 × 20)', ml: 'ഉച്ചഭക്ഷണം: 600 രൂപ/ദിവസം, 20 ദിവസം (ജൂൺ). ആകെ? (600 × 20)' }, a: '12000' },
+            { q: { en: 'Lunch: 600 rupees/day for 22 days (July). Total? (600 × 22)', ml: 'ഉച്ചഭക്ഷണം: 600 രൂപ/ദിവസം, 22 ദിവസം (ജൂലൈ). ആകെ? (600 × 22)' }, a: '13200' },
+            { q: { en: 'Pencils: 5 pencils/pack, 4 packs/box. How many pencils per box? (5 × 4)', ml: 'പെൻസിൽ: 5 എണ്ണം/പാക്കറ്റ്, 4 പാക്കറ്റ്/പെട്ടി. ഒരു പെട്ടിയിൽ എത്ര പെൻസിൽ? (5 × 4)' }, a: '20' },
+            { q: { en: 'Pencils: 20 pencils/box. 6 boxes for Narma store. Total pencils? (20 × 6)', ml: 'പെൻസിൽ: 20 എണ്ണം/പെട്ടി. നന്മ സ്റ്റോറിൽ 6 പെട്ടി. ആകെ പെൻസിൽ? (20 × 6)' }, a: '120' },
+            { q: { en: 'Pencils: Total boxes = 6 + 4 = 10. Total pencils = 10 × 20 = ?', ml: 'പെൻസിൽ: ആകെ പെട്ടികൾ = 6 + 4 = 10. ആകെ പെൻസിലുകൾ = 10 × 20 = ?' }, a: '200' },
+            { q: { en: 'Bank: 3 bundles, 100 notes/bundle. Total notes? (3 × 100)', ml: 'ബാങ്ക്: 3 കെട്ടുകൾ, 100 നോട്ടുകൾ/കെട്ട്. ആകെ നോട്ടുകൾ? (3 × 100)' }, a: '300' },
+            { q: { en: 'Bank: 300 notes, 50 rupees/note. Total amount? (300 × 50)', ml: 'ബാങ്ക്: 300 നോട്ടുകൾ, 50 രൂപ/നോട്ട്. ആകെ തുക? (300 × 50)' }, a: '15000' },
+            { q: { en: 'Masons: (3 masons × 1000) + (2 helpers × 800). Total wage per day?', ml: 'പണിക്കാർ: (3 × 1000) + (2 × 800). ഒരു ദിവസത്തെ ആകെ കൂലി?' }, a: '4600' }
+        ];
+
+        let quizState = {};
+
+        // --- 3. NAVIGATION & MODULE HANDLING ---
+        function setLanguage(langCode) {
+            currentLang = langCode;
+            document.querySelectorAll('[data-lang-key]').forEach(elem => {
+                const key = elem.getAttribute('data-lang-key');
+                if (lang[key] && lang[key][currentLang]) {
+                    elem.innerHTML = lang[key][currentLang];
+                }
+            });
+
+            // Refresh current quiz module to update language
+            const activeModuleId = document.querySelector('.module.active').id;
+            if (quizState[activeModuleId]) {
+                const { type, currentQuestionIndex } = quizState[activeModuleId];
+                if (type === 'mcq') {
+                    loadMcqQuestion(activeModuleId, currentQuestionIndex);
+                } else if (type === 'fill') {
+                    loadFillInBlankQuestion(activeModuleId, currentQuestionIndex);
+                }
+            }
+        }
+
+        document.getElementById('lang-selector').addEventListener('change', (e) => setLanguage(e.target.value));
+
+        function showModule(moduleId) {
+            document.querySelectorAll('.module').forEach(module => module.classList.remove('active'));
+            document.getElementById(moduleId).classList.add('active');
+            
+            // Initialize quiz modules
+            switch(moduleId) {
+                case 'basic-multi-quiz':
+                    initMcqQuiz('basic-multi', basicMultiData);
+                    break;
+                case 'splitting-puzzle':
+                    initFillInBlankQuiz('splitting', splittingData);
+                    break;
+                case 'tens-multi-quiz':
+                    initMcqQuiz('tens-multi', tensMultiData);
+                    break;
+                case 'simple-puzzle':
+                    initFillInBlankQuiz('simple', simplePuzzleData);
+                    break;
+                case 'advanced-puzzle':
+                    initFillInBlankQuiz('advanced', advancedPuzzleData);
+                    break;
+            }
+        }
+
+        // --- 4. QUIZ LOGIC (Multiple Choice) ---
+
+        function initMcqQuiz(prefix, data) {
+            quizState[prefix + '-quiz'] = {
+                prefix: prefix,
+                data: data,
+                currentQuestionIndex: 0,
+                totalQuestions: data.length,
+                type: 'mcq'
+            };
+            loadMcqQuestion(prefix + '-quiz', 0);
+        }
+
+        function loadMcqQuestion(moduleId, index) {
+            const { prefix, data, totalQuestions } = quizState[moduleId];
+            if (index >= totalQuestions) {
+                showQuizComplete(prefix);
+                return;
+            }
+            
+            const qData = data[index];
+            document.getElementById(prefix + '-question').textContent = qData.q[currentLang];
+            document.getElementById(prefix + '-counter').textContent = lang.question_counter[currentLang]
+                .replace('{current}', index + 1)
+                .replace('{total}', totalQuestions);
+            
+            const optionsContainer = document.getElementById(prefix + '-options');
+            optionsContainer.innerHTML = '';
+            
+            let options = [qData.a, ...qData.o];
+            options.sort(() => Math.random() - 0.5).forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.onclick = () => checkMcqAnswer(moduleId, option, qData.a, button);
+                optionsContainer.appendChild(button);
+            });
+            document.getElementById(prefix + '-feedback').textContent = '';
+        }
+
+        function checkMcqAnswer(moduleId, selected, correct, btn) {
+            const { prefix } = quizState[moduleId];
+            const feedbackElem = document.getElementById(prefix + '-feedback');
+            const allButtons = document.querySelectorAll('#' + prefix + '-options .option-btn');
+            allButtons.forEach(b => b.disabled = true);
+
+            if (selected === correct) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                btn.classList.add('correct');
+                setTimeout(() => {
+                    quizState[moduleId].currentQuestionIndex++;
+                    loadMcqQuestion(moduleId, quizState[moduleId].currentQuestionIndex);
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+                btn.classList.add('wrong');
+                allButtons.forEach(b => {
+                    if (b.textContent === correct) b.classList.add('correct');
+                });
+                setTimeout(() => {
+                    allButtons.forEach(b => b.disabled = false);
+                    feedbackElem.textContent = '';
+                    btn.classList.remove('wrong');
+                    allButtons.forEach(b => { if (b.textContent === correct) b.classList.remove('correct'); });
+                }, 2000);
+            }
+        }
+
+        function showQuizComplete(prefix) {
+            document.getElementById(prefix + '-question').textContent = lang.quiz_complete[currentLang];
+            document.getElementById(prefix + '-options').innerHTML = '';
+            document.getElementById(prefix + '-feedback').textContent = '🎉';
+            document.getElementById(prefix + '-counter').textContent = '';
+        }
+
+        // --- 5. QUIZ LOGIC (Fill-in-the-blank) ---
+        
+        function initFillInBlankQuiz(prefix, data) {
+            quizState[prefix + '-puzzle'] = {
+                prefix: prefix,
+                data: data,
+                currentQuestionIndex: 0,
+                totalQuestions: data.length,
+                type: 'fill'
+            };
+            loadFillInBlankQuestion(prefix + '-puzzle', 0);
+        }
+
+        function loadFillInBlankQuestion(moduleId, index) {
+            const { prefix, data, totalQuestions } = quizState[moduleId];
+            if (index >= totalQuestions) {
+                showQuizComplete(prefix);
+                return;
+            }
+
+            const qData = data[index];
+            document.getElementById(prefix + '-question').textContent = qData.q[currentLang];
+            document.getElementById(prefix + '-counter').textContent = lang.question_counter[currentLang]
+                .replace('{current}', index + 1)
+                .replace('{total}', totalQuestions);
+            
+            document.getElementById(prefix + '-answer').value = '';
+            document.getElementById(prefix + '-feedback').textContent = '';
+        }
+
+        function checkFillInBlankAnswer(prefix) {
+            const moduleId = prefix + '-puzzle';
+            const { data, currentQuestionIndex } = quizState[moduleId];
+            const feedbackElem = document.getElementById(prefix + '-feedback');
+            const answerInput = document.getElementById(prefix + '-answer');
+            const userAnswer = answerInput.value.trim().toLowerCase().replace(/\s+/g, ' '); // Standardize answer
+            const correctAnswer = data[currentQuestionIndex].a.toLowerCase().replace(/\s+/g, ' '); // Standardize answer
+
+            if (userAnswer === correctAnswer) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(() => {
+                    quizState[moduleId].currentQuestionIndex++;
+                    loadFillInBlankQuestion(moduleId, quizState[moduleId].currentQuestionIndex);
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+        
+        // --- INITIALIZE APP ---
+        setLanguage(currentLang);
+    </script>
+</body>
+</html>

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Measuring and Weighing</title>
+    <style>
+        /* --- General Styling & Fonts --- */
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap');
+        
+        :root {
+            --primary-color: #8E24AA; /* Purple */
+            --secondary-color: #00897B; /* Teal */
+            --background-color: #F3E5F5; /* Light Purple */
+            --text-color: #333;
+            --correct-color: #4CAF50; /* Green */
+            --wrong-color: #F44336; /* Red */
+            --white: #FFFFFF;
+            --font-main: 'Baloo 2', cursive;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Main App Container --- */
+        #app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 900px;
+            background: var(--white);
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 5px solid var(--white);
+        }
+
+        /* --- Header --- */
+        header {
+            background: linear-gradient(45deg, var(--primary-color), #6A1B9A);
+            color: var(--white);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        #lang-selector {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--white);
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            font-family: var(--font-main);
+            font-weight: 700;
+        }
+        #lang-selector option { color: black; }
+
+        /* --- Main Content Area --- */
+        main {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            text-align: center;
+            background: #FAFAFA;
+        }
+        
+        .module { display: none; }
+        .module.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h2 {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            font-size: 1.2em;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            color: #555;
+        }
+        
+        .question-counter {
+            font-size: 1em;
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+
+        /* --- Buttons & Inputs --- */
+        .btn, button {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--secondary-color), #00695C);
+            color: var(--white);
+            font-family: var(--font-main);
+            padding: 14px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.3em;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 8px 5px;
+        }
+
+        .btn:hover, button:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0,137,123,0.4);
+        }
+        
+        .main-menu-btn {
+            display: block;
+            width: 90%;
+            margin: 12px auto;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        .main-menu-btn:hover { background: var(--primary-color); color: var(--white); }
+        
+        .back-btn { background: #f1f1f1; color: #555; font-size: 1.1em; padding: 10px 25px; }
+        .back-btn:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+        input[type="number"], input[type="text"] {
+            width: 80%;
+            padding: 12px;
+            font-size: 1.8em;
+            font-weight: 700;
+            text-align: center;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            margin-top: 15px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .feedback { font-size: 1.3em; font-weight: 700; margin-top: 20px; height: 35px; transition: all 0.3s; }
+
+        /* --- Game-Specific Styles --- */
+        .game-emoji { font-size: 100px; margin-bottom: 15px; }
+        
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        
+        .option-btn {
+            width: 100%;
+            padding: 15px 10px;
+            font-size: 1.2em;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid #ddd;
+        }
+        .option-btn.correct { background: var(--correct-color); color: var(--white); border-color: var(--correct-color); animation: pulse 0.5s; }
+        .option-btn.wrong { background: var(--wrong-color); color: var(--white); border-color: var(--wrong-color); animation: shake 0.5s; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1 data-lang-key="app_title">Measuring and Weighing</h1>
+            <select id="lang-selector">
+                <option value="en">English</option>
+                <option value="ml">മലയാളം</option>
+            </select>
+        </header>
+
+        <main>
+            <div id="welcome-screen" class="module active">
+                <h2 data-lang-key="welcome_title">Measuring & Weighing!</h2>
+                <div class="game-emoji">⚖️</div>
+                <p class="instruction" data-lang-key="welcome_subtitle">Let's practice measurements!</p>
+                <button class="main-menu-btn" onclick="showModule('heavy-weight-quiz')" data-lang-key="activity1_btn">Heavy Weights (t, q)</button>
+                <button class="main-menu-btn" onclick="showModule('grams-kg-quiz')" data-lang-key="activity2_btn">Grams & Kilograms</button>
+                <button class="main-menu-btn" onclick="showModule('litres-ml-quiz')" data-lang-key="activity3_btn">Litres & Millilitres</button>
+                <button class="main-menu-btn" onclick="showModule('weight-puzzle')" data-lang-key="activity4_btn">Weight Puzzles (kg)</button>
+                <button class="main-menu-btn" onclick="showModule('liquid-puzzle')" data-lang-key="activity5_btn">Liquid Puzzles (L, mL)</button>
+            </div>
+
+            <div id="heavy-weight-quiz" class="module">
+                <h2 data-lang-key="heavy_weight_title">Heavy Weights</h2>
+                <div class="question-counter" id="heavy-weight-counter"></div>
+                <p id="heavy-weight-question" class="instruction"></p>
+                <div id="heavy-weight-options" class="options-grid"></div>
+                <div id="heavy-weight-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+            
+            <div id="grams-kg-quiz" class="module">
+                <h2 data-lang-key="grams_kg_title">Grams & Kilograms</h2>
+                <div class="question-counter" id="grams-kg-counter"></div>
+                <p id="grams-kg-question" class="instruction"></p>
+                <div id="grams-kg-options" class="options-grid"></div>
+                <div id="grams-kg-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="litres-ml-quiz" class="module">
+                <h2 data-lang-key="litres_ml_title">Litres & Millilitres</h2>
+                <div class="question-counter" id="litres-ml-counter"></div>
+                <p id="litres-ml-question" class="instruction"></p>
+                <div id="litres-ml-options" class="options-grid"></div>
+                <div id="litres-ml-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="weight-puzzle" class="module">
+                <h2 data-lang-key="weight_puzzle_title">Weight Puzzles</h2>
+                <div class="question-counter" id="weight-counter"></div>
+                <p id="weight-question" class="instruction"></p>
+                <input type="number" id="weight-answer" placeholder="?">
+                <div id="weight-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkFillInBlankAnswer('weight')" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="liquid-puzzle" class="module">
+                <h2 data-lang-key="liquid_puzzle_title">Liquid Puzzles</h2>
+                <div class="question-counter" id="liquid-counter"></div>
+                <p id="liquid-question" class="instruction"></p>
+                <input type="number" id="liquid-answer" placeholder="?">
+                <div id="liquid-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkFillInBlankAnswer('liquid')" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 1. LANGUAGE & TEXT DATA ---
+        const lang = {
+            'app_title': { en: 'Measuring and Weighing', ml: 'അളന്നും തൂക്കിയും' },
+            'back_to_menu': { en: 'Menu', ml: 'മെനു' },
+            'check_btn': { en: 'Check', ml: 'പരിശോധിക്കുക' },
+            'welcome_title': { en: 'Measuring & Weighing!', ml: 'അളന്നും തൂക്കിയും!' },
+            'welcome_subtitle': { en: "Let's practice measurements!", ml: 'നമുക്ക് അളവുകൾ പരിശീലിക്കാം!' },
+            'correct_feedback': { en: 'Correct! 🎉', ml: 'ശരിയാണ്! 🎉' },
+            'wrong_feedback': { en: 'Try again! 🤔', ml: 'വീണ്ടും ശ്രമിക്കൂ! 🤔' },
+            'quiz_complete': { en: 'Quiz Complete! Great job!', ml: 'ക്വിസ് പൂർത്തിയായി! കൊള്ളാം!' },
+            'question_counter': { en: 'Question {current} of {total}', ml: 'ചോദ്യം {current} / {total}' },
+            
+            'activity1_btn': { en: 'Heavy Weights (t, q)', ml: 'വലിയ ഭാരം (ടൺ, ക്വിന്റൽ)' },
+            'activity2_btn': { en: 'Grams & Kilograms', ml: 'ഗ്രാം & കിലോഗ്രാം' },
+            'activity3_btn': { en: 'Litres & Millilitres', ml: 'ലിറ്റർ & മില്ലിലിറ്റർ' },
+            'activity4_btn': { en: 'Weight Puzzles (kg)', ml: 'ഭാരക്കണക്കുകൾ (കി.ഗ്രാം)' },
+            'activity5_btn': { en: 'Liquid Puzzles (L, mL)', ml: 'അളവ് കണക്കുകൾ (ലി, മി.ലി)' },
+
+            'heavy_weight_title': { en: 'Heavy Weights', ml: 'വലിയ ഭാരം' },
+            'grams_kg_title': { en: 'Grams & Kilograms', ml: 'ഗ്രാം & കിലോഗ്രാം' },
+            'litres_ml_title': { en: 'Litres & Millilitres', ml: 'ലിറ്റർ & മില്ലിലിറ്റർ' },
+            'weight_puzzle_title': { en: 'Weight Puzzles', ml: 'ഭാരക്കണക്കുകൾ' },
+            'liquid_puzzle_title': { en: 'Liquid Puzzles', ml: 'അളവ് കണക്കുകൾ' },
+        };
+
+        let currentLang = 'en';
+
+        // --- 2. QUIZ DATA ---
+
+        // Module 1: Heavy Weights Data
+        const heavyWeightData = [
+            { q: { en: '1 Tonne = ? kg', ml: '1 ടൺ = ? കിലോഗ്രാം' }, a: '1000 kg', o: ['10 kg', '100 kg', '10000 kg'] },
+            { q: { en: '1 Quintal = ? kg', ml: '1 ക്വിന്റൽ = ? കിലോഗ്രാം' }, a: '100 kg', o: ['10 kg', '1000 kg', '1 kg'] },
+            { q: { en: '1 Tonne = ? Quintal', ml: '1 ടൺ = ? ക്വിന്റൽ' }, a: '10 Quintal', o: ['1 Quintal', '100 Quintal', '1000 Quintal'] },
+            { q: { en: '5 Tonnes = ? kg', ml: '5 ടൺ = ? കിലോഗ്രാം' }, a: '5000 kg', o: ['50 kg', '500 kg', '50000 kg'] },
+            { q: { en: '7 Quintal = ? kg', ml: '7 ക്വിന്റൽ = ? കിലോഗ്രാം' }, a: '700 kg', o: ['70 kg', '7 kg', '7000 kg'] },
+            { q: { en: '2000 kg = ? Tonnes', ml: '2000 കിലോഗ്രാം = ? ടൺ' }, a: '2 Tonnes', o: ['20 Tonnes', '200 Tonnes', '0.2 Tonnes'] },
+            { q: { en: '500 kg = ? Quintal', ml: '500 കിലോഗ്രാം = ? ക്വിന്റൽ' }, a: '5 Quintal', o: ['50 Quintal', '0.5 Quintal', '5000 Quintal'] },
+            { q: { en: 'Half Tonne = ? kg', ml: 'അര ടൺ = ? കിലോഗ്രാം' }, a: '500 kg', o: ['50 kg', '5 kg', '250 kg'] },
+            { q: { en: 'Half Quintal = ? kg', ml: 'അര ക്വിന്റൽ = ? കിലോഗ്രാം' }, a: '50 kg', o: ['5 kg', '500 kg', '25 kg'] },
+            { q: { en: 'Quarter Quintal = ? kg', ml: 'കാൽ ക്വിന്റൽ = ? കിലോഗ്രാം' }, a: '25 kg', o: ['2.5 kg', '250 kg', '50 kg'] }
+        ];
+
+        // Module 2: Grams & Kilograms Data
+        const gramsKgData = [
+            { q: { en: '1 kg = ? g', ml: '1 കിലോഗ്രാം = ? ഗ്രാം' }, a: '1000 g', o: ['10 g', '100 g', '1 g'] },
+            { q: { en: 'Half kg = ? g', ml: 'അര കിലോഗ്രാം = ? ഗ്രാം' }, a: '500 g', o: ['50 g', '5 g', '250 g'] },
+            { q: { en: 'Quarter kg = ? g', ml: 'കാൽ കിലോഗ്രാം = ? ഗ്രാം' }, a: '250 g', o: ['25 g', '500 g', '750 g'] },
+            { q: { en: 'Three-Quarter kg = ? g', ml: 'മുക്കാൽ കിലോഗ്രാം = ? ഗ്രാം' }, a: '750 g', o: ['75 g', '500 g', '250 g'] },
+            { q: { en: '2500 g = ?', ml: '2500 ഗ്രാം = ?' }, a: '2 kg 500 g', o: ['25 kg 0 g', '2 kg 50 g', '20 kg 500 g'] },
+            { q: { en: '3250 g = ?', ml: '3250 ഗ്രാം = ?' }, a: '3 kg 250 g', o: ['32 kg 50 g', '3 kg 25 g', '3.25 g'] },
+            { q: { en: 'Scale reads 1.005. What is the weight?', ml: 'ത്രാസിൽ 1.005. ഭാരം എത്ര?' }, a: '1 kg 5 g', o: ['1 kg 50 g', '1 kg 500 g', '1005 g'] },
+            { q: { en: 'Scale reads 7.250. What is the weight?', ml: 'ത്രാസിൽ 7.250. ഭാരം എത്ര?' }, a: '7 kg 250 g', o: ['7 kg 25 g', '72 kg 50 g', '7.25 g'] },
+            { q: { en: 'Scale reads 0.500. What is the weight?', ml: 'ത്രാസിൽ 0.500. ഭാരം എത്ര?' }, a: '500 g', o: ['5 g', '50 g', '5 kg'] },
+            { q: { en: '4 kg 250 g = ? g', ml: '4 കിലോഗ്രാം 250 ഗ്രാം = ? ഗ്രാം' }, a: '4250 g', o: ['4.25 g', '425 g', '40250 g'] }
+        ];
+
+        // Module 3: Litres & Millilitres Data
+        const litresMlData = [
+            { q: { en: '1 Litre = ? mL', ml: '1 ലിറ്റർ = ? മില്ലിലിറ്റർ' }, a: '1000 mL', o: ['10 mL', '100 mL', '1 mL'] },
+            { q: { en: 'Half Litre = ? mL', ml: 'അര ലിറ്റർ = ? മില്ലിലിറ്റർ' }, a: '500 mL', o: ['50 mL', '5 mL', '250 mL'] },
+            { q: { en: 'Quarter Litre = ? mL', ml: 'കാൽ ലിറ്റർ = ? മില്ലിലിറ്റർ' }, a: '250 mL', o: ['25 mL', '500 mL', '750 mL'] },
+            { q: { en: 'Three-Quarter Litre = ? mL', ml: 'മുക്കാൽ ലിറ്റർ = ? മില്ലിലിറ്റർ' }, a: '750 mL', o: ['75 mL', '500 mL', '250 mL'] },
+            { q: { en: '2500 mL = ? Litres', ml: '2500 മില്ലിലിറ്റർ = ? ലിറ്റർ' }, a: '2.5 Litres', o: ['25 Litres', '0.25 Litres', '250 Litres'] },
+            { q: { en: '1000L + 500L + 200L + 200L = ? L', ml: '1000L + 500L + 200L + 200L = ? L' }, a: '1900 L', o: ['1700 L', '1800 L', '2000 L'] },
+            { q: { en: 'How many 100 mL bottles in 1 Litre?', ml: '1 ലിറ്ററിൽ എത്ര 100 മില്ലി കുപ്പികൾ?' }, a: '10', o: ['1', '5', '100'] },
+            { q: { en: 'How many 250 mL bottles in 1 Litre?', ml: '1 ലിറ്ററിൽ എത്ര 250 മില്ലി കുപ്പികൾ?' }, a: '4', o: ['1', '2', '5'] },
+            { q: { en: 'How many 500 mL bottles in 1 Litre?', ml: '1 ലിറ്ററിൽ എത്ര 500 മില്ലി കുപ്പികൾ?' }, a: '2', o: ['1', '4', '5'] },
+            { q: { en: '500mL x 5 + 200mL x 6 = ? mL', ml: '500mL x 5 + 200mL x 6 = ? mL' }, a: '3700 mL', o: ['3500 mL', '1200 mL', '2500 mL'] }
+        ];
+
+        // Module 4: Weight Puzzles Data (Fill-in-the-blank)
+        const weightPuzzleData = [
+            { q: { en: '40 bags, 50 kg each. Total kg?', ml: '40 ചാക്ക്, ഓരോന്നും 50 കി.ഗ്രാം. ആകെ കി.ഗ്രാം?' }, a: '2000' },
+            { q: { en: '20 bags, 50 kg each. Total kg?', ml: '20 ചാക്ക്, ഓരോന്നും 50 കി.ഗ്രാം. ആകെ കി.ഗ്രാം?' }, a: '1000' },
+            { q: { en: '25 bags, 20 kg each. Total kg?', ml: '25 ചാക്ക്, ഓരോന്നും 20 കി.ഗ്രാം. ആകെ കി.ഗ്രാം?' }, a: '500' },
+            { q: { en: 'How many 50 kg bags in 1 tonne (1000 kg)?', ml: '1 ടണ്ണിൽ (1000 കി.ഗ്രാം) എത്ര 50 കി.ഗ്രാം ചാക്കുകൾ?' }, a: '20' },
+            { q: { en: 'How many 25 kg bags in 1 tonne (1000 kg)?', ml: '1 ടണ്ണിൽ (1000 കി.ഗ്രാം) എത്ര 25 കി.ഗ്രാം ചാക്കുകൾ?' }, a: '40' },
+            { q: { en: 'Bought 250 g. Balance from 1 kg (1000 g)?', ml: '250 ഗ്രാം വാങ്ങി. 1 കി.ഗ്രാമിൽ (1000 ഗ്രാം) ബാക്കി?' }, a: '750' },
+            { q: { en: 'Bought 900 g. Balance from 1 kg (1000 g)?', ml: '900 ഗ്രാം വാങ്ങി. 1 കി.ഗ്രാമിൽ (1000 ഗ്രാം) ബാക്കി?' }, a: '100' },
+            { q: { en: 'Bought 750 g. Balance from 1 kg (1000 g)?', ml: '750 ഗ്രാം വാങ്ങി. 1 കി.ഗ്രാമിൽ (1000 ഗ്രാം) ബാക്കി?' }, a: '250' },
+            { q: { en: '635 kg + 375 kg = ? kg', ml: '635 കി.ഗ്രാം + 375 കി.ഗ്രാം = ? കി.ഗ്രാം' }, a: '1010' },
+            { q: { en: '2 Quintal 65 kg = ? kg', ml: '2 ക്വിന്റൽ 65 കി.ഗ്രാം = ? കി.ഗ്രാം' }, a: '265' }
+        ];
+
+        // Module 5: Liquid Puzzles Data (Fill-in-the-blank)
+        const liquidPuzzleData = [
+            { q: { en: '2 bottles of 250mL + 1 bottle of 500mL = ? mL', ml: '2 കുപ്പി 250mL + 1 കുപ്പി 500mL = ? mL' }, a: '1000' },
+            { q: { en: 'How many 100 mL bottles for 1 Litre (1000 mL)?', ml: '1 ലിറ്ററിന് (1000 mL) എത്ര 100 mL കുപ്പികൾ?' }, a: '10' },
+            { q: { en: 'How many 250 mL bottles for 1 Litre (1000 mL)?', ml: '1 ലിറ്ററിന് (1000 mL) എത്ര 250 mL കുപ്പികൾ?' }, a: '4' },
+            { q: { en: '2000 L tank needs 765 L to be full. How much water is in it? (in L)', ml: '2000 L ടാങ്ക് നിറയാൻ 765 L വേണം. ഇപ്പോൾ എത്ര വെള്ളമുണ്ട്? (L-ൽ)' }, a: '1235' },
+            { q: { en: '5 bottles of 500 mL = ? mL', ml: '5 കുപ്പി 500 mL = ? mL' }, a: '2500' },
+            { q: { en: '6 bottles of 200 mL = ? mL', ml: '6 കുപ്പി 200 mL = ? mL' }, a: '1200' },
+            { q: { en: 'Total oil: (5 x 500mL) + (6 x 200mL) + 1300mL = ? mL', ml: 'ആകെ എണ്ണ: (5 x 500mL) + (6 x 200mL) + 1300mL = ? mL' }, a: '5000' },
+            { q: { en: '550 L 750 mL - 85 L 250 mL = ? (Answer in mL)', ml: '550 L 750 mL - 85 L 250 mL = ? (mL-ൽ ഉത്തരം)' }, a: '465500' },
+            { q: { en: 'Payasam: 100 mL glass for 1000 people. How many Litres needed?', ml: 'പായസം: 1000 പേർക്ക് 100 mL ഗ്ലാസ്. എത്ര ലിറ്റർ വേണം?' }, a: '100' },
+            { q: { en: 'Rice for 8 people = 1 kg. Rice for 1000 people = ? kg', ml: '8 പേർക്ക് 1 കി.ഗ്രാം അരി. 1000 പേർക്ക് എത്ര കി.ഗ്രാം അരി?' }, a: '125' }
+        ];
+
+        let quizState = {};
+
+        // --- 3. NAVIGATION & MODULE HANDLING ---
+        function setLanguage(langCode) {
+            currentLang = langCode;
+            document.querySelectorAll('[data-lang-key]').forEach(elem => {
+                const key = elem.getAttribute('data-lang-key');
+                if (lang[key] && lang[key][currentLang]) {
+                    elem.innerHTML = lang[key][currentLang];
+                }
+            });
+
+            // Refresh current quiz module to update language
+            const activeModuleId = document.querySelector('.module.active').id;
+            if (quizState[activeModuleId]) {
+                const { type, currentQuestionIndex } = quizState[activeModuleId];
+                if (type === 'mcq') {
+                    loadMcqQuestion(activeModuleId, currentQuestionIndex);
+                } else if (type === 'fill') {
+                    loadFillInBlankQuestion(activeModuleId, currentQuestionIndex);
+                }
+            }
+        }
+
+        document.getElementById('lang-selector').addEventListener('change', (e) => setLanguage(e.target.value));
+
+        function showModule(moduleId) {
+            document.querySelectorAll('.module').forEach(module => module.classList.remove('active'));
+            document.getElementById(moduleId).classList.add('active');
+            
+            // Initialize quiz modules
+            switch(moduleId) {
+                case 'heavy-weight-quiz':
+                    initMcqQuiz('heavy-weight', heavyWeightData);
+                    break;
+                case 'grams-kg-quiz':
+                    initMcqQuiz('grams-kg', gramsKgData);
+                    break;
+                case 'litres-ml-quiz':
+                    initMcqQuiz('litres-ml', litresMlData);
+                    break;
+                case 'weight-puzzle':
+                    initFillInBlankQuiz('weight', weightPuzzleData);
+                    break;
+                case 'liquid-puzzle':
+                    initFillInBlankQuiz('liquid', liquidPuzzleData);
+                    break;
+            }
+        }
+
+        // --- 4. QUIZ LOGIC (Multiple Choice) ---
+
+        function initMcqQuiz(prefix, data) {
+            quizState[prefix + '-quiz'] = {
+                prefix: prefix,
+                data: data,
+                currentQuestionIndex: 0,
+                totalQuestions: data.length,
+                type: 'mcq'
+            };
+            loadMcqQuestion(prefix + '-quiz', 0);
+        }
+
+        function loadMcqQuestion(moduleId, index) {
+            const { prefix, data, totalQuestions } = quizState[moduleId];
+            if (index >= totalQuestions) {
+                showQuizComplete(prefix);
+                return;
+            }
+            
+            const qData = data[index];
+            document.getElementById(prefix + '-question').textContent = qData.q[currentLang];
+            document.getElementById(prefix + '-counter').textContent = lang.question_counter[currentLang]
+                .replace('{current}', index + 1)
+                .replace('{total}', totalQuestions);
+            
+            const optionsContainer = document.getElementById(prefix + '-options');
+            optionsContainer.innerHTML = '';
+            
+            let options = [qData.a, ...qData.o];
+            options.sort(() => Math.random() - 0.5).forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.onclick = () => checkMcqAnswer(moduleId, option, qData.a, button);
+                optionsContainer.appendChild(button);
+            });
+            document.getElementById(prefix + '-feedback').textContent = '';
+        }
+
+        function checkMcqAnswer(moduleId, selected, correct, btn) {
+            const { prefix } = quizState[moduleId];
+            const feedbackElem = document.getElementById(prefix + '-feedback');
+            const allButtons = document.querySelectorAll('#' + prefix + '-options .option-btn');
+            allButtons.forEach(b => b.disabled = true);
+
+            if (selected === correct) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                btn.classList.add('correct');
+                setTimeout(() => {
+                    quizState[moduleId].currentQuestionIndex++;
+                    loadMcqQuestion(moduleId, quizState[moduleId].currentQuestionIndex);
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+                btn.classList.add('wrong');
+                allButtons.forEach(b => {
+                    if (b.textContent === correct) b.classList.add('correct');
+                });
+                setTimeout(() => {
+                    allButtons.forEach(b => b.disabled = false);
+                    feedbackElem.textContent = '';
+                    btn.classList.remove('wrong');
+                    allButtons.forEach(b => { if (b.textContent === correct) b.classList.remove('correct'); });
+                }, 2000);
+            }
+        }
+
+        function showQuizComplete(prefix) {
+            document.getElementById(prefix + '-question').textContent = lang.quiz_complete[currentLang];
+            document.getElementById(prefix + '-options').innerHTML = '';
+            document.getElementById(prefix + '-feedback').textContent = '🎉';
+            document.getElementById(prefix + '-counter').textContent = '';
+        }
+
+        // --- 5. QUIZ LOGIC (Fill-in-the-blank) ---
+        
+        function initFillInBlankQuiz(prefix, data) {
+            quizState[prefix + '-puzzle'] = {
+                prefix: prefix,
+                data: data,
+                currentQuestionIndex: 0,
+                totalQuestions: data.length,
+                type: 'fill'
+            };
+            loadFillInBlankQuestion(prefix + '-puzzle', 0);
+        }
+
+        function loadFillInBlankQuestion(moduleId, index) {
+            const { prefix, data, totalQuestions } = quizState[moduleId];
+            if (index >= totalQuestions) {
+                showQuizComplete(prefix);
+                return;
+            }
+
+            const qData = data[index];
+            document.getElementById(prefix + '-question').textContent = qData.q[currentLang];
+            document.getElementById(prefix + '-counter').textContent = lang.question_counter[currentLang]
+                .replace('{current}', index + 1)
+                .replace('{total}', totalQuestions);
+            
+            document.getElementById(prefix + '-answer').value = '';
+            document.getElementById(prefix + '-feedback').textContent = '';
+        }
+
+        function checkFillInBlankAnswer(prefix) {
+            const moduleId = prefix + '-puzzle';
+            const { data, currentQuestionIndex } = quizState[moduleId];
+            const feedbackElem = document.getElementById(prefix + '-feedback');
+            const answerInput = document.getElementById(prefix + '-answer');
+            const userAnswer = answerInput.value.trim().toLowerCase().replace(/\s+/g, ' '); // Standardize answer
+            const correctAnswer = data[currentQuestionIndex].a.toLowerCase().replace(/\s+/g, ' '); // Standardize answer
+
+            if (userAnswer === correctAnswer) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(() => {
+                    quizState[moduleId].currentQuestionIndex++;
+                    loadFillInBlankQuestion(moduleId, quizState[moduleId].currentQuestionIndex);
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+        
+        // --- INITIALIZE APP ---
+        setLanguage(currentLang);
+    </script>
+</body>
+</html>

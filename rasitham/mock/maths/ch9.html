@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equal Groups</title>
+    <style>
+        /* --- General Styling & Fonts --- */
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap');
+        
+        :root {
+            --primary-color: #E91E63; /* Pink */
+            --secondary-color: #FF9800; /* Orange */
+            --background-color: #FCE4EC; /* Light Pink */
+            --text-color: #333;
+            --correct-color: #4CAF50; /* Green */
+            --wrong-color: #F44336; /* Red */
+            --white: #FFFFFF;
+            --font-main: 'Baloo 2', cursive;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Main App Container --- */
+        #app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 900px;
+            background: var(--white);
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 5px solid var(--white);
+        }
+
+        /* --- Header --- */
+        header {
+            background: linear-gradient(45deg, var(--primary-color), #C2185B);
+            color: var(--white);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        #lang-selector {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--white);
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            font-family: var(--font-main);
+            font-weight: 700;
+        }
+        #lang-selector option { color: black; }
+
+        /* --- Main Content Area --- */
+        main {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            text-align: center;
+            background: #FAFAFA;
+        }
+        
+        .module { display: none; }
+        .module.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h2 {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            font-size: 1.2em;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            color: #555;
+        }
+        
+        .question-counter {
+            font-size: 1em;
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+
+        /* --- Buttons & Inputs --- */
+        .btn, button {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--secondary-color), #F57C00);
+            color: var(--white);
+            font-family: var(--font-main);
+            padding: 14px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.3em;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 8px 5px;
+        }
+
+        .btn:hover, button:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(255,152,0,0.4);
+        }
+        
+        .main-menu-btn {
+            display: block;
+            width: 90%;
+            margin: 12px auto;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        .main-menu-btn:hover { background: var(--primary-color); color: var(--white); }
+        
+        .back-btn { background: #f1f1f1; color: #555; font-size: 1.1em; padding: 10px 25px; }
+        .back-btn:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+        input[type="number"], input[type="text"] {
+            width: 80%;
+            padding: 12px;
+            font-size: 1.8em;
+            font-weight: 700;
+            text-align: center;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            margin-top: 15px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .feedback { font-size: 1.3em; font-weight: 700; margin-top: 20px; height: 35px; transition: all 0.3s; }
+
+        /* --- Game-Specific Styles --- */
+        .game-emoji { font-size: 100px; margin-bottom: 15px; }
+        
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        
+        .option-btn {
+            width: 100%;
+            padding: 15px 10px;
+            font-size: 1.2em;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid #ddd;
+        }
+        .option-btn.correct { background: var(--correct-color); color: var(--white); border-color: var(--correct-color); animation: pulse 0.5s; }
+        .option-btn.wrong { background: var(--wrong-color); color: var(--white); border-color: var(--wrong-color); animation: shake 0.5s; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1 data-lang-key="app_title">Equal Groups</h1>
+            <select id="lang-selector">
+                <option value="en">English</option>
+                <option value="ml">മലയാളം</option>
+            </select>
+        </header>
+
+        <main>
+            <div id="welcome-screen" class="module active">
+                <h2 data-lang-key="welcome_title">Equal Groups!</h2>
+                <div class="game-emoji">➗</div>
+                <p class="instruction" data-lang-key="welcome_subtitle">Let's practice division!</p>
+                <button class="main-menu-btn" onclick="showModule('basic-division-quiz')" data-lang-key="activity1_btn">Basic Division</button>
+                <button class="main-menu-btn" onclick="showModule('facts-quiz')" data-lang-key="activity2_btn">Division Facts</button>
+                <button class="main-menu-btn" onclick="showModule('mental-math-puzzle')" data-lang-key="activity3_btn">Mental Math</button>
+                <button class="main-menu-btn" onclick="showModule('zeros-puzzle')" data-lang-key="activity4_btn">Division with Zeros</button>
+                <button class="main-menu-btn" onclick="showModule('puzzle-quiz')" data-lang-key="activity5_btn">Division Puzzles</button>
+            </div>
+
+            <div id="basic-division-quiz" class="module">
+                <h2 data-lang-key="basic_division_title">Basic Division</h2>
+                <div class="question-counter" id="basic-division-counter"></div>
+                <p id="basic-division-question" class="instruction"></p>
+                <div id="basic-division-options" class="options-grid"></div>
+                <div id="basic-division-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+            
+            <div id="facts-quiz" class="module">
+                <h2 data-lang-key="facts_title">Division Facts</h2>
+                <div class="question-counter" id="facts-counter"></div>
+                <p id="facts-question" class="instruction"></p>
+                <div id="facts-options" class="options-grid"></div>
+                <div id="facts-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="mental-math-puzzle" class="module">
+                <h2 data-lang-key="mental_math_title">Mental Math</h2>
+                <div class="question-counter" id="mental-math-counter"></div>
+                <p id="mental-math-question" class="instruction"></p>
+                <input type="number" id="mental-math-answer" placeholder="?">
+                <div id="mental-math-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkFillInBlankAnswer('mental-math')" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="zeros-puzzle" class="module">
+                <h2 data-lang-key="zeros_title">Division with Zeros</h2>
+                <div class="question-counter" id="zeros-counter"></div>
+                <p id="zeros-question" class="instruction"></p>
+                <input type="number" id="zeros-answer" placeholder="?">
+                <div id="zeros-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkFillInBlankAnswer('zeros')" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="puzzle-quiz" class="module">
+                <h2 data-lang-key="puzzle_title">Division Puzzles</h2>
+                <div class="question-counter" id="puzzle-counter"></div>
+                <p id="puzzle-question" class="instruction"></p>
+                <div id="puzzle-options" class="options-grid"></div>
+                <div id="puzzle-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 1. LANGUAGE & TEXT DATA ---
+        const lang = {
+            'app_title': { en: 'Equal Groups', ml: 'തുല്യമായ കൂട്ടം' },
+            'back_to_menu': { en: 'Menu', ml: 'മെനു' },
+            'check_btn': { en: 'Check', ml: 'പരിശോധിക്കുക' },
+            'welcome_title': { en: 'Equal Groups!', ml: 'തുല്യമായ കൂട്ടം!' },
+            'welcome_subtitle': { en: "Let's practice division!", ml: 'നമുക്ക് ഹരണം പരിശീലിക്കാം!' },
+            'correct_feedback': { en: 'Correct! 🎉', ml: 'ശരിയാണ്! 🎉' },
+            'wrong_feedback': { en: 'Try again! 🤔', ml: 'വീണ്ടും ശ്രമിക്കൂ! 🤔' },
+            'quiz_complete': { en: 'Quiz Complete! Great job!', ml: 'ക്വിസ് പൂർത്തിയായി! കൊള്ളാം!' },
+            'question_counter': { en: 'Question {current} of {total}', ml: 'ചോദ്യം {current} / {total}' },
+            
+            'activity1_btn': { en: 'Basic Division', ml: 'അടിസ്ഥാന ഹരണം' },
+            'activity2_btn': { en: 'Division Facts', ml: 'ഹരണ വസ്തുതകൾ' },
+            'activity3_btn': { en: 'Mental Math', ml: 'മനക്കണക്ക്' },
+            'activity4_btn': { en: 'Division with Zeros', ml: 'പൂജ്യങ്ങൾ കൊണ്ടുള്ള ഹരണം' },
+            'activity5_btn': { en: 'Division Puzzles', ml: 'ഹരണക്കണക്കുകൾ' },
+
+            'basic_division_title': { en: 'Basic Division', ml: 'അടിസ്ഥാന ഹരണം' },
+            'facts_title': { en: 'Division Facts', ml: 'ഹരണ വസ്തുതകൾ' },
+            'mental_math_title': { en: 'Mental Math', ml: 'മനക്കണക്ക്' },
+            'zeros_title': { en: 'Division with Zeros', ml: 'പൂജ്യങ്ങൾ കൊണ്ടുള്ള ഹരണം' },
+            'puzzle_title': { en: 'Division Puzzles', ml: 'ഹരണക്കണക്കുകൾ' },
+        };
+
+        let currentLang = 'en';
+
+        // --- 2. QUIZ DATA ---
+
+        // Module 1: Basic Division Data
+        const basicDivisionData = [
+            { q: { en: '36 ÷ 2 = ?', ml: '36 ÷ 2 = ?' }, a: '18', o: ['16', '12', '20'] },
+            { q: { en: '36 ÷ 3 = ?', ml: '36 ÷ 3 = ?' }, a: '12', o: ['10', '9', '18'] },
+            { q: { en: '36 ÷ 4 = ?', ml: '36 ÷ 4 = ?' }, a: '9', o: ['8', '12', '6'] },
+            { q: { en: '36 ÷ 6 = ?', ml: '36 ÷ 6 = ?' }, a: '6', o: ['4', '9', '12'] },
+            { q: { en: '36 ÷ 9 = ?', ml: '36 ÷ 9 = ?' }, a: '4', o: ['3', '6', '9'] },
+            { q: { en: '48 ÷ 6 = ?', ml: '48 ÷ 6 = ?' }, a: '8', o: ['6', '7', '9'] },
+            { q: { en: '48 ÷ 8 = ?', ml: '48 ÷ 8 = ?' }, a: '6', o: ['8', '7', '9'] },
+            { q: { en: '32 ÷ 4 = ?', ml: '32 ÷ 4 = ?' }, a: '8', o: ['6', '7', '9'] },
+            { q: { en: '24 ÷ 2 = ?', ml: '24 ÷ 2 = ?' }, a: '12', o: ['10', '11', '13'] },
+            { q: { en: '40 ÷ 4 = ?', ml: '40 ÷ 4 = ?' }, a: '10', o: ['8', '9', '12'] }
+        ];
+
+        // Module 2: Division Facts Data
+        const factsQuizData = [
+            { q: { en: '9 × ? = 36', ml: '9 × ? = 36' }, a: '4', o: ['3', '6', '5'] },
+            { q: { en: '6 × ? = 36', ml: '6 × ? = 36' }, a: '6', o: ['4', '7', '9'] },
+            { q: { en: '4 × ? = 36', ml: '4 × ? = 36' }, a: '9', o: ['8', '6', '12'] },
+            { q: { en: '3 × ? = 36', ml: '3 × ? = 36' }, a: '12', o: ['10', '9', '18'] },
+            { q: { en: '8 × 6 = 48, so 48 ÷ 8 = ?', ml: '8 × 6 = 48, അപ്പോൾ 48 ÷ 8 = ?' }, a: '6', o: ['8', '48', '7'] },
+            { q: { en: '8 × 6 = 48, so 48 ÷ 6 = ?', ml: '8 × 6 = 48, അപ്പോൾ 48 ÷ 6 = ?' }, a: '8', o: ['6', '48', '7'] },
+            { q: { en: '9 × 4 = 36, so 36 ÷ 4 = ?', ml: '9 × 4 = 36, അപ്പോൾ 36 ÷ 4 = ?' }, a: '9', o: ['4', '36', '6'] },
+            { q: { en: '7 × 6 = 42, so 42 ÷ 7 = ?', ml: '7 × 6 = 42, അപ്പോൾ 42 ÷ 7 = ?' }, a: '6', o: ['7', '42', '8'] },
+            { q: { en: '6 × 5 = 30, so 30 ÷ 5 = ?', ml: '6 × 5 = 30, അപ്പോൾ 30 ÷ 5 = ?' }, a: '6', o: ['5', '30', '7'] },
+            { q: { en: '4 × ? = 32', ml: '4 × ? = 32' }, a: '8', o: ['6', '7', '9'] }
+        ];
+
+        // Module 3: Mental Math Data (Fill-in-the-blank)
+        const mentalMathData = [
+            { q: { en: '76 ÷ 2 = ?', ml: '76 ÷ 2 = ?' }, a: '38' },
+            { q: { en: '68 ÷ 2 = ?', ml: '68 ÷ 2 = ?' }, a: '34' },
+            { q: { en: '68 ÷ 4 = ?', ml: '68 ÷ 4 = ?' }, a: '17' },
+            { q: { en: '76 ÷ 4 = ?', ml: '76 ÷ 4 = ?' }, a: '19' },
+            { q: { en: '57 ÷ 3 = ?', ml: '57 ÷ 3 = ?' }, a: '19' },
+            { q: { en: '54 ÷ 6 = ?', ml: '54 ÷ 6 = ?' }, a: '9' },
+            { q: { en: '84 ÷ 4 = ?', ml: '84 ÷ 4 = ?' }, a: '21' },
+            { q: { en: '63 ÷ 3 = ?', ml: '63 ÷ 3 = ?' }, a: '21' },
+            { q: { en: '72 ÷ 6 = ?', ml: '72 ÷ 6 = ?' }, a: '12' },
+            { q: { en: '96 ÷ 8 = ?', ml: '96 ÷ 8 = ?' }, a: '12' }
+        ];
+
+        // Module 4: Division with Zeros Data (Fill-in-the-blank)
+        const zerosQuizData = [
+            { q: { en: '3600 ÷ 100 = ?', ml: '3600 ÷ 100 = ?' }, a: '36' },
+            { q: { en: '3600 ÷ 200 = ?', ml: '3600 ÷ 200 = ?' }, a: '18' },
+            { q: { en: '80 ÷ 4 = ?', ml: '80 ÷ 4 = ?' }, a: '20' },
+            { q: { en: '800 ÷ 4 = ?', ml: '800 ÷ 4 = ?' }, a: '200' },
+            { q: { en: '60 ÷ 3 = ?', ml: '60 ÷ 3 = ?' }, a: '20' },
+            { q: { en: '600 ÷ 3 = ?', ml: '600 ÷ 3 = ?' }, a: '200' },
+            { q: { en: '1000 ÷ 250 = ?', ml: '1000 ÷ 250 = ?' }, a: '4' },
+            { q: { en: '10000 ÷ 250 = ?', ml: '10000 ÷ 250 = ?' }, a: '40' },
+            { q: { en: '3500 ÷ 100 = ?', ml: '3500 ÷ 100 = ?' }, a: '35' },
+            { q: { en: '3500 ÷ 500 = ?', ml: '3500 ÷ 500 = ?' }, a: '7' }
+        ];
+
+        // Module 5: Division Puzzles Data (Multiple Choice)
+        const puzzleQuizData = [
+            { q: { en: '35 apples in 7 trays. How many in one tray?', ml: '35 ആപ്പിൾ 7 ട്രേകളിൽ. ഒരു ട്രേയിൽ എത്ര?' }, a: '5', o: ['6', '7', '35'] },
+            { q: { en: '36 oranges, 6 per tray. How many trays?', ml: '36 ഓറഞ്ച്, ഒരു ട്രേയിൽ 6 എണ്ണം. എത്ര ട്രേകൾ?' }, a: '6', o: ['5', '7', '36'] },
+            { q: { en: '50 mangoes in 5 groups. How many in one group?', ml: '50 മാമ്പഴം 5 കൂട്ടങ്ങളാക്കി. ഒരു കൂട്ടത്തിൽ എത്ര?' }, a: '10', o: ['5', '12', '50'] },
+            { q: { en: '32 pineapples in groups of 4. How many groups?', ml: '32 പൈനാപ്പിൾ 4 എണ്ണം വീതമുള്ള കൂട്ടങ്ങൾ. എത്ര കൂട്ടങ്ങൾ?' }, a: '8', o: ['6', '7', '9'] },
+            { q: { en: '1 sack = 50 kg rice. 1 student = 5 kg. How many students per sack?', ml: '1 ചാക്ക് = 50 കിലോ അരി. 1 കുട്ടി = 5 കിലോ. ഒരു ചാക്ക് എത്ര കുട്ടിക്ക്?' }, a: '10', o: ['5', '50', '250'] },
+            { q: { en: '4 notebooks cost 72 rupees. What is the cost of 1?', ml: '4 നോട്ടുബുക്കിന് 72 രൂപ. ഒന്നിന്റെ വില?' }, a: '18', o: ['16', '14', '72'] },
+            { q: { en: '8 pens cost 72 rupees. What is the cost of 1?', ml: '8 പേനയ്ക്ക് 72 രൂപ. ഒന്നിന്റെ വില?' }, a: '9', o: ['8', '7', '12'] },
+            { q: { en: '10 scales cost 60 rupees. What is the cost of 1?', ml: '10 സ്കെയിലിന് 60 രൂപ. ഒന്നിന്റെ വില?' }, a: '6', o: ['10', '60', '5'] },
+            { q: { en: '120 sweets are shared equally among 40 kids. How many sweets each?', ml: '120 മിഠായി 40 കുട്ടികൾക്ക് തുല്യമായി നൽകി. ഒരാൾക്ക് എത്ര?' }, a: '3', o: ['4', '30', '10'] },
+            { q: { en: 'A number × 2 = 240. What is that number ÷ 2?', ml: 'ഒരു സംഖ്യ × 2 = 240. ആ സംഖ്യ ÷ 2 എത്ര?' }, a: '60', o: ['120', '240', '480'] }
+        ];
+
+
+        let quizState = {};
+
+        // --- 3. NAVIGATION & MODULE HANDLING ---
+        function setLanguage(langCode) {
+            currentLang = langCode;
+            document.querySelectorAll('[data-lang-key]').forEach(elem => {
+                const key = elem.getAttribute('data-lang-key');
+                if (lang[key] && lang[key][currentLang]) {
+                    elem.innerHTML = lang[key][currentLang];
+                }
+            });
+
+            // Refresh current quiz module to update language
+            const activeModuleId = document.querySelector('.module.active').id;
+            if (quizState[activeModuleId]) {
+                const { type, currentQuestionIndex } = quizState[activeModuleId];
+                if (type === 'mcq') {
+                    loadMcqQuestion(activeModuleId, currentQuestionIndex);
+                } else if (type === 'fill') {
+                    loadFillInBlankQuestion(activeModuleId, currentQuestionIndex);
+                }
+            }
+        }
+
+        document.getElementById('lang-selector').addEventListener('change', (e) => setLanguage(e.target.value));
+
+        function showModule(moduleId) {
+            document.querySelectorAll('.module').forEach(module => module.classList.remove('active'));
+            document.getElementById(moduleId).classList.add('active');
+            
+            // Initialize quiz modules
+            switch(moduleId) {
+                case 'basic-division-quiz':
+                    initMcqQuiz('basic-division', basicDivisionData);
+                    break;
+                case 'facts-quiz':
+                    initMcqQuiz('facts', factsQuizData);
+                    break;
+                case 'mental-math-puzzle':
+                    initFillInBlankQuiz('mental-math', mentalMathData);
+                    break;
+                case 'zeros-puzzle':
+                    initFillInBlankQuiz('zeros', zerosQuizData);
+                    break;
+                case 'puzzle-quiz':
+                    initMcqQuiz('puzzle', puzzleQuizData);
+                    break;
+            }
+        }
+
+        // --- 4. QUIZ LOGIC (Multiple Choice) ---
+
+        function initMcqQuiz(prefix, data) {
+            quizState[prefix + '-quiz'] = {
+                prefix: prefix,
+                data: data,
+                currentQuestionIndex: 0,
+                totalQuestions: data.length,
+                type: 'mcq'
+            };
+            loadMcqQuestion(prefix + '-quiz', 0);
+        }
+
+        function loadMcqQuestion(moduleId, index) {
+            const { prefix, data, totalQuestions } = quizState[moduleId];
+            if (index >= totalQuestions) {
+                showQuizComplete(prefix);
+                return;
+            }
+            
+            const qData = data[index];
+            document.getElementById(prefix + '-question').textContent = qData.q[currentLang];
+            document.getElementById(prefix + '-counter').textContent = lang.question_counter[currentLang]
+                .replace('{current}', index + 1)
+                .replace('{total}', totalQuestions);
+            
+            const optionsContainer = document.getElementById(prefix + '-options');
+            optionsContainer.innerHTML = '';
+            
+            let options = [qData.a, ...qData.o];
+            options.sort(() => Math.random() - 0.5).forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.onclick = () => checkMcqAnswer(moduleId, option, qData.a, button);
+                optionsContainer.appendChild(button);
+            });
+            document.getElementById(prefix + '-feedback').textContent = '';
+        }
+
+        function checkMcqAnswer(moduleId, selected, correct, btn) {
+            const { prefix } = quizState[moduleId];
+            const feedbackElem = document.getElementById(prefix + '-feedback');
+            const allButtons = document.querySelectorAll('#' + prefix + '-options .option-btn');
+            allButtons.forEach(b => b.disabled = true);
+
+            if (selected === correct) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                btn.classList.add('correct');
+                setTimeout(() => {
+                    quizState[moduleId].currentQuestionIndex++;
+                    loadMcqQuestion(moduleId, quizState[moduleId].currentQuestionIndex);
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+                btn.classList.add('wrong');
+                allButtons.forEach(b => {
+                    if (b.textContent === correct) b.classList.add('correct');
+                });
+                setTimeout(() => {
+                    allButtons.forEach(b => b.disabled = false);
+                    feedbackElem.textContent = '';
+                    btn.classList.remove('wrong');
+                    allButtons.forEach(b => { if (b.textContent === correct) b.classList.remove('correct'); });
+                }, 2000);
+            }
+        }
+
+        function showQuizComplete(prefix) {
+            document.getElementById(prefix + '-question').textContent = lang.quiz_complete[currentLang];
+            document.getElementById(prefix + '-options').innerHTML = '';
+            document.getElementById(prefix + '-feedback').textContent = '🎉';
+            document.getElementById(prefix + '-counter').textContent = '';
+        }
+
+        // --- 5. QUIZ LOGIC (Fill-in-the-blank) ---
+        
+        function initFillInBlankQuiz(prefix, data) {
+            quizState[prefix + '-puzzle'] = {
+                prefix: prefix,
+                data: data,
+                currentQuestionIndex: 0,
+                totalQuestions: data.length,
+                type: 'fill'
+            };
+            loadFillInBlankQuestion(prefix + '-puzzle', 0);
+        }
+
+        function loadFillInBlankQuestion(moduleId, index) {
+            const { prefix, data, totalQuestions } = quizState[moduleId];
+            if (index >= totalQuestions) {
+                showQuizComplete(prefix);
+                return;
+            }
+
+            const qData = data[index];
+            document.getElementById(prefix + '-question').textContent = qData.q[currentLang];
+            document.getElementById(prefix + '-counter').textContent = lang.question_counter[currentLang]
+                .replace('{current}', index + 1)
+                .replace('{total}', totalQuestions);
+            
+            document.getElementById(prefix + '-answer').value = '';
+            document.getElementById(prefix + '-feedback').textContent = '';
+        }
+
+        function checkFillInBlankAnswer(prefix) {
+            const moduleId = prefix + '-puzzle';
+            const { data, currentQuestionIndex } = quizState[moduleId];
+            const feedbackElem = document.getElementById(prefix + '-feedback');
+            const answerInput = document.getElementById(prefix + '-answer');
+            const userAnswer = answerInput.value.trim().toLowerCase().replace(/\s+/g, ' '); // Standardize answer
+            const correctAnswer = data[currentQuestionIndex].a.toLowerCase().replace(/\s+/g, ' '); // Standardize answer
+
+            if (userAnswer === correctAnswer) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(() => {
+                    quizState[moduleId].currentQuestionIndex++;
+                    loadFillInBlankQuestion(moduleId, quizState[moduleId].currentQuestionIndex);
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+        
+        // --- INITIALIZE APP ---
+        setLanguage(currentLang);
+    </script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>We Can Measure Like This</title>
+    <style>
+        /* --- General Styling & Fonts --- */
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap');
+        
+        :root {
+            --primary-color: #009688; /* Teal */
+            --secondary-color: #FF5722; /* Deep Orange */
+            --background-color: #E0F2F1; /* Light Teal */
+            --text-color: #333;
+            --correct-color: #4CAF50; /* Green */
+            --wrong-color: #F44336; /* Red */
+            --white: #FFFFFF;
+            --font-main: 'Baloo 2', cursive;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Main App Container --- */
+        #app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 900px;
+            background: var(--white);
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 5px solid var(--white);
+        }
+
+        /* --- Header --- */
+        header {
+            background: linear-gradient(45deg, var(--primary-color), #00796B);
+            color: var(--white);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        #lang-selector {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--white);
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            font-family: var(--font-main);
+            font-weight: 700;
+        }
+        #lang-selector option { color: black; }
+
+        /* --- Main Content Area --- */
+        main {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            text-align: center;
+            background: #FAFAFA;
+        }
+        
+        .module { display: none; }
+        .module.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h2 {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            font-size: 1.2em;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            color: #555;
+        }
+        
+        .question-counter {
+            font-size: 1em;
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+
+        /* --- Buttons & Inputs --- */
+        .btn, button {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--secondary-color), #E64A19);
+            color: var(--white);
+            font-family: var(--font-main);
+            padding: 14px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.3em;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 8px 5px;
+        }
+
+        .btn:hover, button:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(255,87,34,0.4);
+        }
+        
+        .main-menu-btn {
+            display: block;
+            width: 90%;
+            margin: 12px auto;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        .main-menu-btn:hover { background: var(--primary-color); color: var(--white); }
+        
+        .back-btn { background: #f1f1f1; color: #555; font-size: 1.1em; padding: 10px 25px; }
+        .back-btn:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+        input[type="number"], input[type="text"] {
+            width: 80%;
+            padding: 12px;
+            font-size: 1.8em;
+            font-weight: 700;
+            text-align: center;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            margin-top: 15px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .feedback { font-size: 1.3em; font-weight: 700; margin-top: 20px; height: 35px; transition: all 0.3s; }
+
+        /* --- Game-Specific Styles --- */
+        .game-emoji { font-size: 100px; margin-bottom: 15px; }
+        
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        
+        .option-btn {
+            width: 100%;
+            padding: 15px 10px;
+            font-size: 1.2em;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid #ddd;
+        }
+        .option-btn.correct { background: var(--correct-color); color: var(--white); border-color: var(--correct-color); animation: pulse 0.5s; }
+        .option-btn.wrong { background: var(--wrong-color); color: var(--white); border-color: var(--wrong-color); animation: shake 0.5s; }
+        
+        .ruler-image {
+            width: 100%;
+            max-width: 350px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1 data-lang-key="app_title">We Can Measure Like This</h1>
+            <select id="lang-selector">
+                <option value="en">English</option>
+                <option value="ml">മലയാളം</option>
+            </select>
+        </header>
+
+        <main>
+            <div id="welcome-screen" class="module active">
+                <h2 data-lang-key="welcome_title">We Can Measure!</h2>
+                <div class="game-emoji">📏</div>
+                <p class="instruction" data-lang-key="welcome_subtitle">Choose a quiz to start measuring!</p>
+                <button class="main-menu-btn" onclick="showModule('ruler-quiz')" data-lang-key="activity1_btn">Read the Ruler</button>
+                <button class="main-menu-btn" onclick="showModule('cm-mm-quiz')" data-lang-key="activity2_btn">Convert: CM & MM</button>
+                <button class="main-menu-btn" onclick="showModule('m-km-quiz')" data-lang-key="activity3_btn">Convert: M & KM</button>
+                <button class="main-menu-btn" onclick="showModule('length-puzzle')" data-lang-key="activity4_btn">Length Puzzles</button>
+                <button class="main-menu-btn" onclick="showModule('distance-puzzle')" data-lang-key="activity5_btn">Distance Puzzles</button>
+            </div>
+
+            <div id="ruler-quiz" class="module">
+                <h2 data-lang-key="ruler_quiz_title">Read the Ruler</h2>
+                <div class="question-counter" id="ruler-counter"></div>
+                <p id="ruler-question" class="instruction"></p>
+                <div id="ruler-options" class="options-grid"></div>
+                <div id="ruler-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+            
+            <div id="cm-mm-quiz" class="module">
+                <h2 data-lang-key="cm_mm_quiz_title">Convert: CM & MM</h2>
+                <div class="question-counter" id="cm-mm-counter"></div>
+                <p id="cm-mm-question" class="instruction"></p>
+                <div id="cm-mm-options" class="options-grid"></div>
+                <div id="cm-mm-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="m-km-quiz" class="module">
+                <h2 data-lang-key="m_km_quiz_title">Convert: M & KM</h2>
+                <div class="question-counter" id="m-km-counter"></div>
+                <p id="m-km-question" class="instruction"></p>
+                <div id="m-km-options" class="options-grid"></div>
+                <div id="m-km-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="length-puzzle" class="module">
+                <h2 data-lang-key="length_puzzle_title">Length Puzzles</h2>
+                <div class="question-counter" id="length-counter"></div>
+                <p id="length-question" class="instruction"></p>
+                <input type="text" id="length-answer" placeholder="?">
+                <div id="length-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkFillInBlankAnswer('length')" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="distance-puzzle" class="module">
+                <h2 data-lang-key="distance_puzzle_title">Distance Puzzles</h2>
+                <div class="question-counter" id="distance-counter"></div>
+                <p id="distance-question" class="instruction"></p>
+                <input type="text" id="distance-answer" placeholder="?">
+                <div id="distance-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkFillInBlankAnswer('distance')" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 1. LANGUAGE & TEXT DATA ---
+        const lang = {
+            'app_title': { en: 'We Can Measure Like This', ml: 'ഇങ്ങനെ അളക്കാം' },
+            'back_to_menu': { en: 'Menu', ml: 'മെനു' },
+            'check_btn': { en: 'Check', ml: 'പരിശോധിക്കുക' },
+            'welcome_title': { en: 'We Can Measure!', ml: 'നമുക്ക് അളക്കാം!' },
+            'welcome_subtitle': { en: 'Choose a quiz to start measuring!', ml: 'അളന്നു തുടങ്ങാൻ ഒരു ക്വിസ് തിരഞ്ഞെടുക്കൂ!' },
+            'correct_feedback': { en: 'Correct! 🎉', ml: 'ശരിയാണ്! 🎉' },
+            'wrong_feedback': { en: 'Try again! 🤔', ml: 'വീണ്ടും ശ്രമിക്കൂ! 🤔' },
+            'quiz_complete': { en: 'Quiz Complete! Great job!', ml: 'ക്വിസ് പൂർത്തിയായി! കൊള്ളാം!' },
+            'question_counter': { en: 'Question {current} of {total}', ml: 'ചോദ്യം {current} / {total}' },
+            
+            'activity1_btn': { en: 'Read the Ruler', ml: 'സ്കെയിൽ അളക്കാം' },
+            'activity2_btn': { en: 'Convert: CM & MM', ml: 'മാറ്റം: സെ.മീ & മി.മീ' },
+            'activity3_btn': { en: 'Convert: M & KM', ml: 'മാറ്റം: മീറ്റർ & കി.മീ' },
+            'activity4_btn': { en: 'Length Puzzles', ml: 'നീളക്കണക്കുകൾ (സെ.മീ)' },
+            'activity5_btn': { en: 'Distance Puzzles', ml: 'ദൂരക്കണക്കുകൾ (കി.മീ)' },
+
+            'ruler_quiz_title': { en: 'Read the Ruler', ml: 'സ്കെയിൽ അളക്കാം' },
+            'cm_mm_quiz_title': { en: 'Convert: CM & MM', ml: 'മാറ്റം: സെ.മീ & മി.മീ' },
+            'm_km_quiz_title': { en: 'Convert: M & KM', ml: 'മാറ്റം: മീറ്റർ & കി.മീ' },
+            'length_puzzle_title': { en: 'Length Puzzles', ml: 'നീളക്കണക്കുകൾ' },
+            'distance_puzzle_title': { en: 'Distance Puzzles', ml: 'ദൂരക്കണക്കുകൾ' },
+
+            // Questions will be populated by JS
+        };
+
+        let currentLang = 'en';
+
+        // --- 2. QUIZ DATA ---
+
+        // Module 1: Ruler Quiz Data (CORRECTED)
+        const rulerQuizData = [
+            { 
+                q: { 
+                    en: 'Pencil starts at 3.8 cm and ends at 13.9 cm. What is the length?', 
+                    ml: 'പെൻസിൽ 3.8 സെ.മീ-ൽ തുടങ്ങി 13.9 സെ.മീ-ൽ അവസാനിക്കുന്നു. നീളം എത്ര?' 
+                }, 
+                a: '10cm 1mm', 
+                o: ['10cm 0mm', '13cm 9mm', '3cm 8mm'] 
+            },
+            { 
+                q: { 
+                    en: 'Pencil starts at 0 cm and ends at 9.8 cm. What is the length?', 
+                    ml: 'പെൻസിൽ 0 സെ.മീ-ൽ തുടങ്ങി 9.8 സെ.മീ-ൽ അവസാനിക്കുന്നു. നീളം എത്ര?' 
+                }, 
+                a: '9cm 8mm', 
+                o: ['9cm 0mm', '9cm 5mm', '10cm 2mm'] 
+            },
+            { 
+                q: { 
+                    en: 'Pencil starts at 5.9 cm and ends at 14.1 cm. What is the length?', 
+                    ml: 'പെൻസിൽ 5.9 സെ.മീ-ൽ തുടങ്ങി 14.1 സെ.മീ-ൽ അവസാനിക്കുന്നു. നീളം എത്ര?' 
+                }, 
+                a: '8cm 2mm', 
+                o: ['8cm 0mm', '14cm 1mm', '5cm 9mm'] 
+            },
+            { 
+                q: { 
+                    en: 'Pencil starts at 2.1 cm and ends at 8.8 cm. What is the length?', 
+                    ml: 'പെൻസിൽ 2.1 സെ.മീ-ൽ തുടങ്ങി 8.8 സെ.മീ-ൽ അവസാനിക്കുന്നു. നീളം എത്ര?' 
+                }, 
+                a: '6cm 7mm', 
+                o: ['6cm 0mm', '8cm 8mm', '6cm 5mm'] 
+            },
+            { 
+                q: { 
+                    en: 'Pencil starts at 3.8 cm and ends at 7.1 cm. What is the length?', 
+                    ml: 'പെൻസിൽ 3.8 സെ.മീ-ൽ തുടങ്ങി 7.1 സെ.മീ-ൽ അവസാനിക്കുന്നു. നീളം എത്ര?' 
+                }, 
+                a: '3cm 3mm', 
+                o: ['3cm 0mm', '7cm 1mm', '3cm 8mm'] 
+            }
+        ];
+
+        // Module 2: CM/MM Quiz Data
+        const cmMmQuizData = [
+            { q: { en: '5 cm 7 mm = ?', ml: '5 സെ.മീ 7 മി.മീ = ?' }, a: '57 mm', o: ['507 mm', '5.7 mm', '75 mm'] },
+            { q: { en: '1 cm 8 mm = ?', ml: '1 സെ.മീ 8 മി.മീ = ?' }, a: '18 mm', o: ['108 mm', '1.8 mm', '81 mm'] },
+            { q: { en: '24 mm = ?', ml: '24 മി.മീ = ?' }, a: '2 cm 4 mm', o: ['24 cm', '0 cm 24 mm', '2.4 cm 0 mm'] },
+            { q: { en: '16 cm 5 mm = ?', ml: '16 സെ.മീ 5 മി.മീ = ?' }, a: '165 mm', o: ['16.5 mm', '1605 mm', '516 mm'] },
+            { q: { en: '256 mm = ?', ml: '256 മി.മീ = ?' }, a: '25 cm 6 mm', o: ['2 cm 56 mm', '256 cm', '2.56 cm'] },
+            { q: { en: '140 mm = ?', ml: '140 മി.മീ = ?' }, a: '14 cm 0 mm', o: ['1 cm 40 mm', '1.4 cm', '140 cm'] },
+            { q: { en: '70 mm = ?', ml: '70 മി.മീ = ?' }, a: '7 cm', o: ['0 cm 70 mm', '70 cm', '0.7 cm'] },
+            { q: { en: '9 cm = ?', ml: '9 സെ.മീ = ?' }, a: '90 mm', o: ['9 mm', '0.9 mm', '900 mm'] },
+            { q: { en: '4 cm = ?', ml: '4 സെ.മീ = ?' }, a: '40 mm', o: ['4 mm', '0.4 mm', '400 mm'] },
+            { q: { en: '100 mm = ?', ml: '100 മി.മീ = ?' }, a: '10 cm', o: ['1 cm', '100 cm', '1000 mm'] }
+        ];
+
+        // Module 3: M/KM Quiz Data
+        const mKmQuizData = [
+            { q: { en: '3000 m = ?', ml: '3000 മീറ്റർ = ?' }, a: '3 km', o: ['30 km', '0.3 km', '300 km'] },
+            { q: { en: '3 km 500 m = ?', ml: '3 കി.മീ 500 മീറ്റർ = ?' }, a: '3500 m', o: ['3.5 m', '30500 m', '300500 m'] },
+            { q: { en: '2500 m = ?', ml: '2500 മീറ്റർ = ?' }, a: '2 km 500 m', o: ['25 km 0 m', '2.5 km 0 m', '250 km'] },
+            { q: { en: '5245 m = ?', ml: '5245 മീറ്റർ = ?' }, a: '5 km 245 m', o: ['52 km 45 m', '5.245 m', '524 km 5 m'] },
+            { q: { en: '3 km 800 m = ?', ml: '3 കി.മീ 800 മീറ്റർ = ?' }, a: '3800 m', o: ['380 m', '3.8 m', '30800 m'] },
+            { q: { en: '4.5 km (Half) = ?', ml: '4.5 കി.മീ (നാലര) = ?' }, a: '4500 m', o: ['4050 m', '4005 m', '450 m'] },
+            { q: { en: '1/2 km (Half) = ?', ml: '1/2 കി.മീ (അര) = ?' }, a: '500 m', o: ['50 m', '5000 m', '0.5 m'] },
+            { q: { en: '1/4 km (Quarter) = ?', ml: '1/4 കി.മീ (കാൽ) = ?' }, a: '250 m', o: ['25 m', '2500 m', '0.25 m'] },
+            { q: { en: '3/4 km (Three-Quarter) = ?', ml: '3/4 കി.മീ (മുക്കാൽ) = ?' }, a: '750 m', o: ['75 m', '7500 m', '0.75 m'] },
+            { q: { en: '5 km = ?', ml: '5 കി.മീ = ?' }, a: '5000 m', o: ['500 m', '50 m', '0.05 m'] }
+        ];
+
+        // Module 4: Length Puzzles Data
+        const lengthPuzzleData = [
+            { q: { en: '7 cm 8 mm + 5 cm 3 mm = ? (in mm)', ml: '7 സെ.മീ 8 മി.മീ + 5 സെ.മീ 3 മി.മീ = ? (മി.മീ-ൽ)' }, a: '131' },
+            { q: { en: '15 cm - 8 cm 4 mm = ? (in mm)', ml: '15 സെ.മീ - 8 സെ.മീ 4 മി.മീ = ? (മി.മീ-ൽ)' }, a: '66' },
+            { q: { en: '2 m 46 cm - 1 m 96 cm = ? (in cm)', ml: '2 മീ 46 സെ.മീ - 1 മീ 96 സെ.മീ = ? (സെ.മീ-ൽ)' }, a: '50' },
+            { q: { en: 'A square has a side of 9 cm 5 mm. What is its total perimeter? (in mm)', ml: 'ഒരു സമചതുരത്തിന്റെ വശം 9 സെ.മീ 5 മി.മീ. ആകെ ചുറ്റളവ്? (മി.മീ-ൽ)' }, a: '380' },
+            { q: { en: '20 cm 4 mm + 16 cm 6 mm = ? (in mm)', ml: '20 സെ.മീ 4 മി.മീ + 16 സെ.മീ 6 മി.മീ = ? (മി.മീ-ൽ)' }, a: '370' },
+            { q: { en: '10 cm 0 mm - 5 cm 5 mm = ? (in mm)', ml: '10 സെ.മീ 0 മി.മീ - 5 സെ.മീ 5 മി.മീ = ? (മി.മീ-ൽ)' }, a: '45' },
+            { q: { en: '24 cm 6 mm + 19 cm 4 mm = ? (in cm mm)', ml: '24 സെ.മീ 6 മി.മീ + 19 സെ.മീ 4 മി.മീ = ? (സെ.മീ മി.മീ)' }, a: '44 cm 0 mm' },
+            { q: { en: '26 cm 7 mm - 21 cm 5 mm = ? (in cm mm)', ml: '26 സെ.മീ 7 മി.മീ - 21 സെ.മീ 5 മി.മീ = ? (സെ.മീ മി.മീ)' }, a: '5 cm 2 mm' },
+            { q: { en: '40 cm 0 mm - 26 cm 7 mm = ? (in cm mm)', ml: '40 സെ.മീ 0 മി.മീ - 26 സെ.മീ 7 മി.മീ = ? (സെ.മീ മി.മീ)' }, a: '13 cm 3 mm' },
+            { q: { en: '35 cm 8 mm - 10 cm 5 mm = ? (in cm mm)', ml: '35 സെ.മീ 8 മി.മീ - 10 സെ.മീ 5 മി.മീ = ? (സെ.മീ മി.മീ)' }, a: '25 cm 3 mm' }
+        ];
+
+        // Module 5: Distance Puzzles Data
+        const distancePuzzleData = [
+            { q: { en: '2500 m + 2500 m = ? (in km)', ml: '2500 മീ + 2500 മീ = ? (കി.മീ-ൽ)' }, a: '5' },
+            { q: { en: 'Total 24.5 km. Traveled 17 km 260 m. How much is left? (in m)', ml: 'ആകെ 24.5 കി.മീ. യാത്ര ചെയ്തു 17 കി.മീ 260 മീ. ബാക്കി? (മീ-ൽ)' }, a: '7240' },
+            { q: { en: 'Total 20 km. Used 12 km 673 m. How much is left? (in m)', ml: 'ആകെ 20 കി.മീ. ഉപയോഗിച്ചു 12 കി.മീ 673 മീ. ബാക്കി? (മീ-ൽ)' }, a: '7327' },
+            { q: { en: '9 km 825 m - 4 km 300 m = ? (in km m)', ml: '9 കി.മീ 825 മീ - 4 കി.മീ 300 മീ = ? (കി.മീ മീ)' }, a: '5 km 525 m' },
+            { q: { en: '6 km 700 m + 8 km 300 m = ? (in km)', ml: '6 കി.മീ 700 മീ + 8 കി.മീ 300 മീ = ? (കി.മീ-ൽ)' }, a: '15' },
+            { q: { en: 'Total 17 km 200 m. Day 1 was 9 km 300 m. How much on Day 2? (in km m)', ml: 'ആകെ 17 കി.മീ 200 മീ. ദിവസം 1: 9 കി.മീ 300 മീ. ദിവസം 2-ൽ എത്ര? (കി.മീ മീ)' }, a: '7 km 900 m' },
+            { q: { en: '400 m per round. How many meters for 3 rounds?', ml: 'ഒരു റൗണ്ട് 400 മീ. 3 റൗണ്ടിന് എത്ര മീറ്റർ?' }, a: '1200' },
+            { q: { en: '3 km 800 m + 3 km 800 m = ? (in km m)', ml: '3 കി.മീ 800 മീ + 3 കി.മീ 800 മീ = ? (കി.മീ മീ)' }, a: '7 km 600 m' },
+            { q: { en: 'Total 15 km. Day 1: 4 km 325 m. Day 2: 6 km 500 m. How much on Day 3? (in km m)', ml: 'ആകെ 15 കി.മീ. ദിവസം 1: 4 കി.മീ 325 മീ. ദിവസം 2: 6 കി.മീ 500 മീ. ദിവസം 3-ൽ എത്ര? (കി.മീ മീ)' }, a: '4 km 175 m' },
+            { q: { en: '30 km - 24.5 km = ? (in m)', ml: '30 കി.മീ - 24.5 കി.മീ = ? (മീ-ൽ)' }, a: '5500' }
+        ];
+
+        let quizState = {};
+
+        // --- 3. NAVIGATION & MODULE HANDLING ---
+        function setLanguage(langCode) {
+            currentLang = langCode;
+            document.querySelectorAll('[data-lang-key]').forEach(elem => {
+                const key = elem.getAttribute('data-lang-key');
+                if (lang[key] && lang[key][currentLang]) {
+                    elem.innerHTML = lang[key][currentLang];
+                }
+            });
+
+            // Refresh current quiz module to update language
+            const activeModuleId = document.querySelector('.module.active').id;
+            if (quizState[activeModuleId]) {
+                const { type, currentQuestionIndex } = quizState[activeModuleId];
+                if (type === 'mcq') {
+                    loadMcqQuestion(activeModuleId, currentQuestionIndex);
+                } else if (type === 'fill') {
+                    loadFillInBlankQuestion(activeModuleId, currentQuestionIndex);
+                }
+            }
+        }
+
+        document.getElementById('lang-selector').addEventListener('change', (e) => setLanguage(e.target.value));
+
+        function showModule(moduleId) {
+            document.querySelectorAll('.module').forEach(module => module.classList.remove('active'));
+            document.getElementById(moduleId).classList.add('active');
+            
+            // Initialize quiz modules
+            switch(moduleId) {
+                case 'ruler-quiz':
+                    initMcqQuiz('ruler', rulerQuizData);
+                    break;
+                case 'cm-mm-quiz':
+                    initMcqQuiz('cm-mm', cmMmQuizData);
+                    break;
+                case 'm-km-quiz':
+                    initMcqQuiz('m-km', mKmQuizData);
+                    break;
+                case 'length-puzzle':
+                    initFillInBlankQuiz('length', lengthPuzzleData);
+                    break;
+                case 'distance-puzzle':
+                    initFillInBlankQuiz('distance', distancePuzzleData);
+                    break;
+            }
+        }
+
+        // --- 4. QUIZ LOGIC (Multiple Choice) ---
+
+        function initMcqQuiz(prefix, data) {
+            quizState[prefix + '-quiz'] = {
+                prefix: prefix,
+                data: data,
+                currentQuestionIndex: 0,
+                totalQuestions: data.length,
+                type: 'mcq'
+            };
+            loadMcqQuestion(prefix + '-quiz', 0);
+        }
+
+        function loadMcqQuestion(moduleId, index) {
+            const { prefix, data, totalQuestions } = quizState[moduleId];
+            if (index >= totalQuestions) {
+                showQuizComplete(prefix);
+                return;
+            }
+            
+            const qData = data[index];
+            document.getElementById(prefix + '-question').textContent = qData.q[currentLang];
+            document.getElementById(prefix + '-counter').textContent = lang.question_counter[currentLang]
+                .replace('{current}', index + 1)
+                .replace('{total}', totalQuestions);
+            
+            const optionsContainer = document.getElementById(prefix + '-options');
+            optionsContainer.innerHTML = '';
+            
+            let options = [qData.a, ...qData.o];
+            options.sort(() => Math.random() - 0.5).forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.onclick = () => checkMcqAnswer(moduleId, option, qData.a, button);
+                optionsContainer.appendChild(button);
+            });
+            document.getElementById(prefix + '-feedback').textContent = '';
+        }
+
+        function checkMcqAnswer(moduleId, selected, correct, btn) {
+            const { prefix } = quizState[moduleId];
+            const feedbackElem = document.getElementById(prefix + '-feedback');
+            const allButtons = document.querySelectorAll('#' + prefix + '-options .option-btn');
+            allButtons.forEach(b => b.disabled = true);
+
+            if (selected === correct) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                btn.classList.add('correct');
+                setTimeout(() => {
+                    quizState[moduleId].currentQuestionIndex++;
+                    loadMcqQuestion(moduleId, quizState[moduleId].currentQuestionIndex);
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+                btn.classList.add('wrong');
+                allButtons.forEach(b => {
+                    if (b.textContent === correct) b.classList.add('correct');
+                });
+                setTimeout(() => {
+                    allButtons.forEach(b => b.disabled = false);
+                    feedbackElem.textContent = '';
+                    btn.classList.remove('wrong');
+                    allButtons.forEach(b => { if (b.textContent === correct) b.classList.remove('correct'); });
+                }, 2000);
+            }
+        }
+
+        function showQuizComplete(prefix) {
+            document.getElementById(prefix + '-question').textContent = lang.quiz_complete[currentLang];
+            document.getElementById(prefix + '-options').innerHTML = '';
+            document.getElementById(prefix + '-feedback').textContent = '🎉';
+            document.getElementById(prefix + '-counter').textContent = '';
+        }
+
+        // --- 5. QUIZ LOGIC (Fill-in-the-blank) ---
+        
+        function initFillInBlankQuiz(prefix, data) {
+            quizState[prefix + '-puzzle'] = {
+                prefix: prefix,
+                data: data,
+                currentQuestionIndex: 0,
+                totalQuestions: data.length,
+                type: 'fill'
+            };
+            loadFillInBlankQuestion(prefix + '-puzzle', 0);
+        }
+
+        function loadFillInBlankQuestion(moduleId, index) {
+            const { prefix, data, totalQuestions } = quizState[moduleId];
+            if (index >= totalQuestions) {
+                showQuizComplete(prefix);
+                return;
+            }
+
+            const qData = data[index];
+            document.getElementById(prefix + '-question').textContent = qData.q[currentLang];
+            document.getElementById(prefix + '-counter').textContent = lang.question_counter[currentLang]
+                .replace('{current}', index + 1)
+                .replace('{total}', totalQuestions);
+            
+            document.getElementById(prefix + '-answer').value = '';
+            document.getElementById(prefix + '-feedback').textContent = '';
+        }
+
+        function checkFillInBlankAnswer(prefix) {
+            const moduleId = prefix + '-puzzle';
+            const { data, currentQuestionIndex } = quizState[moduleId];
+            const feedbackElem = document.getElementById(prefix + '-feedback');
+            const answerInput = document.getElementById(prefix + '-answer');
+            const userAnswer = answerInput.value.trim().toLowerCase().replace(/\s+/g, ' '); // Standardize answer
+            const correctAnswer = data[currentQuestionIndex].a.toLowerCase().replace(/\s+/g, ' '); // Standardize answer
+
+            if (userAnswer === correctAnswer) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(() => {
+                    quizState[moduleId].currentQuestionIndex++;
+                    loadFillInBlankQuestion(moduleId, quizState[moduleId].currentQuestionIndex);
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+        
+        // --- INITIALIZE APP ---
+        setLanguage(currentLang);
+    </script>
+</body>
+</html>

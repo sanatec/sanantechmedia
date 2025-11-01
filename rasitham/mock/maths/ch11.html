@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pictures Tell Stories</title>
+    <style>
+        /* --- General Styling & Fonts --- */
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap');
+        
+        :root {
+            --primary-color: #2196F3; /* Blue */
+            --secondary-color: #FFC107; /* Amber */
+            --background-color: #E3F2FD; /* Light Blue */
+            --text-color: #333;
+            --correct-color: #4CAF50; /* Green */
+            --wrong-color: #F44336; /* Red */
+            --white: #FFFFFF;
+            --font-main: 'Baloo 2', cursive;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Main App Container --- */
+        #app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 900px;
+            background: var(--white);
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 5px solid var(--white);
+        }
+
+        /* --- Header --- */
+        header {
+            background: linear-gradient(45deg, var(--primary-color), #1976D2);
+            color: var(--white);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        #lang-selector {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--white);
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            font-family: var(--font-main);
+            font-weight: 700;
+        }
+        #lang-selector option { color: black; }
+
+        /* --- Main Content Area --- */
+        main {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            text-align: center;
+            background: #FAFAFA;
+        }
+        
+        .module { display: none; }
+        .module.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h2 {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            font-size: 1.2em;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            color: #555;
+        }
+        
+        .question-counter {
+            font-size: 1em;
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+
+        /* --- Buttons & Inputs --- */
+        .btn, button {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--secondary-color), #FFB300);
+            color: var(--white);
+            font-family: var(--font-main);
+            padding: 14px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.3em;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 8px 5px;
+        }
+
+        .btn:hover, button:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(255,193,7,0.4);
+        }
+        
+        .main-menu-btn {
+            display: block;
+            width: 90%;
+            margin: 12px auto;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        .main-menu-btn:hover { background: var(--primary-color); color: var(--white); }
+        
+        .back-btn { background: #f1f1f1; color: #555; font-size: 1.1em; padding: 10px 25px; }
+        .back-btn:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+        input[type="number"], input[type="text"] {
+            width: 80%;
+            padding: 12px;
+            font-size: 1.8em;
+            font-weight: 700;
+            text-align: center;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            margin-top: 15px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .feedback { font-size: 1.3em; font-weight: 700; margin-top: 20px; height: 35px; transition: all 0.3s; }
+
+        /* --- Game-Specific Styles --- */
+        .game-emoji { font-size: 100px; margin-bottom: 15px; }
+        
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        
+        .option-btn {
+            width: 100%;
+            padding: 15px 10px;
+            font-size: 1.2em;
+            background: var(--white);
+            color: var(--primary-color);
+            border: 2px solid #ddd;
+        }
+        .option-btn.correct { background: var(--correct-color); color: var(--white); border-color: var(--correct-color); animation: pulse 0.5s; }
+        .option-btn.wrong { background: var(--wrong-color); color: var(--white); border-color: var(--wrong-color); animation: shake 0.5s; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1 data-lang-key="app_title">Pictures Tell Stories</h1>
+            <select id="lang-selector">
+                <option value="en">English</option>
+                <option value="ml">മലയാളം</option>
+            </select>
+        </header>
+
+        <main>
+            <div id="welcome-screen" class="module active">
+                <h2 data-lang-key="welcome_title">Pictures Tell Stories!</h2>
+                <div class="game-emoji">📊</div>
+                <p class="instruction" data-lang-key="welcome_subtitle">Let's read the data!</p>
+                <button class="main-menu-btn" onclick="showModule('agri-farm-quiz')" data-lang-key="activity1_btn">Agri Farm</button>
+                <button class="main-menu-btn" onclick="showModule('transport-quiz')" data-lang-key="activity2_btn">School Transport</button>
+                <button class="main-menu-btn" onclick="showModule('tree-quiz')" data-lang-key="activity3_btn">Tree Planting</button>
+                <button class="main-menu-btn" onclick="showModule('tally-quiz')" data-lang-key="activity4_btn">Tally Marks</button>
+                <button class="main-menu-btn" onclick="showModule('library-puzzle')" data-lang-key="activity5_btn">Library Books</button>
+            </div>
+
+            <div id="agri-farm-quiz" class="module">
+                <h2 data-lang-key="agri_farm_title">Agri Farm</h2>
+                <div class="question-counter" id="agri-farm-counter"></div>
+                <p id="agri-farm-question" class="instruction"></p>
+                <div id="agri-farm-options" class="options-grid"></div>
+                <div id="agri-farm-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+            
+            <div id="transport-quiz" class="module">
+                <h2 data-lang-key="transport_title">School Transport</h2>
+                <div class="question-counter" id="transport-counter"></div>
+                <p id="transport-question" class="instruction"></p>
+                <div id="transport-options" class="options-grid"></div>
+                <div id="transport-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="tree-quiz" class="module">
+                <h2 data-lang-key="tree_title">Tree Planting</h2>
+                <div class="question-counter" id="tree-counter"></div>
+                <p id="tree-question" class="instruction"></p>
+                <div id="tree-options" class="options-grid"></div>
+                <div id="tree-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="tally-quiz" class="module">
+                <h2 data-lang-key="tally_title">Tally Marks</h2>
+                <div class="question-counter" id="tally-counter"></div>
+                <p id="tally-question" class="instruction"></p>
+                <div id="tally-options" class="options-grid"></div>
+                <div id="tally-feedback" class="feedback"></div>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+            <div id="library-puzzle" class="module">
+                <h2 data-lang-key="library_title">Library Books</h2>
+                <div class="question-counter" id="library-counter"></div>
+                <p id="library-question" class="instruction"></p>
+                <input type="text" id="library-answer" placeholder="?">
+                <div id="library-feedback" class="feedback"></div>
+                <button class="btn" onclick="checkFillInBlankAnswer('library')" data-lang-key="check_btn">Check</button>
+                <button class="back-btn" onclick="showModule('welcome-screen')" data-lang-key="back_to_menu">Menu</button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 1. LANGUAGE & TEXT DATA ---
+        const lang = {
+            'app_title': { en: 'Pictures Tell Stories', ml: 'ചിത്രങ്ങൾ കഥ പറയുന്നു' },
+            'back_to_menu': { en: 'Menu', ml: 'മെനു' },
+            'check_btn': { en: 'Check', ml: 'പരിശോധിക്കുക' },
+            'welcome_title': { en: 'Pictures Tell Stories!', ml: 'ചിത്രങ്ങൾ കഥ പറയുന്നു!' },
+            'welcome_subtitle': { en: "Let's read the data!", ml: 'നമുക്ക് ഡാറ്റ വായിക്കാം!' },
+            'correct_feedback': { en: 'Correct! 🎉', ml: 'ശരിയാണ്! 🎉' },
+            'wrong_feedback': { en: 'Try again! 🤔', ml: 'വീണ്ടും ശ്രമിക്കൂ! 🤔' },
+            'quiz_complete': { en: 'Quiz Complete! Great job!', ml: 'ക്വിസ് പൂർത്തിയായി! കൊള്ളാം!' },
+            'question_counter': { en: 'Question {current} of {total}', ml: 'ചോദ്യം {current} / {total}' },
+            
+            'activity1_btn': { en: 'Agri Farm', ml: 'അഗ്രിഫാം' },
+            'activity2_btn': { en: 'School Transport', ml: 'സ്കൂൾ യാത്ര' },
+            'activity3_btn': { en: 'Tree Planting', ml: 'മരം നടീൽ' },
+            'activity4_btn': { en: 'Tally Marks', ml: 'റ്റാലി മാർക്കുകൾ' },
+            'activity5_btn': { en: 'Library Books', ml: 'ലൈബ്രറി പുസ്തകങ്ങൾ' },
+
+            'agri_farm_title': { en: 'Agri Farm', ml: 'അഗ്രിഫാം' },
+            'transport_title': { en: 'School Transport', ml: 'സ്കൂൾ യാത്ര' },
+            'tree_title': { en: 'Tree Planting', ml: 'മരം നടീൽ' },
+            'tally_title': { en: 'Tally Marks', ml: 'റ്റാലി മാർക്കുകൾ' },
+            'library_title': { en: 'Library Books', ml: 'ലൈബ്രറി പുസ്തകങ്ങൾ' },
+        };
+
+        let currentLang = 'en';
+
+        // --- 2. QUIZ DATA ---
+
+        // Module 1: Agri Farm Data (Page 1-2)
+        const agriFarmData = [
+            { q: { en: 'How many cows (പശു)? 🐄', ml: 'എത്ര പശുക്കളുണ്ട്? 🐄' }, a: '24', o: ['20', '25', '30'] },
+            { q: { en: 'How many roosters (പൂവൻകോഴി)? 🐓', ml: 'എത്ര പൂവൻകോഴികളുണ്ട്? 🐓' }, a: '30', o: ['20', '25', '24'] },
+            { q: { en: 'How many ducks (താറാവ്)? 🦆', ml: 'എത്ര താറാവുകളുണ്ട്? 🦆' }, a: '20', o: ['30', '25', '15'] },
+            { q: { en: 'How many buffalos (എരുമ)? 🐃', ml: 'എത്ര എരുമകളുണ്ട്? 🐃' }, a: '9', o: ['10', '6', '24'] },
+            { q: { en: 'How many dogs (നായ)? 🐕', ml: 'എത്ര നായ്ക്കളുണ്ട്? 🐕' }, a: '4', o: ['5', '6', '3'] },
+            { q: { en: 'Which animal is the most numerous?', ml: 'ഏറ്റവും കൂടുതലുള്ള ജീവി ഏതാണ്?' }, a: 'Rooster (പൂവൻകോഴി)', o: ['Cow (പശു)', 'Duck (താറാവ്)', 'Dog (നായ)'] },
+            { q: { en: 'Which animal is the least numerous?', ml: 'ഏറ്റവും കുറവുള്ള ജീവി ഏതാണ്?' }, a: 'Dog (നായ)', o: ['Buffalo (എരുമ)', 'Bull (കാള)', 'Rooster (പൂവൻകോഴി)'] },
+            { q: { en: 'How many roosters (🐓) and ducks (🦆) in total?', ml: 'ആകെ എത്ര കോഴികളും (🐓) താറാവുകളുമുണ്ട് (🦆)?' }, a: '50', o: ['44', '39', '93'] },
+            { q: { en: 'How many cows (🐄) and buffalos (🐃) in total?', ml: 'ആകെ എത്ര പശുക്കളും (🐄) എരുമകളുമുണ്ട് (🐃)?' }, a: '33', o: ['30', '54', '15'] },
+            { q: { en: 'What is the total number of animals?', ml: 'ആകെ ജീവികളുടെ എണ്ണം എത്ര?' }, a: '93', o: ['83', '100', '90'] }
+        ];
+
+        // Module 2: School Transport Data (Page 3-5)
+        // Key: 👩 or 👨 = 5 children
+        const transportData = [
+            { q: { en: 'Key: 👩=5. How many girls by Bus 🚌 (👩👩👩👩👩)?', ml: 'സൂചന: 👩=5. എത്ര പെൺകുട്ടികൾ ബസിൽ 🚌 (👩👩👩👩👩)?' }, a: '25', o: ['5', '30', '55'] },
+            { q: { en: 'Key: 👨=5. How many boys by Auto 🛺 (👨👨👨👨)?', ml: 'സൂചന: 👨=5. എത്ര ആൺകുട്ടികൾ ഓട്ടോയിൽ 🛺 (👨👨👨👨)?' }, a: '20', o: ['4', '15', '35'] },
+            { q: { en: 'Key: 👨=5. How many boys walk 🚶 (👨👨👨👨👨👨👨👨👨👨👨👨)?', ml: 'സൂചന: 👨=5. എത്ര ആൺകുട്ടികൾ നടന്ന് 🚶 (👨👨👨👨👨👨👨👨👨👨👨👨)?' }, a: '60', o: ['12', '20', '80'] },
+            { q: { en: 'Key: 👩=5. How many girls by Cycle 🚲 (👩)?', ml: 'സൂചന: 👩=5. എത്ര പെൺകുട്ടികൾ സൈക്കിളിൽ 🚲 (👩)?' }, a: '5', o: ['1', '10', '15'] },
+            { q: { en: 'How many children travel by Bus (🚌) in total?', ml: 'ആകെ എത്ര കുട്ടികൾ ബസിൽ (🚌) വരുന്നു?' }, a: '55', o: ['25', '30', '11'] },
+            { q: { en: 'What is the most common way to travel?', ml: 'ഏറ്റവും കൂടുതൽ കുട്ടികൾ എങ്ങനെ വരുന്നു?' }, a: 'Walking (നടന്ന്)', o: ['Bus (ബസ്)', 'Auto (ഓട്ടോ)', 'Cycle (സൈക്കിൾ)'] },
+            { q: { en: 'What is the least common way to travel?', ml: 'ഏറ്റവും കുറച്ച് കുട്ടികൾ എങ്ങനെ വരുന്നു?' }, a: 'Cycle (സൈക്കിൾ)', o: ['Bus (ബസ്)', 'Auto (ഓട്ടോ)', 'Walking (നടന്ന്)'] },
+            { q: { en: 'How many girls in total?', ml: 'ആകെ എത്ര പെൺകുട്ടികളുണ്ട്?' }, a: '65', o: ['120', '185', '55'] },
+            { q: { en: 'How many boys in total?', ml: 'ആകെ എത്ര ആൺകുട്ടികളുണ്ട്?' }, a: '120', o: ['65', '185', '60'] },
+            { q: { en: 'How many children in total?', ml: 'ആകെ എത്ര കുട്ടികളുണ്ട്?' }, a: '185', o: ['120', '65', '100'] }
+        ];
+
+        // Module 3: Tree Planting Data (Page 6-7)
+        // Key: 🌳 = 10 saplings
+        const treeData = [
+            { q: { en: 'Key: 🌳=10. How many Jackfruit (പ്ലാവ്) (🌳🌳🌳🌳🌳🌳🌳🌳)?', ml: 'സൂചന: 🌳=10. എത്ര പ്ലാവിൻതൈ (🌳🌳🌳🌳🌳🌳🌳🌳)?' }, a: '80', o: ['8', '10', '70'] },
+            { q: { en: 'Key: 🌳=10. How many Teak (തേക്ക്) (🌳🌳🌳🌳🌳)?', ml: 'സൂചന: 🌳=10. എത്ര തേക്കിൻതൈ (🌳🌳🌳🌳🌳)?' }, a: '50', o: ['5', '10', '60'] },
+            { q: { en: 'Key: 🌳=10. How many Mango (മാവ്) (🌳🌳🌳🌳)?', ml: 'സൂചന: 🌳=10. എത്ര മാവിൻതൈ (🌳🌳🌳🌳)?' }, a: '40', o: ['4', '10', '80'] },
+            { q: { en: 'Key: 🌳=10. How many KaniKonna (കണിക്കൊന്ന) (🌳🌳🌳🌳🌳🌳)?', ml: 'സൂചന: 🌳=10. എത്ര കണിക്കൊന്ന (🌳🌳🌳🌳🌳🌳)?' }, a: '60', o: ['6', '10', '50'] },
+            { q: { en: 'Key: 🌳=10. How many Tamarind (പുളി) (🌳🌳🌳)?', ml: 'സൂചന: 🌳=10. എത്ര പുളി തൈ (🌳🌳🌳)?' }, a: '30', o: ['3', '10', '40'] },
+            { q: { en: 'Which sapling is the most numerous?', ml: 'ഏറ്റവും കൂടുതലുള്ള തൈ ഏതാണ്?' }, a: 'Jackfruit (പ്ലാവ്)', o: ['Mango (മാവ്)', 'Teak (തേക്ക്)', 'KaniKonna (കണിക്കൊന്ന)'] },
+            { q: { en: 'Which sapling is the least numerous?', ml: 'ഏറ്റവും കുറവുള്ള തൈ ഏതാണ്?' }, a: 'Sapota (സപ്പോട്ട)', o: ['Tamarind (പുളി)', 'Mango (മാവ്)', 'Jackfruit (പ്ലാവ്)'] },
+            { q: { en: 'How many Mango (🌳🌳🌳🌳) and Teak (🌳🌳🌳🌳🌳) in total?', ml: 'ആകെ എത്ര മാവും (🌳🌳🌳🌳) തേക്കും (🌳🌳🌳🌳🌳) തൈകളുണ്ട്?' }, a: '90', o: ['100', '80', '270'] },
+            { q: { en: 'How many more Jackfruit (🌳x8) than Mango (🌳x4)?', ml: 'മാവിനേക്കാൾ (🌳x4) എത്ര കൂടുതൽ പ്ലാവുണ്ട് (🌳x8)?' }, a: '40', o: ['80', '120', '30'] },
+            { q: { en: 'What is the total number of saplings?', ml: 'ആകെ എത്ര തൈകളുണ്ട്?' }, a: '270', o: ['250', '300', '27'] }
+        ];
+
+        // Module 4: Tally Marks Data (Page 8-9)
+        const tallyData = [
+            { q: { en: 'What is Ayan\'s (അയാൻ) score? 🏆 (|||| / ||)', ml: 'അയാന്റെ പോയിന്റ് എത്ര? 🏆 (|||| / ||)' }, a: '7', o: ['5', '6', '8'] },
+            { q: { en: 'What is Jani\'s (ജാനി) score? 🏆 (|||| / ||||)', ml: 'ജാനിയുടെ പോയിന്റ് എത്ര? 🏆 (|||| / ||||)' }, a: '9', o: ['5', '10', '4'] },
+            { q: { en: 'What is Anas\'s (അനസ്) score? 🏆 (|||| / |||| /)', ml: 'അനസിന്റെ പോയിന്റ് എത്ര? 🏆 (|||| / |||| /)' }, a: '10', o: ['5', '11', '9'] },
+            { q: { en: 'What is Gopu\'s (ഗോപു) score? 🏆 (|||| / |||| / |)', ml: 'ഗോപുവിന്റെ പോയിന്റ് എത്ര? 🏆 (|||| / |||| / |)' }, a: '11', o: ['10', '12', '5'] },
+            { q: { en: 'What is Nayan\'s (നയൻ) score? 🏆 (|||| / |||)', ml: 'നയനിന്റെ പോയിന്റ് എത്ര? 🏆 (|||| / |||)' }, a: '8', o: ['5', '7', '9'] },
+            { q: { en: 'Who has the highest score?', ml: 'ആർക്കാണ് ഏറ്റവും കൂടുതൽ പോയിന്റ്?' }, a: 'Gopu (ഗോപു)', o: ['Anas (അനസ്)', 'Jani (ജാനി)', 'Ayan (അയാൻ)'] },
+            { q: { en: 'Who has the lowest score?', ml: 'ആർക്കാണ് ഏറ്റവും കുറഞ്ഞ പോയിന്റ്?' }, a: 'Amrith (അമൃത്)', o: ['Rupa (രൂപ)', 'Ayan (അയാൻ)', 'Nayan (നയൻ)'] },
+            { q: { en: 'Karan (കരൺ) sub-district score? 🏆 (|||| / |||| / |||)', ml: 'കരണിന്റെ ഉപജില്ലാ സ്കോർ? 🏆 (|||| / |||| / |||)' }, a: '13', o: ['10', '15', '17'] },
+            { q: { en: 'Nayan (നയൻ) sub-district score? 🏆 (|||| / |||| / |||| / ||)', ml: 'നയനിന്റെ ഉപജില്ലാ സ്കോർ? 🏆 (|||| / |||| / |||| / ||)' }, a: '17', o: ['15', '16', '18'] },
+            { q: { en: 'Gopu (ഗോപു) sub-district score? 🏆 (|||| / |||| / |||| / |)', ml: 'ഗോപുവിന്റെ ഉപജില്ലാ സ്കോർ? 🏆 (|||| / |||| / |||| / |)' }, a: '16', o: ['15', '17', '11'] }
+        ];
+
+        // Module 5: Library Books Data (Page 10)
+        // Key: 📚 = 10 books
+        const libraryData = [
+            { q: { en: 'Key: 📚=10. How many books did Group 1 collect? (📚📚📚📚📚)', ml: 'സൂചന: 📚=10. ഗ്രൂപ്പ് 1 എത്ര പുസ്തകം ശേഖരിച്ചു? (📚📚📚📚📚)' }, a: '50' },
+            { q: { en: 'Key: 📚=10. How many books did Group 2 collect? (📚📚📚)', ml: 'സൂചന: 📚=10. ഗ്രൂപ്പ് 2 എത്ര പുസ്തകം ശേഖരിച്ചു? (📚📚📚)' }, a: '30' },
+            { q: { en: 'Key: 📚=10. How many books did Group 3 collect? (📚📚📚📚📚📚)', ml: 'സൂചന: 📚=10. ഗ്രൂപ്പ് 3 എത്ര പുസ്തകം ശേഖരിച്ചു? (📚📚📚📚📚📚)' }, a: '60' },
+            { q: { en: 'Key: 📚=10. How many books did Group 6 collect? (📚📚📚📚📚📚📚)', ml: 'സൂചന: 📚=10. ഗ്രൂപ്പ് 6 എത്ര പുസ്തകം ശേഖരിച്ചു? (📚📚📚📚📚📚📚)' }, a: '70' },
+            { q: { en: 'Which two groups collected the same number? (📚📚📚📚📚)', ml: 'ഏതൊക്കെ ഗ്രൂപ്പുകളാണ് ഒരേ എണ്ണം (📚📚📚📚📚) ശേഖരിച്ചത്?' }, a: '1 and 4' },
+            { q: { en: 'How many more books did Group 6 (📚x7) collect than Group 1 (📚x5)?', ml: 'ഗ്രൂപ്പ് 1-നേക്കാൾ (📚x5) എത്ര കൂടുതൽ പുസ്തകങ്ങൾ ഗ്രൂപ്പ് 6 (📚x7) ശേഖരിച്ചു?' }, a: '20' },
+            { q: { en: 'How many more books does Group 2 (📚📚📚) need to equal Group 3 (📚📚📚📚📚📚)?', ml: 'ഗ്രൂപ്പ് 2-ന് (📚📚📚) ഗ്രൂപ്പ് 3-ന് (📚📚📚📚📚📚) തുല്യമാകാൻ എത്ര പുസ്തകങ്ങൾ കൂടി വേണം?' }, a: '30' },
+            { q: { en: 'What is the total number of books collected?', ml: 'ആകെ എത്ര പുസ്തകങ്ങൾ ശേഖരിച്ചു?' }, a: '300' },
+            { q: { en: 'What is the total from Group 1 (📚x5) and 2 (📚x3)?', ml: 'ഗ്രൂപ്പ് 1 (📚x5) ഉം 2 (📚x3) ഉം കൂടി ആകെ എത്ര?' }, a: '80' },
+            { q: { en: 'Which group collected the least books? (📚📚📚) (Enter group number)', ml: 'ഏറ്റവും കുറവ് പുസ്തകങ്ങൾ (📚📚📚) ശേഖരിച്ച ഗ്രൂപ്പ് ഏത്? (നമ്പർ നൽകുക)' }, a: '2' }
+        ];
+
+        let quizState = {};
+
+        // --- 3. NAVIGATION & MODULE HANDLING ---
+        function setLanguage(langCode) {
+            currentLang = langCode;
+            document.querySelectorAll('[data-lang-key]').forEach(elem => {
+                const key = elem.getAttribute('data-lang-key');
+                if (lang[key] && lang[key][currentLang]) {
+                    elem.innerHTML = lang[key][currentLang];
+                }
+            });
+
+            // Refresh current quiz module to update language
+            const activeModuleId = document.querySelector('.module.active').id;
+            if (quizState[activeModuleId]) {
+                const { type, currentQuestionIndex } = quizState[activeModuleId];
+                if (type === 'mcq') {
+                    loadMcqQuestion(activeModuleId, currentQuestionIndex);
+                } else if (type === 'fill') {
+                    loadFillInBlankQuestion(activeModuleId, currentQuestionIndex);
+                }
+            }
+        }
+
+        document.getElementById('lang-selector').addEventListener('change', (e) => setLanguage(e.target.value));
+
+        function showModule(moduleId) {
+            document.querySelectorAll('.module').forEach(module => module.classList.remove('active'));
+            document.getElementById(moduleId).classList.add('active');
+            
+            // Initialize quiz modules
+            switch(moduleId) {
+                case 'agri-farm-quiz':
+                    initMcqQuiz('agri-farm', agriFarmData);
+                    break;
+                case 'transport-quiz':
+                    initMcqQuiz('transport', transportData);
+                    break;
+                case 'tree-quiz':
+                    initMcqQuiz('tree', treeData);
+                    break;
+                case 'tally-quiz':
+                    initMcqQuiz('tally', tallyData);
+                    break;
+                case 'library-puzzle':
+                    initFillInBlankQuiz('library', libraryData);
+                    break;
+            }
+        }
+
+        // --- 4. QUIZ LOGIC (Multiple Choice) ---
+
+        function initMcqQuiz(prefix, data) {
+            quizState[prefix + '-quiz'] = {
+                prefix: prefix,
+                data: data,
+                currentQuestionIndex: 0,
+                totalQuestions: data.length,
+                type: 'mcq'
+            };
+            loadMcqQuestion(prefix + '-quiz', 0);
+        }
+
+        function loadMcqQuestion(moduleId, index) {
+            const { prefix, data, totalQuestions } = quizState[moduleId];
+            if (index >= totalQuestions) {
+                showQuizComplete(prefix);
+                return;
+            }
+            
+            const qData = data[index];
+            document.getElementById(prefix + '-question').textContent = qData.q[currentLang];
+            document.getElementById(prefix + '-counter').textContent = lang.question_counter[currentLang]
+                .replace('{current}', index + 1)
+                .replace('{total}', totalQuestions);
+            
+            const optionsContainer = document.getElementById(prefix + '-options');
+            optionsContainer.innerHTML = '';
+            
+            let options = [qData.a, ...qData.o];
+            options.sort(() => Math.random() - 0.5).forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.onclick = () => checkMcqAnswer(moduleId, option, qData.a, button);
+                optionsContainer.appendChild(button);
+            });
+            document.getElementById(prefix + '-feedback').textContent = '';
+        }
+
+        function checkMcqAnswer(moduleId, selected, correct, btn) {
+            const { prefix } = quizState[moduleId];
+            const feedbackElem = document.getElementById(prefix + '-feedback');
+            const allButtons = document.querySelectorAll('#' + prefix + '-options .option-btn');
+            allButtons.forEach(b => b.disabled = true);
+
+            if (selected === correct) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                btn.classList.add('correct');
+                setTimeout(() => {
+                    quizState[moduleId].currentQuestionIndex++;
+                    loadMcqQuestion(moduleId, quizState[moduleId].currentQuestionIndex);
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+                btn.classList.add('wrong');
+                allButtons.forEach(b => {
+                    if (b.textContent === correct) b.classList.add('correct');
+                });
+                setTimeout(() => {
+                    allButtons.forEach(b => b.disabled = false);
+                    feedbackElem.textContent = '';
+                    btn.classList.remove('wrong');
+                    allButtons.forEach(b => { if (b.textContent === correct) b.classList.remove('correct'); });
+                }, 2000);
+            }
+        }
+
+        function showQuizComplete(prefix) {
+            document.getElementById(prefix + '-question').textContent = lang.quiz_complete[currentLang];
+            document.getElementById(prefix + '-options').innerHTML = '';
+            document.getElementById(prefix + '-feedback').textContent = '🎉';
+            document.getElementById(prefix + '-counter').textContent = '';
+        }
+
+        // --- 5. QUIZ LOGIC (Fill-in-the-blank) ---
+        
+        function initFillInBlankQuiz(prefix, data) {
+            quizState[prefix + '-puzzle'] = {
+                prefix: prefix,
+                data: data,
+                currentQuestionIndex: 0,
+                totalQuestions: data.length,
+                type: 'fill'
+            };
+            loadFillInBlankQuestion(prefix + '-puzzle', 0);
+        }
+
+        function loadFillInBlankQuestion(moduleId, index) {
+            const { prefix, data, totalQuestions } = quizState[moduleId];
+            if (index >= totalQuestions) {
+                showQuizComplete(prefix);
+                return;
+            }
+
+            const qData = data[index];
+            document.getElementById(prefix + '-question').textContent = qData.q[currentLang];
+            document.getElementById(prefix + '-counter').textContent = lang.question_counter[currentLang]
+                .replace('{current}', index + 1)
+                .replace('{total}', totalQuestions);
+            
+            document.getElementById(prefix + '-answer').value = '';
+            document.getElementById(prefix + '-feedback').textContent = '';
+        }
+
+        function checkFillInBlankAnswer(prefix) {
+            const moduleId = prefix + '-puzzle';
+            const { data, currentQuestionIndex } = quizState[moduleId];
+            const feedbackElem = document.getElementById(prefix + '-feedback');
+            const answerInput = document.getElementById(prefix + '-answer');
+            const userAnswer = answerInput.value.trim().toLowerCase().replace(/\s+/g, ' '); // Standardize answer
+            const correctAnswer = data[currentQuestionIndex].a.toLowerCase().replace(/\s+/g, ' '); // Standardize answer
+
+            if (userAnswer === correctAnswer) {
+                feedbackElem.textContent = lang.correct_feedback[currentLang];
+                feedbackElem.style.color = 'var(--correct-color)';
+                setTimeout(() => {
+                    quizState[moduleId].currentQuestionIndex++;
+                    loadFillInBlankQuestion(moduleId, quizState[moduleId].currentQuestionIndex);
+                }, 1500);
+            } else {
+                feedbackElem.textContent = lang.wrong_feedback[currentLang];
+                feedbackElem.style.color = 'var(--wrong-color)';
+            }
+        }
+        
+        // --- INITIALIZE APP ---
+        setLanguage(currentLang);
+    </script>
+</body>
+</html>
