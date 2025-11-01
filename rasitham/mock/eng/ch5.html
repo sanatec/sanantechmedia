@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Interactive Learning App: The Melody of Rain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* All CSS styles are identical to your original file */
+        :root {
+            --bg-color: #F0F7FF;
+            --primary-color: #3B82F6;
+            --secondary-color: #10B981;
+            --accent-color-1: #F97316;
+            --accent-color-2: #8B5CF6;
+            --text-color: #1F2937;
+            --card-bg: linear-gradient(145deg, #ffffff, #f3f8ff);
+        }
+
+        @keyframes tada {
+            from { transform: scale3d(1, 1, 1); }
+            10%, 20% { transform: scale3d(0.95, 0.95, 0.95) rotate3d(0, 0, 1, -5deg); }
+            30%, 50%, 70%, 90% { transform: scale3d(1.05, 1.05, 1.05) rotate3d(0, 0, 1, 5deg); }
+            40%, 60%, 80% { transform: scale3d(1.05, 1.05, 1.05) rotate3d(0, 0, 1, -5deg); }
+            to { transform: scale3d(1, 1, 1); }
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        body {
+            font-family: 'Comic Neue', cursive;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none;
+        }
+
+        #app-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 450px; /* Mobile-first constraint */
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 1.5rem;
+            transition: transform 0.4s ease-in-out;
+            background-color: var(--bg-color);
+            overflow-y: auto;
+        }
+
+        .screen.inactive { transform: translateX(100%); }
+        .screen.slide-out { transform: translateX(-100%); }
+
+        .header-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            text-shadow: 2px 2px 0px #fff;
+        }
+        
+        .tada { display: inline-block; animation: tada 1.5s infinite; }
+
+        /* Learning Path Menu */
+        #learning-path { display: flex; flex-direction: column; gap: 1rem; }
+        
+        .path-item {
+            display: flex; align-items: center; background: var(--card-bg);
+            border-radius: 20px; padding: 1rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+            transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
+        }
+        .path-item:hover { transform: scale(1.03); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); }
+        .path-item .icon-container {
+            width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center;
+            justify-content: center; margin-right: 1rem; flex-shrink: 0;
+        }
+        .path-item .icon-container svg { width: 36px; height: 36px; }
+        .path-item .text-content { flex-grow: 1; }
+        .path-item h3 { font-size: 1.25rem; font-weight: 700; }
+        .path-item p { font-size: 0.9rem; color: #6B7280; }
+
+        /* Activity Screen */
+        .activity-header { text-align: center; margin-bottom: 1rem; }
+        .activity-title { font-family: 'Fredoka One', cursive; font-size: 1.75rem; color: var(--secondary-color); }
+        .progress-bar-container {
+            width: 100%; height: 12px; background-color: #E5E7EB;
+            border-radius: 99px; margin-top: 0.5rem; overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #34D399, #10B981);
+            border-radius: 99px; transition: width 0.5s ease;
+        }
+
+        .activity-card {
+            background: var(--card-bg); border-radius: 24px;
+            padding: 1.5rem; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn {
+            padding: 1rem 1.5rem; border-radius: 16px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease;
+            cursor: pointer; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%;
+        }
+        .btn-primary { background: linear-gradient(45deg, var(--primary-color), #60a5fa); color: white; }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 7px 14px rgba(59, 130, 246, 0.4); }
+        .btn-secondary { background: linear-gradient(45deg, var(--accent-color-1), #fb923c); color: white; }
+
+        /* Modal */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background-color: white; padding: 2rem; border-radius: 24px;
+            text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: bounceIn 0.5s ease; width: 90%; max-width: 350px;
+        }
+        .modal-emoji { font-size: 4rem; margin-bottom: 1rem; }
+        .modal-title { font-size: 1.8rem; font-weight: bold; margin-bottom: 0.5rem; }
+        .modal-message { font-size: 1.1rem; margin-bottom: 1.5rem; color: #4b5563; }
+        
+        /* Other styles for activities */
+        .option-btn {
+            display: block; width: 100%; text-align: center; padding: 1rem;
+            margin-bottom: 0.75rem; border: 2px solid #e5e7eb; border-radius: 16px;
+            transition: all 0.2s ease; background-color: #f9fafb; font-size: 1.1rem;
+        }
+        .option-btn:hover { transform: scale(1.03); border-color: var(--primary-color); }
+        .option-btn.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; font-weight: bold; }
+        .option-btn.incorrect { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; font-weight: bold; }
+        
+        .draggable { touch-action: none; cursor: move; background-color: #e0f2fe; padding: 0.75rem 1.25rem; border-radius: 12px; margin: 0.25rem; border: 1px solid #bae6fd; text-align: center; }
+        .drop-zone { border: 3px dashed #9ca3af; border-radius: 16px; padding: 1rem; min-height: 100px; background-color: #f9fafb; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 0.5rem; }
+        .letter-input { width: 2.5rem; height: 2.5rem; text-align: center; font-size: 1.25rem; border-radius: 8px; border: 2px solid #d1d5db; margin: 0 0.1rem; color: var(--secondary-color); }
+        .riddle-box { background-color: #fefce8; border: 3px dashed #eab308; padding: 1.5rem; border-radius: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="app-wrapper">
+        <div id="main-menu-screen" class="screen">
+            <header class="text-center mb-6">
+                <h1 class="header-title">The Melody of Rain <span class="tada">🌧️</span></h1>
+                <p class="text-md text-gray-500 mt-1">An Interactive Raindrop Adventure!</p>
+            </header>
+            <div id="learning-path">
+                </div>
+        </div>
+
+        <div id="activity-screen" class="screen inactive">
+            <div class="activity-header">
+                <h2 id="activity-title" class="activity-title">Activity Title</h2>
+                <div class="progress-bar-container">
+                    <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+            <div id="activity-content" class="activity-card">
+                </div>
+            <button class="btn btn-secondary mt-6" onclick="showMenu()">🏠 Back to Path</button>
+        </div>
+    </div>
+
+    <div id="feedback-modal" class="modal hidden">
+        <div class="modal-content">
+            <div id="modal-emoji" class="modal-emoji"></div>
+            <h2 id="modal-title" class="modal-title"></h2>
+            <p id="modal-message" class="modal-message"></p>
+            <div id="modal-buttons-container" class="mt-4 flex flex-col gap-2">
+                 </div>
+        </div>
+    </div>
+
+    <script>
+        // --- SOUND SETUP (Identical to original) ---
+        const correctSynth = new Tone.Synth({
+            oscillator: { type: 'triangle' },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
+        }).toDestination();
+
+        const incorrectSynth = new Tone.Synth({
+            oscillator: { type: 'square' },
+            envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
+        }).toDestination();
+
+        function playCorrectSound() {
+            correctSynth.triggerAttackRelease("C5", "8n", Tone.now());
+            correctSynth.triggerAttackRelease("E5", "8n", Tone.now() + 0.1);
+            correctSynth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
+        }
+
+        function playIncorrectSound() {
+            incorrectSynth.triggerAttackRelease("C3", "4n");
+        }
+
+        // --- DATA AND ICONS (Identical to original) ---
+        const icons = {
+            fill: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16.707 2.293a1 1 0 0 1 1.414 0l4 4a1 1 0 0 1 0 1.414l-13 13a1 1 0 0 1-.707.293H4a1 1 0 0 1-1-1v-4.414a1 1 0 0 1 .293-.707l13-13zm3 4.414L17 4.414 4.707 16.707H4v.293L16.293 4.707l.414.414z"/></svg>`,
+            jumbled: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`,
+            complete: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.26 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z"/></svg>`,
+            odd: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM12 10h-2v2H8v-2H6V8h2V6h2v2h2v2z"/></svg>`,
+            rearrange: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18h17v-2H4v2zM4 13h17v-2H4v2zM4 6v2h17V6H4z"/></svg>`,
+            riddles: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>`,
+            order: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 11.9v-.9H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg>`,
+            letters: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M6.4 18L5 16.6l5.6-5.6L5 5.4 6.4 4l5.6 5.6L17.6 4 19 5.4l-5.6 5.6L19 16.6 17.6 18l-5.6-5.6L6.4 18z"/></svg>`,
+            poem: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>`,
+            language: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>`,
+            oneWord: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M14 17H4v2h10v-2Zm6-8H4v2h16V9Z"/>`,
+            preposition: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>`
+        };
+
+        // --- NEW ACTIVITY DATA (Based on eng5.pdf) ---
+        const activities = {
+            fillInTheBlanks: {
+                title: "Fill in the Blanks",
+                questions: [
+                    { sentence: "The tiny raindrop lives in a big, fluffy ___.", options: ["cloud", "house", "tree"], answer: "cloud" },
+                    { sentence: "The raindrop heard a loud '___!'", options: ["BOOM", "SPLAT", "WHEE"], answer: "BOOM" },
+                    { sentence: "The ___ rumbled, 'Get ready to go!'", options: ["Thunder", "Cloud", "Wind"], answer: "Thunder" },
+                    { sentence: "A sharp light ___ the cloud.", options: ["pierced", "opened", "tickled"], answer: "pierced" },
+                    { sentence: "The ___ looked up with hope.", options: ["farmer", "cat", "children"], answer: "farmer" },
+                    { sentence: "Sunbeams shone through us and made a ___.", options: ["RAINBOW", "puddle", "river"], answer: "RAINBOW" },
+                    { sentence: "The raindrop landed on the cat with a soft ___!", options: ["SPLAT", "SPLASH", "BOOM"], answer: "SPLAT" },
+                    { sentence: "The cat shook its fur ___.", options: ["angrily", "happily", "sadly"], answer: "angrily" },
+                    { sentence: "I fell on the soil with a sharp ___!", options: ["SPLASH", "SPLAT", "WHEE"], answer: "SPLASH" },
+                    { sentence: "The ___ roots of paddy were searching for water.", options: ["thirsty", "green", "angry"], answer: "thirsty" },
+                    { sentence: "The raindrop ___ into the soil.", options: ["seeped", "floated", "flew"], answer: "seeped" },
+                    { sentence: "The leaves of the paddy ___ gently in the breeze.", options: ["rustled", "shouted", "cried"], answer: "rustled" },
+                    { sentence: "The sun shone hot and we ___ upwards.", options: ["drifted", "walked", "seeped"], answer: "drifted" },
+                    { sentence: "The rivers looked like silver ___.", options: ["threads", "carpets", "blankets"], answer: "threads" },
+                    { sentence: "The fields and gardens looked like a green ___.", options: ["carpet", "thread", "river"], answer: "carpet" },
+                    { sentence: "The Cloud said 'Welcome back and take ___.'", options: ["rest", "a bath", "food"], answer: "rest" },
+                    { sentence: "In 'Where Go the Boats?', dark brown is the ___.", options: ["river", "sand", "mill"], answer: "river" },
+                    { sentence: "'___ is the sand.'", options: ["Golden", "Brown", "Green"], answer: "Golden" },
+                    { sentence: "The poem mentions 'Castles of the ___.'", options: ["foam", "sand", "river"], answer: "foam" },
+                    { sentence: "The river goes 'out past the ___.'", options: ["mill", "hill", "valley"], answer: "mill" },
+                    { sentence: "In 'Helping Cloud', the peacock's ___ were dusty.", options: ["feathers", "feet", "beak"], answer: "feathers" },
+                    { sentence: "The fish begged for rain because the ___ was dry.", options: ["pool", "river", "cloud"], answer: "pool" },
+                    { sentence: "The farmer's ___ were dying.", options: ["crops", "animals", "house"], answer: "crops" },
+                    { sentence: "Sonu wanted to sail paper ___.", options: ["boats", "planes", "cars"], answer: "boats" }
+                ]
+            },
+            jumbledWords: {
+                title: "Jumbled Words",
+                questions: [
+                    { jumbled: "LUDCO", correct: "CLOUD" }, { jumbled: "NIAR", correct: "RAIN" },
+                    { jumbled: "MOBO", correct: "BOOM" }, { jumbled: "DETHURN", correct: "THUNDER" },
+                    { jumbled: "PLAST", correct: "SPLAT" }, { jumbled: "HASPLS", correct: "SPLASH" },
+                    { jumbled: "MERRAF", correct: "FARMER" }, { jumbled: "BOWINAR", correct: "RAINBOW" },
+                    { jumbled: "OSTR", correct: "ROOTS" }, { jumbled: "DAPYP", correct: "PADDY" },
+                    { jumbled: "REVI", correct: "RIVER" }, { jumbled: "DNAS", correct: "SAND" },
+                    { jumbled: "LILM", correct: "MILL" }, { jumbled: "LILH", correct: "HILL" },
+                    { jumbled: "AOTB", correct: "BOAT" }, { jumbled: "MAFO", correct: "FOAM" },
+                    { jumbled: "KOCAPEC", correct: "PEACOCK" }, { jumbled: "HIFS", correct: "FISH" },
+                    { jumbled: "PORCS", correct: "CROPS" }, { jumbled: "ONSU", correct: "SONU" },
+                    { jumbled: "DOWHAS", correct: "SHADOW" }, { jumbled: "RUF", correct: "FUR" },
+                    { jumbled: "EESP", correct: "SEEP" }, { jumbled: "ELTURS", correct: "RUSTLE" }
+                ]
+            },
+            completeTheSentence: {
+                title: "Complete the Sentence",
+                questions: [
+                    { sentence: "I live in a ___.", answer: "CLOUD" },
+                    { sentence: "A grand ___ awaits you!", answer: "ADVENTURE" },
+                    { sentence: "The birds flew, ___ their wings.", answer: "FLUTTERING" },
+                    { sentence: "Children looked up and ___.", answer: "SHOUTED" },
+                    { sentence: "The brown cat hid under a ___.", answer: "TREE" },
+                    { sentence: "It shook its fur ___.", answer: "ANGRILY" },
+                    { sentence: "I felt the fresh, warm ___ of the soil.", answer: "TOUCH" },
+                    { sentence: "Some of my friends ___ on the leaves.", answer: "LANDED" },
+                    { sentence: "Others gently ___ the flowers.", answer: "KISSED" },
+                    { sentence: "Some formed tiny ___.", answer: "PUDDLES" },
+                    { sentence: "The ___ roots of paddy were searching.", answer: "THIRSTY" },
+                    { sentence: "Slowly I ___ upward.", answer: "TRAVELLED" },
+                    { sentence: "The leaves of the paddy ___ gently.", answer: "RUSTLED" },
+                    { sentence: "The sun shined hot and ___.", answer: "BRIGHT" },
+                    { sentence: "The rivers looked like ___ threads.", answer: "SILVER" },
+                    { sentence: "I feel sad to ___ my new friends.", answer: "LEAVE" },
+                    { sentence: "Dark brown is the ___.", answer: "RIVER" },
+                    { sentence: "___ is the sand.", answer: "GOLDEN" },
+                    { sentence: "___ leaves a-floating.", answer: "GREEN" },
+                    { sentence: "Away down the ___.", answer: "VALLEY" },
+                    { sentence: "The peacock's ___ are dusty.", answer: "FEATHERS" },
+                    { sentence: "The farmer's crops are ___.", answer: "DYING" }
+                ]
+            },
+            oddOneOut: {
+                title: "Odd One Out",
+                questions: [
+                    { options: ["Cloud", "Thunder", "Lightning", "Soil"], answer: "Soil" },
+                    { options: ["Splat", "Splash", "Boom", "Hope"], answer: "Hope" },
+                    { options: ["Farmer", "Cat", "Children", "Cloud"], answer: "Cloud" },
+                    { options: ["Roots", "Leaves", "Flowers", "Cat"], answer: "Cat" },
+                    { options: ["Red", "Blue", "Green", "Loud"], answer: "Loud" },
+                    { options: ["River", "Mill", "Valley", "Cloud"], answer: "Cloud" },
+                    { options: ["Sand", "Foam", "Boats", "Farmer"], answer: "Farmer" },
+                    { options: ["Peacock", "Fish", "Farmer", "Raindrop"], answer: "Raindrop" },
+                    { options: ["Seep", "Trickle", "Splash", "Float"], answer: "Float" },
+                    { options: ["Rumble", "Rustle", "Shout", "Bright"], answer: "Bright" },
+                    { options: ["Happy", "Excited", "Sad", "Green"], answer: "Green" },
+                    { options: ["Console", "Flutter", "Pierce", "Paddy"], answer: "Paddy" },
+                    { options: ["Carpet", "Thread", "Leaf", "Fur"], answer: "Leaf" },
+                    { options: ["Morning", "Sunset", "Bright", "Night"], answer: "Bright" },
+                    { options: ["Orange", "Brown", "Golden", "Shout"], answer: "Shout" },
+                    { options: ["Run", "Fly", "Dance", "Tree"], answer: "Tree" },
+                    { options: ["Pool", "Puddle", "River", "Hill"], answer: "Hill" },
+                    { options: ["Crops", "Paddy", "Field", "Feathers"], answer: "Feathers" },
+                    { options: ["Whee", "Boom", "Splat", "Hope"], answer: "Hope" },
+                    { options: ["Sail", "Float", "Drift", "Run"], answer: "Run" },
+                    { options: ["Rain", "Water", "Wind", "Cloud"], answer: "Wind" }
+                ]
+            },
+            rearrangeSentence: {
+                title: "Rearrange Sentences",
+                questions: [
+                    ["I", "am", "a", "raindrop"], ["I", "live", "in", "a", "cloud"],
+                    ["I", "heard", "a", "loud", "BOOM"], ["I", "felt", "so", "excited"],
+                    ["We", "were", "falling", "together"], ["The", "flowers", "waved", "gently"],
+                    ["The", "farmer", "looked", "up", "with", "hope"], ["Children", "shouted", "RAINBOW"],
+                    ["I", "landed", "on", "the", "cat"], ["It", "shook", "its", "fur", "angrily"],
+                    ["I", "seeped", "into", "the", "soil"],
+                    ["The", "thirsty", "roots", "were", "searching", "for", "water"],
+                    ["The", "sun", "began", "to", "set"], ["We", "began", "to", "float", "higher"],
+                    ["The", "rivers", "looked", "like", "silver", "threads"], ["Dark", "brown", "is", "the", "river"],
+                    ["Golden", "is", "the", "sand"], ["It", "flows", "along", "for", "ever"],
+                    ["The", "pool", "is", "dry"], ["The", "farmer", "pleaded", "Please", "rain"],
+                    ["The", "peacock", "spread", "its", "pretty", "feathers"], ["Sonu", "and", "his", "friends", "started", "playing"]
+                ]
+            },
+            riddles: {
+                title: "Riddles & Puzzles",
+                questions: [
+                    { riddle: "I live in a cloud and I am a tiny drop. What am I?", answer: "Raindrop" },
+                    { riddle: "I make a loud 'BOOM!' and tell the raindrops to go. What am I?", answer: "Thunder" },
+                    { riddle: "I am fluffy and raindrops live inside me. What am I?", answer: "Cloud" },
+                    { riddle: "I looked up with hope when the rain started. Who am I?", answer: "Farmer" },
+                    { riddle: "I am bright and colourful, and children shout my name after the rain. What am I?", answer: "Rainbow" },
+                    { riddle: "A raindrop landed on me with a 'SPLAT' and I got angry. Who am I?", answer: "Cat" },
+                    { riddle: "We are in the paddy and we were thirsty for water. What are we?", answer: "Roots" },
+                    { riddle: "I shine hot and bright and pull the raindrops back up. Who am I?", answer: "Sun" },
+                    { riddle: "I am dark brown and I have golden sand. What am I?", answer: "River" },
+                    { riddle: "I am a building that the river flows past in the poem. What am I?", answer: "Mill" },
+                    { riddle: "I am a bird with dusty feathers who cried for rain. Who am I?", answer: "Peacock" },
+                    { riddle: "My pool was dry so I begged the cloud to rain. Who am I?", answer: "Fish" },
+                    { riddle: "My crops were dying so I pleaded for rain. Who am I?", answer: "Farmer" },
+                    { riddle: "I am a boy who wanted to sail paper boats. Who am I?", answer: "Sonu" },
+                    { riddle: "I am the sound a raindrop makes hitting a cat. What am I?", answer: "Splat" },
+                    { riddle: "I am the sound a raindrop makes hitting the soil. What am I?", answer: "Splash" },
+                    { riddle: "I am a word for enjoyment, shouted by the raindrops. What am I?", answer: "Whee" },
+                    { riddle: "This is the sound leaves make in the breeze. What am I?", answer: "Rustle" },
+                    { riddle: "This is the sound of thunder. What am I?", answer: "Rumble" },
+                    { riddle: "I am a small pool of water. What am I?", answer: "Puddle" },
+                    { riddle: "I am a ray of sun's light. What am I?", answer: "Sunbeam" }
+                ]
+            },
+            orderStory: {
+                title: "Order the Story",
+                questions: [
+                    {
+                        name: "Journey of the Raindrop",
+                        events: [
+                            "I live in a big, fluffy cloud.",
+                            "Thunder rumbled and lightning flashed.",
+                            "I leaped out of the cloud and fell down.",
+                            "I saw a farmer with hope and children shouting 'Rainbow!'",
+                            "I landed on an angry cat (SPLAT), then the soil (SPLASH).",
+                            "I seeped into the soil and was drawn into a thirsty paddy root.",
+                            "The hot sun shone and I drifted upwards, back to the sky.",
+                            "I returned to my cloud, happy to have helped the farmer."
+                        ]
+                    },
+                    {
+                        name: "The Helping Cloud",
+                        events: [
+                            "A cloud rolled merrily in the sky.",
+                            "A peacock with dusty feathers cried for rain.",
+                            "A fish in a dry pool begged for water.",
+                            "A farmer with dying crops pleaded for rain.",
+                            "A boy named Sonu wanted rain to sail paper boats.",
+                            "The cloud smiled and started to rain.",
+                            "The peacock danced, the fish was happy, the farmer planted paddy, and the children played."
+                        ]
+                    },
+                    {
+                        name: "Where Go the Boats?",
+                        events: [
+                            "Dark brown is the river, golden is the sand.",
+                            "Green leaves and castles of foam are floating.",
+                            "My boats are boating on the river.",
+                            "The river goes on, past the mill and down the hill.",
+                            "Away down the river, a hundred miles or more.",
+                            "Other little children shall bring my boats ashore."
+                        ]
+                    }
+                ]
+            },
+            missingLetters: {
+                title: "Find Missing Letters",
+                questions: [
+                    "CLOUD", "RAIN", "BOOM", "THUNDER", "SPLAT", "SPLASH", 
+                    "FARMER", "RAINBOW", "ROOTS", "PADDY", "RIVER", "SAND", 
+                    "MILL", "HILL", "BOAT", "FOAM", "PEACOCK", "FISH", 
+                    "CROPS", "SONU", "SHADOW", "FUR", "SEEP", "RUSTLE", 
+                    "PIERCE", "PUDDLE", "CONSOLE"
+                ]
+            },
+            addPoemLines: {
+                title: "Add to the Poem",
+                questions: [
+                    { start: "My friend says I have to..." },
+                    { start: "Write two lines about the thirsty paddy roots." },
+                    { start: "Write two lines about the angry cat." },
+                    { start: "Write two lines to thank the 'Helping Cloud'." },
+                    { start: "Write two lines about the 'castles of the foam'." },
+                    { start: "Write two lines that rhyme with 'river'." },
+                    { start: "Write two lines that rhyme with 'sand'." },
+                    { start: "Create a new stanza for 'Where Go the Boats?'." },
+                    { start: "What else did the raindrop see? Write two lines." },
+                    { start: "Write two lines about the sound of rain." },
+                    { start: "Write two lines about playing in a puddle." },
+                    { start: "What did the fish say? Write two lines." },
+                    { start: "What did the peacock say? Write two lines." },
+                    { start: "What did the farmer say? Write two lines." },
+                    { start: "What did Sonu say? Write two lines." },
+                    { start: "Write two lines about the sun pulling the rain up." },
+                    { start: "Write two lines about being back in the cloud." },
+                    { start: "Write two lines rhyming with 'hill' and 'mill'." },
+                    { start: "Write two lines rhyming with 'foam' and 'home'." },
+                    { start: "Write two lines rhyming with 'more' and 'ashore'." }
+                ]
+            },
+            languagePuzzle: {
+                title: "Language Puzzles",
+                questions: [
+                    { word: "Console", synonym: "To offer comfort" },
+                    { word: "Flutter", synonym: "To move lightly and quickly" },
+                    { word: "Pierce", synonym: "To pass through something" },
+                    { word: "Puddle", synonym: "A small pool of water" },
+                    { word: "Refreshing", synonym: "Something new or different" },
+                    { word: "Rumble", synonym: "The sound of thunder" },
+                    { word: "Rustle", synonym: "A soft sound of leaves" },
+                    { word: "Seep", synonym: "To flow slowly into the soil" },
+                    { word: "Shone", synonym: "Gave out a bright light" },
+                    { word: "Sigh", synonym: "Deep breath expressing relief" },
+                    { word: "Splash", synonym: "Sound of falling into liquid" },
+                    { word: "Splat", synonym: "Sound of hitting a surface" },
+                    { word: "Sunbeam", synonym: "A ray of sun's light" },
+                    { word: "Trickle", synonym: "To flow slowly drop by drop" },
+                    { word: "Vanish", synonym: "To disappear suddenly" },
+                    { word: "Whee", synonym: "Used to express enjoyment" },
+                    { word: "Excited", synonym: "Very happy and eager" },
+                    { word: "Angry", synonym: "Mad or furious" },
+                    { word: "Sad", synonym: "Unhappy" },
+                    { word: "Tiny", synonym: "Very small" },
+                    // ***** THIS LINE IS NOW FIXED *****
+                    { word: "Loud", synonym: "Noisy" },
+                    { word: "Afloat", synonym: "Floating" }
+                ]
+            },
+            oneWord: {
+                title: "One Word",
+                questions: [
+                    { clue: "To offer comfort to someone sad", answer: "CONSOLE" },
+                    { clue: "To move wings lightly and quickly", answer: "FLUTTER" },
+                    { clue: "Soft thick hair on an animal", answer: "FUR" },
+                    { clue: "To pass through something sharp", answer: "PIERCE" },
+                    { clue: "A small pool of water", answer: "PUDDLE" },
+                    { clue: "Making you feel new or different", answer: "REFRESHING" },
+                    { clue: "The deep, rolling sound of thunder", answer: "RUMBLE" },
+                    { clue: "A soft sound of leaves moving", answer: "RUSTLE" },
+                    { clue: "To flow slowly into the soil", answer: "SEEP" },
+                    { clue: "Past tense of shine; gave out light", answer: "SHONE" },
+                    { clue: "A deep breath expressing relief or sadness", answer: "SIGH" },
+                    { clue: "Sound of something falling into liquid", answer: "SPLASH" },
+                    { clue: "Sound of something wet hitting a surface", answer: "SPLAT" },
+                    { clue: "A ray of sun's light", answer: "SUNBEAM" },
+                    { clue: "To flow slowly, drop by drop", answer: "TRICKLE" },
+                    { clue: "To disappear suddenly", answer: "VANISH" },
+                    { clue: "An exclamation of enjoyment", answer: "WHEE" },
+                    { clue: "A person who grows crops", answer: "FARMER" },
+                    { clue: "A fluffy white thing in the sky", answer: "CLOUD" },
+                    { clue: "A building by a river, in a poem", answer: "MILL" },
+                    { clue: "A bird with beautiful, dusty feathers", answer: "PEACOCK" }
+                ]
+            },
+            prepositions: {
+                title: "Find the Preposition",
+                questions: [
+                    { sentence: "I live ___ a cloud.", options: ["in", "on", "at"], answer: "in" },
+                    { sentence: "A flash of lightning ___ the sky.", options: ["across", "under", "over"], answer: "across" },
+                    { sentence: "I had never been ___ the cloud before.", options: ["outside", "inside", "with"], answer: "outside" },
+                    { sentence: "Each drop was pushed ___ of the cloud.", options: ["out", "in", "by"], answer: "out" },
+                    { sentence: "We were falling ___ and down.", options: ["down", "up", "through"], answer: "down" },
+                    { sentence: "From high ___ in the sky...", options: ["up", "down", "on"], answer: "up" },
+                    { sentence: "Everyone ran to escape ___ the rain.", options: ["from", "with", "to"], answer: "from" },
+                    { sentence: "A farmer looked ___ with hope.", options: ["up", "down", "at"], answer: "up" },
+                    { sentence: "Sunbeams shone ___ us.", options: ["through", "on", "with"], answer: "through" },
+                    { sentence: "A brown cat hid ___ a tree.", options: ["under", "over", "on"], answer: "under" },
+                    { sentence: "I landed ___ the cat.", options: ["on", "in", "at"], answer: "on" },
+                    { sentence: "I fell ___ the soil.", options: ["on", "in", "at"], answer: "on" },
+                    { sentence: "Some of my friends landed ___ the leaves.", options: ["on", "in", "at"], answer: "on" },
+                    { sentence: "I seeped ___ the soil.", options: ["into", "onto", "at"], answer: "into" },
+                    { sentence: "The leaves rustled gently ___ the breeze.", options: ["in", "on", "with"], answer: "in" },
+                    { sentence: "Who is pulling us ___ above?", options: ["from", "to", "with"], answer: "from" },
+                    { sentence: "I looked down ___ the field below.", options: ["at", "on", "in"], answer: "at" },
+                    { sentence: "The river flows ___ for ever.", options: ["along", "with", "to"], answer: "along" },
+                    { sentence: "With trees ___ either hand.", options: ["on", "in", "at"], answer: "on" },
+                    { sentence: "The river goes out ___ the mill.", options: ["past", "to", "from"], answer: "past" },
+                    { sentence: "Away ___ the valley.", options: ["down", "up", "over"], answer: "down" },
+                    { sentence: "The farmer walked ___ the muddy fields.", options: ["through", "on", "at"], answer: "through" }
+                ]
+            }
+        };
+        
+        // --- SCRIPT LOGIC (Identical to original) ---
+        let currentActivityId = null;
+        let currentQuestionIndex = 0;
+        let currentStoryIndex = 0; // For 'orderStory'
+        let audioStarted = false;
+
+        const mainMenuScreen = document.getElementById('main-menu-screen');
+        const activityScreen = document.getElementById('activity-screen');
+        const learningPathContainer = document.getElementById('learning-path');
+        const activityTitleEl = document.getElementById('activity-title');
+        const progressBarFillEl = document.getElementById('progress-bar-fill');
+        const activityContentEl = document.getElementById('activity-content');
+
+        // --- NEW MENU DATA (Based on the PDF and new activities) ---
+        const menuData = [
+            { id: 'fillInTheBlanks', title: 'Fill in the Blanks', desc: 'Find the missing weather word!', icon: icons.fill, color: '#3B82F6' },
+            { id: 'jumbledWords', title: 'Jumbled Words', desc: 'Unscramble the rain words!', icon: icons.jumbled, color: '#10B981' },
+            { id: 'completeTheSentence', title: 'Complete the Sentence', desc: 'Finish the raindrop\'s story!', icon: icons.complete, color: '#EF4444' },
+            { id: 'oddOneOut', title: 'Odd One Out', desc: 'Which one is different?', icon: icons.odd, color: '#F59E0B' },
+            { id: 'rearrangeSentence', title: 'Rearrange Sentences', desc: 'Put the story words in order!', icon: icons.rearrange, color: '#8B5CF6' },
+            { id: 'riddles', title: 'Rainy Day Riddles', desc: 'Solve the weather mystery!', icon: icons.riddles, color: '#EC4899' },
+            { id: 'orderStory', title: 'Order the Story', desc: 'What happens next?', icon: icons.order, color: '#6366F1' },
+            { id: 'missingLetters', title: 'Find Missing Letters', desc: 'Complete the word!', icon: icons.letters, color: '#0EA5E9' },
+            { id: 'addPoemLines', title: 'Add to the Poem', desc: 'Be a rain poet!', icon: icons.poem, color: '#D946EF' },
+            { id: 'languagePuzzle', title: 'Language Puzzles', desc: 'Find the matching word!', icon: icons.language, color: '#84CC16' },
+            { id: 'oneWord', title: 'One Word', desc: 'Find the single word clue!', icon: icons.oneWord, color: '#14B8A6' },
+            { id: 'prepositions', title: 'Find Prepositions', desc: 'Choose the right linking word!', icon: icons.preposition, color: '#F43F5E' }
+        ];
+        
+        function generateMenu() {
+            learningPathContainer.innerHTML = menuData.map(item => `
+                <div class="path-item" onclick="showActivity('${item.id}')">
+                    <div class="icon-container" style="background-color: ${item.color}20; color: ${item.color};">${item.icon}</div>
+                    <div class="text-content"><h3>${item.title}</h3><p>${item.desc}</p></div>
+                </div>`).join('');
+        }
+
+        function showMenu() {
+            activityScreen.classList.add('inactive');
+            mainMenuScreen.classList.remove('slide-out');
+        }
+
+        async function showActivity(activityId) {
+            if (!audioStarted) {
+                // Wait for a user interaction to start audio
+                try {
+                    await Tone.start();
+                    audioStarted = true;
+                    console.log("Audio Context started");
+                } catch (e) {
+                    console.error("Audio Context could not start", e);
+                }
+            }
+            currentActivityId = activityId;
+            currentQuestionIndex = 0;
+            currentStoryIndex = 0;
+            mainMenuScreen.classList.add('slide-out');
+            activityScreen.classList.remove('inactive');
+            loadActivity(activityId);
+        }
+
+
+        function updateProgressBar() {
+            const data = activities[currentActivityId];
+            if (!data) return;
+            const total = data.questions.length;
+            let current = currentActivityId === 'orderStory' ? currentStoryIndex : currentQuestionIndex;
+            const percentage = total > 0 ? (current / total) * 100 : 0;
+            progressBarFillEl.style.width = `${percentage}%`;
+        }
+        
+        function loadActivity(activityId) {
+            const activityData = menuData.find(m => m.id === activityId);
+            activityTitleEl.innerText = activityData.title;
+            updateProgressBar();
+
+            const loaders = {
+                fillInTheBlanks, jumbledWords, completeTheSentence, oddOneOut,
+                rearrangeSentence, riddles, orderStory, missingLetters,
+                addPoemLines, languagePuzzle, oneWord, prepositions
+            };
+            if (loaders[activityId]) {
+                loaders[activityId]();
+            }
+        }
+        
+        function showModal(title, message, emoji, onclose, showAnswerCallback) {
+            if (audioStarted) {
+                if (emoji === '✅') playCorrectSound();
+                if (emoji === '❌') playIncorrectSound();
+            }
+
+            const modal = document.getElementById('feedback-modal');
+            const modalMessageEl = document.getElementById('modal-message');
+            document.getElementById('modal-title').innerText = title;
+            modalMessageEl.innerHTML = message; // Use innerHTML to allow for breaks
+            document.getElementById('modal-emoji').innerText = emoji;
+            const buttonsContainer = document.getElementById('modal-buttons-container');
+            buttonsContainer.innerHTML = ''; // Clear previous buttons
+
+            if (showAnswerCallback) {
+                const showAnswerBtn = document.createElement('button');
+                showAnswerBtn.id = 'show-answer-btn';
+                showAnswerBtn.className = 'btn btn-secondary';
+                showAnswerBtn.innerText = 'Show Answer';
+                showAnswerBtn.onclick = () => {
+                    const answer = showAnswerCallback();
+                    modalMessageEl.innerHTML += `<br><br><strong class="text-green-600">Correct Answer:<br>${answer}</strong>`;
+                    showAnswerBtn.style.display = 'none'; // Hide after clicking
+                };
+                buttonsContainer.appendChild(showAnswerBtn);
+            }
+            
+            const continueButton = document.createElement('button');
+            continueButton.className = 'btn btn-primary';
+            continueButton.innerText = 'Continue';
+            continueButton.onclick = onclose || closeModal;
+            buttonsContainer.appendChild(continueButton);
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('feedback-modal').classList.add('hidden');
+        }
+        
+        function showCompletionScreen() {
+             activityContentEl.innerHTML = `<div class="text-center"><h2 class="text-2xl font-bold mb-4 text-green-600">Great Job! <span class="tada">🎉</span></h2><p class="mb-4">You've completed this section!</p></div>`;
+             progressBarFillEl.style.width = '100%';
+        }
+
+        // --- ACTIVITY LOGIC FUNCTIONS (Identical to original) ---
+        function fillInTheBlanks() {
+            const data = activities.fillInTheBlanks;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            activityContentEl.innerHTML = `<p class="text-lg text-center mb-6 p-4 bg-blue-50 rounded-lg">${q.sentence.replace('___', '<span class="font-bold text-blue-600">___</span>')}</p><div id="options-container"></div>`;
+            const optionsContainer = activityContentEl.querySelector('#options-container');
+            q.options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.innerText = option;
+                button.onclick = () => {
+                    button.parentElement.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+                    if (option.toUpperCase() === q.answer.toUpperCase()) {
+                        button.classList.add('correct');
+                        showModal("Correct!", "That's the right word!", '✅', () => { currentQuestionIndex++; fillInTheBlanks(); closeModal(); });
+                    } else {
+                        button.classList.add('incorrect');
+                        const next = () => { currentQuestionIndex++; fillInTheBlanks(); closeModal(); };
+                        const showAnswer = () => `"${q.answer}"`;
+                        showModal("Try Again!", "That wasn't quite right.", '❌', next, showAnswer);
+                    }
+                };
+                optionsContainer.appendChild(button);
+            });
+        }
+        
+        function jumbledWords() {
+            const data = activities.jumbledWords;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            activityContentEl.innerHTML = `
+                <p class="text-4xl font-bold tracking-widest text-center my-8 text-purple-600">${q.jumbled}</p>
+                <input type="text" id="jumbled-input" class="w-full p-3 border-2 border-gray-300 rounded-lg text-lg text-center" placeholder="Your answer..." autocapitalize="off">
+                <button class="btn btn-primary mt-4">Check Answer</button>`;
+            activityContentEl.querySelector('button').onclick = () => {
+                const userAnswer = activityContentEl.querySelector('input').value.toUpperCase();
+                if (userAnswer === q.correct) {
+                    showModal("You got it!", `"${q.correct}" is correct!`, '✅', () => { currentQuestionIndex++; jumbledWords(); closeModal(); });
+                } else {
+                    const next = () => { currentQuestionIndex++; jumbledWords(); closeModal(); };
+                    const showAnswer = () => `"${q.correct}"`;
+                    showModal("Not quite!", "Check your spelling.", '❌', next, showAnswer);
+                }
+            };
+        }
+
+        // ***** THIS FUNCTION IS NOW FIXED TO MATCH YOUR TEMPLATE *****
+        function completeTheSentence() {
+            const data = activities.completeTheSentence;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            
+            let scrambledWord = q.answer.split('').sort(() => Math.random() - 0.5).join('');
+            if (scrambledWord === q.answer && q.answer.length > 1) {
+                scrambledWord = q.answer.split('').sort(() => Math.random() - 0.5).join('');
+            }
+
+            activityContentEl.innerHTML = `
+                <p class="text-lg text-center mb-4 p-4 bg-orange-50 rounded-lg">${q.sentence.replace('___', '<span class="font-bold text-orange-500">___</span>')}</p>
+                <p class="text-lg text-center mb-6">Unscramble this word: <span class="font-bold text-2xl text-orange-500">${scrambledWord}</span></p>
+                <input type="text" id="complete-input" class="w-full p-3 border-2 border-gray-300 rounded-lg text-lg text-center" placeholder="Type the unscrambled word..." autocapitalize="off">
+                <button class="btn btn-primary mt-4">Check</button>`;
+            
+            activityContentEl.querySelector('button').onclick = () => {
+                const userAnswer = activityContentEl.querySelector('input').value.toUpperCase();
+                if (userAnswer === q.answer) {
+                    showModal("Perfect!", "You completed the sentence correctly!", '✅', () => { currentQuestionIndex++; completeTheSentence(); closeModal(); });
+                } else {
+                    const next = () => { currentQuestionIndex++; completeTheSentence(); closeModal(); };
+                    const showAnswer = () => `"${q.answer}"`;
+                    showModal("Oops!", "That's not the right word.", '❌', next, showAnswer);
+                }
+            };
+        }
+        
+        function oddOneOut() {
+            const data = activities.oddOneOut;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            activityContentEl.innerHTML = `<p class="text-lg text-center mb-6">Which word does not belong in this group?</p><div id="options-container"></div>`;
+            const optionsContainer = activityContentEl.querySelector('#options-container');
+            q.options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.innerText = option;
+                button.onclick = () => {
+                    button.parentElement.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+                    if (option === q.answer) {
+                        button.classList.add('correct');
+                        showModal("That's right!", `"${option}" is the odd one out.`, '✅', () => { currentQuestionIndex++; oddOneOut(); closeModal(); });
+                    } else {
+                        button.classList.add('incorrect');
+                        const next = () => { currentQuestionIndex++; oddOneOut(); closeModal(); };
+                        const showAnswer = () => `"${q.answer}"`;
+                        showModal("Not quite!", "That wasn't the one.", '❌', next, showAnswer);
+                    }
+                };
+                optionsContainer.appendChild(button);
+            });
+        }
+        
+        // --- Drag and Drop Logic (Identical to original) ---
+        let draggedItem = null;
+        function handleDragStart(e) { 
+            draggedItem = this;
+            setTimeout(() => this.style.display = 'none', 0);
+            if (e.dataTransfer) e.dataTransfer.setData('text/html', this.innerHTML);
+        }
+        function handleDragEnd() { this.style.display = 'block'; draggedItem = null; }
+        function handleDragOver(e) { e.preventDefault(); }
+        function handleDrop(e) {
+            e.preventDefault();
+            if (e.target.classList.contains('draggable')) {
+                 e.target.parentNode.insertBefore(draggedItem, e.target.nextSibling);
+            } else if (e.target.classList.contains('drop-zone')) {
+                 e.target.appendChild(draggedItem);
+            }
+        }
+
+        function rearrangeSentence() {
+            const data = activities.rearrangeSentence;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const sentenceWords = [...data.questions[currentQuestionIndex]].sort(() => Math.random() - 0.5);
+            activityContentEl.innerHTML = `
+                <p class="mb-4 text-center">Drag and drop the words to form a correct sentence.</p>
+                <div id="drop-zone" class="drop-zone mb-4"></div>
+                <div id="word-bank" class="drop-zone bg-blue-100 border-blue-300"></div>
+                <button class="btn btn-primary mt-6">Check Sentence</button>`;
+            
+            const wordBank = activityContentEl.querySelector('#word-bank');
+            const dropZone = activityContentEl.querySelector('#drop-zone');
+            
+            sentenceWords.forEach(word => {
+                const wordEl = document.createElement('div');
+                wordEl.className = 'draggable';
+                wordEl.innerText = word;
+                wordEl.draggable = true;
+                wordBank.appendChild(wordEl);
+            });
+
+            [wordBank, dropZone].forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('drop', handleDrop);
+            });
+            
+            activityContentEl.querySelectorAll('.draggable').forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+
+            activityContentEl.querySelector('button').onclick = () => {
+                const userAnswer = Array.from(dropZone.children).map(el => el.innerText).join(' ');
+                const correctAnswer = data.questions[currentQuestionIndex].join(' ');
+                if (userAnswer === correctAnswer) {
+                    showModal("Excellent!", "You made a perfect sentence!", '✅', () => { currentQuestionIndex++; rearrangeSentence(); closeModal(); });
+                } else {
+                    const next = () => { currentQuestionIndex++; rearrangeSentence(); closeModal(); };
+                    const showAnswer = () => `"${correctAnswer}"`;
+                    showModal("Almost!", "The words are not in the right order.", '❌', next, showAnswer);
+                }
+            };
+        }
+
+        function riddles() {
+            const data = activities.riddles;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            activityContentEl.innerHTML = `
+                <div class="riddle-box"><p class="text-lg italic text-yellow-800 text-center">${q.riddle}</p></div>
+                <input type="text" id="riddle-input" class="w-full p-3 border-2 border-gray-300 rounded-lg text-lg mt-4 text-center" placeholder="What's the answer?" autocapitalize="off">
+                <button class="btn btn-primary mt-4">Solve</button>`;
+             activityContentEl.querySelector('button').onclick = () => {
+                const userAnswer = activityContentEl.querySelector('input').value.trim().toLowerCase();
+                if (userAnswer === q.answer.toLowerCase()) {
+                    showModal("Brilliant!", "You solved the riddle!", '✅', () => { currentQuestionIndex++; riddles(); closeModal(); });
+                } else {
+                    const next = () => { currentQuestionIndex++; riddles(); closeModal(); };
+                    const showAnswer = () => `"${q.answer}"`;
+                    showModal("Good guess!", "That's not it.", '❌', next, showAnswer);
+                }
+            };
+        }
+
+        function orderStory() {
+            const data = activities.orderStory;
+            if (currentStoryIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+
+            const story = data.questions[currentStoryIndex];
+            const shuffledEvents = [...story.events].sort(() => Math.random() - 0.5);
+            activityContentEl.innerHTML = `
+                <h3 class="font-bold text-center text-lg mb-4">${story.name}</h3>
+                <p class="mb-4 text-center">Drag and drop the sentences to put the story in the correct order.</p>
+                <div id="story-drop-zone" class="drop-zone space-y-2 flex-col flex-nowrap"></div>
+                <button class="btn btn-primary mt-6">Check Order</button>`;
+            
+            const dropZone = activityContentEl.querySelector('#story-drop-zone');
+            shuffledEvents.forEach(event => {
+                const eventEl = document.createElement('div');
+                eventEl.className = 'draggable w-full';
+                eventEl.innerText = event;
+                eventEl.draggable = true;
+                dropZone.appendChild(eventEl);
+            });
+
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('drop', handleDrop);
+            activityContentEl.querySelectorAll('.draggable').forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+
+            activityContentEl.querySelector('button').onclick = () => {
+                const userOrder = Array.from(dropZone.children).map(el => el.innerText);
+                const isCorrect = JSON.stringify(userOrder) === JSON.stringify(story.events);
+                if (isCorrect) {
+                    showModal("Wonderful!", "You put the story in the perfect order!", '✅', () => { currentStoryIndex++; orderStory(); closeModal(); });
+                } else {
+                    const next = () => { currentStoryIndex++; orderStory(); closeModal(); };
+                    const showAnswer = () => story.events.map((e, i) => `${i+1}. ${e}`).join('<br>');
+                    showModal("Almost there!", "Some events are in the wrong place.", '❌', next, showAnswer);
+                }
+            };
+        }
+
+        function missingLetters() {
+            const data = activities.missingLetters;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const word = data.questions[currentQuestionIndex];
+            let html = `<p class="mb-6 text-center">Fill in the blanks to complete the word.</p><div class="flex justify-center items-center flex-wrap">`;
+            const missingIndices = new Set();
+            let minMissing = 2;
+            if (word.length > 4) minMissing = 2;
+            if (word.length > 7) minMissing = 3;
+            
+            while(missingIndices.size < minMissing) {
+                missingIndices.add(Math.floor(Math.random() * word.length));
+            }
+            word.split('').forEach((letter, index) => {
+                if (missingIndices.has(index)) {
+                    html += `<input type="text" class="letter-input" maxlength="1" data-letter="${letter.toUpperCase()}">`;
+                } else {
+                    html += `<span class="letter-input bg-gray-200 flex items-center justify-center">${letter}</span>`;
+                }
+            });
+            html += `</div><button class="btn btn-primary mt-6">Check Word</button>`;
+            activityContentEl.innerHTML = html;
+
+            activityContentEl.querySelector('button').onclick = () => {
+                let allCorrect = true;
+                activityContentEl.querySelectorAll('input').forEach(input => {
+                    if (input.value.toUpperCase() !== input.dataset.letter) {
+                        allCorrect = false;
+                        input.style.borderColor = 'red';
+                    } else {
+                         input.style.borderColor = '#22c55e';
+                    }
+                });
+                if (allCorrect) {
+                    showModal("Correct!", "You've completed the word!", '✅', () => { currentQuestionIndex++; missingLetters(); closeModal(); });
+                } else {
+                    const next = () => { currentQuestionIndex++; missingLetters(); closeModal(); };
+                    const showAnswer = () => `"${word}"`;
+                    showModal("Oops!", "One or more letters are incorrect.", '❌', next, showAnswer);
+                }
+            };
+        }
+        
+        function addPoemLines() {
+            const data = activities.addPoemLines;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            activityContentEl.innerHTML = `
+                <p class="text-lg mb-4 text-center">${q.start}</p>
+                <textarea id="poem-input" class="w-full p-3 border-2 border-gray-300 rounded-lg text-lg" rows="4" placeholder="Write your creative lines here..."></textarea>
+                <button class="btn btn-primary mt-4">Submit Lines</button>`;
+            activityContentEl.querySelector('button').onclick = () => {
+                const userInput = activityContentEl.querySelector('textarea').value;
+                if (userInput.trim().length > 10) {
+                    showModal("Creative!", "What wonderful lines! You're a poet!", '✅', () => { currentQuestionIndex++; addPoemLines(); closeModal(); });
+                } else {
+                    showModal("Keep thinking!", "Try to write a little more.", '❌', () => { closeModal(); });
+                }
+            };
+        }
+        
+        function languagePuzzle() {
+            const data = activities.languagePuzzle;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            const options = [q.synonym];
+            while (options.length < 3) {
+                const randomWord = data.questions[Math.floor(Math.random() * data.questions.length)].synonym;
+                if (!options.includes(randomWord)) {
+                    options.push(randomWord);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+            
+            activityContentEl.innerHTML = `
+                <p class="text-lg text-center mb-4">Which word means the same as:</p>
+                <p class="text-3xl font-bold text-center my-6 text-purple-600">${q.word}</p>
+                <div id="options-container"></div>`;
+            const optionsContainer = activityContentEl.querySelector('#options-container');
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.innerText = option;
+                button.onclick = () => {
+                     button.parentElement.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+                    if (option === q.synonym) {
+                        button.classList.add('correct');
+                        showModal("Correct!", `You found the matching word!`, '✅', () => { currentQuestionIndex++; languagePuzzle(); closeModal(); });
+                    } else {
+                        button.classList.add('incorrect');
+                        const next = () => { currentQuestionIndex++; languagePuzzle(); closeModal(); };
+                        const showAnswer = () => `"${q.synonym}"`;
+                        showModal("Not quite!", `The answer was "${q.synonym}".`, '❌', next, showAnswer);
+                    }
+                };
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function oneWord() {
+            const data = activities.oneWord;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            activityContentEl.innerHTML = `
+                <p class="text-lg text-center mb-6 p-4 bg-teal-50 rounded-lg">${q.clue}</p>
+                <input type="text" id="one-word-input" class="w-full p-3 border-2 border-gray-300 rounded-lg text-lg text-center" placeholder="Type one word..." autocapitalize="off">
+                <button class="btn btn-primary mt-4">Check Answer</button>`;
+            activityContentEl.querySelector('button').onclick = () => {
+                const userAnswer = activityContentEl.querySelector('input').value.toUpperCase();
+                if (userAnswer === q.answer) {
+                    showModal("Excellent!", "That's the right word!", '✅', () => { currentQuestionIndex++; oneWord(); closeModal(); });
+                } else {
+                    const next = () => { currentQuestionIndex++; oneWord(); closeModal(); };
+                    const showAnswer = () => `"${q.answer}"`;
+                    showModal("Not quite!", "Think of another word.", '❌', next, showAnswer);
+                }
+            };
+        }
+
+        function prepositions() {
+            const data = activities.prepositions;
+            if (currentQuestionIndex >= data.questions.length) return showCompletionScreen();
+            updateProgressBar();
+            const q = data.questions[currentQuestionIndex];
+            activityContentEl.innerHTML = `<p class="text-lg text-center mb-6 p-4 bg-pink-50 rounded-lg">${q.sentence.replace('___', '<span class="font-bold text-pink-600">___</span>')}</p><div id="options-container"></div>`;
+            const optionsContainer = activityContentEl.querySelector('#options-container');
+            q.options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.innerText = option;
+                button.onclick = () => {
+                    button.parentElement.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+                    if (option === q.answer) {
+                        button.classList.add('correct');
+                        showModal("Correct!", "You picked the right preposition!", '✅', () => { currentQuestionIndex++; prepositions(); closeModal(); });
+                    } else {
+                        button.classList.add('incorrect');
+                        const next = () => { currentQuestionIndex++; prepositions(); closeModal(); };
+                        const showAnswer = () => `"${q.answer}"`;
+                        showModal("Try Again!", "That wasn't the right one.", '❌', next, showAnswer);
+                    }
+                };
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        // Initial load
+        window.onload = () => {
+            generateMenu();
+            showMenu();
+        };
+    </script>
+</body>
+</html>
