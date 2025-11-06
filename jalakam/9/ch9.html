@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Creating a Webpage</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles (same as your provided file) */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f5f3ff; /* Violet 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(91, 33, 182, 0.1);
+            border: 1px solid #ddd6fe; /* Violet 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #c4b5fd; /* Violet 300 */
+        }
+        .option-btn:hover {
+             background-color: #f5f3ff; /* Violet 50 */
+        }
+        .option-btn.selected {
+            background-color: #db2777; /* Pink 600 for selected */
+            color: white;
+            border-color: #be185d; /* Pink 700 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f87171; /* Red 400 for wrong */
+            color: white;
+            border-color: #ef4444;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-violet-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-violet-800 mb-2">Creating a Webpage Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your HTML Skills!</p>
+            <img src="https://placehold.co/400x200/a78bfa/ffffff?text=Ready+to+Code%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="HTML Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3"></div>
+                
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                 <h2 id="review-title" class="text-3xl font-black text-violet-800 mb-2">Test Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                 </div>
+                 <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Creating a Webpage Quiz!", welcomeSubtitle: "Test Your HTML Skills!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "വെബ്പേജ് നിർമ്മാണ ക്വിസ്!", welcomeSubtitle: "നിങ്ങളുടെ HTML കഴിവുകൾ പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- NEW 33-Question Bank based on Chapter 9: Creating a Webpage ---
+        const fullQuizData = [
+            { en: { question: "A webpage is a file stored on a special computer called a...?", options: ["Server", "Browser", "Client", "URL"], answer: "Server" }, ml: { question: "ഒരു വെബ്പേജ് സംഭരിച്ചിരിക്കുന്ന പ്രത്യേക കമ്പ്യൂട്ടറിനെ എന്ത് വിളിക്കുന്നു?", options: ["സെർവർ", "ബ്രൗസർ", "ക്ലയന്റ്", "URL"], answer: "സെർവർ" } },
+            { en: { question: "What is the unique address of a webpage on the internet called?", options: ["HTML", "URL", "Browser", "Server"], answer: "URL" }, ml: { question: "ഇന്റർനെറ്റിലെ ഒരു വെബ്പേജിന്റെ തനതായ വിലാസത്തെ എന്തുവിളിക്കുന്നു?", options: ["HTML", "URL", "ബ്രൗസർ", "സെർവർ"], answer: "URL" } },
+            { en: { question: "In the URL 'https://www.schoolwiki.in', what part is 'schoolwiki.in'?", options: ["Protocol", "Server Part", "Domain (Name)", "File Path"], answer: "Domain (Name)" }, ml: { question: "'https://www.schoolwiki.in' എന്ന URL-ൽ, 'schoolwiki.in' എന്ന ഭാഗം എന്താണ്?", options: ["പ്രോട്ടോക്കോൾ", "സെർവർ ഭാഗം", "ഡൊമെയ്ൻ (പേര്)", "ഫയൽ പാത്ത്"], answer: "ഡൊമെയ്ൻ (പേര്)" } },
+            { en: { question: "In the URL 'https://www.schoolwiki.in', what does 'https://' indicate?", options: ["The Domain", "The Server", "How to access the page (Protocol)", "The file name"], answer: "How to access the page (Protocol)" }, ml: { question: "'https://www.schoolwiki.in' എന്ന URL-ൽ, 'https://' എന്താണ് സൂചിപ്പിക്കുന്നത്?", options: ["ഡൊമെയ്ൻ", "സെർവർ", "പേജ് എങ്ങനെ ആക്സസ് ചെയ്യാം (പ്രോട്ടോക്കോൾ)", "ഫയലിന്റെ പേര്"], answer: "പേജ് എങ്ങനെ ആക്സസ് ചെയ്യാം (പ്രോട്ടോക്കോൾ)" } },
+            { en: { question: "What software is used to access and view webpages?", options: ["Text Editor", "Web Browser", "Server", "GIMP"], answer: "Web Browser" }, ml: { question: "വെബ്പേജുകൾ ആക്സസ് ചെയ്യാനും കാണാനും ഉപയോഗിക്കുന്ന സോഫ്റ്റ്‌വെയർ ഏതാണ്?", options: ["ടെക്സ്റ്റ് എഡിറ്റർ", "വെബ് ബ്രൗസർ", "സെർവർ", "ജിമ്പ്"], answer: "വെബ് ബ്രൗസർ" } },
+            { en: { question: "Which of these is an example of a web browser?", options: ["Mozilla Firefox", "HTML", "Notepad", "Server"], answer: "Mozilla Firefox" }, ml: { question: "ഇവയിൽ ഏതാണ് ഒരു വെബ് ബ്രൗസറിന് ഉദാഹരണം?", options: ["മോസില്ല ഫയർഫോക്സ്", "HTML", "നോട്ട്പാഡ്", "സെർവർ"], answer: "മോസില്ല ഫയർഫോക്സ്" } },
+            { en: { question: "Who is the computer scientist who invented the HTML markup language?", options: ["Bill Gates", "Sir Timothy John Berners-Lee", "Steve Jobs", "Linus Torvalds"], answer: "Sir Timothy John Berners-Lee" }, ml: { question: "HTML മാർക്ക്അപ്പ് ഭാഷ കണ്ടുപിടിച്ച കമ്പ്യൂട്ടർ ശാസ്ത്രജ്ഞൻ ആരാണ്?", options: ["ബിൽ ഗേറ്റ്സ്", "സർ തിമോത്തി ജോൺ ബർണേഴ്സ്-ലീ", "സ്റ്റീവ് ജോബ്സ്", "ലിനസ് ടോർവാൾഡ്സ്"], answer: "സർ തിമോത്തി ജോൺ ബർണേഴ്സ്-ലീ" } },
+            { en: { question: "What does HTML stand for?", options: ["Hyper Tool Markup Language", "Hyper Text Markup Language", "High Text Markup Language", "Hyperlink Text Management Language"], answer: "Hyper Text Markup Language" }, ml: { question: "HTML എന്നതിന്റെ പൂർണ്ണരൂപം എന്താണ്?", options: ["ഹൈപ്പർ ടൂൾ മാർക്ക്അപ്പ് ലാംഗ്വേജ്", "ഹൈപ്പർ ടെക്സ്റ്റ് മാർക്ക്അപ്പ് ലാംഗ്വേജ്", "ഹൈ ടെക്സ്റ്റ് മാർക്ക്അപ്പ് ലാംഗ്വേജ്", "ഹൈപ്പർലിങ്ക് ടെക്സ്റ്റ് മാനേജ്മെന്റ് ലാംഗ്വേജ്"], answer: "ഹൈപ്പർ ടെക്സ്റ്റ് മാർക്ക്അപ്പ് ലാംഗ്വേജ്" } },
+            { en: { question: "What characters are used to write HTML tags?", options: ["Square brackets []", "Curly braces {}", "Parentheses ()", "Angle brackets <>"], answer: "Angle brackets <>" }, ml: { question: "HTML ടാഗുകൾ എഴുതാൻ എന്ത് പ്രതീകങ്ങളാണ് ഉപയോഗിക്കുന്നത്?", options: ["ചതുര ബ്രാക്കറ്റുകൾ []", "ചുരുള ബ്രാക്കറ്റുകൾ {}", "വലയങ്ങൾ ()", "ആംഗിൾ ബ്രാക്കറ്റുകൾ <>"], answer: "ആംഗിൾ ബ്രാക്കറ്റുകൾ <>" } },
+            { en: { question: "Which tag pair contains *all* other HTML elements on a page?", options: ["<body>...</body>", "<html>...</html>", "<head>...</head>", "<title>...</title>"], answer: "<html>...</html>" }, ml: { question: "ഒരു പേജിലെ മറ്റെല്ലാ HTML ഘടകങ്ങളെയും ഉൾക്കൊള്ളുന്ന ടാഗ് ജോഡി ഏതാണ്?", options: ["<body>...</body>", "<html>...</html>", "<head>...</head>", "<title>...</title>"], answer: "<html>...</html>" } },
+            { en: { question: "Which tag pair contains metadata and the title of the page?", options: ["<body>...</body>", "<h1>...</h1>", "<head>...</head>", "<p>...</p>"], answer: "<head>...</head>" }, ml: { question: "മെറ്റാഡാറ്റയും പേജിന്റെ തലക്കെട്ടും അടങ്ങുന്ന ടാഗ് ജോഡി ഏതാണ്?", options: ["<body>...</body>", "<h1>...</h1>", "<head>...</head>", "<p>...</p>"], answer: "<head>...</head>" } },
+            { en: { question: "Which tag pair contains all the visible content of the webpage?", options: ["<body>...</body>", "<html>...</html>", "<head>...</head>", "<title>...</title>"], answer: "<body>...</body>" }, ml: { question: "വെബ്പേജിൽ ദൃശ്യമാകുന്ന എല്ലാ ഉള്ളടക്കവും അടങ്ങുന്ന ടാഗ് ജോഡി ഏതാണ്?", options: ["<body>...</body>", "<html>...</html>", "<head>...</head>", "<title>...</title>"], answer: "<body>...</body>" } },
+            { en: { question: "Which tag defines the title that appears in the browser's title bar?", options: ["<h1>", "<head>", "<title>", "<p>"], answer: "<title>" }, ml: { question: "ബ്രൗസറിന്റെ ടൈറ്റിൽ ബാറിൽ ദൃശ്യമാകുന്ന തലക്കെട്ട് നിർവചിക്കുന്ന ടാഗ് ഏതാണ്?", options: ["<h1>", "<head>", "<title>", "<p>"], answer: "<title>" } },
+            { en: { question: "Which tag is used to add the main heading of the page?", options: ["<h1>", "<h6>", "<p>", "<head>"], answer: "<h1>" }, ml: { question: "പേജിന്റെ പ്രധാന തലക്കെട്ട് ചേർക്കാൻ ഉപയോഗിക്കുന്ന ടാഗ് ഏതാണ്?", options: ["<h1>", "<h6>", "<p>", "<head>"], answer: "<h1>" } },
+            { en: { question: "Which tag is used to organize content into paragraphs?", options: ["<p>", "<br>", "<h1>", "<body>"], answer: "<p>" }, ml: { question: "ഉള്ളടക്കം ഖണ്ഡികകളായി തിരിക്കാൻ ഉപയോഗിക്കുന്ന ടാഗ് ഏതാണ്?", options: ["<p>", "<br>", "<h1>", "<body>"], answer: "<p>" } },
+            { en: { question: "What is 'data about data' called?", options: ["HTML", "Metadata", "Attribute", "Tag"], answer: "Metadata" }, ml: { question: "'ഡാറ്റയെക്കുറിച്ചുള്ള ഡാറ്റ' എന്ന് വിളിക്കുന്നത് എന്തിനെയാണ്?", options: ["HTML", "മെറ്റാഡാറ്റ", "ആട്രിബ്യൂട്ട്", "ടാഗ്"], answer: "മെറ്റാഡാറ്റ" } },
+            { en: { question: "What kind of software is used to write or edit HTML files?", options: ["Web Browser", "Server", "Text Editor", "GIMP"], answer: "Text Editor" }, ml: { question: "HTML ഫയലുകൾ എഴുതാനോ എഡിറ്റ് ചെയ്യാനോ എന്തുതരം സോഫ്റ്റ്‌വെയറാണ് ഉപയോഗിക്കുന്നത്?", options: ["വെബ് ബ്രൗസർ", "സെർവർ", "ടെക്സ്റ്റ് എഡിറ്റർ", "ജിമ്പ്"], answer: "ടെക്സ്റ്റ് എഡിറ്റർ" } },
+            { en: { question: "What file extension should you use when saving an HTML file?", options: [".txt", ".html", ".doc", ".jpg"], answer: ".html" }, ml: { question: "ഒരു HTML ഫയൽ സേവ് ചെയ്യുമ്പോൾ എന്ത് ഫയൽ എക്സ്റ്റൻഷനാണ് ഉപയോഗിക്കേണ്ടത്?", options: [".txt", ".html", ".doc", ".jpg"], answer: ".html" } },
+            { en: { question: "What do you call instructions given *within* an HTML opening tag for additional settings?", options: ["Attributes", "Metadata", "Tags", "Content"], answer: "Attributes" }, ml: { question: "അധിക ക്രമീകരണങ്ങൾക്കായി ഒരു HTML ഓപ്പണിംഗ് ടാഗിനുള്ളിൽ നൽകുന്ന നിർദ്ദേശങ്ങളെ എന്തുവിളിക്കുന്നു?", options: ["ആട്രിബ്യൂട്ടുകൾ", "മെറ്റാഡാറ്റ", "ടാഗുകൾ", "ഉള്ളടക്കം"], answer: "ആട്രിബ്യൂട്ടുകൾ" } },
+            { en: { question: "Which attribute is used with the <body> tag to set the background color?", options: ["color", "bgcolor", "background", "style"], answer: "bgcolor" }, ml: { question: "പശ്ചാത്തല നിറം സജ്ജീകരിക്കാൻ <body> ടാഗിനൊപ്പം ഉപയോഗിക്കുന്ന ആട്രിബ്യൂട്ട് ഏതാണ്?", options: ["color", "bgcolor", "background", "style"], answer: "bgcolor" } },
+            { en: { question: "What is the correct HTML for a blue background?", options: ["<background color='blue'>", "<body color='blue'>", "<body bgcolor='blue'>", "<body background='blue'>"], answer: "<body bgcolor='blue'>" }, ml: { question: "നീല പശ്ചാത്തലത്തിനായുള്ള ശരിയായ HTML ഏതാണ്?", options: ["<background color='blue'>", "<body color='blue'>", "<body bgcolor='blue'>", "<body background='blue'>"], answer: "<body bgcolor='blue'>" } },
+            { en: { question: "What does the hexadecimal code '#ff0000' represent?", options: ["Blue", "Green", "Red", "White"], answer: "Red" }, ml: { question: "'#ff0000' എന്ന ഹെക്സാഡെസിമൽ കോഡ് എന്തിനെ പ്രതിനിധീകരിക്കുന്നു?", options: ["നീല", "പച്ച", "ചുവപ്പ്", "വെള്ള"], answer: "ചുവപ്പ്" } },
+            { en: { question: "Which tag is used to insert an image into a webpage?", options: ["<image>", "<picture>", "<img>", "<src>"], answer: "<img>" }, ml: { question: "ഒരു വെബ്പേജിലേക്ക് ചിത്രം ചേർക്കാൻ ഉപയോഗിക്കുന്ന ടാഗ് ഏതാണ്?", options: ["<image>", "<picture>", "<img>", "<src>"], answer: "<img>" } },
+            { en: { question: "Which attribute of the <img> tag specifies the image file name?", options: ["src", "href", "link", "file"], answer: "src" }, ml: { question: "<img> ടാഗിന്റെ ഏത് ആട്രിബ്യൂട്ടാണ് ചിത്രത്തിന്റെ ഫയൽ നാമം വ്യക്തമാക്കുന്നത്?", options: ["src", "href", "link", "file"], answer: "src" } },
+            { en: { question: "To change the image in '<img src=\"juice.png\" ...>', which attribute must be changed?", options: ["img", "height", "width", "src"], answer: "src" }, ml: { question: "'<img src=\"juice.png\" ...>' എന്നതിലെ ചിത്രം മാറ്റാൻ, ഏത് ആട്രിബ്യൂട്ടാണ് മാറ്റേണ്ടത്?", options: ["img", "height", "width", "src"], answer: "src" } },
+            { en: { question: "Which tag is used to make text <b>bold</b>?", options: ["<b>", "<bold>", "<strong>", "<br>"], answer: "<b>" }, ml: { question: "ടെക്സ്റ്റ് <b>കടുപ്പിക്കാൻ</b> (bold) ഉപയോഗിക്കുന്ന ടാഗ് ഏതാണ്?", options: ["<b>", "<bold>", "<strong>", "<br>"], answer: "<b>" } },
+            { en: { question: "Which tag is used to start a new line without starting a new paragraph?", options: ["<p>", "<new>", "<line>", "<br>"], answer: "<br>" }, ml: { question: "ഒരു പുതിയ ഖണ്ഡിക ആരംഭിക്കാതെ ഒരു പുതിയ വരി ആരംഭിക്കാൻ ഏത് ടാഗാണ് ഉപയോഗിക്കുന്നത്?", options: ["<p>", "<new>", "<line>", "<br>"], answer: "<br>" } },
+            { en: { question: "Which tag is used to <u>underline</u> text?", options: ["<i>", "<br>", "<u>", "<b>"], answer: "<u>" }, ml: { question: "ടെക്സ്റ്റിന് <u>അടിവരയിടാൻ</u> (underline) ഉപയോഗിക്കുന്ന ടാഗ് ഏതാണ്?", options: ["<i>", "<br>", "<u>", "<b>"], answer: "<u>" } },
+            { en: { question: "Which tag pair is used to define a table?", options: ["<table>...</table>", "<tab>...</tab>", "<tr>...</tr>", "<td>...</td>"], answer: "<table>...</table>" }, ml: { question: "ഒരു ടേബിൾ നിർവചിക്കാൻ ഉപയോഗിക്കുന്ന ടാഗ് ജോഡി ഏതാണ്?", options: ["<table>...</table>", "<tab>...</tab>", "<tr>...</tr>", "<td>...</td>"], answer: "<table>...</table>" } },
+            { en: { question: "Which tag is used to define a table *row*?", options: ["<td>", "<th>", "<table>", "<tr>"], answer: "<tr>" }, ml: { question: "ഒരു ടേബിൾ *വരി* (row) നിർവചിക്കാൻ ഉപയോഗിക്കുന്ന ടാഗ് ഏതാണ്?", options: ["<td>", "<th>", "<table>", "<tr>"], answer: "<tr>" } },
+            { en: { question: "Which tag is used to define a table *header cell*?", options: ["<th>", "<td>", "<tr>", "<caption>"], answer: "<th>" }, ml: { question: "ഒരു ടേബിൾ *തലക്കെട്ട്* (header cell) നിർവചിക്കാൻ ഉപയോഗിക്കുന്ന ടാഗ് ഏതാണ്?", options: ["<th>", "<td>", "<tr>", "<caption>"], answer: "<caption>" } },
+            { en: { question: "Which tag is used to define a regular *data cell* in a table?", options: ["<cell>", "<th>", "<td>", "<tr>"], answer: "<td>" }, ml: { question: "ഒരു ടേബിളിലെ സാധാരണ *ഡാറ്റാ സെൽ* (data cell) നിർവചിക്കാൻ ഉപയോഗിക്കുന്ന ടാഗ് ഏതാണ്?", options: ["<cell>", "<th>", "<td>", "<tr>"], answer: "<td>" } },
+            { en: { question: "Which tag is used to add a video file to a webpage?", options: ["<media>", "<video>", "<movie>", "<source>"], answer: "<video>" }, ml: { question: "ഒരു വെബ്പേജിലേക്ക് ഒരു വീഡിയോ ഫയൽ ചേർക്കാൻ ഉപയോഗിക്കുന്ന ടാഗ് ഏതാണ്?", options: ["<media>", "<video>", "<movie>", "<source>"], answer: "<video>" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 33-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            // Use innerHTML to correctly render tags like <b> in questions
+            questionTextEl.innerHTML = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                // Use innerHTML to correctly render tags like <b> in options
+                button.innerHTML = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                // Use innerHTML to render correct answer if it contains HTML
+                feedbackMessage.innerHTML = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-700">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                // Updated review colors for better contrast on white bg
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-50' : 'bg-rose-50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : ' ✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>

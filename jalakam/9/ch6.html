@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Intelligent Machines</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* Custom styles (same as your provided file) */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f5f3ff; /* Violet 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(91, 33, 182, 0.1);
+            border: 1px solid #ddd6fe; /* Violet 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #c4b5fd; /* Violet 300 */
+        }
+        .option-btn:hover {
+             background-color: #f5f3ff; /* Violet 50 */
+        }
+        .option-btn.selected {
+            background-color: #db2777; /* Pink 600 for selected */
+            color: white;
+            border-color: #be185d; /* Pink 700 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f87171; /* Red 400 for wrong */
+            color: white;
+            border-color: #ef4444;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-violet-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-violet-800 mb-2">Intelligent Machines Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your AI Knowledge!</p>
+            <img src="https://placehold.co/400x200/a78bfa/ffffff?text=Ready+to+Learn%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="AI Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3"></div>
+                
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                 <h2 id="review-title" class="text-3xl font-black text-violet-800 mb-2">Test Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                 </div>
+                 <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Intelligent Machines Quiz!", welcomeSubtitle: "Test Your AI Knowledge!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "ഇന്റലിജന്റ് മെഷീൻസ് ക്വിസ്!", welcomeSubtitle: "നിങ്ങളുടെ AI പരിജ്ഞാനം പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- NEW 31-Question Bank based on Chapter 6: Intelligent Machines ---
+        const fullQuizData = [
+            { en: { question: "What technology is being used on forest borders in Kerala to prevent human-wildlife conflict?", options: ["Manual Patrols", "Electric Fences", "A.I. Warning System", "Loud Sirens"], answer: "A.I. Warning System" }, ml: { question: "മനുഷ്യ-വന്യജീവി സംഘർഷം തടയാൻ കേരളത്തിലെ വനാതിർത്തികളിൽ എന്ത് സാങ്കേതികവിദ്യയാണ് ഉപയോഗിക്കുന്നത്?", options: ["മാന്വൽ പട്രോളിംഗ്", "ഇലക്ട്രിക് വേലികൾ", "എ.ഐ. മുന്നറിയിപ്പ് സംവിധാനം", "ഉച്ചത്തിലുള്ള സൈറണുകൾ"], answer: "എ.ഐ. മുന്നറിയിപ്പ് സംവിധാനം" } },
+            { en: { question: "How does the A.I. surveillance system identify the presence of wild animals?", options: ["Only sound sensors", "Only satellite images", "Using drone, thermal, and laser infrared cameras", "By detecting footsteps"], answer: "Using drone, thermal, and laser infrared cameras" }, ml: { question: "എ.ഐ. നിരീക്ഷണ സംവിധാനം വന്യമൃഗങ്ങളുടെ സാന്നിധ്യം എങ്ങനെയാണ് തിരിച്ചറിയുന്നത്?", options: ["ശബ്ദ സെൻസറുകൾ മാത്രം", "ഉപഗ്രഹ ചിത്രങ്ങൾ മാത്രം", "ഡ്രോൺ, തെർമൽ, ലേസർ ഇൻഫ്രാറെഡ് ക്യാമറകൾ ഉപയോഗിച്ച്", "കാൽപ്പാടുകൾ കണ്ടെത്തി"], answer: "ഡ്രോൺ, തെർമൽ, ലേസർ ഇൻഫ്രാറെഡ് ക്യാമറകൾ ഉപയോഗിച്ച്" } },
+            { en: { question: "Who first used the term 'Artificial Intelligence'?", options: ["Alan Turing", "John McCarthy", "Bill Gates", "Steve Jobs"], answer: "John McCarthy" }, ml: { question: "'ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ്' എന്ന പദം ആദ്യമായി ഉപയോഗിച്ചത് ആരാണ്?", options: ["അലൻ ട്യൂറിംഗ്", "ജോൺ മക്കാർത്തി", "ബിൽ ഗേറ്റ്സ്", "സ്റ്റീവ് ജോബ്സ്"], answer: "ജോൺ മക്കാർത്തി" } },
+            { en: { question: "Where was the term 'Artificial Intelligence' first introduced in 1956?", options: ["Harvard University", "Stanford University", "Dartmouth Conference", "MIT"], answer: "Dartmouth Conference" }, ml: { question: "1956-ൽ 'ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ്' എന്ന പദം ആദ്യമായി അവതരിപ്പിച്ചത് എവിടെയാണ്?", options: ["ഹാർവാർഡ് യൂണിവേഴ്സിറ്റി", "സ്റ്റാൻഫോർഡ് യൂണിവേഴ്സിറ്റി", "ഡാർട്ട്മൗത്ത് കോൺഫറൻസ്", "എംഐടി"], answer: "ഡാർട്ട്മൗത്ത് കോൺഫറൻസ്" } },
+            { en: { question: "What is artificial intelligence?", options: ["A new type of computer", "A physical robot", "Technology that enables machines to imitate human intelligence", "A fast internet connection"], answer: "Technology that enables machines to imitate human intelligence" }, ml: { question: "എന്താണ് ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ്?", options: ["ഒരു പുതിയ തരം കമ്പ്യൂട്ടർ", "ഒരു ഭൗതിക റോബോട്ട്", "മനുഷ്യബുദ്ധിയെ അനുകരിക്കാൻ യന്ത്രങ്ങളെ പ്രാപ്തമാക്കുന്ന സാങ്കേതികവിദ്യ", "വേഗതയേറിയ ഇന്റർനെറ്റ് കണക്ഷൻ"], answer: "മനുഷ്യബുദ്ധിയെ അനുകരിക്കാൻ യന്ത്രങ്ങളെ പ്രാപ്തമാക്കുന്ന സാങ്കേതികവിദ്യ" } },
+            { en: { question: "What are the three main steps AI systems use to learn and make decisions?", options: ["Input, Output, Storage", "Data Collection, Pattern Recognition, Decision Making", "Programming, Compiling, Running", "Searching, Sorting, Displaying"], answer: "Data Collection, Pattern Recognition, Decision Making" }, ml: { question: "AI സിസ്റ്റങ്ങൾ പഠിക്കാനും തീരുമാനങ്ങൾ എടുക്കാനും ഉപയോഗിക്കുന്ന മൂന്ന് പ്രധാന ഘട്ടങ്ങൾ ഏവ?", options: ["ഇൻപുട്ട്, ഔട്ട്പുട്ട്, സ്റ്റോറേജ്", "ഡാറ്റാ ശേഖരണം, പാറ്റേൺ തിരിച്ചറിയൽ, തീരുമാനമെടുക്കൽ", "പ്രോഗ്രാമിംഗ്, കംപൈലിംഗ്, റണ്ണിംഗ്", "തിരയൽ, സോർട്ടിംഗ്, പ്രദർശിപ്പിക്കൽ"], answer: "ഡാറ്റാ ശേഖരണം, പാറ്റേൺ തിരിച്ചറിയൽ, തീരുമാനമെടുക്കൽ" } },
+            { en: { question: "What is an AI model described as in the chapter?", options: ["A physical machine", "The 'brain' of AI systems, trained to analyze data", "A single line of code", "A database"], answer: "The 'brain' of AI systems, trained to analyze data" }, ml: { question: "പാഠത്തിൽ ഒരു AI മോഡലിനെ എങ്ങനെയാണ് വിശേഷിപ്പിക്കുന്നത്?", options: ["ഒരു ഭൗതിക യന്ത്രം", "AI സിസ്റ്റങ്ങളുടെ 'തലച്ചോറ്', ഡാറ്റ വിശകലനം ചെയ്യാൻ പരിശീലിപ്പിച്ചത്", "ഒരു ഒറ്റ വരി കോഡ്", "ഒരു ഡാറ്റാബേസ്"], answer: "AI സിസ്റ്റങ്ങളുടെ 'തലച്ചോറ്', ഡാറ്റ വിശകലനം ചെയ്യാൻ പരിശീലിപ്പിച്ചത്" } },
+            { en: { question: "What do Language AI Models predict?", options: ["Weather", "Stock prices", "Words", "Animal movements"], answer: "Words" }, ml: { question: "ലാംഗ്വേജ് AI മോഡലുകൾ എന്താണ് പ്രവചിക്കുന്നത്?", options: ["കാലാവസ്ഥ", "ഓഹരി വില", "വാക്കുകൾ", "മൃഗങ്ങളുടെ ചലനങ്ങൾ"], answer: "വാക്കുകൾ" } },
+            { en: { question: "Which of the following is an example of a Language AI Model mentioned in the chapter?", options: ["Photoshop", "Gemini AI", "Windows 11", "Drone Camera"], answer: "Gemini AI" }, ml: { question: "താഴെ പറയുന്നവയിൽ പാഠത്തിൽ പരാമർശിച്ചിരിക്കുന്ന ലാംഗ്വേജ് AI മോഡലിന് ഉദാഹരണം ഏതാണ്?", options: ["ഫോട്ടോഷോപ്പ്", "ജെമിനി എഐ", "വിൻഡോസ് 11", "ഡ്രോൺ ക്യാമറ"], answer: "ജെമിനി എഐ" } },
+            { en: { question: "What is Natural Language Processing (NLP)?", options: ["A new programming language", "A hardware component", "A branch of AI that helps computers understand human language", "A type of drone"], answer: "A branch of AI that helps computers understand human language" }, ml: { question: "എന്താണ് നാച്ചുറൽ ലാംഗ്വേജ് പ്രോസസ്സിംഗ് (NLP)?", options: ["ഒരു പുതിയ പ്രോഗ്രാമിംഗ് ഭാഷ", "ഒരു ഹാർഡ്‌വെയർ ഘടകം", "കമ്പ്യൂട്ടറുകളെ മനുഷ്യഭാഷ മനസ്സിലാക്കാൻ സഹായിക്കുന്ന AI-യുടെ ഒരു ശാഖ", "ഒരു തരം ഡ്രോൺ"], answer: "കമ്പ്യൂട്ടറുകളെ മനുഷ്യഭാഷ മനസ്സിലാക്കാൻ സഹായിക്കുന്ന AI-യുടെ ഒരു ശാഖ" } },
+            { en: { question: "What is the first step in how NLP works, according to Table 6.2?", options: ["Creating responses", "Analyzing the structure", "Understanding the sentence (breaking into tokens)", "Collecting data"], answer: "Understanding the sentence (breaking into tokens)" }, ml: { question: "ടേബിൾ 6.2 അനുസരിച്ച്, NLP എങ്ങനെ പ്രവർത്തിക്കുന്നു എന്നതിന്റെ ആദ്യപടി എന്താണ്?", options: ["പ്രതികരണങ്ങൾ സൃഷ്ടിക്കൽ", "ഘടന വിശകലനം ചെയ്യൽ", "വാക്യം മനസ്സിലാക്കൽ (ടോക്കണുകളായി വിഭജിക്കൽ)", "ഡാറ്റ ശേഖരിക്കൽ"], answer: "വാക്യം മനസ്സിലാക്കൽ (ടോക്കണുകളായി വിഭജിക്കൽ)" } },
+            { en: { question: "What are models trained with large amounts of text data using NLP called?", options: ["Big Text Models (BTM)", "Large Language Models (LLM)", "Document AI (DAI)", "Sentence Processors (SP)"], answer: "Large Language Models (LLM)" }, ml: { question: "NLP ഉപയോഗിച്ച് വലിയ അളവിലുള്ള ടെക്സ്റ്റ് ഡാറ്റ ഉപയോഗിച്ച് പരിശീലിപ്പിക്കുന്ന മോഡലുകളെ എന്തുവിളിക്കുന്നു?", options: ["ബിഗ് ടെക്സ്റ്റ് മോഡലുകൾ (BTM)", "ലാർജ് ലാംഗ്വേജ് മോഡലുകൾ (LLM)", "ഡോക്യുമെന്റ് AI (DAI)", "സെന്റൻസ് പ്രോസസറുകൾ (SP)"], answer: "ലാർജ് ലാംഗ്വേജ് മോഡലുകൾ (LLM)" } },
+            { en: { question: "What is a sentence or question provided to an NLP system to get a response called?", options: ["A search query", "A command", "A prompt", "An algorithm"], answer: "A prompt" }, ml: { question: "ഒരു NLP സിസ്റ്റത്തിൽ നിന്ന് പ്രതികരണം ലഭിക്കാൻ നൽകുന്ന വാക്യത്തെയോ ചോദ്യത്തെയോ എന്തുവിളിക്കുന്നു?", options: ["ഒരു സെർച്ച് ക്വറി", "ഒരു കമാൻഡ്", "ഒരു പ്രോംപ്റ്റ്", "ഒരു അൽഗോരിതം"], answer: "ഒരു പ്രോംപ്റ്റ്" } },
+            { en: { question: "How do you get a better response from an NLP system?", options: ["By using all capital letters", "By providing a more precise prompt", "By asking very short questions", "By using a faster computer"], answer: "By providing a more precise prompt" }, ml: { question: "ഒരു NLP സിസ്റ്റത്തിൽ നിന്ന് മികച്ച പ്രതികരണം എങ്ങനെ ലഭിക്കും?", options: ["എല്ലാ വലിയ അക്ഷരങ്ങളും ഉപയോഗിക്കുന്നതിലൂടെ", "കൂടുതൽ കൃത്യമായ പ്രോംപ്റ്റ് നൽകുന്നതിലൂടെ", "വളരെ ചെറിയ ചോദ്യങ്ങൾ ചോദിക്കുന്നതിലൂടെ", "വേഗതയേറിയ കമ്പ്യൂട്ടർ ഉപയോഗിക്കുന്നതിലൂടെ"], answer: "കൂടുതൽ കൃത്യമായ പ്രോംപ്റ്റ് നൽകുന്നതിലൂടെ" } },
+            { en: { question: "What is the chemical equation for Photosynthesis shown in the chapter?", options: ["$CO_2 + H_2O \\rightarrow H_2CO_3$", "$6CO_2 + 6H_2O + \\text{light energy} \\rightarrow C_6H_{12}O_6 + 6O_2$", "$C_6H_{12}O_6 \\rightarrow 2C_2H_5OH + 2CO_2$", "$H_2 + O_2 \\rightarrow H_2O$"], answer: "$6CO_2 + 6H_2O + \\text{light energy} \\rightarrow C_6H_{12}O_6 + 6O_2$" }, ml: { question: "പാഠത്തിൽ കാണിച്ചിരിക്കുന്ന പ്രകാശസംശ്ലേഷണത്തിന്റെ രാസസമവാക്യം എന്താണ്?", options: ["$CO_2 + H_2O \\rightarrow H_2CO_3$", "$6CO_2 + 6H_2O + \\text{പ്രകാശം} \\rightarrow C_6H_{12}O_6 + 6O_2$", "$C_6H_{12}O_6 \\rightarrow 2C_2H_5OH + 2CO_2$", "$H_2 + O_2 \\rightarrow H_2O$"], answer: "$6CO_2 + 6H_2O + \\text{പ്രകാശം} \\rightarrow C_6H_{12}O_6 + 6O_2$" } },
+            { en: { question: "Where does photosynthesis take place?", options: ["In the nucleus", "In the mitochondria", "In the chloroplasts of plant cells", "In the roots"], answer: "In the chloroplasts of plant cells" }, ml: { question: "പ്രകാശസംശ്ലേഷണം എവിടെയാണ് നടക്കുന്നത്?", options: ["ന്യൂക്ലിയസിൽ", "മൈറ്റോകോൺഡ്രിയയിൽ", "സസ്യകോശങ്ങളിലെ ക്ലോറോപ്ലാസ്റ്റുകളിൽ", "വേരുകളിൽ"], answer: "സസ്യകോശങ്ങളിലെ ക്ലോറോപ്ലാസ്റ്റുകളിൽ" } },
+            { en: { question: "What is a good practice when designing prompts?", options: ["Be vague and ambiguous", "Be clear and precise", "Use complex words", "Write a very long paragraph"], answer: "Be clear and precise" }, ml: { question: "പ്രോംപ്റ്റുകൾ രൂപകൽപ്പന ചെയ്യുമ്പോൾ ശ്രദ്ധിക്കേണ്ട ഒരു നല്ല കാര്യം എന്താണ്?", options: ["അവ്യക്തവും സന്ദിഗ്ദ്ധവുമായിരിക്കുക", "വ്യക്തവും കൃത്യവുമായിരിക്കുക", "സങ്കീർണ്ണമായ വാക്കുകൾ ഉപയോഗിക്കുക", "വളരെ നീണ്ട ഖണ്ഡിക എഴുതുക"], answer: "വ്യക്തവും കൃത്യവുമായിരിക്കുക" } },
+            { en: { question: "What does 'Make the persona clear' mean in prompt engineering?", options: ["Use a person's name", "Give a hint as to who the person is responding to (e.g., 'Act as a teacher')", "Write in the first person", "Upload a photo"], answer: "Give a hint as to who the person is responding to (e.g., 'Act as a teacher')" }, ml: { question: "പ്രോംപ്റ്റ് എഞ്ചിനീയറിംഗിൽ 'വ്യക്തിത്വം വ്യക്തമാക്കുക' (Make the persona clear) എന്നതുകൊണ്ട് എന്താണ് അർത്ഥമാക്കുന്നത്?", options: ["ഒരു വ്യക്തിയുടെ പേര് ഉപയോഗിക്കുക", "ആരോടാണ് പ്രതികരിക്കുന്നത് എന്നതിനെക്കുറിച്ച് സൂചന നൽകുക (ഉദാ: 'ഒരു അധ്യാപകനായി അഭിനയിക്കുക')", "സ്വന്തം കാഴ്ചപ്പാടിൽ എഴുതുക", "ഒരു ഫോട്ടോ അപ്‌ലോഡ് ചെയ്യുക"], answer: "ആരോടാണ് പ്രതികരിക്കുന്നത് എന്നതിനെക്കുറിച്ച് സൂചന നൽകുക (ഉദാ: 'ഒരു അധ്യാപകനായി അഭിനയിക്കുക')" } },
+            { en: { question: "What does 'Prompt Engineering' help a person do?", options: ["Build AI models", "Write computer code", "Prepare accurate prompts for better AI responses", "Design hardware"], answer: "Prepare accurate prompts for better AI responses" }, ml: { question: "'പ്രോംപ്റ്റ് എഞ്ചിനീയറിംഗ്' ഒരു വ്യക്തിയെ എന്തുചെയ്യാൻ സഹായിക്കുന്നു?", options: ["AI മോഡലുകൾ നിർമ്മിക്കുക", "കമ്പ്യൂട്ടർ കോഡ് എഴുതുക", "മികച്ച AI പ്രതികരണങ്ങൾക്കായി കൃത്യമായ പ്രോംപ്റ്റുകൾ തയ്യാറാക്കുക", "ഹാർഡ്‌വെയർ രൂപകൽപ്പന ചെയ്യുക"], answer: "മികച്ച AI പ്രതികരണങ്ങൾക്കായി കൃത്യമായ പ്രോംപ്റ്റുകൾ തയ്യാറാക്കുക" } },
+            { en: { question: "Besides answering questions, what else can NLP systems do?", options: ["Only perform calculations", "Write stories and create poems", "Only store data", "Only play music"], answer: "Write stories and create poems" }, ml: { question: "ചോദ്യങ്ങൾക്ക് ഉത്തരം നൽകുന്നതിനപ്പുറം NLP സിസ്റ്റങ്ങൾക്ക് എന്തുചെയ്യാൻ കഴിയും?", options: ["കണക്കുകൂട്ടലുകൾ മാത്രം നടത്തുക", "കഥകൾ എഴുതാനും കവിതകൾ സൃഷ്ടിക്കാനും", "ഡാറ്റ മാത്രം സംഭരിക്കുക", "സംഗീതം മാത്രം പ്ലേ ചെയ്യുക"], answer: "കഥകൾ എഴുതാനും കവിതകൾ സൃഷ്ടിക്കാനും" } },
+            { en: { question: "How can you create an image of a child planting a tree using AI?", options: ["By writing code", "By using a normal camera", "By giving a text prompt to an AI image generator", "By downloading it from a library"], answer: "By giving a text prompt to an AI image generator" }, ml: { question: "AI ഉപയോഗിച്ച് ഒരു കുട്ടി മരം നടുന്ന ചിത്രം എങ്ങനെ സൃഷ്ടിക്കാം?", options: ["കോഡ് എഴുതുന്നതിലൂടെ", "ഒരു സാധാരണ ക്യാമറ ഉപയോഗിക്കുന്നതിലൂടെ", "ഒരു AI ഇമേജ് ജനറേറ്ററിന് ടെക്സ്റ്റ് പ്രോംപ്റ്റ് നൽകുന്നതിലൂടെ", "ഒരു ലൈബ്രറിയിൽ നിന്ന് ഡൗൺലോഡ് ചെയ്യുന്നതിലൂടെ"], answer: "ഒരു AI ഇമേജ് ജനറേറ്ററിന് ടെക്സ്റ്റ് പ്രോംപ്റ്റ് നൽകുന്നതിലൂടെ" } },
+            { en: { question: "What kind of unique images can AI create?", options: ["Only copies of existing photos", "Imaginary images not usually available on the Internet", "Only black and white images", "Only maps"], answer: "Imaginary images not usually available on the Internet" }, ml: { question: "ഏത് തരം സവിശേഷ ചിത്രങ്ങളാണ് AI-ക്ക് സൃഷ്ടിക്കാൻ കഴിയുക?", options: ["നിലവിലുള്ള ഫോട്ടോകളുടെ പകർപ്പുകൾ മാത്രം", "സാധാരണയായി ഇന്റർനെറ്റിൽ ലഭ്യമല്ലാത്ത സാങ്കൽപ്പിക ചിത്രങ്ങൾ", "ബ്ലാക്ക് ആൻഡ് വൈറ്റ് ചിത്രങ്ങൾ മാത്രം", "ഭൂപടങ്ങൾ മാത്രം"], answer: "സാധാരണയായി ഇന്റർനെറ്റിൽ ലഭ്യമല്ലാത്ത സാങ്കൽപ്പിക ചിത്രങ്ങൾ" } },
+            { en: { question: "What is the warning given about the excessive use of AI?", options: ["It will make computers too slow", "It may hinder the growth of our own creative skills", "It uses too much electricity", "It is too expensive"], answer: "It may hinder the growth of our own creative skills" }, ml: { question: "AI-യുടെ അമിതമായ ഉപയോഗത്തെക്കുറിച്ച് നൽകിയിരിക്കുന്ന മുന്നറിയിപ്പ് എന്താണ്?", options: ["ഇത് കമ്പ്യൂട്ടറുകളെ വളരെ വേഗത കുറഞ്ഞതാക്കും", "ഇത് നമ്മുടെ സ്വന്തം സർഗ്ഗാത്മക കഴിവുകളുടെ വളർച്ചയെ തടസ്സപ്പെടുത്തിയേക്കാം", "ഇത് വളരെയധികം വൈദ്യുതി ഉപയോഗിക്കുന്നു", "ഇത് വളരെ ചെലവേറിയതാണ്"], answer: "ഇത് നമ്മുടെ സ്വന്തം സർഗ്ഗാത്മക കഴിവുകളുടെ വളർച്ചയെ തടസ്സപ്പെടുത്തിയേക്കാം" } },
+            { en: { question: "How can AI systems help in learning?", options: ["By doing homework for students", "By explaining complex things in a simple way", "By replacing teachers completely", "By blocking access to information"], answer: "By explaining complex things in a simple way" }, ml: { question: "പഠനത്തിൽ AI സിസ്റ്റങ്ങൾക്ക് എങ്ങനെ സഹായിക്കാനാകും?", options: ["വിദ്യാർത്ഥികൾക്ക് വേണ്ടി ഹോംവർക്ക് ചെയ്യുന്നതിലൂടെ", "സങ്കീർണ്ണമായ കാര്യങ്ങൾ ലളിതമായ രീതിയിൽ വിശദീകരിക്കുന്നതിലൂടെ", "അധ്യാപകരെ പൂർണ്ണമായും മാറ്റിസ്ഥാപിക്കുന്നതിലൂടെ", "വിവരങ്ങളിലേക്കുള്ള പ്രവേശനം തടയുന്നതിലൂടെ"], answer: "സങ്കീർണ്ണമായ കാര്യങ്ങൾ ലളിതമായ രീതിയിൽ വിശദീകരിക്കുന്നതിലൂടെ" } },
+            { en: { question: "Why should you not 'Trust AI Blindly'?", options: ["AI systems are always correct", "The information they provide may not always be true and accurate", "AI is too slow", "AI systems can read your mind"], answer: "The information they provide may not always be true and accurate" }, ml: { question: "എന്തുകൊണ്ടാണ് നിങ്ങൾ 'AI-യെ അന്ധമായി വിശ്വസിക്കരുത്' എന്ന് പറയുന്നത്?", options: ["AI സിസ്റ്റങ്ങൾ എപ്പോഴും ശരിയാണ്", "അവർ നൽകുന്ന വിവരങ്ങൾ എല്ലായ്പ്പോഴും ശരിയും കൃത്യവുമാകണമെന്നില്ല", "AI വളരെ വേഗത കുറഞ്ഞതാണ്", "AI സിസ്റ്റങ്ങൾക്ക് നിങ്ങളുടെ മനസ്സ് വായിക്കാൻ കഴിയും"], answer: "അവർ നൽകുന്ന വിവരങ്ങൾ എല്ലായ്പ്പോഴും ശരിയും കൃത്യവുമാകണമെന്നില്ല" } },
+            { en: { question: "Which of the following is a key principle of Responsible AI?", options: ["Share all personal data", "Avoid Harm", "Trust AI blindly", "Use AI for all your work"], answer: "Avoid Harm" }, ml: { question: "താഴെ പറയുന്നവയിൽ ഉത്തരവാദിത്തമുള്ള AI ഉപയോഗത്തിന്റെ (Responsible AI) പ്രധാന തത്വം ഏതാണ്?", options: ["എല്ലാ വ്യക്തിഗത ഡാറ്റയും പങ്കിടുക", "ദോഷം ഒഴിവാക്കുക (Avoid Harm)", "AI-യെ അന്ധമായി വിശ്വസിക്കുക", "നിങ്ങളുടെ എല്ലാ ജോലികൾക്കും AI ഉപയോഗിക്കുക"], answer: "ദോഷം ഒഴിവാക്കുക (Avoid Harm)" } },
+            { en: { question: "What does 'Respect Privacy' mean in Responsible AI?", options: ["Share everyone's information", "Never share personal information with unsafe AI systems", "Post your address online", "Use AI to find secrets"], answer: "Never share personal information with unsafe AI systems" }, ml: { question: "ഉത്തരവാദിത്തമുള്ള AI ഉപയോഗത്തിൽ 'സ്വകാര്യതയെ മാനിക്കുക' എന്നതുകൊണ്ട് എന്താണ് അർത്ഥമാക്കുന്നത്?", options: ["എല്ലാവരുടെയും വിവരങ്ങൾ പങ്കിടുക", "സുരക്ഷിതമല്ലാത്ത AI സിസ്റ്റങ്ങളുമായി വ്യക്തിഗത വിവരങ്ങൾ പങ്കുവെക്കരുത്", "നിങ്ങളുടെ വിലാസം ഓൺലൈനിൽ പോസ്റ്റ് ചെയ്യുക", "രഹസ്യങ്ങൾ കണ്ടെത്താൻ AI ഉപയോഗിക്കുക"], answer: "സുരക്ഷിതമല്ലാത്ത AI സിസ്റ്റങ്ങളുമായി വ്യക്തിഗത വിവരങ്ങൾ പങ്കുവെക്കരുത്" } },
+            { en: { question: "What does 'Be Honest' mean when using AI for learning activities?", options: ["Give credit to the AI and not pretend it's all your own work", "Say you did everything yourself", "Copy the work without checking", "Ask AI to do the test for you"], answer: "Give credit to the AI and not pretend it's all your own work" }, ml: { question: "പഠന പ്രവർത്തനങ്ങൾക്കായി AI ഉപയോഗിക്കുമ്പോൾ 'സത്യസന്ധത പുലർത്തുക' എന്നതുകൊണ്ട് എന്താണ് അർത്ഥമാക്കുന്നത്?", options: ["AI-ക്ക് ക്രെഡിറ്റ് നൽകുക, അതെല്ലാം നിങ്ങളുടെ സ്വന്തം സൃഷ്ടിയാണെന്ന് നടിക്കാതിരിക്കുക", "എല്ലാം നിങ്ങൾ തന്നെ ചെയ്തുവെന്ന് പറയുക", "പരിശോധിക്കാതെ വർക്ക് പകർത്തുക", "നിങ്ങൾക്കായി ടെസ്റ്റ് ചെയ്യാൻ AI-യോട് ആവശ്യപ്പെടുക"], answer: "AI-ക്ക് ക്രെഡിറ്റ് നൽകുക, അതെല്ലാം നിങ്ങളുടെ സ്വന്തം സൃഷ്ടിയാണെന്ന് നടിക്കാതിരിക്കുക" } },
+            { en: { question: "What is an 'AI Agent'?", options: ["A human who sells AI", "A type of AI language model", "A system that coordinates several systems to do things automatically", "A hardware robot"], answer: "A system that coordinates several systems to do things automatically" }, ml: { question: "എന്താണ് 'AI ഏജന്റുകൾ'?", options: ["AI വിൽക്കുന്ന ഒരു മനുഷ്യൻ", "ഒരു തരം AI ലാംഗ്വേജ് മോഡൽ", "ഒരു പ്രത്യേക ആവശ്യത്തിനായി നിരവധി സിസ്റ്റങ്ങളെ ഏകോപിപ്പിച്ച് കാര്യങ്ങൾ സ്വയം ചെയ്യുന്ന ഒരു സിസ്റ്റം", "ഒരു ഹാർഡ്‌വെയർ റോബോട്ട്"], answer: "ഒരു പ്രത്യേക ആവശ്യത്തിനായി നിരവധി സിസ്റ്റങ്ങളെ ഏകോപിപ്പിച്ച് കാര്യങ്ങൾ സ്വയം ചെയ്യുന്ന ഒരു സിസ്റ്റം" } },
+            { en: { question: "Which of the following is *NOT* included in Responsible AI?", options: ["Avoid harm to others", "Respect the privacy", "Be honest", "Trust AI blindly"], answer: "Trust AI blindly" }, ml: { question: "താഴെ പറയുന്നവയിൽ ഏതാണ് ഉത്തരവാദിത്തമുള്ള AI ഉപയോഗത്തിൽ (Responsible AI) ഉൾപ്പെടാത്തത്?", options: ["മറ്റുള്ളവർക്ക് ദോഷം വരുത്താതിരിക്കുക", "സ്വകാര്യതയെ മാനിക്കുക", "സത്യസന്ധത പുലർത്തുക", "AI-യെ അന്ധമായി വിശ്വസിക്കുക"], answer: "AI-യെ അന്ധമായി വിശ്വസിക്കുക" } },
+            { en: { question: "How does the AI system in the news article scare animals back into the forest?", options: ["By sending a report to the forest minister", "By identifying them and sounding a siren", "By deploying nets", "By sending humans"], answer: "By identifying them and sounding a siren" }, ml: { question: "വാർത്താ ലേഖനത്തിലെ AI സംവിധാനം മൃഗങ്ങളെ എങ്ങനെയാണ് കാട്ടിലേക്ക് തിരികെ ഓടിക്കുന്നത്?", options: ["വനം മന്ത്രിക്ക് റിപ്പോർട്ട് അയച്ചുകൊണ്ട്", "അവയെ തിരിച്ചറിഞ്ഞ് സൈറൺ മുഴക്കി", "വല വിന്യസിച്ചുകൊണ്ട്", "മനുഷ്യരെ അയച്ചുകൊണ്ട്"], answer: "അവയെ തിരിച്ചറിഞ്ഞ് സൈറൺ മുഴക്കി" } }
+        ];
+
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 31-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.innerHTML = questionData.question; // Use innerHTML for LaTeX
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.innerHTML = option; // Use innerHTML for LaTeX
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            // Re-render LaTeX if MathJax is loaded
+            if (typeof MathJax !== 'undefined') {
+                MathJax.typesetPromise([questionTextEl, optionsContainer]);
+            }
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                // Use innerHTML for LaTeX in feedback
+                feedbackMessage.innerHTML = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+                if (typeof MathJax !== 'undefined') {
+                    MathJax.typesetPromise([feedbackMessage]);
+                }
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-700">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                // Updated review colors for better contrast on white bg
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-50' : 'bg-rose-50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : ' ✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+            
+            // Re-render LaTeX for the review screen
+            if (typeof MathJax !== 'undefined') {
+                MathJax.typesetPromise([reviewContent]);
+            }
+        }
+
+    </script>
+</body>
+</html>

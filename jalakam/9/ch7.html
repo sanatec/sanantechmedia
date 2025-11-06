@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Laboratory within the Computer</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles (same as your provided file) */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f5f3ff; /* Violet 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(91, 33, 182, 0.1);
+            border: 1px solid #ddd6fe; /* Violet 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #c4b5fd; /* Violet 300 */
+        }
+        .option-btn:hover {
+             background-color: #f5f3ff; /* Violet 50 */
+        }
+        .option-btn.selected {
+            background-color: #db2777; /* Pink 600 for selected */
+            color: white;
+            border-color: #be185d; /* Pink 700 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f87171; /* Red 400 for wrong */
+            color: white;
+            border-color: #ef4444;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-violet-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-violet-800 mb-2">Computer Lab Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your GeoGebra, Kalzium & PhET Skills!</p>
+            <img src="https://placehold.co/400x200/a78bfa/ffffff?text=Ready+to+Learn%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Science Software Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3"></div>
+                
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                 <h2 id="review-title" class="text-3xl font-black text-violet-800 mb-2">Test Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                 </div>
+                 <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Computer Lab Quiz!", welcomeSubtitle: "Test Your GeoGebra, Kalzium & PhET Skills!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "കമ്പ്യൂട്ടർ ലാബ് ക്വിസ്!", welcomeSubtitle: "നിങ്ങളുടെ ജിയോജിബ്ര, കാൽസ്യം, PhET കഴിവുകൾ പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- NEW 31-Question Bank based on Chapter 7: Laboratory within the Computer ---
+        const fullQuizData = [
+            { en: { question: "What software is introduced in the chapter for geometric constructions?", options: ["Kalzium", "PhET", "GeoGebra", "Try Square"], answer: "GeoGebra" }, ml: { question: "ജ്യാമിതീയ നിർമ്മാണങ്ങൾക്കായി ഈ അധ്യായത്തിൽ ഏത് സോഫ്റ്റ്‌വെയറാണ് പരിചയപ്പെടുത്തുന്നത്?", options: ["കാൽസ്യം", "PhET", "ജിയോജിബ്ര", "ട്രൈ സ്ക്വയർ"], answer: "ജിയോജിബ്ര" } },
+            { en: { question: "What ancient tool was used by carpenters to mark and check 90° angles?", options: ["String", "GeoGebra", "Try Square", "Kalzium"], answer: "Try Square" }, ml: { question: "90° കോണുകൾ അടയാളപ്പെടുത്താനും പരിശോധിക്കാനും ആശാരിമാർ പണ്ട് ഉപയോഗിച്ചിരുന്ന ഉപകരണം ഏതാണ്?", options: ["ചരട്", "ജിയോജിബ്ര", "ട്രൈ സ്ക്വയർ (മട്ടം)", "കാൽസ്യം"], answer: "ട്രൈ സ്ക്വയർ (മട്ടം)" } },
+            { en: { question: "In GeoGebra, lines that go on forever without meeting are called...?", options: ["Perpendicular lines", "Parallel lines", "Segments", "Angles"], answer: "Parallel lines" }, ml: { question: "ജിയോജിബ്രയിൽ, ഒരിക്കലും കൂട്ടിമുട്ടാതെ അനന്തമായി പോകുന്ന വരകളെ എന്തുവിളിക്കുന്നു?", options: ["ലംബ രേഖകൾ", "സമാന്തര രേഖകൾ", "രേഖാഖണ്ഡങ്ങൾ", "കോണുകൾ"], answer: "സമാന്തര രേഖകൾ" } },
+            { en: { question: "A line that intersects another line at a 90° angle is called a...?", options: ["Parallel line", "Perpendicular line", "Segment", "Ray"], answer: "Perpendicular line" }, ml: { question: "മറ്റൊരു വരയെ 90° കോണിൽ മുറിച്ചുകടക്കുന്ന വരയെ എന്തുവിളിക്കുന്നു?", options: ["സമാന്തര രേഖ", "ലംബ രേഖ", "രേഖാഖണ്ഡം", "രശ്മി"], answer: "ലംബ രേഖ" } },
+            { en: { question: "What property is observed when a slanting line intersects equidistant parallel lines?", options: ["The segments created are of random lengths", "The segments created are of equal length", "The line becomes perpendicular", "The parallel lines intersect"], answer: "The segments created are of equal length" }, ml: { question: "തുല്യ അകലത്തിലുള്ള സമാന്തര രേഖകളെ ഒരു ചരിഞ്ഞ വര മുറിക്കുമ്പോൾ എന്ത് പ്രത്യേകതയാണ് കാണുന്നത്?", options: ["ഉണ്ടാകുന്ന ഖണ്ഡങ്ങൾക്ക് വ്യത്യസ്ത നീളമായിരിക്കും", "ഉണ്ടാകുന്ന ഖണ്ഡങ്ങൾക്ക് തുല്യ നീളമായിരിക്കും", "വര ലംബമായി മാറുന്നു", "സമാന്തര രേഖകൾ കൂട്ടിമുട്ടുന്നു"], answer: "ഉണ്ടാകുന്ന ഖണ്ഡങ്ങൾക്ക് തുല്യ നീളമായിരിക്കും" } },
+            { en: { question: "A line drawn parallel to one side of a triangle divides the other two sides...?", options: ["Unequally", "In the same ratio", "Into three parts", "At a 90° angle"], answer: "In the same ratio" }, ml: { question: "ഒരു ത്രികോണത്തിന്റെ ഒരു വശത്തിന് സമാന്തരമായി വരയ്ക്കുന്ന രേഖ മറ്റ് രണ്ട് വശങ്ങളെയും...?", options: ["വ്യത്യസ്ത അനുപാതത്തിൽ", "ഒരേ അനുപാതത്തിൽ", "മൂന്ന് ഭാഗങ്ങളായി", "90° കോണിൽ"], answer: "ഒരേ അനുപാതത്തിൽ" } },
+            { en: { question: "Which tool is used to divide a 19-unit line into 3 equal parts using a slanting line?", options: ["Perpendicular Line tool", "Parallel Line tool", "Circle tool", "Polygon tool"], answer: "Parallel Line tool" }, ml: { question: "19 യൂണിറ്റ് നീളമുള്ള ഒരു വരയെ ഒരു ചരിഞ്ഞ വര ഉപയോഗിച്ച് 3 തുല്യ ഭാഗങ്ങളാക്കാൻ ഏത് ടൂളാണ് ഉപയോഗിക്കുന്നത്?", options: ["പെർപെൻഡിക്കുലർ ലൈൻ ടൂൾ", "പാരലൽ ലൈൻ ടൂൾ", "സർക്കിൾ ടൂൾ", "പോളിഗൺ ടൂൾ"], answer: "പാരലൽ ലൈൻ ടൂൾ" } },
+            { en: { question: "What is the use of the GeoGebra tool icon that shows two parallel lines?", options: ["To draw perpendicular line", "To draw parallel line", "To draw a circle", "To draw an angle"], answer: "To draw parallel line" }, ml: { question: "രണ്ട് സമാന്തര രേഖകൾ കാണിക്കുന്ന ജിയോജിബ്ര ടൂൾ ഐക്കണിന്റെ ഉപയോഗമെന്താണ്?", options: ["ലംബ രേഖ വരയ്ക്കാൻ", "സമാന്തര രേഖ വരയ്ക്കാൻ", "വൃത്തം വരയ്ക്കാൻ", "കോൺ വരയ്ക്കാൻ"], answer: "സമാന്തര രേഖ വരയ്ക്കാൻ" } },
+            { en: { question: "What is the use of the GeoGebra tool icon that shows an angle?", options: ["To draw a polygon", "To draw a perpendicular line", "To draw a circle", "To draw an angle"], answer: "To draw an angle" }, ml: { question: "ഒരു കോൺ കാണിക്കുന്ന ജിയോജിബ്ര ടൂൾ ഐക്കണിന്റെ ഉപയോഗമെന്താണ്?", options: ["ബഹുഭുജം വരയ്ക്കാൻ", "ലംബ രേഖ വരയ്ക്കാൻ", "വൃത്തം വരയ്ക്കാൻ", "കോൺ വരയ്ക്കാൻ"], answer: "കോൺ വരയ്ക്കാൻ" } },
+            { en: { question: "Which tool is used to find the length of a line segment in GeoGebra?", options: ["Distance or Length tool", "Move tool", "Midpoint tool", "Parallel Line tool"], answer: "Distance or Length tool" }, ml: { question: "ജിയോജിബ്രയിൽ ഒരു രേഖാഖണ്ഡത്തിന്റെ നീളം കണ്ടെത്താൻ ഏത് ടൂളാണ് ഉപയോഗിക്കുന്നത്?", options: ["ഡിസ്റ്റൻസ് ഓർ ലെങ്ത് ടൂൾ", "മൂവ് ടൂൾ", "മിഡ്‌പോയിന്റ് ടൂൾ", "പാരലൽ ലൈൻ ടൂൾ"], answer: "ഡിസ്റ്റൻസ് ഓർ ലെങ്ത് ടൂൾ" } },
+            { en: { question: "What software is introduced for studying the Periodic Table of elements?", options: ["GeoGebra", "PhET", "Kalzium", "Try Square"], answer: "Kalzium" }, ml: { question: "മൂലകങ്ങളുടെ ആവർത്തനപ്പട്ടികയെക്കുറിച്ച് പഠിക്കാൻ ഏത് സോഫ്റ്റ്‌വെയറാണ് പരിചയപ്പെടുത്തുന്നത്?", options: ["ജിയോജിബ്ര", "PhET", "കാൽസ്യം", "ട്രൈ സ്ക്വയർ"], answer: "കാൽസ്യം" } },
+            { en: { question: "In the Periodic Table, what are the horizontal rows called?", options: ["Groups", "Periods", "Families", "Blocks"], answer: "Periods" }, ml: { question: "ആവർത്തനപ്പട്ടികയിലെ തിരശ്ചീനമായ വരികളെ എന്തുവിളിക്കുന്നു?", options: ["ഗ്രൂപ്പുകൾ", "പിരീഡുകൾ", "കുടുംബങ്ങൾ", "ബ്ലോക്കുകൾ"], answer: "പിരീഡുകൾ" } },
+            { en: { question: "In the Periodic Table, what are the vertical columns called?", options: ["Periods", "Groups", "Rows", "Shells"], answer: "Groups" }, ml: { question: "ആവർത്തനപ്പട്ടികയിലെ ലംബമായ നിരകളെ എന്തുവിളിക്കുന്നു?", options: ["പിരീഡുകൾ", "ഗ്രൂപ്പുകൾ", "വരികൾ", "ഷെല്ലുകൾ"], answer: "ഗ്രൂപ്പുകൾ" } },
+            { en: { question: "What element is in the 3rd Period and 1st Group?", options: ["Lithium (Li)", "Sodium (Na)", "Potassium (K)", "Beryllium (Be)"], answer: "Sodium (Na)" }, ml: { question: "മൂന്നാം പിരീഡിലും ഒന്നാം ഗ്രൂപ്പിലുമുള്ള മൂലകം ഏതാണ്?", options: ["ലിഥിയം (Li)", "സോഡിയം (Na)", "പൊട്ടാസ്യം (K)", "ബെറിലിയം (Be)"], answer: "സോഡിയം (Na)" } },
+            { en: { question: "In Kalzium's 'Atom Model', what do the yellow dots represent?", options: ["Protons", "Neutrons", "Shells", "Electrons"], answer: "Electrons" }, ml: { question: "കാൽസിയത്തിന്റെ 'ആറ്റം മോഡലിൽ', മഞ്ഞ ഡോട്ടുകൾ എന്തിനെയാണ് പ്രതിനിധീകരിക്കുന്നത്?", options: ["പ്രോട്ടോണുകൾ", "ന്യൂട്രോണുകൾ", "ഷെല്ലുകൾ", "ഇലക്ട്രോണുകൾ"], answer: "ഇലക്ട്രോണുകൾ" } },
+            { en: { question: "In Kalzium's 'Atom Model', what do the concentric circles represent?", options: ["Electrons", "Protons", "Shells", "The Nucleus"], answer: "Shells" }, ml: { question: "കാൽസിയത്തിന്റെ 'ആറ്റം മോഡലിൽ', കേന്ദ്രീകൃതമായ വൃത്തരേഖകൾ എന്തിനെയാണ് പ്രതിനിധീകരിക്കുന്നത്?", options: ["ഇലക്ട്രോണുകൾ", "പ്രോട്ടോണുകൾ", "ഷെല്ലുകൾ", "ന്യൂക്ലിയസ്"], answer: "ഷെല്ലുകൾ" } },
+            { en: { question: "What is the Atomic Number of Sodium (Na)?", options: ["3", "11", "12", "19"], answer: "11" }, ml: { question: "സോഡിയത്തിന്റെ (Na) ആറ്റോമിക സംഖ്യ എത്രയാണ്?", options: ["3", "11", "12", "19"], answer: "11" } },
+            { en: { question: "What is the electron configuration of Sodium (Na)?", options: ["2,1", "2,8,1", "2,8,8,1", "2,8,2"], answer: "2,8,1" }, ml: { question: "സോഡിയത്തിന്റെ (Na) ഇലക്ട്രോൺ വിന്യാസം എന്താണ്?", options: ["2,1", "2,8,1", "2,8,8,1", "2,8,2"], answer: "2,8,1" } },
+            { en: { question: "What is the electron configuration of Calcium (Ca), which is in Period 4, Group 2?", options: ["2,8,2", "2,8,18,2", "2,8,8,2", "2,8,8,1"], answer: "2,8,8,2" }, ml: { question: "പിരീഡ് 4, ഗ്രൂപ്പ് 2-ൽ ഉള്ള കാൽസ്യത്തിന്റെ (Ca) ഇലക്ട്രോൺ വിന്യാസം എന്താണ്?", options: ["2,8,2", "2,8,18,2", "2,8,8,2", "2,8,8,1"], answer: "2,8,8,2" } },
+            { en: { question: "An element's chemical properties are primarily based on what?", options: ["Number of protons", "Atomic mass", "Number of electrons in the outer shell", "Melting point"], answer: "Number of electrons in the outer shell" }, ml: { question: "ഒരു മൂലകത്തിന്റെ രാസഗുണങ്ങൾ പ്രാഥമികമായി എന്തിനെ അടിസ്ഥാനമാക്കിയാണ് ഇരിക്കുന്നത്?", options: ["പ്രോട്ടോണുകളുടെ എണ്ണം", "ആറ്റോമിക മാസ്", "ബാഹ്യതമ ഷെല്ലിലെ ഇലക്ട്രോണുകളുടെ എണ്ണം", "ദ്രവണാങ്കം"], answer: "ബാഹ്യതമ ഷെല്ലിലെ ഇലക്ട്രോണുകളുടെ എണ്ണം" } },
+            { en: { question: "Elements in groups 1, 2, and 13-18 are collectively known as...?", options: ["Transition elements", "Main Group elements", "Lanthanoids", "Noble gases"], answer: "Main Group elements" }, ml: { question: "1, 2, 13-18 ഗ്രൂപ്പുകളിലെ മൂലകങ്ങൾ മൊത്തത്തിൽ എങ്ങനെ അറിയപ്പെടുന്നു...?", options: ["സംക്രമണ മൂലകങ്ങൾ", "പ്രധാന ഗ്രൂപ്പ് മൂലകങ്ങൾ", "ലാന്തനൈഡുകൾ", "ഉൽകൃഷ്ട വാതകങ്ങൾ"], answer: "പ്രധാന ഗ്രൂപ്പ് മൂലകങ്ങൾ" } },
+            { en: { question: "What Kalzium view mode shows elements colored by their 'State of Matter' (solid, liquid, gas)?", options: ["Scheme -> Groups", "Scheme -> Family", "Gradients -> State of Matter", "Scheme -> Iconic"], answer: "Gradients -> State of Matter" }, ml: { question: "മൂലകങ്ങളെ അവയുടെ 'അവസ്ഥ (ഖരം, ദ്രാവകം, വാതകം) അനുസരിച്ച് നിറം നൽകി കാണിക്കുന്ന കാൽസിയം വ്യൂ മോഡ് ഏതാണ്?", options: ["സ്കീം -> ഗ്രൂപ്പ്സ്", "സ്കീം -> ഫാമിലി", "ഗ്രേഡിയന്റ്സ് -> സ്റ്റേറ്റ് ഓഫ് മാറ്റർ", "സ്കീം -> ഐക്കോണിക്"], answer: "ഗ്രേഡിയന്റ്സ് -> സ്റ്റേറ്റ് ഓഫ് മാറ്റർ" } },
+            { en: { question: "What Kalzium view mode represents elements with symbols indicating their main uses?", options: ["Scheme -> Iconic", "Scheme -> Blocks", "Gradients -> Year of discovery", "Scheme -> Groups"], answer: "Scheme -> Iconic" }, ml: { question: "മൂലകങ്ങളെ അവയുടെ പ്രധാന ഉപയോഗങ്ങളെ സൂചിപ്പിക്കുന്ന ചിഹ്നങ്ങളാൽ പ്രതിനിധീകരിക്കുന്ന കാൽസിയം വ്യൂ മോഡ് ഏതാണ്?", options: ["സ്കീം -> ഐക്കോണിക്", "സ്കീം -> ബ്ലോക്ക്സ്", "ഗ്രേഡിയന്റ്സ് -> ഇയർ ഓഫ് ഡിസ്കവറി", "സ്കീം -> ഗ്രൂപ്പ്സ്"], answer: "സ്കീം -> ഐക്കോണിക്" } },
+            { en: { question: "Elements in groups 3 to 12 are known as...?", options: ["Main Group elements", "Noble gases", "Transition elements", "Actinoids"], answer: "Transition elements" }, ml: { question: "3 മുതൽ 12 വരെയുള്ള ഗ്രൂപ്പുകളിലെ മൂലകങ്ങൾ എങ്ങനെ അറിയപ്പെടുന്നു...?", options: ["പ്രധാന ഗ്രൂപ്പ് മൂലകങ്ങൾ", "ഉൽകൃഷ്ട വാതകങ്ങൾ", "സംക്രമണ മൂലകങ്ങൾ", "ആക്ടിനൈഡുകൾ"], answer: "സംക്രമണ മൂലകങ്ങൾ" } },
+            { en: { question: "How can you find an element in Kalzium if you only know its name?", options: ["Use the Search Function", "Click on 'Atom Model'", "Click on 'Gradients'", "Use the 'Iconic' view"], answer: "Use the Search Function" }, ml: { question: "ഒരു മൂലകത്തിന്റെ പേര് മാത്രം അറിയാമെങ്കിൽ കാൽസിയത്തിൽ അത് എങ്ങനെ കണ്ടെത്താം?", options: ["സെർച്ച് ഫംഗ്ഷൻ ഉപയോഗിക്കുക", "'ആറ്റം മോഡൽ' ക്ലിക്ക് ചെയ്യുക", "'ഗ്രേഡിയന്റ്സ്' ക്ലിക്ക് ചെയ്യുക", "'ഐക്കോണിക്' വ്യൂ ഉപയോഗിക്കുക"], answer: "സെർച്ച് ഫംഗ്ഷൻ ഉപയോഗിക്കുക" } },
+            { en: { question: "What virtual lab software is used to show the 'Bending Light' simulation?", options: ["GeoGebra", "Kalzium", "PhET", "Audacity"], answer: "PhET" }, ml: { question: "'ബെൻഡിംഗ് ലൈറ്റ്' സിമുലേഷൻ കാണിക്കാൻ ഉപയോഗിക്കുന്ന വെർച്വൽ ലാബ് സോഫ്റ്റ്‌വെയർ ഏതാണ്?", options: ["ജിയോജിബ്ര", "കാൽസ്യം", "PhET", "ഒഡാസിറ്റി"], answer: "PhET" } },
+            { en: { question: "What is a 'Scientific Simulation'?", options: ["A real experiment in a lab", "A tool to draw angles", "Recreating a real scientific phenomenon on a computer", "A type of periodic table"], answer: "Recreating a real scientific phenomenon on a computer" }, ml: { question: "എന്താണ് 'സയന്റിഫിക് സിമുലേഷൻ'?", options: ["ലാബിലെ ഒരു യഥാർത്ഥ പരീക്ഷണം", "കോണുകൾ വരയ്ക്കാനുള്ള ഒരു ഉപകരണം", "യഥാർത്ഥ ശാസ്ത്ര പ്രതിഭാസത്തെ കമ്പ്യൂട്ടറിൽ പുനഃസൃഷ്ടിക്കുന്നത്", "ഒരുതരം ആവർത്തനപ്പട്ടിക"], answer: "യഥാർത്ഥ ശാസ്ത്ര പ്രതിഭാസത്തെ കമ്പ്യൂട്ടറിൽ പുനഃസൃഷ്ടിക്കുന്നത്" } },
+            { en: { question: "When light travels from Air (less dense) to Water (denser), the light ray bends...?", options: ["Closer to the normal", "Away from the normal", "It does not bend", "It reflects back"], answer: "Closer to the normal" }, ml: { question: "പ്രകാശം വായുവിൽ (സാന്ദ്രത കുറഞ്ഞ) നിന്ന് വെള്ളത്തിലേക്ക് (സാന്ദ്രത കൂടിയ) സഞ്ചരിക്കുമ്പോൾ, പ്രകാശകിരണം...?", options: ["ലംബത്തോട് അടുക്കുന്നു", "ലംബത്തിൽ നിന്ന് അകലുന്നു", "അത് വളയുന്നില്ല", "അത് പ്രതിഫലിക്കുന്നു"], answer: "ലംബത്തോട് അടുക്കുന്നു" } },
+            { en: { question: "What tool in the PhET 'Bending Light' simulation is used to measure the angles?", options: ["Laser", "Slider", "Protractor tool", "Wave meter"], answer: "Protractor tool" }, ml: { question: "PhET 'ബെൻഡിംഗ് ലൈറ്റ്' സിമുലേഷനിൽ കോണുകൾ അളക്കാൻ എന്ത് ഉപകരണമാണ് ഉപയോഗിക്കുന്നത്?", options: ["ലേസർ", "സ്ലൈഡർ", "പ്രൊട്രാക്ടർ ടൂൾ", "വേവ് മീറ്റർ"], answer: "പ്രൊട്രാക്ടർ ടൂൾ" } },
+            { en: { question: "Based on the simulation, what happens to the angle of refraction as the angle of incidence increases?", options: ["It decreases", "It stays the same", "The angle of refraction also increases", "It becomes 90 degrees"], answer: "The angle of refraction also increases" }, ml: { question: "സിമുലേഷൻ അനുസരിച്ച്, പതനകോൺ (angle of incidence) കൂടുമ്പോൾ അപവർത്തനകോണിന് (angle of refraction) എന്ത് സംഭവിക്കുന്നു?", options: ["അത് കുറയുന്നു", "അത് മാറുന്നില്ല", "അപവർത്തനകോണും കൂടുന്നു", "അത് 90 ഡിഗ്രിയാകുന്നു"], answer: "അപവർത്തനകോണും കൂടുന്നു" } },
+            { en: { question: "What happens to the path of light if the angle of incidence is 0° (along the normal)?", options: ["It bends closer to the normal", "It bends away from the normal", "The path does not change", "It reflects completely"], answer: "The path does not change" }, ml: { question: "പതനകോൺ 0° ആണെങ്കിൽ (ലംബത്തിലൂടെ) പ്രകാശപാതയ്ക്ക് എന്ത് സംഭവിക്കുന്നു?", options: ["ലംബത്തോട് അടുക്കുന്നു", "ലംബത്തിൽ നിന്ന് അകലുന്നു", "പാതയ്ക്ക് മാറ്റം സംഭവിക്കുന്നില്ല", "അത് പൂർണ്ണമായും പ്രതിഫലിക്കുന്നു"], answer: "പാതയ്ക്ക് മാറ്റം സംഭവിക്കുന്നില്ല" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 31-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-700">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                // Updated review colors for better contrast on white bg
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-50' : 'bg-rose-50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : ' ✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>

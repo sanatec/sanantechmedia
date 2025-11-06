@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: A Network of Computing Devices</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles (same as your provided file) */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f5f3ff; /* Violet 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(91, 33, 182, 0.1);
+            border: 1px solid #ddd6fe; /* Violet 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #c4b5fd; /* Violet 300 */
+        }
+        .option-btn:hover {
+             background-color: #f5f3ff; /* Violet 50 */
+        }
+        .option-btn.selected {
+            background-color: #db2777; /* Pink 600 for selected */
+            color: white;
+            border-color: #be185d; /* Pink 700 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f87171; /* Red 400 for wrong */
+            color: white;
+            border-color: #ef4444;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-violet-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-violet-800 mb-2">Network Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your Networking Knowledge!</p>
+            <img src="https://placehold.co/400x200/a78bfa/ffffff?text=Ready+to+Connect%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Networking Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3"></div>
+                
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                 <h2 id="review-title" class="text-3xl font-black text-violet-800 mb-2">Test Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                 </div>
+                 <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Network Quiz!", welcomeSubtitle: "Test Your Networking Knowledge!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "കമ്പ്യൂട്ടർ നെറ്റ്വർക്ക് ക്വിസ്!", welcomeSubtitle: "നിങ്ങളുടെ നെറ്റ്വർക്കിംഗ് പരിജ്ഞാനം പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- NEW 31-Question Bank based on Chapter 10: A Network of Computing Devices ---
+        const fullQuizData = [
+            { en: { question: "What is a computer called that stores webpages and sends them when requested?", options: ["Server", "Browser", "Client", "URL"], answer: "Server" }, ml: { question: "ഒരു വെബ്പേജ് സംഭരിച്ചിരിക്കുന്ന പ്രത്യേക കമ്പ്യൂട്ടറിനെ എന്ത് വിളിക്കുന്നു?", options: ["സെർവർ", "ബ്രൗസർ", "ക്ലയന്റ്", "URL"], answer: "സെർവർ" } },
+            { en: { question: "What is the unique address of a webpage on the internet called?", options: ["HTML", "URL", "Browser", "Server"], answer: "URL" }, ml: { question: "ഇന്റർനെറ്റിലെ ഒരു വെബ്പേജിന്റെ തനതായ വിലാസത്തെ എന്തുവിളിക്കുന്നു?", options: ["HTML", "URL", "ബ്രൗസർ", "സെർവർ"], answer: "URL" } },
+            { en: { question: "What software is used to access and view webpages?", options: ["Text Editor", "Web Browser", "Server", "Media Converter"], answer: "Web Browser" }, ml: { question: "വെബ്പേജുകൾ ആക്സസ് ചെയ്യാനും കാണാനും ഉപയോഗിക്കുന്ന സോഫ്റ്റ്‌വെയർ ഏതാണ്?", options: ["ടെക്സ്റ്റ് എഡിറ്റർ", "വെബ് ബ്രൗസർ", "സെർവർ", "മീഡിയ കൺവെർട്ടർ"], answer: "വെബ് ബ്രൗസർ" } },
+            { en: { question: "Which of these is an example of an Internet Service Provider (ISP) in India?", options: ["BSNL", "Google", "Microsoft", "Apple"], answer: "BSNL" }, ml: { question: "ഇവയിൽ ഏതാണ് ഇന്ത്യയിലെ ഒരു ഇന്റർനെറ്റ് സേവന ദാതാവിന് (ISP) ഉദാഹരണം?", options: ["ബിഎസ്എൻഎൽ", "ഗൂഗിൾ", "മൈക്രോസോഫ്റ്റ്", "ആപ്പിൾ"], answer: "ബിഎസ്എൻഎൽ" } },
+            { en: { question: "Which type of cable transmits data as light signals through thin glass fibers?", options: ["Optical Fibre Cables", "Copper Cables", "UTP Cables", "Wireless"], answer: "Optical Fibre Cables" }, ml: { question: "നേർത്ത ഗ്ലാസ് നാരുകളിലൂടെ പ്രകാശ സിഗ്നലുകളായി ഡാറ്റ കൈമാറുന്ന കേബിൾ തരം ഏതാണ്?", options: ["ഒപ്റ്റിക്കൽ ഫൈബർ കേബിളുകൾ", "ചെമ്പ് കേബിളുകൾ", "യുടിപി കേബിളുകൾ", "വയർലെസ്"], answer: "ഒപ്റ്റിക്കൽ ഫൈബർ കേബിളുകൾ" } },
+            { en: { question: "What are devices called that convert signals (like analogue or optical) into digital signals for a computer?", options: ["Media converters", "Switches", "Hubs", "Routers"], answer: "Media converters" }, ml: { question: "സിഗ്നലുകളെ (അനലോഗ് അഥവാ ഒപ്റ്റിക്കൽ പോലുള്ളവ) കമ്പ്യൂട്ടറിനായി ഡിജിറ്റൽ സിഗ്നലുകളാക്കി മാറ്റുന്ന ഉപകരണങ്ങളെ എന്തുവിളിക്കുന്നു?", options: ["മീഡിയ കൺവെർട്ടറുകൾ", "സ്വിച്ചുകൾ", "ഹബ്ബുകൾ", "റൂട്ടറുകൾ"], answer: "മീഡിയ കൺവെർട്ടറുകൾ" } },
+            { en: { question: "What is it called when computers are connected to share resources like files and printers?", options: ["Computer network", "Internet", "Protocol", "Server"], answer: "Computer network" }, ml: { question: "ഫയലുകളും പ്രിന്ററുകളും പോലുള്ള വിഭവങ്ങൾ പങ്കുവെക്കാൻ കമ്പ്യൂട്ടറുകളെ ബന്ധിപ്പിക്കുന്നതിനെ എന്തുവിളിക്കുന്നു?", options: ["കമ്പ്യൂട്ടർ നെറ്റ്‌വർക്ക്", "ഇന്റർനെറ്റ്", "പ്രോട്ടോക്കോൾ", "സെർവർ"], answer: "കമ്പ്യൂട്ടർ നെറ്റ്‌വർക്ക്" } },
+            { en: { question: "What type of cable, with four twisted pairs of wires, is commonly used to connect computers in a network?", options: ["Optical Fibre", "Coaxial Cable", "UTP Cable", "HDMI Cable"], answer: "UTP Cable" }, ml: { question: "നാല് ജോഡി പിരിച്ച വയറുകളുള്ള ഏത് തരം കേബിളാണ് സാധാരണയായി കമ്പ്യൂട്ടറുകളെ നെറ്റ്‌വർക്കിൽ ബന്ധിപ്പിക്കാൻ ഉപയോഗിക്കുന്നത്?", options: ["ഒപ്റ്റിക്കൽ ഫൈബർ", "കോയാക്സിയൽ കേബിൾ", "യുടിപി കേബിൾ", "എച്ച്ഡിഎംഐ കേബിൾ"], answer: "യുടിപി കേബിൾ" } },
+            { en: { question: "What is the name of the connector (jack) used to plug a UTP cable into a computer?", options: ["RJ11", "RJ45", "USB-C", "VGA"], answer: "RJ45" }, ml: { question: "ഒരു യുടിപി കേബിൾ കമ്പ്യൂട്ടറിലേക്ക് പ്ലഗ് ചെയ്യാൻ ഉപയോഗിക്കുന്ന കണക്ടറിന്റെ (ജാക്ക്) പേരെന്താണ്?", options: ["RJ11", "RJ45", "യുഎസ്ബി-സി", "വിജിഎ"], answer: "RJ45" } },
+            { en: { question: "Which network device sends data *only* to the specific device it is meant for, reducing traffic?", options: ["Hub", "Switch", "Media Converter", "Repeater"], answer: "Switch" }, ml: { question: "ഏത് നെറ്റ്‌വർക്ക് ഉപകരണമാണ് ഡാറ്റ ഉദ്ദേശിക്കുന്ന പ്രത്യേക ഉപകരണത്തിലേക്ക് *മാത്രം* അയച്ച് ട്രാഫിക് കുറയ്ക്കുന്നത്?", options: ["ഹബ്", "സ്വിച്ച്", "മീഡിയ കൺവെർട്ടർ", "റിപ്പീറ്റർ"], answer: "സ്വിച്ച്" } },
+            { en: { question: "Which older network device sends copies of data to *all* connected computers, increasing traffic?", options: ["Switch", "Hub", "Router", "Modem"], answer: "Hub" }, ml: { question: "ഏത് പഴയ നെറ്റ്‌വർക്ക് ഉപകരണമാണ് ഡാറ്റയുടെ പകർപ്പുകൾ കണക്റ്റുചെയ്‌തിരിക്കുന്ന *എല്ലാ* കമ്പ്യൂട്ടറുകളിലേക്കും അയച്ച് ട്രാഫിക് വർദ്ധിപ്പിക്കുന്നത്?", options: ["സ്വിച്ച്", "ഹബ്", "റൂട്ടർ", "മോഡം"], answer: "ഹബ്" } },
+            { en: { question: "What type of network connects computers within a single building, like a school lab?", options: ["WAN", "PAN", "LAN", "MAN"], answer: "LAN" }, ml: { question: "ഒരു സ്കൂൾ ലാബ് പോലെ, ഒരൊറ്റ കെട്ടിടത്തിനുള്ളിലെ കമ്പ്യൂട്ടറുകളെ ബന്ധിപ്പിക്കുന്ന നെറ്റ്‌വർക്ക് തരം ഏതാണ്?", options: ["WAN", "PAN", "LAN", "MAN"], answer: "LAN" } },
+            { en: { question: "What type of network connects personal devices like a smartphone and wireless headphones?", options: ["LAN", "WAN", "PAN", "MAN"], answer: "PAN" }, ml: { question: "ഒരു സ്മാർട്ട്‌ഫോണും വയർലെസ് ഹെഡ്‌ഫോണുകളും പോലുള്ള വ്യക്തിഗത ഉപകരണങ്ങളെ ബന്ധിപ്പിക്കുന്ന നെറ്റ്‌വർക്ക് തരം ഏതാണ്?", options: ["LAN", "WAN", "PAN", "MAN"], answer: "PAN" } },
+            { en: { question: "What type of network extends across a whole country, like those used by banks?", options: ["PAN", "LAN", "WAN", "MAN"], answer: "WAN" }, ml: { question: "ബാങ്കുകൾ ഉപയോഗിക്കുന്നതുപോലെ, ഒരു രാജ്യം മുഴുവൻ വ്യാപിച്ചുകിടക്കുന്ന നെറ്റ്‌വർക്ക് തരം ഏതാണ്?", options: ["PAN", "LAN", "WAN", "MAN"], answer: "WAN" } },
+            { en: { question: "What technology has a short range of about 10 meters and is used for headphones and keyboards?", options: ["Wi-Fi", "Bluetooth", "LAN", "WAN"], answer: "Bluetooth" }, ml: { question: "ഏകദേശം 10 മീറ്റർ ഹ്രസ്വ ദൂരപരിധിയുള്ളതും ഹെഡ്‌ഫോണുകൾക്കും കീബോർഡുകൾക്കും ഉപയോഗിക്കുന്നതുമായ സാങ്കേതികവിദ്യ ഏതാണ്?", options: ["വൈ-ഫൈ", "ബ്ലൂടൂത്ത്", "ലാൻ", "വാൻ"], answer: "ബ്ലൂടൂത്ത്" } },
+            { en: { question: "What unique address is assigned by the manufacturer to every network device (e.g., 00:18:44:11:3A:B7)?", options: ["IP Address", "MAC Address", "DHCP", "SSID"], answer: "MAC Address" }, ml: { question: "എല്ലാ നെറ്റ്‌വർക്ക് ഉപകരണത്തിനും നിർമ്മാതാവ് നൽകുന്ന തനതായ വിലാസം (ഉദാ: 00:18:44:11:3A:B7) ഏതാണ്?", options: ["IP അഡ്രസ്", "MAC അഡ്രസ്", "DHCP", "SSID"], answer: "MAC അഡ്രസ്" } },
+            { en: { question: "A MAC address is written using which number system?", options: ["Decimal", "Binary", "Hexadecimal", "Octal"], answer: "Hexadecimal" }, ml: { question: "ഏത് സംഖ്യാ സമ്പ്രദായം ഉപയോഗിച്ചാണ് MAC അഡ്രസ് എഴുതുന്നത്?", options: ["ദശാംശം", "ബൈനറി", "ഹെക്സാഡെസിമൽ", "ഒക്ടൽ"], answer: "ഹെക്സാഡെസിമൽ" } },
+            { en: { question: "What is the address given to each device in a network, like 192.168.1.1, called?", options: ["MAC Address", "IP Address", "Protocol", "PAN"], answer: "IP Address" }, ml: { question: "192.168.1.1 പോലെ ഒരു നെറ്റ്‌വർക്കിലെ ഓരോ ഉപകരണത്തിനും നൽകുന്ന വിലാസത്തെ എന്തുവിളിക്കുന്നു?", options: ["MAC അഡ്രസ്", "IP അഡ്രസ്", "പ്രോട്ടോക്കോൾ", "PAN"], answer: "IP അഡ്രസ്" } },
+            { en: { question: "An IPv4 address consists of four numbers, each between...?", options: ["0 and 255", "1 and 100", "0 and 1000", "A and F"], answer: "0 and 255" }, ml: { question: "ഒരു IPv4 വിലാസത്തിൽ നാല് സംഖ്യകൾ അടങ്ങിയിരിക്കുന്നു, ഓരോന്നും...?", options: ["0-നും 255-നും ഇടയിൽ", "1-നും 100-നും ഇടയിൽ", "0-നും 1000-നും ഇടയിൽ", "A-യ്ക്കും F-നും ഇടയിൽ"], answer: "0-നും 255-നും ഇടയിൽ" } },
+            { en: { question: "What is the newer IP address system that uses hexadecimal numbers to accommodate more devices?", options: ["IPv4", "IPv6", "MAC Address", "DHCP"], answer: "IPv6" }, ml: { question: "കൂടുതൽ ഉപകരണങ്ങളെ ഉൾക്കൊള്ളാൻ ഹെക്സാഡെസിമൽ സംഖ്യകൾ ഉപയോഗിക്കുന്ന പുതിയ IP വിലാസ സംവിധാനം ഏതാണ്?", options: ["IPv4", "IPv6", "MAC അഡ്രസ്", "DHCP"], answer: "IPv6" } },
+            { en: { question: "What are the common guidelines or 'rules' that allow different devices to communicate on a network?", options: ["Protocols", "Addresses", "Cables", "Servers"], answer: "Protocols" }, ml: { question: "ഒരു നെറ്റ്‌വർക്കിൽ വ്യത്യസ്ത ഉപകരണങ്ങളെ ആശയവിനിമയം നടത്താൻ അനുവദിക്കുന്ന പൊതുവായ മാർഗ്ഗനിർദ്ദേശങ്ങളെ അഥവാ 'ചട്ടങ്ങളെ' എന്തുവിളിക്കുന്നു?", options: ["പ്രോട്ടോക്കോളുകൾ", "വിലാസങ്ങൾ", "കേബിളുകൾ", "സെർവറുകൾ"], answer: "പ്രോട്ടോക്കോളുകൾ" } },
+            { en: { question: "Which protocol *automatically* assigns IP addresses to devices when they join a network?", options: ["HTTP", "FTP", "SSH", "DHCP"], answer: "DHCP" }, ml: { question: "ഉപകരണങ്ങൾ ഒരു നെറ്റ്‌വർക്കിൽ ചേരുമ്പോൾ അവയ്ക്ക് *സ്വയമേവ* IP വിലാസങ്ങൾ നൽകുന്ന പ്രോട്ടോക്കോൾ ഏതാണ്?", options: ["HTTP", "FTP", "SSH", "DHCP"], answer: "DHCP" } },
+            { en: { question: "Which protocol is used for securely controlling another computer (Remote Login)?", options: ["SSH", "HTTP", "FTP", "DHCP"], answer: "SSH" }, ml: { question: "മറ്റൊരു കമ്പ്യൂട്ടറിനെ സുരക്ഷിതമായി നിയന്ത്രിക്കാൻ (റിമോട്ട് ലോഗിൻ) ഉപയോഗിക്കുന്ന പ്രോട്ടോക്കോൾ ഏതാണ്?", options: ["SSH", "HTTP", "FTP", "DHCP"], answer: "SSH" } },
+            { en: { question: "Which protocol do web browsers use to transfer webpages?", options: ["FTP", "DHCP", "HTTP", "SSH"], answer: "HTTP" }, ml: { question: "വെബ്പേജുകൾ കൈമാറ്റം ചെയ്യാൻ വെബ് ബ്രൗസറുകൾ ഏത് പ്രോട്ടോക്കോൾ ആണ് ഉപയോഗിക്കുന്നത്?", options: ["FTP", "DHCP", "HTTP", "SSH"], answer: "HTTP" } },
+            { en: { question: "What is the standard network protocol used to transfer files between computers?", options: ["HTTP", "FTP", "DHCP", "SSH"], answer: "FTP" }, ml: { question: "കമ്പ്യൂട്ടറുകൾക്കിടയിൽ ഫയലുകൾ കൈമാറ്റം ചെയ്യാൻ ഉപയോഗിക്കുന്ന സ്റ്റാൻഡേർഡ് നെറ്റ്‌വർക്ക് പ്രോട്ടോക്കോൾ ഏതാണ്?", options: ["HTTP", "FTP", "DHCP", "SSH"], answer: "FTP" } },
+            { en: { question: "What terminal command checks if a network connection to another IP address is working?", options: ["connect", "ssh", "ping", "ipconfig"], answer: "ping" }, ml: { question: "മറ്റൊരു IP വിലാസത്തിലേക്കുള്ള നെറ്റ്‌വർക്ക് കണക്ഷൻ പ്രവർത്തിക്കുന്നുണ്ടോയെന്ന് പരിശോധിക്കാൻ ടെർമിനലിൽ ഉപയോഗിക്കുന്ന കമാൻഡ് ഏതാണ്?", options: ["connect", "ssh", "ping", "ipconfig"], answer: "ping" } },
+            { en: { question: "To transfer a file using SSH, what format do you type in 'Connect to Server'?", options: ["ftp://192.168.1.15", "http://192.168.1.15", "ssh://192.168.1.15", "vnc://192.168.1.15"], answer: "ssh://192.168.1.15" }, ml: { question: "SSH ഉപയോഗിച്ച് ഒരു ഫയൽ കൈമാറ്റം ചെയ്യാൻ, 'Connect to Server'-ൽ നിങ്ങൾ ഏത് ഫോർമാറ്റിലാണ് ടൈപ്പ് ചെയ്യേണ്ടത്?", options: ["ftp://192.168.1.15", "http://192.168.1.15", "ssh://192.168.1.15", "vnc://192.168.1.15"], answer: "ssh://192.168.1.15" } },
+            { en: { question: "What application is used to view another computer's screen using the VNC protocol?", options: ["Remmina", "Firefox", "Terminal", "Files"], answer: "Remmina" }, ml: { question: "VNC പ്രോട്ടോക്കോൾ ഉപയോഗിച്ച് മറ്റൊരു കമ്പ്യൂട്ടറിന്റെ സ്ക്രീൻ കാണാൻ ഉപയോഗിക്കുന്ന ആപ്ലിക്കേഷൻ ഏതാണ്?", options: ["റെമ്മിന", "ഫയർഫോക്സ്", "ടെർമിനൽ", "ഫയൽസ്"], answer: "റെമ്മിന" } },
+            { en: { question: "What is an easy-to-remember name for a website's IP address (like 'schoolwiki.in') called?", options: ["MAC Address", "Domain Name", "Protocol", "Server Name"], answer: "Domain Name" }, ml: { question: "ഒരു വെബ്സൈറ്റിന്റെ IP വിലാസത്തിന് പകരമായി എളുപ്പത്തിൽ ഓർമ്മിക്കാവുന്ന പേരിനെ (ഉദാ: 'schoolwiki.in') എന്തുവിളിക്കുന്നു?", options: ["MAC അഡ്രസ്", "ഡൊമെയ്ൻ നെയിം", "പ്രോട്ടോക്കോൾ", "സെർവർ നെയിം"], answer: "ഡൊമെയ്ൻ നെയിം" } },
+            { en: { question: "What is the system of internet-connected smart devices (like TVs, refrigerators, bulbs) called?", options: ["IoT (Internet of Things)", "LAN", "PAN", "HTTP"], answer: "IoT (Internet of Things)" }, ml: { question: "ഇന്റർനെറ്റുമായി ബന്ധിപ്പിച്ചിട്ടുള്ള സ്മാർട്ട് ഉപകരണങ്ങളുടെ (ടിവി, ഫ്രിഡ്ജ്, ബൾബുകൾ പോലുള്ളവ) സിസ്റ്റത്തെ എന്തുവിളിക്കുന്നു?", options: ["IoT (ഇന്റർനെറ്റ് ഓഫ് തിംഗ്സ്)", "ലാൻ", "പാൻ", "എച്ച്ടിടിപി"], answer: "IoT (ഇന്റർനെറ്റ് ഓഫ് തിംഗ്സ്)" } },
+            { en: { question: "Which of these is a valid IPv4 address?", options: ["192.168.1.257", "192.168.256.1", "192.168.1.254", "2001:0db8::7334"], answer: "192.168.1.254" }, ml: { question: "ഇവയിൽ ഏതാണ് സാധുവായ ഒരു IPv4 വിലാസം?", options: ["192.168.1.257", "192.168.256.1", "192.168.1.254", "2001:0db8::7334"], answer: "192.168.1.254" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 31-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-700">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                // Updated review colors for better contrast on white bg
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-50' : 'bg-rose-50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : ' ✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>

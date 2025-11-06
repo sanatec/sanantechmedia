@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Infinite Scope of Presentation</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles (same as your provided file) */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f5f3ff; /* Violet 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(91, 33, 182, 0.1);
+            border: 1px solid #ddd6fe; /* Violet 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #c4b5fd; /* Violet 300 */
+        }
+        .option-btn:hover {
+             background-color: #f5f3ff; /* Violet 50 */
+        }
+        .option-btn.selected {
+            background-color: #db2777; /* Pink 600 for selected */
+            color: white;
+            border-color: #be185d; /* Pink 700 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f87171; /* Red 400 for wrong */
+            color: white;
+            border-color: #ef4444;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-violet-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-violet-800 mb-2">Presentation Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your Impress Skills!</p>
+            <img src="https://placehold.co/400x200/a78bfa/ffffff?text=Ready+to+Present%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Presentation Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3"></div>
+                
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                 <h2 id="review-title" class="text-3xl font-black text-violet-800 mb-2">Test Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                 </div>
+                 <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Presentation Quiz!", welcomeSubtitle: "Test Your Impress Skills!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "പ്രസന്റേഷൻ ക്വിസ്!", welcomeSubtitle: "നിങ്ങളുടെ ഇംപ്രസ് കഴിവുകൾ പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- NEW 31-Question Bank based on Chapter 8: The Infinite Scope of Presentation ---
+        const fullQuizData = [
+            { en: { question: "What is mentioned as one of the most important soft skills for individuals?", options: ["Technical skills", "Presentation skills", "Driving skills", "Financial skills"], answer: "Presentation skills" }, ml: { question: "വ്യക്തികൾക്ക് ആവശ്യമായ ഏറ്റവും പ്രധാനപ്പെട്ട സോഫ്റ്റ് സ്കില്ലുകളിൽ ഒന്നായി പാഠത്തിൽ പരാമർശിക്കുന്നത് എന്താണ്?", options: ["സാങ്കേതിക കഴിവുകൾ", "അവതരണ കഴിവുകൾ", "ഡ്രൈവിംഗ് കഴിവുകൾ", "സാമ്പത്തിക കഴിവുകൾ"], answer: "അവതരണ കഴിവുകൾ" } },
+            { en: { question: "What is a key advantage of using a presentation?", options: ["It only uses text", "Systematic presentation of ideas", "It does not allow images", "It is very slow"], answer: "Systematic presentation of ideas" }, ml: { question: "ഒരു പ്രസന്റേഷൻ ഉപയോഗിക്കുന്നതിന്റെ പ്രധാന നേട്ടം എന്താണ്?", options: ["ഇത് ടെക്സ്റ്റ് മാത്രം ഉപയോഗിക്കുന്നു", "ആശയങ്ങളുടെ ചിട്ടയായ അവതരണം", "ഇത് ചിത്രങ്ങൾ അനുവദിക്കുന്നില്ല", "ഇത് വളരെ വേഗത കുറഞ്ഞതാണ്"], answer: "ആശയങ്ങളുടെ ചിട്ടയായ അവതരണം" } },
+            { en: { question: "How can you insert an image into an Impress slide?", options: ["Insert -> Image", "File -> Open Image", "Format -> Image", "View -> Image"], answer: "Insert -> Image" }, ml: { question: "ഒരു ഇംപ്രസ് സ്ലൈഡിലേക്ക് നിങ്ങൾക്ക് എങ്ങനെ ഒരു ചിത്രം ഇൻസേർട്ട് ചെയ്യാം?", options: ["Insert -> Image", "File -> Open Image", "Format -> Image", "View -> Image"], answer: "Insert -> Image" } },
+            { en: { question: "Which tool is used to add text to a slide?", options: ["Insert Image icon", "A tool (Textbox)", "Master View", "Gallery"], answer: "A tool (Textbox)" }, ml: { question: "ഒരു സ്ലൈഡിലേക്ക് ടെക്സ്റ്റ് ചേർക്കാൻ ഏത് ടൂളാണ് ഉപയോഗിക്കുന്നത്?", options: ["ഇൻസേർട്ട് ഇമേജ് ഐക്കൺ", "A ടൂൾ (ടെക്സ്റ്റ്ബോക്സ്)", "മാസ്റ്റർ വ്യൂ", "ഗാലറി"], answer: "A ടൂൾ (ടെക്സ്റ്റ്ബോക്സ്)" } },
+            { en: { question: "How do you add an animation effect to selected text?", options: ["Select text -> Sidebar -> Animation -> Add", "Select text -> Insert -> Animation", "Select text -> Format -> Animation", "Select text -> Right-click -> Animate"], answer: "Select text -> Sidebar -> Animation -> Add" }, ml: { question: "തിരഞ്ഞെടുത്ത ടെക്സ്റ്റിന് ആനിമേഷൻ ഇഫക്റ്റ് എങ്ങനെ ചേർക്കാം?", options: ["ടെക്സ്റ്റ് തിരഞ്ഞെടുക്കുക -> സൈഡ്ബാർ -> ആനിമേഷൻ -> ആഡ്", "ടെക്സ്റ്റ് തിരഞ്ഞെടുക്കുക -> ഇൻസേർട്ട് -> ആനിമേഷൻ", "ടെക്സ്റ്റ് തിരഞ്ഞെടുക്കുക -> ഫോർമാറ്റ് -> ആനിമേഷൻ", "ടെക്സ്റ്റ് തിരഞ്ഞെടുക്കുക -> റൈറ്റ്-ക്ലിക്ക് -> ആനിമേറ്റ്"], answer: "ടെക്സ്റ്റ് തിരഞ്ഞെടുക്കുക -> സൈഡ്ബാർ -> ആനിമേഷൻ -> ആഡ്" } },
+            { en: { question: "What are the template slides that give all slides in a presentation the same style called?", options: ["Layouts", "Master Slides", "Animations", "Infographics"], answer: "Master Slides" }, ml: { question: "ഒരു അവതരണത്തിലെ എല്ലാ സ്ലൈഡുകൾക്കും ഒരേ ശൈലി നൽകുന്ന ടെംപ്ലേറ്റ് സ്ലൈഡുകളെ എന്തുവിളിക്കുന്നു?", options: ["ലേഔട്ടുകൾ", "മാസ്റ്റർ സ്ലൈഡുകൾ", "ആനിമേഷനുകൾ", "ഇൻഫോഗ്രാഫിക്സ്"], answer: "മാസ്റ്റർ സ്ലൈഡുകൾ" } },
+            { en: { question: "How do you switch to the view for editing a master slide?", options: ["Click 'Close Master View'", "Sidebar -> Slide Properties -> Master View", "Insert -> Master Slide", "View -> Master Slide"], answer: "Sidebar -> Slide Properties -> Master View" }, ml: { question: "ഒരു മാസ്റ്റർ സ്ലൈഡ് എഡിറ്റ് ചെയ്യുന്നതിനുള്ള വ്യൂവിലേക്ക് നിങ്ങൾ എങ്ങനെ മാറും?", options: ["'ക്ലോസ് മാസ്റ്റർ വ്യൂ' ക്ലിക്ക് ചെയ്യുക", "സൈഡ്ബാർ -> സ്ലൈഡ് പ്രോപ്പർട്ടീസ് -> മാസ്റ്റർ വ്യൂ", "ഇൻസേർട്ട് -> മാസ്റ്റർ സ്ലൈഡ്", "വ്യൂ -> മാസ്റ്റർ സ്ലൈഡ്"], answer: "സൈഡ്ബാർ -> സ്ലൈഡ് പ്രോപ്പർട്ടീസ് -> മാസ്റ്റർ വ്യൂ" } },
+            { en: { question: "What pre-defined positions can be found on a Master View?", options: ["Only title and text", "Only images", "Text levels, Date & Time, Footer, Slide Number", "Animations and transitions"], answer: "Text levels, Date & Time, Footer, Slide Number" }, ml: { question: "ഒരു മാസ്റ്റർ വ്യൂവിൽ മുൻകൂട്ടി നിശ്ചയിച്ചിട്ടുള്ള ഏതൊക്കെ സ്ഥാനങ്ങൾ കാണാൻ കഴിയും?", options: ["തലക്കെട്ടും ടെക്സ്റ്റും മാത്രം", "ചിത്രങ്ങൾ മാത്രം", "ടെക്സ്റ്റ് ലെവലുകൾ, തീയതി & സമയം, അടിക്കുറിപ്പ്, സ്ലൈഡ് നമ്പർ", "ആനിമേഷനുകളും ട്രാൻസിഷനുകളും"], answer: "Text levels, Date & Time, Footer, Slide Number" } },
+            { en: { question: "Which shape tools were mentioned for creating the design in the master slide?", options: ["Circle and Star", "Rectangle and Moon", "Arrow and Line", "Triangle and Square"], answer: "Rectangle and Moon" }, ml: { question: "മാസ്റ്റർ സ്ലൈഡിലെ ഡിസൈൻ സൃഷ്ടിക്കാൻ ഏതൊക്കെ ഷേപ്പ് ടൂളുകളാണ് പരാമർശിച്ചത്?", options: ["സർക്കിൾ, സ്റ്റാർ", "റെക്ടാങ്കിൾ (ചതുരം), മൂൺ (ചന്ദ്രക്കല)", "ആരോ, ലൈൻ", "ട്രയാംഗിൾ, സ്ക്വയർ"], answer: "റെക്ടാങ്കിൾ (ചതുരം), മൂൺ (ചന്ദ്രക്കല)" } },
+            { en: { question: "How can you automatically add consecutive numbers to all slides?", options: ["Insert -> Field -> Slide Number", "Insert -> Textbox and type numbers", "Insert -> Shapes -> Number", "Manually type on each slide"], answer: "Insert -> Field -> Slide Number" }, ml: { question: "എല്ലാ സ്ലൈഡുകളിലും തുടർച്ചയായ നമ്പറുകൾ സ്വയമേവ എങ്ങനെ ചേർക്കാം?", options: ["Insert -> Field -> Slide Number", "Insert -> Textbox, എന്നിട്ട് നമ്പറുകൾ ടൈപ്പ് ചെയ്യുക", "Insert -> Shapes -> Number", "ഓരോ സ്ലൈഡിലും നേരിട്ട് ടൈപ്പ് ചെയ്യുക"], answer: "Insert -> Field -> Slide Number" } },
+            { en: { question: "What button do you click to exit the master slide editing mode?", options: ["Save", "Close Master View", "Master View", "Exit"], answer: "Close Master View" }, ml: { question: "മാസ്റ്റർ സ്ലൈഡ് എഡിറ്റിംഗ് മോഡിൽ നിന്ന് പുറത്തുകടക്കാൻ നിങ്ങൾ ഏത് ബട്ടണാണ് ക്ലിക്ക് ചെയ്യേണ്ടത്?", options: ["സേവ്", "ക്ലോസ് മാസ്റ്റർ വ്യൂ", "മാസ്റ്റർ വ്യൂ", "എക്സിറ്റ്"], answer: "ക്ലോസ് മാസ്റ്റർ വ്യൂ" } },
+            { en: { question: "How can you apply a master slide you created to a new slide?", options: ["Slide -> Change Slide Master", "Slide -> New Master", "Format -> Master Slide", "View -> Change Master"], answer: "Slide -> Change Slide Master" }, ml: { question: "നിങ്ങൾ സൃഷ്ടിച്ച ഒരു മാസ്റ്റർ സ്ലൈഡ് ഒരു പുതിയ സ്ലൈഡിൽ എങ്ങനെ പ്രയോഗിക്കാം?", options: ["Slide -> Change Slide Master", "Slide -> New Master", "Format -> Master Slide", "View -> Change Master"], answer: "Slide -> Change Slide Master" } },
+            { en: { question: "What happens in all other slides if you change the design of their master slide?", options: ["Nothing happens", "Only the new slides change", "The change will be reflected in all slides", "The old slides are deleted"], answer: "The change will be reflected in all slides" }, ml: { question: "മാസ്റ്റർ സ്ലൈഡിന്റെ ഡിസൈൻ മാറ്റിയാൽ മറ്റെല്ലാ സ്ലൈഡുകളിലും എന്ത് സംഭവിക്കും?", options: ["ഒന്നും സംഭവിക്കില്ല", "പുതിയ സ്ലൈഡുകൾ മാത്രം മാറും", "ആ മാറ്റം എല്ലാ സ്ലൈഡുകളിലും പ്രതിഫലിക്കും", "പഴയ സ്ലൈഡുകൾ ഡിലീറ്റ് ആകും"], answer: "ആ മാറ്റം എല്ലാ സ്ലൈഡുകളിലും പ്രതിഫലിക്കും" } },
+            { en: { question: "How should the content of the slides be presented?", options: ["As long paragraphs", "Concise and suggestive, using bullet lists", "With many different colors", "Using only images"], answer: "Concise and suggestive, using bullet lists" }, ml: { question: "സ്ലൈഡുകളിലെ ഉള്ളടക്കം എങ്ങനെയാണ് അവതരിപ്പിക്കേണ്ടത്?", options: ["നീണ്ട ഖണ്ഡികകളായി", "ബുള്ളറ്റ് ലിസ്റ്റുകൾ ഉപയോഗിച്ച്, സംക്ഷിപ്തമായും സൂചകമായും", "ധാരാളം വ്യത്യസ്ത നിറങ്ങൾ ഉപയോഗിച്ച്", "ചിത്രങ്ങൾ മാത്രം ഉപയോഗിച്ച്"], answer: "ബുള്ളറ്റ് ലിസ്റ്റുകൾ ഉപയോഗിച്ച്, സംക്ഷിപ്തമായും സൂചകമായും" } },
+            { en: { question: "What is 'Infographics' the short term for?", options: ["Information Graphics", "Internal Graphics", "Information Forums", "Informal Graphics"], answer: "Information Graphics" }, ml: { question: "'ഇൻഫോഗ്രാഫിക്സ്' എന്നത് എന്തിന്റെ ഹ്രസ്വ രൂപമാണ്?", options: ["ഇൻഫർമേഷൻ ഗ്രാഫിക്സ്", "ഇന്റേണൽ ഗ്രാഫിക്സ്", "ഇൻഫർമേഷൻ ഫോറംസ്", "ഇൻഫോർമൽ ഗ്രാഫിക്സ്"], answer: "ഇൻഫർമേഷൻ ഗ്രാഫിക്സ്" } },
+            { en: { question: "What is the purpose of Infographics?", options: ["To make information more complex", "To present complex information in a clear, simple, and engaging way", "To add animations to text", "To create 3D models"], answer: "To present complex information in a clear, simple, and engaging way" }, ml: { question: "ഇൻഫോഗ്രാഫിക്സിന്റെ ഉദ്ദേശ്യം എന്താണ്?", options: ["വിവരങ്ങൾ കൂടുതൽ സങ്കീർണ്ണമാക്കാൻ", "സങ്കീർണ്ണമായ വിവരങ്ങൾ വ്യക്തവും ലളിതവും ആകർഷകവുമായ രീതിയിൽ അവതരിപ്പിക്കാൻ", "ടെക്സ്റ്റിന് ആനിമേഷനുകൾ ചേർക്കാൻ", "3D മോഡലുകൾ നിർമ്മിക്കാൻ"], answer: "സങ്കീർണ്ണമായ വിവരങ്ങൾ വ്യക്തവും ലളിതവും ആകർഷകവുമായ രീതിയിൽ അവതരിപ്പിക്കാൻ" } },
+            { en: { question: "Where in LibreOffice Impress can you find pre-made elements for building infographics?", options: ["In the Sidebar Settings -> Gallery -> Diagrams", "In the Insert -> Field menu", "In the Animation tab", "In the Master View"], answer: "In the Sidebar Settings -> Gallery -> Diagrams" }, ml: { question: "ലിബ്രെഓഫീസ് ഇംപ്രസ്സിൽ ഇൻഫോഗ്രാഫിക്സ് നിർമ്മിക്കുന്നതിനാവശ്യമായ മുൻകൂട്ടി തയ്യാറാക്കിയ ഘടകങ്ങൾ എവിടെയാണ് കാണാൻ കഴിയുക?", options: ["സൈഡ്ബാർ സെറ്റിംഗ്സ് -> ഗാലറി -> ഡയഗ്രംസ്", "ഇൻസേർട്ട് -> ഫീൽഡ് മെനുവിൽ", "ആനിമേഷൻ ടാബിൽ", "മാസ്റ്റർ വ്യൂവിൽ"], answer: "സൈഡ്ബാർ സെറ്റിംഗ്സ് -> ഗാലറി -> ഡയഗ്രംസ്" } },
+            { en: { question: "Which specific diagram was selected from the Gallery to create the risk factor infographic?", options: ["Rectangle-Cut-2", "Goal-List-Colourful", "Moon", "Text"], answer: "Goal-List-Colourful" }, ml: { question: "റിസ്ക് ഫാക്ടർ ഇൻഫോഗ്രാഫിക് സൃഷ്ടിക്കാൻ ഗാലറിയിൽ നിന്ന് ഏത് പ്രത്യേക ഡയഗ്രമാണ് തിരഞ്ഞെടുത്തത്?", options: ["റെക്ടാങ്കിൾ-കട്ട്-2", "ഗോൾ-ലിസ്റ്റ്-കളർഫുൾ", "മൂൺ", "ടെക്സ്റ്റ്"], answer: "ഗോൾ-ലിസ്റ്റ്-കളർഫുൾ" } },
+            { en: { question: "What tool allows you to change the stacking order of objects (e.g., move an image to the back)?", options: ["The Gallery", "The Arrange tool (from right-click)", "The Animation tool", "The Master Slide tool"], answer: "The Arrange tool (from right-click)" }, ml: { question: "ഒബ്ജക്റ്റുകളുടെ അടുക്ക് ക്രമം മാറ്റാൻ (ഉദാഹരണത്തിന്, ഒരു ചിത്രം പിന്നിലേക്ക് മാറ്റാൻ) ഏത് ടൂളാണ് നിങ്ങളെ അനുവദിക്കുന്നത്?", options: ["ഗാലറി", "അറേഞ്ച് ടൂൾ (വലത്-ക്ലിക്കിൽ നിന്ന്)", "ആനിമേഷൻ ടൂൾ", "മാസ്റ്റർ സ്ലൈഡ് ടൂൾ"], answer: "അറേഞ്ച് ടൂൾ (വലത്-ക്ലിക്കിൽ നിന്ന്)" } },
+            { en: { question: "Which of the following is an online collaborative platform for presentations?", options: ["LibreOffice Impress", "LibreOffice Draw", "Google Slides", "Adobe Photoshop"], answer: "Google Slides" }, ml: { question: "താഴെ പറയുന്നവയിൽ പ്രസന്റേഷനുകൾക്കായുള്ള ഒരു ഓൺലൈൻ കൊളാബറേറ്റീവ് പ്ലാറ്റ്ഫോം ഏതാണ്?", options: ["ലിബ്രെഓഫീസ് ഇംപ്രസ്", "ലിബ്രെഓഫീസ് ഡ്രോ", "ഗൂഗിൾ സ്ലൈഡ്സ്", "അഡോബ് ഫോട്ടോഷോപ്പ്"], answer: "ഗൂഗിൾ സ്ലൈഡ്സ്" } },
+            { en: { question: "What popular platform is mentioned for sharing ideas with the world, like Malala Yousafzai?", options: ["Google Slides", "TEDx", "Canva", "LibreOffice"], answer: "TEDx" }, ml: { question: "മലാല യൂസഫ്‌സായിയെപ്പോലെ ലോകവുമായി ആശയങ്ങൾ പങ്കുവെക്കുന്നതിന് പാഠത്തിൽ പരാമർശിച്ചിരിക്കുന്ന പ്രശസ്തമായ പ്ലാറ്റ്ഫോം ഏതാണ്?", options: ["ഗൂഗിൾ സ്ലൈഡ്സ്", "ടെഡ്എക്സ് (TEDx)", "കാൻവ", "ലിബ്രെഓഫീസ്"], answer: "ടെഡ്എക്സ് (TEDx)" } },
+            { en: { question: "What new technology is mentioned that can create presentations within minutes?", options: ["Master Slides", "Infographics", "Artificial Intelligence (AI)", "Gallery"], answer: "Artificial Intelligence (AI)" }, ml: { question: "മിനിറ്റുകൾക്കുള്ളിൽ പ്രസന്റേഷനുകൾ സൃഷ്ടിക്കാൻ കഴിയുന്ന ഏത് പുതിയ സാങ്കേതികവിദ്യയാണ് പാഠത്തിൽ പരാമർശിക്കുന്നത്?", options: ["മാസ്റ്റർ സ്ലൈഡുകൾ", "ഇൻഫോഗ്രാഫിക്സ്", "ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ് (AI)", "ഗാലറി"], answer: "ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ് (AI)" } },
+            { en: { question: "What is the main use of Master Slides?", options: ["To define the layout and style for other slides", "To add specific animations to each slide", "To control navigation between slides", "To add slide transitions"], answer: "To define the layout and style for other slides" }, ml: { question: "മാസ്റ്റർ സ്ലൈഡുകളുടെ പ്രധാന ഉപയോഗം എന്താണ്?", options: ["മറ്റ് സ്ലൈഡുകൾക്കായുള്ള ലേഔട്ടും ശൈലിയും നിർവചിക്കാൻ", "ഓരോ സ്ലൈഡിനും പ്രത്യേക ആനിമേഷനുകൾ നൽകാൻ", "സ്ലൈഡുകൾ തമ്മിലുള്ള നാവിഗേഷൻ നിയന്ത്രിക്കാൻ", "സ്ലൈഡ് ട്രാൻസിഷനുകൾ നൽകാൻ"], answer: "മറ്റ് സ്ലൈഡുകൾക്കായുള്ള ലേഔട്ടും ശൈലിയും നിർവചിക്കാൻ" } },
+            { en: { question: "Which characteristic *cannot* be defined using Master Slides?", options: ["Background Colour", "Font Size", "Paragraph Style", "Slide Transitions"], answer: "Slide Transitions" }, ml: { question: "മാസ്റ്റർ സ്ലൈഡുകൾ ഉപയോഗിച്ച് നിർവചിക്കാൻ *കഴിയാത്ത* സവിശേഷത ഏതാണ്?", options: ["പശ്ചാത്തല നിറം", "ഫോണ്ട് വലുപ്പം", "ഖണ്ഡിക ശൈലി", "സ്ലൈഡ് ട്രാൻസിഷനുകൾ"], answer: "സ്ലൈഡ് ട്രാൻസിഷനുകൾ" } },
+            { en: { question: "What happens to the existing content on a slide when you apply a master slide design?", options: ["All content is deleted", "The master design is applied, preserving the content", "Only the content is hidden", "The content is formatted according to the new design"], answer: "The content is formatted according to the new design" }, ml: { question: "നിങ്ങൾ ഒരു മാസ്റ്റർ സ്ലൈഡ് ഡിസൈൻ പ്രയോഗിക്കുമ്പോൾ ഒരു സ്ലൈഡിലെ നിലവിലുള്ള ഉള്ളടക്കത്തിന് എന്ത് സംഭവിക്കുന്നു?", options: ["എല്ലാ ഉള്ളടക്കവും ഇല്ലാതാക്കപ്പെടും", "ഉള്ളടക്കം സംരക്ഷിച്ചുകൊണ്ട് മാസ്റ്റർ ഡിസൈൻ പ്രയോഗിക്കും", "ഉള്ളടക്കം മാത്രം മറയ്ക്കും", "പുതിയ ഡിസൈനിന് അനുസൃതമായി ഉള്ളടക്കം ഫോർമാറ്റ് ചെയ്യപ്പെടും"], answer: "പുതിയ ഡിസൈനിന് അനുസൃതമായി ഉള്ളടക്കം ഫോർമാറ്റ് ചെയ്യപ്പെടും" } },
+            { en: { question: "What is the menu path to insert a slide number field?", options: ["Insert -> Field -> Slide Number", "Insert -> Slide Number", "Format -> Field -> Slide Number", "Slide -> Slide Number"], answer: "Insert -> Field -> Slide Number" }, ml: { question: "ഒരു സ്ലൈഡ് നമ്പർ ഫീൽഡ് ഇൻസേർട്ട് ചെയ്യാനുള്ള മെനു പാത്ത് എന്താണ്?", options: ["Insert -> Field -> Slide Number", "Insert -> Slide Number", "Format -> Field -> Slide Number", "Slide -> Slide Number"], answer: "Insert -> Field -> Slide Number" } },
+            { en: { question: "What slide layout was used for the first slide with the Intro.png image?", options: ["Title, Content", "Title Only", "Blank Slide", "Title and 2 Content"], answer: "Blank Slide" }, ml: { question: "Intro.png ചിത്രം ഉൾപ്പെടുത്തിയ ആദ്യ സ്ലൈഡിനായി ഏത് സ്ലൈഡ് ലേഔട്ടാണ് ഉപയോഗിച്ചത്?", options: ["ടൈറ്റിൽ, കണ്ടന്റ്", "ടൈറ്റിൽ ഓൺലി", "ബ്ലാങ്ക് സ്ലൈഡ്", "ടൈറ്റിൽ ആൻഡ് 2 കണ്ടന്റ്"], answer: "ബ്ലാങ്ക് സ്ലൈഡ്" } },
+            { en: { question: "How can you rename a master slide?", options: ["Right-click on it in the Slide Pane -> Rename Master", "Go to File -> Rename", "Double-click the slide name", "It cannot be renamed"], answer: "Right-click on it in the Slide Pane -> Rename Master" }, ml: { question: "ഒരു മാസ്റ്റർ സ്ലൈഡിന്റെ പേര് എങ്ങനെ മാറ്റാം?", options: ["സ്ലൈഡ് പേനിൽ അതിൽ റൈറ്റ്-ക്ലിക്ക് -> റീനെയിം മാസ്റ്റർ", "ഫയൽ -> റീനെയിം എന്നതിലേക്ക് പോകുക", "സ്ലൈഡിന്റെ പേരിൽ ഡബിൾ ക്ലിക്ക് ചെയ്യുക", "അതിന്റെ പേര് മാറ്റാൻ കഴിയില്ല"], answer: "സ്ലൈഡ് പേനിൽ അതിൽ റൈറ്റ്-ക്ലിക്ക് -> റീനെയിം മാസ്റ്റർ" } },
+            { en: { question: "What chart was used as an example *before* it was turned into an infographic?", options: ["A pie chart", "A line graph", "A bar chart", "A scatter plot"], answer: "A bar chart" }, ml: { question: "ഇൻഫോഗ്രാഫിക് ആക്കുന്നതിന് *മുമ്പ്* ഏത് ചാർട്ടാണ് ഉദാഹരണമായി ഉപയോഗിച്ചത്?", options: ["ഒരു പൈ ചാർട്ട്", "ഒരു ലൈൻ ഗ്രാഫ്", "ഒരു ബാർ ചാർട്ട്", "ഒരു സ്കാറ്റർ പ്ലോട്ട്"], answer: "ഒരു ബാർ ചാർട്ട്" } },
+            { en: { question: "What is the topic of Ebin's presentation?", options: ["Digestion and Nutrient Transport", "Bad habits and heart health", "How to use LibreOffice Impress", "Internet Usage Statistics"], answer: "Bad habits and heart health" }, ml: { question: "എബിന്റെ പ്രസന്റേഷന്റെ വിഷയം എന്താണ്?", options: ["ദഹനവും പോഷക ഗതാഗതവും", "ദുശ്ശീലങ്ങളും ഹൃയാരോഗ്യവും", "ലിബ്രെഓഫീസ് ഇംപ്രസ് എങ്ങനെ ഉപയോഗിക്കാം", "ഇന്റർനെറ്റ് ഉപയോഗ സ്ഥിതിവിവരക്കണക്കുകൾ"], answer: "ദുശ്ശീലങ്ങളും ഹൃയാരോഗ്യവും" } },
+            { en: { question: "Besides 'Insert -> Shapes', where else can you select shape tools?", options: ["From the Drawing Toolbar", "From the Gallery", "From the Animation tab", "From the File menu"], answer: "From the Drawing Toolbar" }, ml: { question: "'ഇൻസേർട്ട് -> ഷേപ്പ്സ്' അല്ലാതെ, നിങ്ങൾക്ക് എവിടെ നിന്നാണ് ഷേപ്പ് ടൂളുകൾ തിരഞ്ഞെടുക്കാൻ കഴിയുക?", options: ["ഡ്രോയിംഗ് ടൂൾബാറിൽ നിന്ന്", "ഗാലറിയിൽ നിന്ന്", "ആനിമേഷൻ ടാബിൽ നിന്ന്", "ഫയൽ മെനുവിൽ നിന്ന്"], answer: "ഡ്രോയിംഗ് ടൂൾബാറിൽ നിന്ന്" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 31-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-700">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                // Updated review colors for better contrast on white bg
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-50' : 'bg-rose-50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : ' ✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
