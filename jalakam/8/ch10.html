@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Smooth Presentation</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles (same as your provided file) */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f5f3ff; /* Violet 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(91, 33, 182, 0.1);
+            border: 1px solid #ddd6fe; /* Violet 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #c4b5fd; /* Violet 300 */
+        }
+        .option-btn:hover {
+             background-color: #f5f3ff; /* Violet 50 */
+        }
+        .option-btn.selected {
+            background-color: #db2777; /* Pink 600 for selected */
+            color: white;
+            border-color: #be185d; /* Pink 700 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f87171; /* Red 400 for wrong */
+            color: white;
+            border-color: #ef4444;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-violet-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-violet-800 mb-2">Smooth Presentation Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your Impress Skills!</p>
+            <img src="https://placehold.co/400x200/a78bfa/ffffff?text=Ready+to+Present%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Presentation Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3"></div>
+                
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                 <h2 id="review-title" class="text-3xl font-black text-violet-800 mb-2">Test Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                 </div>
+                 <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Smooth Presentation Quiz!", welcomeSubtitle: "Test Your Impress Skills!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "സ്മൂത്ത് പ്രസന്റേഷൻ ക്വിസ്!", welcomeSubtitle: "നിങ്ങളുടെ ഇംപ്രസ് കഴിവുകൾ പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- NEW 31-Question Bank based on Chapter 10: Smooth Presentation ---
+        const fullQuizData = [
+            { en: { question: "According to the diagram, which parts are found in Plant cells but NOT in Animal cells?", options: ["Nucleus, Ribosomes", "Cell wall, Chloroplasts", "Lysosomes, Small vacuoles", "Cell membrane, Mitochondria"], answer: "Cell wall, Chloroplasts" }, ml: { question: "ഡയഗ്രം അനുസരിച്ച്, സസ്യകോശങ്ങളിൽ കാണുന്നതും എന്നാൽ ജന്തുകോശങ്ങളിൽ ഇല്ലാത്തതുമായ ഭാഗങ്ങൾ ഏവ?", options: ["ന്യൂക്ലിയസ്, റൈബോസോമുകൾ", "കോശഭിത്തി, ക്ലോറോപ്ലാസ്റ്റുകൾ", "ലൈസോസോമുകൾ, ചെറിയ വാക്യൂളുകൾ", "കോശസ്തരം, മൈറ്റോകോൺഡ്രിയ"], answer: "കോശഭിത്തി, ക്ലോറോപ്ലാസ്റ്റുകൾ" } },
+            { en: { question: "According to the diagram, which parts are common to BOTH Plant and Animal cells?", options: ["Cell wall, Chloroplasts", "Lysosomes, Large central vacuole", "Nucleus, Cell membrane, Mitochondria", "Chloroplasts, Lysosomes"], answer: "Nucleus, Cell membrane, Mitochondria" }, ml: { question: "ഡയഗ്രം അനുസരിച്ച്, സസ്യകോശങ്ങളിലും ജന്തുകോശങ്ങളിലും പൊതുവായി കാണുന്ന ഭാഗങ്ങൾ ഏവ?", options: ["കോശഭിത്തി, ക്ലോറോപ്ലാസ്റ്റുകൾ", "ലൈസോസോമുകൾ, വലിയ സെൻട്രൽ വാക്യൂൾ", "ന്യൂക്ലിയസ്, കോശസ്തരം, മൈറ്റോകോൺഡ്രിയ", "ക്ലോറോപ്ലാസ്റ്റുകൾ, ലൈസോസോമുകൾ"], answer: "ന്യൂക്ലിയസ്, കോശസ്തരം, മൈറ്റോകോൺഡ്രിയ" } },
+            { en: { question: "What feature in Impress helps organize slides and lists all elements like images and text?", options: ["Navigator", "Gallery", "Slide Transition", "Animation"], answer: "Navigator" }, ml: { question: "ഇംപ്രസ്സിൽ, ചിത്രങ്ങൾ, ടെക്സ്റ്റ് തുടങ്ങിയ എല്ലാ ഘടകങ്ങളെയും ലിസ്റ്റ് ചെയ്യാനും സ്ലൈഡുകൾ ഘടനാപരമായി ക്രമീകരിക്കാനും സഹായിക്കുന്ന ഫീച്ചർ ഏതാണ്?", options: ["നാവിഗേറ്റർ", "ഗാലറി", "സ്ലൈഡ് ട്രാൻസിഷൻ", "ആനിമേഷൻ"], answer: "നാവിഗേറ്റർ" } },
+            { en: { question: "What is the default presentation method where slides are displayed one after another in order?", options: ["Non-linear presentation", "Linear presentation", "Interactive presentation", "Random presentation"], answer: "Linear presentation" }, ml: { question: "സ്ലൈഡുകൾ ഒന്നിനുപുറകെ ഒന്നായി ക്രമത്തിൽ പ്രദർശിപ്പിക്കുന്ന സാധാരണ അവതരണ രീതിക്ക് പറയുന്ന പേരെന്താണ്?", options: ["നോൺ-ലീനിയർ പ്രസന്റേഷൻ", "ലീനിയർ പ്രസന്റേഷൻ", "ഇന്ററാക്ടീവ് പ്രസന്റേഷൻ", "റാൻഡം പ്രസന്റേഷൻ"], answer: "ലീനിയർ പ്രസന്റേഷൻ" } },
+            { en: { question: "What presentation method allows you to navigate from one slide to any other specific slide directly?", options: ["Linear presentation", "Non-linear presentation", "Sequential presentation", "Automatic presentation"], answer: "Non-linear presentation" }, ml: { question: "ഒരു സ്ലൈഡിൽ നിന്ന് മറ്റേതെങ്കിലും പ്രത്യേക സ്ലൈഡിലേക്ക് നേരിട്ട് പോകാൻ അനുവദിക്കുന്ന അവതരണ രീതി ഏതാണ്?", options: ["ലീനിയർ പ്രസന്റേഷൻ", "നോൺ-ലീനിയർ പ്രസന്റേഷൻ", "സീക്വൻഷ്യൽ പ്രസന്റേഷൻ", "ഓട്ടോമാറ്റിക് പ്രസന്റേഷൻ"], answer: "നോൺ-ലീനിയർ പ്രസന്റേഷൻ" } },
+            { en: { question: "Which Impress feature is used to create non-linear presentations by linking slides?", options: ["Interaction", "Animation", "Slide Transition", "Navigator"], answer: "Interaction" }, ml: { question: "സ്ലൈഡുകളെ ബന്ധിപ്പിച്ച് നോൺ-ലീനിയർ അവതരണങ്ങൾ സൃഷ്ടിക്കാൻ ഇംപ്രസ്സിൽ ഉപയോഗിക്കുന്ന ഫീച്ചർ ഏതാണ്?", options: ["ഇന്ററാക്ഷൻ", "ആനിമേഷൻ", "സ്ലൈഡ് ട്രാൻസിഷൻ", "നാവിഗേറ്റർ"], answer: "ഇന്ററാക്ഷൻ" } },
+            { en: { question: "What is the menu path to add a new text box to a slide in Impress?", options: ["Insert -> Textbox", "File -> New Text", "Format -> Textbox", "Slide -> Add Text"], answer: "Insert -> Textbox" }, ml: { question: "ഇംപ്രസ്സിൽ ഒരു സ്ലൈഡിലേക്ക് പുതിയ ടെക്സ്റ്റ് ബോക്സ് ചേർക്കാനുള്ള മെനു പാത്ത് ഏതാണ്?", options: ["ഇൻസേർട്ട് -> ടെക്സ്റ്റ്ബോക്സ്", "ഫയൽ -> ന്യൂ ടെക്സ്റ്റ്", "ഫോർമാറ്റ് -> ടെക്സ്റ്റ്ബോക്സ്", "സ്ലൈഡ് -> ആഡ് ടെക്സ്റ്റ്"], answer: "ഇൻസേർട്ട് -> ടെക്സ്റ്റ്ബോക്സ്" } },
+            { en: { question: "Which tool is used to add lines with arrowheads to label components on a slide?", options: ["Line Ends with Arrow", "Draw Line", "Text Tool", "Gallery"], answer: "Line Ends with Arrow" }, ml: { question: "ഒരു സ്ലൈഡിലെ ഘടകങ്ങളെ ലേബൽ ചെയ്യാൻ അമ്പടയാളങ്ങളുള്ള ലൈനുകൾ ചേർക്കാൻ ഏത് ടൂളാണ് ഉപയോഗിക്കുന്നത്?", options: ["ലൈൻ എൻഡ്സ് വിത്ത് ആരോ", "ഡ്രോ ലൈൻ", "ടെക്സ്റ്റ് ടൂൾ", "ഗാലറി"], answer: "ലൈൻ എൻഡ്സ് വിത്ത് ആരോ" } },
+            { en: { question: "How can you change the background of a slide using the Sidebar?", options: ["Sidebar -> Animation -> Background", "Sidebar -> Gallery -> Background", "Sidebar -> Properties -> Slide -> Background", "Sidebar -> Styles -> Background"], answer: "Sidebar -> Properties -> Slide -> Background" }, ml: { question: "സൈഡ്ബാർ ഉപയോഗിച്ച് ഒരു സ്ലൈഡിന്റെ പശ്ചാത്തലം എങ്ങനെ മാറ്റാം?", options: ["സൈഡ്ബാർ -> ആനിമേഷൻ -> ബാക്ക്ഗ്രൗണ്ട്", "സൈഡ്ബാർ -> ഗാലറി -> ബാക്ക്ഗ്രൗണ്ട്", "സൈഡ്ബാർ -> പ്രോപ്പർട്ടീസ് -> സ്ലൈഡ് -> ബാക്ക്ഗ്രൗണ്ട്", "സൈഡ്ബാർ -> സ്റ്റൈൽസ് -> ബാക്ക്ഗ്രൗണ്ട്"], answer: "സൈഡ്ബാർ -> പ്രോപ്പർട്ടീസ് -> സ്ലൈഡ് -> ബാക്ക്ഗ്രൗണ്ട്" } },
+            { en: { question: "How do you open the 'Interaction' settings for a selected text or object?", options: ["Right-click -> Interaction", "Insert -> Interaction", "Format -> Interaction", "Double-click the object"], answer: "Right-click -> Interaction" }, ml: { question: "തിരഞ്ഞെടുത്ത ഒരു ടെക്സ്റ്റിനോ ഒബ്ജക്റ്റിനോ വേണ്ടി 'ഇന്ററാക്ഷൻ' ക്രമീകരണങ്ങൾ എങ്ങനെ തുറക്കാം?", options: ["വലത്-ക്ലിക്ക് -> ഇന്ററാക്ഷൻ", "ഇൻസേർട്ട് -> ഇന്ററാക്ഷൻ", "ഫോർമാറ്റ് -> ഇന്ററാക്ഷൻ", "ഒബ്ജക്റ്റിൽ ഇരട്ട-ക്ലിക്ക് ചെയ്യുക"], answer: "വലത്-ക്ലിക്ക് -> ഇന്ററാക്ഷൻ" } },
+            { en: { question: "In the Interaction window, which action links to another slide within the same presentation?", options: ["Go to document", "Go to page or object", "Play audio", "Run program"], answer: "Go to page or object" }, ml: { question: "ഇന്ററാക്ഷൻ വിൻഡോയിൽ, അതേ അവതരണത്തിലെ മറ്റൊരു സ്ലൈഡിലേക്ക് ലിങ്ക് ചെയ്യുന്ന പ്രവർത്തനം ഏതാണ്?", options: ["ഗോ ടു ഡോക്യുമെന്റ്", "ഗോ ടു പേജ് ഓർ ഒബ്ജക്റ്റ്", "പ്ലേ ഓഡിയോ", "റൺ പ്രോഗ്രാം"], answer: "ഗോ ടു പേജ് ഓർ ഒബ്ജക്റ്റ്" } },
+            { en: { question: "What setting must be disabled to prevent the slide show from advancing on a background click?", options: ["Animations allowed", "Mouse pointer as pen", "Change slides by clicking on background", "Presentation always on top"], answer: "Change slides by clicking on background" }, ml: { question: "പശ്ചാത്തലത്തിൽ ക്ലിക്ക് ചെയ്യുമ്പോൾ സ്ലൈഡ് ഷോ അടുത്തതിലേക്ക് പോകുന്നത് തടയാൻ ഏത് ക്രമീകരണമാണ് പ്രവർത്തനരഹിതമാക്കേണ്ടത്?", options: ["ആനിമേഷനുകൾ അനുവദനീയം", "മൗസ് പോയിന്റർ പേനയായി", "പശ്ചാത്തലത്തിൽ ക്ലിക്ക് ചെയ്യുമ്പോൾ സ്ലൈഡുകൾ മാറ്റുക", "അവതരണം എപ്പോഴും മുകളിൽ"], answer: "പശ്ചാത്തലത്തിൽ ക്ലിക്ക് ചെയ്യുമ്പോൾ സ്ലൈഡുകൾ മാറ്റുക" } },
+            { en: { question: "Where do you find the setting to disable 'Change slides by clicking on background'?", options: ["Slideshow -> Settings", "Slide -> Properties", "Insert -> Interaction", "Tools -> Options"], answer: "Slideshow -> Settings" }, ml: { question: "'പശ്ചാത്തലത്തിൽ ക്ലിക്ക് ചെയ്യുമ്പോൾ സ്ലൈഡുകൾ മാറ്റുക' എന്നത് പ്രവർത്തനരഹിതമാക്കാനുള്ള ക്രമീകരണം എവിടെയാണ്?", options: ["സ്ലൈഡ്‌ഷോ -> സെറ്റിംഗ്സ്", "സ്ലൈഡ് -> പ്രോപ്പർട്ടീസ്", "ഇൻസേർട്ട് -> ഇന്ററാക്ഷൻ", "ടൂൾസ് -> ഓപ്ഷൻസ്"], answer: "സ്ലൈഡ്‌ഷോ -> സെറ്റിംഗ്സ്" } },
+            { en: { question: "Where can you find pre-made buttons and icons (like Arrows and Bullets) in Impress?", options: ["The Navigator", "The Gallery (in Sidebar Settings)", "The Animation Tab", "The Font Menu"], answer: "The Gallery (in Sidebar Settings)" }, ml: { question: "ഇംപ്രസ്സിൽ മുൻകൂട്ടി തയ്യാറാക്കിയ ബട്ടണുകളും ഐക്കണുകളും (ആരോസ്, ബുള്ളറ്റുകൾ പോലെ) എവിടെയാണ് കാണാൻ കഴിയുക?", options: ["നാവിഗേറ്റർ", "ഗാലറി (സൈഡ്ബാർ സെറ്റിംഗ്സിൽ)", "ആനിമേഷൻ ടാബ്", "ഫോണ്ട് മെനു"], answer: "ഗാലറി (സൈഡ്ബാർ സെറ്റിംഗ്സിൽ)" } },
+            { en: { question: "What items on a slide can you add an Interaction to?", options: ["Only text", "Only images", "Only shapes", "Any object, including pictures and shapes"], answer: "Any object, including pictures and shapes" }, ml: { question: "ഒരു സ്ലൈഡിലെ ഏതൊക്കെ ഇനങ്ങളിലാണ് നിങ്ങൾക്ക് ഇന്ററാക്ഷൻ ചേർക്കാൻ കഴിയുക?", options: ["ടെക്സ്റ്റ് മാത്രം", "ചിത്രങ്ങൾ മാത്രം", "രൂപങ്ങൾ മാത്രം", "ചിത്രങ്ങളും രൂപങ്ങളും ഉൾപ്പെടെ ഏത് ഒബ്ജക്റ്റിലും"], answer: "ചിത്രങ്ങളും രൂപങ്ങളും ഉൾപ്പെടെ ഏത് ഒബ്ജക്റ്റിലും" } },
+            { en: { question: "To link to a video file on your computer, which Interaction action should you use?", options: ["Go to page or object", "Go to Document", "Play audio", "Hyperlink"], answer: "Go to Document" }, ml: { question: "നിങ്ങളുടെ കമ്പ്യൂട്ടറിലെ ഒരു വീഡിയോ ഫയലിലേക്ക് ലിങ്ക് ചെയ്യാൻ, ഏത് ഇന്ററാക്ഷൻ പ്രവർത്തനമാണ് നിങ്ങൾ ഉപയോഗിക്കേണ്ടത്?", options: ["ഗോ ടു പേജ് ഓർ ഒബ്ജക്റ്റ്", "ഗോ ടു ഡോക്യുമെന്റ്", "പ്ലേ ഓഡിയോ", "ഹൈപ്പർലിങ്ക്"], answer: "ഗോ ടു ഡോക്യുമെന്റ്" } },
+            { en: { question: "What is the best practice for storing videos you link to in a presentation?", options: ["Save them on the Desktop", "Save them in the 'My Videos' folder", "Save them in the same folder as the presentation", "Save them on a USB drive"], answer: "Save them in the same folder as the presentation" }, ml: { question: "ഒരു അവതരണത്തിൽ നിങ്ങൾ ലിങ്ക് ചെയ്യുന്ന വീഡിയോകൾ സംഭരിക്കുന്നതിനുള്ള ഏറ്റവും നല്ല മാർഗം ഏതാണ്?", options: ["അവ ഡെസ്ക്ടോപ്പിൽ സേവ് ചെയ്യുക", "അവ 'മൈ വീഡിയോസ്' ഫോൾഡറിൽ സേവ് ചെയ്യുക", "അവ അവതരണ ഫയലിന്റെ അതേ ഫോൾഡറിൽ സേവ് ചെയ്യുക", "അവ ഒരു യുഎസ്ബി ഡ്രൈവിൽ സേവ് ചെയ്യുക"], answer: "അവ അവതരണ ഫയലിന്റെ അതേ ഫോൾഡറിൽ സേവ് ചെയ്യുക" } },
+            { en: { question: "What feature is used to link text to a web page on the Internet?", options: ["Interaction", "Hyperlink", "Animation", "Gallery"], answer: "Hyperlink" }, ml: { question: "ടെക്സ്റ്റിനെ ഇന്റർനെറ്റിലെ ഒരു വെബ് പേജുമായി ബന്ധിപ്പിക്കാൻ ഏത് ഫീച്ചറാണ് ഉപയോഗിക്കുന്നത്?", options: ["ഇന്ററാക്ഷൻ", "ഹൈപ്പർലിങ്ക്", "ആനിമേഷൻ", "ഗാലറി"], answer: "ഹൈപ്പർലിങ്ക്" } },
+            { en: { question: "What is the menu path to add a Hyperlink to selected text?", options: ["Insert -> Hyperlink", "Format -> Hyperlink", "Slide -> Hyperlink", "Tools -> Hyperlink"], answer: "Insert -> Hyperlink" }, ml: { question: "തിരഞ്ഞെടുത്ത ടെക്സ്റ്റിലേക്ക് ഒരു ഹൈപ്പർലിങ്ക് ചേർക്കുന്നതിനുള്ള മെനു പാത്ത് എന്താണ്?", options: ["ഇൻസേർട്ട് -> ഹൈപ്പർലിങ്ക്", "ഫോർമാറ്റ് -> ഹൈപ്പർലിങ്ക്", "സ്ലൈഡ് -> ഹൈപ്പർലിങ്ക്", "ടൂൾസ് -> ഹൈപ്പർലിങ്ക്"], answer: "ഇൻസേർട്ട് -> ഹൈപ്പർലിങ്ക്" } },
+            { en: { question: "In the Hyperlink window, what option do you select on the left to link to a website?", options: ["Document", "Mail", "Internet", "New Document"], answer: "Internet" }, ml: { question: "ഹൈപ്പർലിങ്ക് വിൻഡോയിൽ, ഒരു വെബ്സൈറ്റിലേക്ക് ലിങ്ക് ചെയ്യാൻ ഇടതുവശത്ത് ഏത് ഓപ്ഷനാണ് നിങ്ങൾ തിരഞ്ഞെടുക്കേണ്ടത്?", options: ["ഡോക്യുമെന്റ്", "മെയിൽ", "ഇന്റർനെറ്റ്", "ന്യൂ ഡോക്യുമെന്റ്"], answer: "ഇന്റർനെറ്റ്" } },
+            { en: { question: "What feature is used to make text or images appear one by one *on the same slide*?", options: ["Animation", "Interaction", "Slide Transition", "Hyperlink"], answer: "Animation" }, ml: { question: "ടെക്സ്റ്റ് അല്ലെങ്കിൽ ചിത്രങ്ങൾ *ഒരേ സ്ലൈഡിൽ* ഒന്നിനുപുറകെ ഒന്നായി ദൃശ്യമാകാൻ ഏത് ഫീച്ചറാണ് ഉപയോഗിക്കുന്നത്?", options: ["ആനിമേഷൻ", "ഇന്ററാക്ഷൻ", "സ്ലൈഡ് ട്രാൻസിഷൻ", "ഹൈപ്പർലിങ്ക്"], answer: "ആനിമേഷൻ" } },
+            { en: { question: "How do you access the Animation settings for a selected object?", options: ["From the Sidebar Settings", "From the 'Insert' menu", "From the 'Tools' menu", "By right-clicking -> Properties"], answer: "From the Sidebar Settings" }, ml: { question: "തിരഞ്ഞെടുത്ത ഒരു ഒബ്ജക്റ്റിനായുള്ള ആനിമേഷൻ ക്രമീകരണങ്ങൾ നിങ്ങൾ എങ്ങനെയാണ് ആക്സസ് ചെയ്യുന്നത്?", options: ["സൈഡ്ബാർ സെറ്റിംഗ്സിൽ നിന്ന്", "'ഇൻസേർട്ട്' മെനുവിൽ നിന്ന്", "'ടൂൾസ്' മെനുവിൽ നിന്ന്", "വലത്-ക്ലിക്ക് -> പ്രോപ്പർട്ടീസ് വഴി"], answer: "സൈഡ്ബാർ സെറ്റിംഗ്സിൽ നിന്ന്" } },
+            { en: { question: "In the Animation settings, what 'Start' option makes the animation wait for a mouse click?", options: ["With previous", "After previous", "On click", "Automatically"], answer: "On click" }, ml: { question: "ആനിമേഷൻ ക്രമീകരണങ്ങളിൽ, ഒരു മൗസ് ക്ലിക്കിനായി ആനിമേഷൻ കാത്തിരിക്കാൻ 'സ്റ്റാർട്ട്' എന്നതിൽ ഏത് ഓപ്ഷനാണ് തിരഞ്ഞെടുക്കേണ്ടത്?", options: ["വിത്ത് പ്രീവിയസ്", "ആഫ്റ്റർ പ്രീവിയസ്", "ഓൺ ക്ലിക്ക്", "ഓട്ടോമാറ്റിക്കലി"], answer: "ഓൺ ക്ലിക്ക്" } },
+            { en: { question: "What are the visual effects used *between slides* called?", options: ["Animations", "Hyperlinks", "Slide Transitions", "Interactions"], answer: "Slide Transitions" }, ml: { question: "*സ്ലൈഡുകൾക്കിടയിൽ* ഉപയോഗിക്കുന്ന വിഷ്വൽ ഇഫക്റ്റുകളെ എന്തുവിളിക്കുന്നു?", options: ["ആനിമേഷനുകൾ", "ഹൈപ്പർലിങ്കുകൾ", "സ്ലൈഡ് ട്രാൻസിഷനുകൾ", "ഇന്ററാക്ഷനുകൾ"], answer: "സ്ലൈഡ് ട്രാൻസിഷനുകൾ" } },
+            { en: { question: "What is the menu path to add a Slide Transition?", options: ["Slide -> Slide Transition", "Insert -> Slide Transition", "Format -> Slide Transition", "View -> Slide Transition"], answer: "Slide -> Slide Transition" }, ml: { question: "ഒരു സ്ലൈഡ് ട്രാൻസിഷൻ ചേർക്കുന്നതിനുള്ള മെനു പാത്ത് എന്താണ്?", options: ["സ്ലൈഡ് -> സ്ലൈഡ് ട്രാൻസിഷൻ", "ഇൻസേർട്ട് -> സ്ലൈഡ് ട്രാൻസിഷൻ", "ഫോർമാറ്റ് -> സ്ലൈഡ് ട്രാൻസിഷൻ", "വ്യൂ -> സ്ലൈഡ് ട്രാൻസിഷൻ"], answer: "സ്ലൈഡ് -> സ്ലൈഡ് ട്രാൻസിഷൻ" } },
+            { en: { question: "What button applies your chosen Slide Transition to every slide in the presentation?", options: ["Apply to Master Slide", "Apply Transition to All Slides", "OK", "Save Transition"], answer: "Apply Transition to All Slides" }, ml: { question: "നിങ്ങൾ തിരഞ്ഞെടുത്ത സ്ലൈഡ് ട്രാൻസിഷൻ അവതരണത്തിലെ എല്ലാ സ്ലൈഡുകളിലും പ്രയോഗിക്കുന്ന ബട്ടൺ ഏതാണ്?", options: ["അപ്ലൈ ടു മാസ്റ്റർ സ്ലൈഡ്", "അപ്ലൈ ട്രാൻസിഷൻ ടു ഓൾ സ്ലൈഡ്സ്", "ഓകെ", "സേവ് ട്രാൻസിഷൻ"], answer: "അപ്ലൈ ട്രാൻസിഷൻ ടു ഓൾ സ്ലൈഡ്സ്" } },
+            { en: { question: "What is the most likely reason a linked video won't play during a presentation?", options: ["The video has no sound", "The video was moved from its original folder", "The video file size is too small", "The slide has no animation"], answer: "The video was moved from its original folder" }, ml: { question: "ഒരു അവതരണത്തിനിടെ ലിങ്ക് ചെയ്ത വീഡിയോ പ്ലേ ആകാത്തതിന്റെ ഏറ്റവും സാധ്യതയുള്ള കാരണം എന്താണ്?", options: ["വീഡിയോയ്ക്ക് ശബ്ദമില്ല", "വീഡിയോ അതിന്റെ യഥാർത്ഥ ഫോൾഡറിൽ നിന്ന് മാറ്റി", "വീഡിയോ ഫയൽ വലുപ്പം വളരെ ചെറുതാണ്", "സ്ലൈഡിന് ആനിമേഷൻ ഇല്ല"], answer: "വീഡിയോ അതിന്റെ യഥാർത്ഥ ഫോൾഡറിൽ നിന്ന് മാറ്റി" } },
+            { en: { question: "Which statement about Interaction in Impress is *incorrect*?", options: ["Navigation between slides can be customized", "Resources can be included via interaction", "Navigation is *only* possible via interaction", "Presentation can be shown in a customized manner"], answer: "Navigation is *only* possible via interaction" }, ml: { question: "ഇംപ്രസ്സിലെ ഇന്ററാക്ഷനെക്കുറിച്ചുള്ള *തെറ്റായ* പ്രസ്താവന ഏതാണ്?", options: ["സ്ലൈഡുകൾക്കിടയിലുള്ള നാവിഗേഷൻ ഇഷ്ടാനുസൃതമാക്കാം", "ഇന്ററാക്ഷൻ വഴി റിസോഴ്സുകൾ ഉൾപ്പെടുത്താം", "ഇന്ററാക്ഷൻ വഴി *മാത്രമേ* സ്ലൈഡ് നാവിഗേഷൻ സാധ്യമാകൂ", "അവതരണം ഇഷ്ടാനുസൃതമായ രീതിയിൽ കാണിക്കാം"], answer: "ഇന്ററാക്ഷൻ വഴി *മാത്രമേ* സ്ലൈഡ് നാവിഗേഷൻ സാധ്യമാകൂ" } },
+            { en: { question: "What example file name was used in the chapter for the cell presentation?", options: ["Cell_Structure.otp", "Plant_Cell.png", "Animal_Cell.png", "Presentation.odp"], answer: "Cell_Structure.otp" }, ml: { question: "കോശങ്ങളെക്കുറിച്ചുള്ള അവതരണത്തിനായി പാഠത്തിൽ ഉപയോഗിച്ച ഉദാഹരണ ഫയലിന്റെ പേര് എന്തായിരുന്നു?", options: ["Cell_Structure.otp", "Plant_Cell.png", "Animal_Cell.png", "Presentation.odp"], answer: "Cell_Structure.otp" } },
+            { en: { question: "Besides the main menu, where else can 'Interaction' be found?", options: ["In the Gallery", "In the Animation tab", "In the right-click context menu", "In the 'Tools' menu"], answer: "In the right-click context menu" }, ml: { question: "പ്രധാന മെനുവിന് പുറമെ, 'ഇന്ററാക്ഷൻ' മറ്റെവിടെയാണ് കാണാൻ കഴിയുക?", options: ["ഗാലറിയിൽ", "ആനിമേഷൻ ടാബിൽ", "വലത്-ക്ലിക്ക് കോൺടെക്സ്റ്റ് മെനുവിൽ", "'ടൂൾസ്' മെനുവിൽ"], answer: "വലത്-ക്ലിക്ക് കോൺടെക്സ്റ്റ് മെനുവിൽ" } },
+            { en: { question: "In Slide Transition settings, what does 'Duration' control?", options: ["How long the slide stays on screen", "How long the sound plays", "How long the transition effect takes", "How long before the slide advances"], answer: "How long the transition effect takes" }, ml: { question: "സ്ലൈഡ് ട്രാൻസിഷൻ ക്രമീകരണങ്ങളിൽ, 'ഡ്യൂറേഷൻ' ഓപ്ഷൻ എന്തിനെയാണ് നിയന്ത്രിക്കുന്നത്?", options: ["സ്ലൈഡ് എത്രനേരം സ്ക്രീനിൽ നിൽക്കുന്നു", "ശബ്ദം എത്രനേരം പ്ലേ ചെയ്യുന്നു", "ട്രാൻസിഷൻ ഇഫക്റ്റിന് എത്ര സമയമെടുക്കുന്നു", "സ്ലൈഡ് മാറുന്നതിന് മുമ്പുള്ള സമയം"], answer: "ട്രാൻസിഷൻ ഇഫക്റ്റിന് എത്ര സമയമെടുക്കുന്നു" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 31-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-700">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                // Updated review colors for better contrast on white bg
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-50' : 'bg-rose-50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : ' ✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>

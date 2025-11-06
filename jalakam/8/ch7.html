@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Data Analysis</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles (same as your provided file) */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f5f3ff; /* Violet 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(91, 33, 182, 0.1);
+            border: 1px solid #ddd6fe; /* Violet 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #c4b5fd; /* Violet 300 */
+        }
+        .option-btn:hover {
+             background-color: #f5f3ff; /* Violet 50 */
+        }
+        .option-btn.selected {
+            background-color: #db2777; /* Pink 600 for selected */
+            color: white;
+            border-color: #be185d; /* Pink 700 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f87171; /* Red 400 for wrong */
+            color: white;
+            border-color: #ef4444;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-violet-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-violet-800 mb-2">Data Analysis Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your Spreadsheet Skills!</p>
+            <img src="https://placehold.co/400x200/a78bfa/ffffff?text=Ready+to+Analyze%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Spreadsheet Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3"></div>
+                
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                 <h2 id="review-title" class="text-3xl font-black text-violet-800 mb-2">Test Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                 </div>
+                 <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Data Analysis Quiz!", welcomeSubtitle: "Test Your Spreadsheet Skills!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "ഡാറ്റാ അനാലിസിസ് ക്വിസ്!", welcomeSubtitle: "നിങ്ങളുടെ സ്പ്രെഡ്ഷീറ്റ് കഴിവുകൾ പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- NEW 30-Question Bank based on Chapter 7: Data Analysis ---
+        const fullQuizData = [
+            { en: { question: "What is spreadsheet software, like Calc, primarily used for?", options: ["Drawing pictures", "Writing letters", "Organising and analysing information", "Editing videos"], answer: "Organising and analysing information" }, ml: { question: "കാൽക് പോലുള്ള സ്പ്രെഡ്ഷീറ്റ് സോഫ്റ്റ്‌വെയറുകൾ പ്രധാനമായും എന്തിനാണ് ഉപയോഗിക്കുന്നത്?", options: ["ചിത്രങ്ങൾ വരയ്ക്കാൻ", "കത്തുകൾ എഴുതാൻ", "വിവരങ്ങൾ ഓർഗനൈസുചെയ്യാനും വിശകലനം ചെയ്യാനും", "വീഡിയോകൾ എഡിറ്റ് ചെയ്യാൻ"], answer: "വിവരങ്ങൾ ഓർഗനൈസുചെയ്യാനും വിശകലനം ചെയ്യാനും" } },
+            { en: { question: "Which spreadsheet software is mentioned as being available in KITE GNU/Linux?", options: ["Microsoft Excel", "Apple Numbers", "LibreOffice Calc", "Gnumeric"], answer: "LibreOffice Calc" }, ml: { question: "KITE GNU/Linux-ൽ ലഭ്യമായ സ്പ്രെഡ്ഷീറ്റ് സോഫ്റ്റ്‌വെയറായി പാഠത്തിൽ പരാമർശിക്കുന്നത് ഏതാണ്?", options: ["മൈക്രോസോഫ്റ്റ് എക്സൽ", "ആപ്പിൾ നമ്പേഴ്സ്", "ലിബ്രെഓഫീസ് കാൽക്", "ഗ്നുമെറിക്"], answer: "ലിബ്രെഓഫീസ് കാൽക്" } },
+            { en: { question: "In a worksheet, what are the vertical divisions represented by letters (A, B, C) called?", options: ["Rows", "Cells", "Columns", "Formulas"], answer: "Columns" }, ml: { question: "ഒരു വർക്ക്ഷീറ്റിൽ, അക്ഷരങ്ങൾ (A, B, C) പ്രതിനിധീകരിക്കുന്ന ലംബമായ വിഭജനങ്ങളെ എന്തുവിളിക്കുന്നു?", options: ["വരികൾ", "സെല്ലുകൾ", "നിരകൾ", "ഫോർമുലകൾ"], answer: "നിരകൾ" } },
+            { en: { question: "What are the horizontal divisions represented by numbers (1, 2, 3) called?", options: ["Columns", "Rows", "Addresses", "Sheets"], answer: "Rows" }, ml: { question: "അക്കങ്ങൾ (1, 2, 3) പ്രതിനിധീകരിക്കുന്ന തിരശ്ചീനമായ വിഭജനങ്ങളെ എന്തുവിളിക്കുന്നു?", options: ["നിരകൾ", "വരികൾ", "വിലാസങ്ങൾ", "ഷീറ്റുകൾ"], answer: "വരികൾ" } },
+            { en: { question: "What are the small rectangles seen in columns and rows where data is entered called?", options: ["Cells", "Charts", "Handles", "Functions"], answer: "Cells" }, ml: { question: "നിരകളിലും വരികളിലും കാണുന്ന, ഡാറ്റ നൽകുന്ന ചെറിയ ചതുരങ്ങളെ എന്തുവിളിക്കുന്നു?", options: ["സെല്ലുകൾ", "ചാർട്ടുകൾ", "ഹാൻഡിലുകൾ", "ഫംഗ്ഷനുകൾ"], answer: "സെല്ലുകൾ" } },
+            { en: { question: "How is a cell address identified?", options: ["By its color", "By its data", "By its column name and row name", "By its size"], answer: "By its column name and row name" }, ml: { question: "ഒരു സെൽ വിലാസം എങ്ങനെയാണ് തിരിച്ചറിയുന്നത്?", options: ["അതിന്റെ നിറം കൊണ്ട്", "അതിലെ ഡാറ്റ കൊണ്ട്", "അതിന്റെ നിരയുടെ പേരും വരിയുടെ പേരും കൊണ്ട്", "അതിന്റെ വലുപ്പം കൊണ്ട്"], answer: "അതിന്റെ നിരയുടെ പേരും വരിയുടെ പേരും കൊണ്ട്" } },
+            { en: { question: "What is the correct cell address for the cell in column D and row 5?", options: ["5D", "D5", "D,5", "Column D, Row 5"], answer: "D5" }, ml: { question: "D എന്ന നിരയിലെയും 5 എന്ന വരിയിലെയും സെല്ലിന്റെ ശരിയായ വിലാസം ഏതാണ്?", options: ["5D", "D5", "D,5", "നിര D, വരി 5"], answer: "D5" } },
+            { en: { question: "What feature allows you to combine several cells into one large cell?", options: ["Fill Handle", "Cell Merge", "Data Sort", "Chart Insert"], answer: "Cell Merge" }, ml: { question: "ഒന്നിലധികം സെല്ലുകൾ സംയോജിപ്പിച്ച് ഒരൊറ്റ വലിയ സെല്ലാക്കി മാറ്റാൻ അനുവദിക്കുന്ന ഫീച്ചർ ഏതാണ്?", options: ["ഫിൽ ഹാൻഡിൽ", "സെൽ മെർജ്", "ഡാറ്റ സോർട്ട്", "ചാർട്ട് ഇൻസേർട്ട്"], answer: "സെൽ മെർജ്" } },
+            { en: { question: "Which button is clicked on the Formatting toolbar to combine selected cells?", options: ["Sum (Σ)", "Sort A-Z", "Merge and centre", "Insert Chart"], answer: "Merge and centre" }, ml: { question: "തിരഞ്ഞെടുത്ത സെല്ലുകൾ സംയോജിപ്പിക്കാൻ ഫോർമാറ്റിംഗ് ടൂൾബാറിൽ ഏത് ബട്ടണാണ് ക്ലിക്ക് ചെയ്യേണ്ടത്?", options: ["സം (Σ)", "സോർട്ട് A-Z", "മെർജ് ആൻഡ് സെന്റർ", "ഇൻസേർട്ട് ചാർട്ട്"], answer: "മെർജ് ആൻഡ് സെന്റർ" } },
+            { en: { question: "Which function is used to find the total of a list of numbers?", options: ["AVERAGE", "SUM", "TOTAL", "COUNT"], answer: "SUM" }, ml: { question: "ഒരു കൂട്ടം സംഖ്യകളുടെ ആകെത്തുക കണ്ടെത്താൻ ഏത് ഫംഗ്ഷനാണ് ഉപയോഗിക്കുന്നത്?", options: ["AVERAGE", "SUM", "TOTAL", "COUNT"], answer: "SUM" } },
+            { en: { question: "What is the icon (Σ) next to the cell address bar called?", options: ["Select Function", "AutoFill", "Merge Cell", "Sort Data"], answer: "Select Function" }, ml: { question: "സെൽ അഡ്രസ് ബാറിന് അടുത്തുള്ള (Σ) ഐക്കണിനെ എന്തുവിളിക്കുന്നു?", options: ["സെലക്ട് ഫംഗ്ഷൻ", "ഓട്ടോഫിൽ", "മെർജ് സെൽ", "സോർട്ട് ഡാറ്റ"], answer: "സെലക്ട് ഫംഗ്ഷൻ" } },
+            { en: { question: "Which formula correctly finds the total of cells from B5 through B10?", options: ["=TOTAL(B5:B10)", "=SUM(B5:B10)", "=SUM(B5,B10)", "=ADD(B5:B10)"], answer: "=SUM(B5:B10)" }, ml: { question: "B5 മുതൽ B10 വരെയുള്ള സെല്ലുകളുടെ ആകെത്തുക കണ്ടെത്തുന്നതിനുള്ള ശരിയായ ഫോർമുല ഏതാണ്?", options: ["=TOTAL(B5:B10)", "=SUM(B5:B10)", "=SUM(B5,B10)", "=ADD(B5:B10)"], answer: "=SUM(B5:B10)" } },
+            { en: { question: "What is the name of the small '+' symbol at the bottom-right corner of a selected cell?", options: ["Fill Handle", "Merge Tool", "Plus Icon", "Data Selector"], answer: "Fill Handle" }, ml: { question: "തിരഞ്ഞെടുത്ത സെല്ലിന്റെ താഴെ വലത് കോണിലുള്ള ചെറിയ '+' ചിഹ്നത്തിന്റെ പേരെന്താണ്?", options: ["ഫിൽ ഹാൻഡിൽ", "മെർജ് ടൂൾ", "പ്ലസ് ഐക്കൺ", "ഡാറ്റാ സെലക്ടർ"], answer: "ഫിൽ ഹാൻഡിൽ" } },
+            { en: { question: "What is the main purpose of using the Fill Handle?", options: ["To delete cell content", "To change text color", "To copy functions or data across cells", "To merge cells"], answer: "To copy functions or data across cells" }, ml: { question: "ഫിൽ ഹാൻഡിൽ ഉപയോഗിക്കുന്നതിന്റെ പ്രധാന ലക്ഷ്യം എന്താണ്?", options: ["സെല്ലിലെ ഉള്ളടക്കം ഇല്ലാതാക്കാൻ", "ടെക്സ്റ്റിന്റെ നിറം മാറ്റാൻ", "ഫംഗ്ഷനുകളോ ഡാറ്റയോ മറ്റ് സെല്ലുകളിലേക്ക് പകർത്താൻ", "സെല്ലുകൾ ലയിപ്പിക്കാൻ"], answer: "ഫംഗ്ഷനുകളോ ഡാറ്റയോ മറ്റ് സെല്ലുകളിലേക്ക് പകർത്താൻ" } },
+            { en: { question: "Which function calculates the arithmetic mean of a range of numbers?", options: ["SUM", "COUNT", "AVERAGE", "MEDIAN"], answer: "AVERAGE" }, ml: { question: "ഒരു കൂട്ടം സംഖ്യകളുടെ ഗണിത ശരാശരി കണക്കാക്കാൻ ഏത് ഫംഗ്ഷൻ ഉപയോഗിക്കുന്നു?", options: ["SUM", "COUNT", "AVERAGE", "MEDIAN"], answer: "AVERAGE" } },
+            { en: { question: "Which formula correctly finds the average of cells from B5 through F5?", options: ["=AVERAGE(B5:F5)", "=MEAN(B5:F5)", "=AVERAGE(B5,F5)", "=SUM(B5:F5)/4"], answer: "=AVERAGE(B5:F5)" }, ml: { question: "B5 മുതൽ F5 വരെയുള്ള സെല്ലുകളുടെ ശരാശരി കണ്ടെത്തുന്നതിനുള്ള ശരിയായ ഫോർമുല ഏതാണ്?", options: ["=AVERAGE(B5:F5)", "=MEAN(B5:F5)", "=AVERAGE(B5,F5)", "=SUM(B5:F5)/4"], answer: "=AVERAGE(B5:F5)" } },
+            { en: { question: "Which option in the Formatting toolbar is used to remove decimal places?", options: ["Delete Decimal Place", "Add Decimal Place", "Format as Currency", "Percentage"], answer: "Delete Decimal Place" }, ml: { question: "ദശാംശ സ്ഥാനങ്ങൾ നീക്കംചെയ്യാൻ ഫോർമാറ്റിംഗ് ടൂൾബാറിലെ ഏത് ഓപ്ഷനാണ് ഉപയോഗിക്കുന്നത്?", options: ["ഡിലീറ്റ് ഡെസിമൽ പ്ലേസ്", "ആഡ് ഡെസിമൽ പ്ലേസ്", "ഫോർമാറ്റ് ആസ് കറൻസി", "പെർസെന്റേജ്"], answer: "ഡിലീറ്റ് ഡെസിമൽ പ്ലേസ്" } },
+            { en: { question: "What feature is used to arrange data in ascending or descending order?", options: ["Chart", "Sort", "Filter", "Merge"], answer: "Sort" }, ml: { question: "ഡാറ്റയെ ആരോഹണക്രമത്തിലോ അവരോഹണക്രമത്തിലോ ക്രമീകരിക്കാൻ ഏത് ഫീച്ചറാണ് ഉപയോഗിക്കുന്നത്?", options: ["ചാർട്ട്", "സോർട്ട്", "ഫിൽട്ടർ", "മെർജ്"], answer: "സോർട്ട്" } },
+            { en: { question: "To sort data in Calc, which menu path do you follow?", options: ["Insert -> Sort", "Format -> Sort", "Data -> Sort", "Tools -> Sort"], answer: "Data -> Sort" }, ml: { question: "കാൽക്കിൽ ഡാറ്റ സോർട്ട് ചെയ്യാൻ, നിങ്ങൾ ഏത് മെനു പാതയാണ് പിന്തുടരേണ്ടത്?", options: ["ഇൻസേർട്ട് -> സോർട്ട്", "ഫോർമാറ്റ് -> സോർട്ട്", "ഡാറ്റ -> സോർട്ട്", "ടൂൾസ് -> സോർട്ട്"], answer: "ഡാറ്റ -> സോർട്ട്" } },
+            { en: { question: "In the Sort window, what does 'Sort Key 1' allow you to select?", options: ["The order (Ascending/Descending)", "The column to sort by", "The number of rows to sort", "The color of the cells"], answer: "The column to sort by" }, ml: { question: "സോർട്ട് വിൻഡോയിൽ, 'സോർട്ട് കീ 1' എന്ത് തിരഞ്ഞെടുക്കാൻ നിങ്ങളെ അനുവദിക്കുന്നു?", options: ["ക്രമം (ആരോഹണം/അവരോഹണം)", "സോർട്ട് ചെയ്യേണ്ട കോളം", "സോർട്ട് ചെയ്യേണ്ട വരികളുടെ എണ്ണം", "സെല്ലുകളുടെ നിറം"], answer: "സോർട്ട് ചെയ്യേണ്ട കോളം" } },
+            { en: { question: "How do you begin the process of creating a chart from your data?", options: ["Go to Data -> Chart", "Go to Insert -> Chart", "Go to Format -> Chart", "Right-click -> New Chart"], answer: "Go to Insert -> Chart" }, ml: { question: "നിങ്ങളുടെ ഡാറ്റയിൽ നിന്ന് ഒരു ചാർട്ട് സൃഷ്ടിക്കുന്ന പ്രക്രിയ നിങ്ങൾ എങ്ങനെയാണ് ആരംഭിക്കുന്നത്?", options: ["ഡാറ്റ -> ചാർട്ട് എന്നതിലേക്ക് പോകുക", "ഇൻസേർട്ട് -> ചാർട്ട് എന്നതിലേക്ക് പോകുക", "ഫോർമാറ്റ് -> ചാർട്ട് എന്നതിലേക്ക് പോകുക", "റൈറ്റ് ക്ലിക്ക് -> ന്യൂ ചാർട്ട്"], answer: "ഇൻസേർട്ട് -> ചാർട്ട് എന്നതിലേക്ക് പോകുക" } },
+            { en: { question: "What type of chart was used in the chapter's example to show monthly expenses?", options: ["Pie", "Line", "Bar", "Column"], answer: "Column" }, ml: { question: "പാഠത്തിലെ ഉദാഹരണത്തിൽ പ്രതിമാസ ചെലവുകൾ കാണിക്കാൻ ഏത് തരം ചാർട്ടാണ് ഉപയോഗിച്ചത്?", options: ["പൈ", "ലൈൻ", "ബാർ", "കോൾ"], answer: "കോൾ" } },
+            { en: { question: "In the 'Chart Elements' step, what can you give names to?", options: ["Title, X axis, and Y axis", "Only the Title", "Only the Data Series", "The Fill Handle"], answer: "Title, X axis, and Y axis" }, ml: { question: "'ചാർട്ട് എലമെന്റ്സ്' ഘട്ടത്തിൽ, നിങ്ങൾക്ക് എന്തിനൊക്കെ പേരുകൾ നൽകാം?", options: ["തലക്കെട്ട്, X ആക്സിസ്, Y ആക്സിസ്", "തലക്കെട്ടിന് മാത്രം", "ഡാറ്റാ സീരീസിന് മാത്രം", "ഫിൽ ഹാൻഡിലിന്"], answer: "തലക്കെട്ട്, X ആക്സിസ്, Y ആക്സിസ്" } },
+            { en: { question: "How can you select multiple rows or columns that are *not* next to each other?", options: ["Hold down the Shift key", "Hold down the Control (Ctrl) key", "Hold down the Alt key", "It is not possible"], answer: "Hold down the Control (Ctrl) key" }, ml: { question: "അടുത്തടുത്ത് *അല്ലാത്ത* ഒന്നിലധികം വരികളോ നിരകളോ നിങ്ങൾക്ക് എങ്ങനെ തിരഞ്ഞെടുക്കാനാകും?", options: ["Shift കീ അമർത്തിപ്പിടിക്കുക", "Control (Ctrl) കീ അമർത്തിപ്പിടിക്കുക", "Alt കീ അമർത്തിപ്പിടിക്കുക", "അത് സാധ്യമല്ല"], answer: "Control (Ctrl) കീ അമർത്തിപ്പിടിക്കുക" } },
+            { en: { question: "Which function was *NOT* shown in the 'Select Function' dropdown list in Figure 7.8?", options: ["SUM", "AVERAGE", "MAX", "SUBTRACT"], answer: "SUBTRACT" }, ml: { question: "ചിത്രം 7.8-ലെ 'സെലക്ട് ഫംഗ്ഷൻ' ഡ്രോപ്പ്ഡൗൺ ലിസ്റ്റിൽ കാണിക്കാത്ത ഫംഗ്ഷൻ ഏതാണ്?", options: ["SUM", "AVERAGE", "MAX", "SUBTRACT"], answer: "SUBTRACT" } },
+            { en: { question: "What is the purpose of the toolbar button with the icon '.00 <- .0'?", options: ["To add decimal places", "To remove decimal places", "To format as currency", "To sort numbers"], answer: "To remove decimal places" }, ml: { question: "'.00 <- .0' എന്ന ഐക്കണുള്ള ടൂൾബാർ ബട്ടണിന്റെ ഉദ്ദേശ്യമെന്താണ്?", options: ["ദശാംശ സ്ഥാനങ്ങൾ ചേർക്കാൻ", "ദശാംശ സ്ഥാനങ്ങൾ നീക്കം ചെയ്യാൻ", "കറൻസിയായി ഫോർമാറ്റ് ചെയ്യാൻ", "നമ്പറുകൾ സോർട്ട് ചെയ്യാൻ"], answer: "ദശാംശ സ്ഥാനങ്ങൾ നീക്കം ചെയ്യാൻ" } },
+            { en: { question: "Based on the chapter's examples, which is a valid syntax for the SUM function?", options: ["=SUM(A1:B1)", "=CALCULATE(A1:B1)", "=TOTAL(A1+B1)", "=SUM{A1:B1}"], answer: "=SUM(A1:B1)" }, ml: { question: "പാഠത്തിലെ ഉദാഹരണങ്ങൾ അനുസരിച്ച്, SUM ഫംഗ്ഷന്റെ സാധുവായ വാക്യഘടന ഏതാണ്?", options: ["=SUM(A1:B1)", "=CALCULATE(A1:B1)", "=TOTAL(A1+B1)", "=SUM{A1:B1}"], answer: "=SUM(A1:B1)" } },
+            { en: { question: "What is the formula for calculating BMI mentioned in the extended activities?", options: ["Weight + Height", "Weight / (Height * Height)", "Weight * Height", "Height / Weight"], answer: "Weight / (Height * Height)" }, ml: { question: "വിപുലമായ പ്രവർത്തനങ്ങളിൽ സൂചിപ്പിച്ചിരിക്കുന്ന BMI കണക്കാക്കുന്നതിനുള്ള സൂത്രവാക്യം എന്താണ്?", options: ["തൂക്കം + ഉയരം", "തൂക്കം / (ഉയരം * ഉയരം)", "തൂക്കം * ഉയരം", "ഉയരം / തൂക്കം"], answer: "തൂക്കം / (ഉയരം * ഉയരം)" } },
+            { en: { question: "What type of chart is suggested for showing how classmates travel to school?", options: ["Column Chart", "Line Chart", "Pie Chart", "Scatter Chart"], answer: "Pie Chart" }, ml: { question: "സഹപാഠികൾ എങ്ങനെ സ്കൂളിലേക്ക് യാത്ര ചെയ്യുന്നു എന്ന് കാണിക്കാൻ ഏത് തരം ചാർട്ടാണ് നിർദ്ദേശിച്ചിരിക്കുന്നത്?", options: ["കോൾ ചാർട്ട്", "ലൈൻ ചാർട്ട്", "പൈ ചാർട്ട്", "സ്കാറ്റർ ചാർട്ട്"], answer: "പൈ ചാർട്ട്" } },
+            { en: { question: "When you click on a cell (e.g., C6), where does its address appear?", options: ["In the center of the cell", "In the main toolbar", "In the column in the left corner (Name Box)", "In the status bar at the bottom"], answer: "In the column in the left corner (Name Box)" }, ml: { question: "നിങ്ങൾ ഒരു സെല്ലിൽ (ഉദാഹരണത്തിന്, C6) ക്ലിക്ക് ചെയ്യുമ്പോൾ, അതിന്റെ വിലാസം എവിടെയാണ് ദൃശ്യമാകുന്നത്?", options: ["സെല്ലിന്റെ മധ്യത്തിൽ", "പ്രധാന ടൂൾബാറിൽ", "ഇടത് മൂലയിലുള്ള കോളത്തിൽ (നെയിം ബോക്സ്)", "ചുവടെയുള്ള സ്റ്റാറ്റസ് ബാറിൽ"], answer: "ഇടത് മൂലയിലുള്ള കോളത്തിൽ (നെയിം ബോക്സ്)" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 30-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+                function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-700">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                // Updated review colors for better contrast on white bg
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-50' : 'bg-rose-50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : ' ✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>

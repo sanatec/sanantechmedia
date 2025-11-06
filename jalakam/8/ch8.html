@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Fun with Learning Science</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles (same as your provided file) */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f5f3ff; /* Violet 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(91, 33, 182, 0.1);
+            border: 1px solid #ddd6fe; /* Violet 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #c4b5fd; /* Violet 300 */
+        }
+        .option-btn:hover {
+             background-color: #f5f3ff; /* Violet 50 */
+        }
+        .option-btn.selected {
+            background-color: #db2777; /* Pink 600 for selected */
+            color: white;
+            border-color: #be185d; /* Pink 700 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f87171; /* Red 400 for wrong */
+            color: white;
+            border-color: #ef4444;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-violet-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-violet-800 mb-2">Fun with Learning Science Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your Science Software Skills!</p>
+            <img src="https://placehold.co/400x200/a78bfa/ffffff?text=Ready+to+Experiment%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Science Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3"></div>
+                
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                 <h2 id="review-title" class="text-3xl font-black text-violet-800 mb-2">Test Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                 </div>
+                 <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Fun with Learning Science Quiz!", welcomeSubtitle: "Test Your Science Software Skills!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "ശാസ്ത്ര പഠനം രസകരം ക്വിസ്!", welcomeSubtitle: "നിങ്ങളുടെ സയൻസ് സോഫ്റ്റ്‌വെയർ കഴിവുകൾ പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- NEW 31-Question Bank based on Chapter 8: Fun with Learning Science ---
+        const fullQuizData = [
+            { en: { question: "What software is introduced to show time zones and day/night areas?", options: ["Sunclock", "Avogadro", "PhET", "GeoGebra"], answer: "Sunclock" }, ml: { question: "സമയ മേഖലകളും പകലും രാത്രിയും കാണിക്കാൻ ഏത് സോഫ്റ്റ്‌വെയറാണ് പരിചയപ്പെടുത്തുന്നത്?", options: ["സൺക്ലോക്ക്", "അവോഗാഡ്രോ", "PhET", "ജിയോജിബ്ര"], answer: "സൺക്ലോക്ക്" } },
+            { en: { question: "The world is divided into how many time zones based on GMT?", options: ["12", "24", "30", "36"], answer: "24" }, ml: { question: "GMT അടിസ്ഥാനമാക്കി ലോകത്തെ എത്ര സമയ മേഖലകളായി തിരിച്ചിരിക്കുന്നു?", options: ["12", "24", "30", "36"], answer: "24" } },
+            { en: { question: "What is the time determined by the sun's highest position (zenith) called?", options: ["Standard Time", "Legal Time", "Local Time", "Greenwich Time"], answer: "Local Time" }, ml: { question: "സൂര്യന്റെ ഏറ്റവും ഉയർന്ന സ്ഥാനം (zenith) അനുസരിച്ച് നിർണ്ണയിക്കുന്ന സമയത്തെ എന്തുവിളിക്കുന്നു?", options: ["സ്റ്റാൻഡേർഡ് സമയം", "ലീഗൽ സമയം", "പ്രാദേശിക സമയം (Local Time)", "ഗ്രീൻവിച്ച് സമയം"], answer: "പ്രാദേശിക സമയം (Local Time)" } },
+            { en: { question: "What is the common time adopted by an entire nation called?", options: ["Local Time", "Standard Time", "Solar Time", "Zonal Time"], answer: "Standard Time" }, ml: { question: "ഒരു രാജ്യം മുഴുവൻ പൊതുവായി അംഗീകരിച്ച സമയത്തെ എന്തുവിളിക്കുന്നു?", options: ["പ്രാദേശിക സമയം", "സ്റ്റാൻഡേർഡ് സമയം (Standard Time)", "സോളാർ സമയം", "സോണൽ സമയം"], answer: "സ്റ്റാൻഡേർഡ് സമയം (Standard Time)" } },
+            { en: { question: "In Sunclock, which tool is used to switch to 'Legal Time Mode' (Standard Time)?", options: ["S tool", "M tool", "L tool", "! tool"], answer: "L tool" }, ml: { question: "സൺക്ലോക്കിൽ, 'ലീഗൽ ടൈം മോഡിലേക്ക്' (സ്റ്റാൻഡേർഡ് സമയം) മാറാൻ ഏത് ടൂളാണ് ഉപയോഗിക്കുന്നത്?", options: ["S ടൂൾ", "M ടൂൾ", "L ടൂൾ", "! ടൂൾ"], answer: "L ടൂൾ" } },
+            { en: { question: "Which tool in the Sunclock menubar opens the 'Clock & Map Window'?", options: ["N", "Y", "Q", "!"], answer: "!" }, ml: { question: "സൺക്ലോക്ക് മെനുബാറിലെ ഏത് ടൂളാണ് 'ക്ലോക്ക് & മാപ്പ് വിൻഡോ' തുറക്കുന്നത്?", options: ["N", "Y", "Q", "!"], answer: "!" } },
+            { en: { question: "Which tool in Sunclock is used to display longitudinal lines?", options: ["L tool", "M tool", "P tool", "T tool"], answer: "M tool" }, ml: { question: "സൺക്ലോക്കിൽ രേഖാംശരേഖകൾ പ്രദർശിപ്പിക്കാൻ ഏത് ടൂളാണ് ഉപയോഗിക്കുന്നത്?", options: ["L ടൂൾ", "M ടൂൾ", "P ടൂൾ", "T ടൂൾ"], answer: "M ടൂൾ" } },
+            { en: { question: "Which tool displays the separation between day and night?", options: ["Y tool", "N tool", "A tool", "B tool"], answer: "N tool" }, ml: { question: "പകലും രാത്രിയും തമ്മിലുള്ള വേർതിരിവ് പ്രദർശിപ്പിക്കുന്ന ടൂൾ ഏതാണ്?", options: ["Y ടൂൾ", "N ടൂൾ", "A ടൂൾ", "B ടൂൾ"], answer: "N ടൂൾ" } },
+            { en: { question: "Which tool in Sunclock makes the Sun visible on the map?", options: ["Y tool", "S tool", "N tool", "G tool"], answer: "Y tool" }, ml: { question: "സൺക്ലോക്കിൽ ഏത് ടൂളാണ് സൂര്യനെ ഭൂപടത്തിൽ ദൃശ്യമാക്കുന്നത്?", options: ["Y ടൂൾ", "S ടൂൾ", "N ടൂൾ", "G ടൂൾ"], answer: "Y ടൂൾ" } },
+            { en: { question: "What is the apparent north-south movement of the Sun between the tropics called?", options: ["Solar Declination (Ayana)", "Earth's Rotation", "Standard Time", "Local Time"], answer: "Solar Declination (Ayana)" }, ml: { question: "ട്രോപ്പിക്കുകൾക്കിടയിലുള്ള സൂര്യന്റെ വടക്ക്-തെക്ക് ചലനത്തെ എന്തുവിളിക്കുന്നു?", options: ["സോളാർ ഡെക്ലിനേഷൻ (അയനം)", "ഭൂമിയുടെ ഭ്രമണം", "സ്റ്റാൻഡേർഡ് സമയം", "പ്രാദേശിക സമയം"], answer: "സോളാർ ഡെക്ലിനേഷൻ (അയനം)" } },
+            { en: { question: "What is the Sun's northward journey from the Tropic of Capricorn to the Tropic of Cancer called?", options: ["Dakshinayanam", "Uttarayanam", "Equinox", "Zenith"], answer: "Uttarayanam" }, ml: { question: "ദക്ഷിണായനരേഖയിൽ നിന്ന് ഉത്തരായനരേഖയിലേക്കുള്ള സൂര്യന്റെ വടക്കോട്ടുള്ള യാത്രയെ എന്തുവിളിക്കുന്നു?", options: ["ദക്ഷിണായനം", "ഉത്തരായനം", "വിഷുവം", "സെനിത്ത്"], answer: "ഉത്തരായനം" } },
+            { en: { question: "What is the smallest unit that contains the properties of a substance?", options: ["Atom", "Molecule", "Element", "Compound"], answer: "Molecule" }, ml: { question: "ഒരു പദാർത്ഥത്തിന്റെ ഗുണങ്ങൾ അടങ്ങിയ ഏറ്റവും ചെറിയ യൂണിറ്റ് ഏതാണ്?", options: ["ആറ്റം", "തന്മാത്ര (Molecule)", "മൂലകം", "സംയുക്തം"], answer: "തന്മാത്ര (Molecule)" } },
+            { en: { question: "What molecular editing software is used to create 3D models of molecules?", options: ["Sunclock", "GeoGebra", "PhET", "Avogadro"], answer: "Avogadro" }, ml: { question: "തന്മാത്രകളുടെ 3D മോഡലുകൾ സൃഷ്ടിക്കാൻ ഉപയോഗിക്കുന്ന മോളിക്യുലാർ എഡിറ്റിംഗ് സോഫ്റ്റ്‌വെയർ ഏതാണ്?", options: ["സൺക്ലോക്ക്", "ജിയോജിബ്ര", "PhET", "അവോഗാഡ്രോ"], answer: "അവോഗാഡ്രോ" } },
+            { en: { question: "What is the chemical formula for a water molecule?", options: ["H2O", "CO2", "O2", "C6H12O6"], answer: "H2O" }, ml: { question: "ഒരു ജലതന്മാത്രയുടെ രാസ സൂത്രവാക്യം എന്താണ്?", options: ["H2O", "CO2", "O2", "C6H12O6"], answer: "H2O" } },
+            { en: { question: "Which tool in Avogadro is used to build a molecule atom by atom?", options: ["Navigation tool", "Draw tool", "Optimize Geometry", "Insert tool"], answer: "Draw tool" }, ml: { question: "അവോഗാഡ്രോയിൽ ആറ്റം ആറ്റമായി ഒരു തന്മാത്ര നിർമ്മിക്കാൻ ഏത് ടൂളാണ് ഉപയോഗിക്കുന്നത്?", options: ["നാവിഗേഷൻ ടൂൾ", "ഡ്രോ ടൂൾ", "ഒപ്റ്റിമൈസ് ജോമെട്രി", "ഇൻസേർട്ട് ടൂൾ"], answer: "ഡ്രോ ടൂൾ" } },
+            { en: { question: "What menu path equalizes bonding and spacing between elements in Avogadro?", options: ["Build -> Insert", "File -> Save", "Extensions -> Open Babel -> Optimise Geometry", "Display Types -> Labels"], answer: "Extensions -> Open Babel -> Optimise Geometry" }, ml: { question: "അവോഗാഡ്രോയിൽ മൂലകങ്ങൾക്കിടയിലുള്ള ബന്ധനവും അകലവും തുല്യമാക്കുന്ന മെനു പാത്ത് ഏതാണ്?", options: ["ബിൽഡ് -> ഇൻസേർട്ട്", "ഫയൽ -> സേവ്", "എക്സ്റ്റൻഷൻസ് -> ഓപ്പൺ ബേബൽ -> ഒപ്റ്റിമൈസ് ജോമെട്രി", "ഡിസ്പ്ലേ ടൈപ്പ്സ് -> ലേബൽസ്"], answer: "എക്സ്റ്റൻഷൻസ് -> ഓപ്പൺ ബേബൽ -> ഒപ്റ്റിമൈസ് ജോമെട്രി" } },
+            { en: { question: "Which tool in Avogadro allows you to rotate and zoom the 3D model?", options: ["Draw tool", "Navigation tool", "Save tool", "Optimize tool"], answer: "Navigation tool" }, ml: { question: "അവോഗാഡ്രോയിലെ ഏത് ടൂളാണ് 3D മോഡൽ തിരിക്കാനും സൂം ചെയ്യാനും അനുവദിക്കുന്നത്?", options: ["ഡ്രോ ടൂൾ", "നാവിഗേഷൻ ടൂൾ", "സേവ് ടൂൾ", "ഒപ്റ്റിമൈസ് ടൂൾ"], answer: "നാവിഗേഷൻ ടൂൾ" } },
+            { en: { question: "How can you insert a pre-made model like glucose in Avogadro?", options: ["Build -> Insert -> Molecule", "File -> Open", "Extensions -> Periodic Table", "Draw -> Glucose"], answer: "Build -> Insert -> Molecule" }, ml: { question: "അവോഗാഡ്രോയിൽ ഗ്ലൂക്കോസ് പോലുള്ള മുൻകൂട്ടി തയ്യാറാക്കിയ മോഡൽ എങ്ങനെ ചേർക്കാം?", options: ["ബിൽഡ് -> ഇൻസേർട്ട് -> മോളിക്യൂൾ", "ഫയൽ -> ഓപ്പൺ", "എക്സ്റ്റൻഷൻസ് -> പീരിയോഡിക് ടേബിൾ", "ഡ്രോ -> ഗ്ലൂക്കോസ്"], answer: "ബിൽഡ് -> ഇൻസേർട്ട് -> മോളിക്യൂൾ" } },
+            { en: { question: "A glucose molecule (C6H12O6) is made of which elements?", options: ["Hydrogen and Oxygen only", "Carbon and Hydrogen only", "Carbon, Hydrogen, and Oxygen", "Nitrogen, Carbon, and Oxygen"], answer: "Carbon, Hydrogen, and Oxygen" }, ml: { question: "ഒരു ഗ്ലൂക്കോസ് തന്മാത്ര (C6H12O6) ഏതൊക്കെ മൂലകങ്ങൾ ചേർന്നതാണ്?", options: ["ഹൈഡ്രജനും ഓക്സിജനും മാത്രം", "കാർബണും ഹൈഡ്രജനും മാത്രം", "കാർബൺ, ഹൈഡ്രജൻ, ഓക്സിജൻ", "നൈട്രജൻ, കാർബൺ, ഓക്സിജൻ"], answer: "കാർബൺ, ഹൈഡ്രജൻ, ഓക്സിജൻ" } },
+            { en: { question: "What simulation software is used to show 'States of Matter: Basics'?", options: ["Avogadro", "PhET", "Sunclock", "GeoGebra"], answer: "PhET" }, ml: { question: "'സ്റ്റേറ്റ്സ് ഓഫ് മാറ്റർ: ബേസിക്സ്' കാണിക്കാൻ ഏത് സിമുലേഷൻ സോഫ്റ്റ്‌വെയറാണ് ഉപയോഗിക്കുന്നത്?", options: ["അവോഗാഡ്രോ", "PhET", "സൺക്ലോക്ക്", "ജിയോജിബ്ര"], answer: "PhET" } },
+            { en: { question: "In the PhET simulation, which state of matter has molecules tightly packed and vibrating?", options: ["Solid", "Liquid", "Gas", "Plasma"], answer: "Solid" }, ml: { question: "PhET സിമുലേഷനിൽ, ഏത് അവസ്ഥയിലാണ് തന്മാത്രകൾ അടുത്തടുത്ത് സ്ഥിതിചെയ്യുകയും വിറയ്ക്കുകയും ചെയ്യുന്നത്?", options: ["ഖരം (Solid)", "ദ്രാവകം (Liquid)", "വാതകം (Gas)", "പ്ലാസ്മ"], answer: "ഖരം (Solid)" } },
+            { en: { question: "In the PhET simulation, which state of matter has molecules far apart and moving freely?", options: ["Solid", "Liquid", "Gas", "All of them"], answer: "Gas" }, ml: { question: "PhET സിമുലേഷനിൽ, ഏത് അവസ്ഥയിലാണ് തന്മാത്രകൾ വളരെ അകലെയും സ്വതന്ത്രമായി ചലിക്കുന്നതും?", options: ["ഖരം (Solid)", "ദ്രാവകം (Liquid)", "വാതകം (Gas)", "ഇവയെല്ലാം"], answer: "വാതകം (Gas)" } },
+            { en: { question: "What software, mentioned in the chapter, is widely used for teaching geometry?", options: ["Avogadro", "Sunclock", "PhET", "GeoGebra"], answer: "GeoGebra" }, ml: { question: "ജ്യാമിതി പഠിപ്പിക്കുന്നതിനായി വ്യാപകമായി ഉപയോഗിക്കുന്ന, പാഠത്തിൽ പരാമർശിച്ചിരിക്കുന്ന സോഫ്റ്റ്‌വെയർ ഏതാണ്?", options: ["അവോഗാഡ്രോ", "സൺക്ലോക്ക്", "PhET", "ജിയോജിബ്ര"], answer: "ജിയോജിബ്ര" } },
+            { en: { question: "Which GeoGebra tool is used to draw a perfect equilateral triangle?", options: ["Polygon tool", "Regular Polygon tool", "Circle tool", "Angle tool"], answer: "Regular Polygon tool" }, ml: { question: "കൃത്യമായ ഒരു സമഭുജ ത്രികോണം വരയ്ക്കാൻ ജിയോജിബ്രയിലെ ഏത് ടൂളാണ് ഉപയോഗിക്കുന്നത്?", options: ["പോളിഗൺ ടൂൾ", "റെഗുലർ പോളിഗൺ ടൂൾ", "സർക്കിൾ ടൂൾ", "ആംഗിൾ ടൂൾ"], answer: "റെഗുലർ പോളിഗൺ ടൂൾ" } },
+            { en: { question: "A circle that passes through all three vertices of a triangle is called a...?", options: ["Circumcircle", "Incircle", "Polygon", "Tangent"], answer: "Circumcircle" }, ml: { question: "ഒരു ത്രികോണത്തിന്റെ മൂന്ന് മൂലകളിലൂടെയും കടന്നുപോകുന്ന വൃത്തത്തെ എന്തുവിളിക്കുന്നു...?", options: ["പരിവൃത്തം (Circumcircle)", "അന്തർവൃത്തം", "ബഹുഭുജം", "തൊടുവര"], answer: "പരിവൃത്തം (Circumcircle)" } },
+            { en: { question: "Which GeoGebra tool finds the exact middle point of a line segment?", options: ["Intersect tool", "Midpoint or centre tool", "Point tool", "Segment tool"], answer: "Midpoint or centre tool" }, ml: { question: "ജിയോജിബ്രയിലെ ഏത് ടൂളാണ് ഒരു രേഖാഖണ്ഡത്തിന്റെ കൃത്യമായ മധ്യബിന്ദു കണ്ടെത്തുന്നത്?", options: ["ഇന്റർസെക്റ്റ് ടൂൾ", "മിഡ്‌പോയിന്റ് ഓർ സെന്റർ ടൂൾ", "പോയിന്റ് ടൂൾ", "സെഗ്‌മെന്റ് ടൂൾ"], answer: "മിഡ്‌പോയിന്റ് ഓർ സെന്റർ ടൂൾ" } },
+            { en: { question: "Which tool allows you to draw a circle if you know 3 points that are on its edge?", options: ["Circle with centre through Point", "Circle through 3 Points", "Compass", "Perpendicular Bisector"], answer: "Circle through 3 Points" }, ml: { question: "വൃത്തത്തിന്റെ അരികിലുള്ള 3 പോയിന്റുകൾ അറിയാമെങ്കിൽ ഒരു വൃത്തം വരയ്ക്കാൻ ഏത് ടൂൾ നിങ്ങളെ അനുവദിക്കുന്നു?", options: ["സർക്കിൾ വിത്ത് സെന്റർ ത്രൂ പോയിന്റ്", "സർക്കിൾ ത്രൂ 3 പോയിന്റ്സ്", "കോമ്പസ്", "പെർപെൻഡിക്കുലർ ബൈസെക്ടർ"], answer: "സർക്കിൾ ത്രൂ 3 പോയിന്റ്സ്" } },
+            { en: { question: "Which GeoGebra tool lets you create a variable that can be adjusted (e.g., for an angle)?", options: ["Angle tool", "Slider tool", "Input tool", "Polygon tool"], answer: "Slider tool" }, ml: { question: "ഒരു കോണളവ് പോലെ, ക്രമീകരിക്കാൻ കഴിയുന്ന ഒരു വേരിയബിൾ സൃഷ്ടിക്കാൻ ജിയോജിബ്രയിലെ ഏത് ടൂളാണ് ഉപയോഗിക്കുന്നത്?", options: ["ആംഗിൾ ടൂൾ", "സ്ലൈഡർ ടൂൾ", "ഇൻപുട്ട് ടൂൾ", "പോളിഗൺ ടൂൾ"], answer: "സ്ലൈഡർ ടൂൾ" } },
+{ en: { question: "Which tool is used to measure an existing angle in GeoGebra?", options: ["Angle with Given Size tool", "Angle tool", "Slider tool", "Polygon tool"], answer: "Angle tool" }, ml: { question: "ജിയോജിബ്രയിൽ നിലവിലുള്ള ഒരു കോൺ അളക്കാൻ ഏത് ടൂളാണ് ഉപയോഗിക്കുന്നത്?", options: ["ആംഗിൾ വിത്ത് ഗിവൺ സൈസ് ടൂൾ", "ആംഗിൾ ടൂൾ", "സ്ലൈഡർ ടൂൾ", "പോളിഗൺ ടൂൾ"], answer: "ആംഗിൾ ടൂൾ" } },
+            { en: { question: "If a triangle has one angle *more* than 90°, where is its circumcentre located?", options: ["Inside the triangle", "On the triangle's longest side", "Outside the triangle", "At one vertex"], answer: "Outside the triangle" }, ml: { question: "ഒരു ത്രികോണത്തിന് 90°-ൽ *കൂടുതൽ* ഒരു കോൺ ഉണ്ടെങ്കിൽ, അതിന്റെ പരിവൃത്തകേന്ദ്രം എവിടെയായിരിക്കും?", options: ["ത്രികോണത്തിനുള്ളിൽ", "ത്രികോണത്തിന്റെ ഏറ്റവും നീളമുള്ള വശത്തിൽ", "ത്രികോണത്തിന് പുറത്ത്", "ഒരു മൂലയിൽ"], answer: "ത്രികോണത്തിന് പുറത്ത്" } },
+            { en: { question: "What do you right-click and enable on a moving object to create a pattern?", options: ["Show Object", "Show Label", "Trace On", "Fix Object"], answer: "Trace On" }, ml: { question: "ഒരു പാറ്റേൺ സൃഷ്ടിക്കുന്നതിനായി ചലിക്കുന്ന ഒബ്ജക്റ്റിൽ റൈറ്റ് ക്ലിക്ക് ചെയ്ത് നിങ്ങൾ എന്താണ് പ്രവർത്തനക്ഷമമാക്കേണ്ടത്?", options: ["ഷോ ഒബ്ജക്റ്റ്", "ഷോ ലേബൽ", "ട്രേസ് ഓൺ", "ഫിക്സ് ഒബ്ജക്റ്റ്"], answer: "ട്രേസ് ഓൺ" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 31-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            // Fixed the bug from the previous turn.
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-700">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                // Updated review colors for better contrast on white bg
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-50' : 'bg-rose-50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : ' ✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>

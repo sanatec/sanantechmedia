@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Machines That Learn</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles (same as your provided file) */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f5f3ff; /* Violet 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(91, 33, 182, 0.1);
+            border: 1px solid #ddd6fe; /* Violet 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #c4b5fd; /* Violet 300 */
+        }
+        .option-btn:hover {
+             background-color: #f5f3ff; /* Violet 50 */
+        }
+        .option-btn.selected {
+            background-color: #db2777; /* Pink 600 for selected */
+            color: white;
+            border-color: #be185d; /* Pink 700 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f87171; /* Red 400 for wrong */
+            color: white;
+            border-color: #ef4444;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-violet-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-violet-800 mb-2">Machines That Learn Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your AI Knowledge!</p>
+            <img src="https://placehold.co/400x200/a78bfa/ffffff?text=Ready+to+Learn%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="AI Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3"></div>
+                
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                 <h2 id="review-title" class="text-3xl font-black text-violet-800 mb-2">Test Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                 </div>
+                 <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Machines That Learn Quiz!", welcomeSubtitle: "Test Your AI Knowledge!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "മെഷീൻ ലേണിംഗ് ക്വിസ്!", welcomeSubtitle: "നിങ്ങളുടെ AI പരിജ്ഞാനം പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- NEW 30-Question Bank based on Chapter 6: Machines That Learn ---
+        const fullQuizData = [
+            { en: { question: "What is the scientific discipline that enables computers to imitate human intelligence?", options: ["Machine Learning", "Artificial Intelligence", "Data Science", "PictoBlox"], answer: "Artificial Intelligence" }, ml: { question: "മനുഷ്യബുദ്ധിയെ അനുകരിക്കാൻ കമ്പ്യൂട്ടറുകളെ പ്രാപ്തമാക്കുന്ന ശാസ്ത്രശാഖ ഏതാണ്?", options: ["മെഷീൻ ലേണിംഗ്", "ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ്", "ഡാറ്റാ സയൻസ്", "പിക്ടോബ്ലോക്സ്"], answer: "ആർട്ടിഫിഷ്യൽ ഇന്റലിജൻസ്" } },
+            { en: { question: "What subfield of AI enables computers to make decisions by identifying patterns in data?", options: ["Machine Learning", "Supervised Learning", "PictoBlox", "ISL"], answer: "Machine Learning" }, ml: { question: "ഡാറ്റയിലെ പാറ്റേണുകൾ തിരിച്ചറിഞ്ഞ് തീരുമാനങ്ങൾ എടുക്കാൻ കമ്പ്യൂട്ടറുകളെ പ്രാപ്തമാക്കുന്ന AI-യുടെ ഉപവിഭാഗം ഏതാണ്?", options: ["മെഷീൻ ലേണിംഗ്", "സൂപ്പർവൈസ്ഡ് ലേണിംഗ്", "പിക്ടോബ്ലോക്സ്", "ISL"], answer: "മെഷീൻ ലേണിംഗ്" } },
+            { en: { question: "In the chapter's example, what was the main difference between Group A and Group B patterns?", options: ["Colors", "Size", "Curved vs. Straight lines", "Brightness"], answer: "Curved vs. Straight lines" }, ml: { question: "പാഠത്തിലെ ഉദാഹരണത്തിൽ, ഗ്രൂപ്പ് A, ഗ്രൂപ്പ് B പാറ്റേണുകൾ തമ്മിലുള്ള പ്രധാന വ്യത്യാസം എന്തായിരുന്നു?", options: ["നിറങ്ങൾ", "വലുപ്പം", "വളഞ്ഞ വരകളും നേർരേഖകളും", "തെളിച്ചം"], answer: "വളഞ്ഞ വരകളും നേർരേഖകളും" } },
+            { en: { question: "What is the first stage in the machine learning process shown in the chapter?", options: ["Training", "Testing", "Dataset Preparation", "Exporting"], answer: "Dataset Preparation" }, ml: { question: "പാഠത്തിൽ കാണിച്ചിരിക്കുന്ന മെഷീൻ ലേണിംഗ് പ്രക്രിയയിലെ ആദ്യ ഘട്ടം ഏതാണ്?", options: ["ട്രെയിനിംഗ്", "ടെസ്റ്റിംഗ്", "ഡാറ്റാസെറ്റ് തയ്യാറാക്കൽ", "എക്സ്പോർട്ടിംഗ്"], answer: "ഡാറ്റാസെറ്റ് തയ്യാറാക്കൽ" } },
+            { en: { question: "What is the process of teaching the model using the prepared dataset called?", options: ["Testing", "Training", "Classification", "Reinforcement"], answer: "Training" }, ml: { question: "തയ്യാറാക്കിയ ഡാറ്റാസെറ്റ് ഉപയോഗിച്ച് മോഡലിനെ പഠിപ്പിക്കുന്ന പ്രക്രിയയ്ക്ക് പറയുന്ന പേരെന്താണ്?", options: ["ടെസ്റ്റിംഗ്", "ട്രെയിനിംഗ്", "ക്ലാസിഫിക്കേഷൻ", "റീഇൻഫോഴ്സ്മെന്റ്"], answer: "ട്രെയിനിംഗ്" } },
+            { en: { question: "What is the process of evaluating the performance of the trained model with new data?", options: ["Dataset Preparation", "Training", "Testing", "Supervised Learning"], answer: "Testing" }, ml: { question: "പുതിയ ഡാറ്റ ഉപയോഗിച്ച് പരിശീലിപ്പിച്ച മോഡലിന്റെ പ്രകടനം വിലയിരുത്തുന്ന പ്രക്രിയ ഏതാണ്?", options: ["ഡാറ്റാസെറ്റ് തയ്യാറാക്കൽ", "ട്രെയിനിംഗ്", "ടെസ്റ്റിംഗ്", "സൂപ്പർവൈസ്ഡ് ലേണിംഗ്"], answer: "ടെസ്റ്റിംഗ്" } },
+            { en: { question: "Which type of machine learning uses labeled data where both input and output are provided?", options: ["Supervised Learning", "Unsupervised Learning", "Reinforcement Learning", "PictoBlox Learning"], answer: "Supervised Learning" }, ml: { question: "ഇൻപുട്ടും ഔട്ട്‌പുട്ടും നൽകിയിട്ടുള്ള, ലേബൽ ചെയ്ത ഡാറ്റ ഉപയോഗിക്കുന്ന മെഷീൻ ലേണിംഗ് തരം ഏതാണ്?", options: ["സൂപ്പർവൈസ്ഡ് ലേണിംഗ്", "അൺസൂപ്പർവൈസ്ഡ് ലേണിംഗ്", "റീഇൻഫോഴ്സ്മെന്റ് ലേണിംഗ്", "പിക്ടോബ്ലോക്സ് ലേണിംഗ്"], answer: "സൂപ്പർവൈസ്ഡ് ലേണിംഗ്" } },
+            { en: { question: "'A robot learns to walk by trying movements and correcting errors.' Which type of learning is this?", options: ["Supervised Learning", "Unsupervised Learning", "Reinforcement Learning", "Deep Learning"], answer: "Reinforcement Learning" }, ml: { question: "'ഒരു റോബോട്ട് ചലനങ്ങൾ പരീക്ഷിച്ച് തെറ്റുതിരുത്തി നടക്കാൻ പഠിക്കുന്നു.' ഇത് ഏത് തരം ലേണിംഗ് ആണ്?", options: ["സൂപ്പർവൈസ്ഡ് ലേണിംഗ്", "അൺസൂപ്പർവൈസ്ഡ് ലേണിംഗ്", "റീഇൻഫോഴ്സ്മെന്റ് ലേണിംഗ്", "ഡീപ് ലേണിംഗ്"], answer: "റീഇൻഫോഴ്സ്മെന്റ് ലേണിംഗ്" } },
+            { en: { question: "Which PictoBlox project type was used to create the sign language model?", options: ["Object Detection", "Pose Classifier", "Image Classifier", "Audio Classifier"], answer: "Image Classifier" }, ml: { question: "ആംഗ്യഭാഷാ മോഡൽ നിർമ്മിക്കാൻ പിക്ടോബ്ലox-ലെ ഏത് പ്രോജക്റ്റ് ടൈപ്പാണ് ഉപയോഗിച്ചത്?", options: ["ഒബ്ജക്റ്റ് ഡിറ്റക്ഷൻ", "പോസ് ക്ലാസിഫയർ", "ഇമേജ് ക്ലാസിഫയർ", "ഓഡിയോ ക്ലാസിഫയർ"], answer: "ഇമേജ് ക്ലാസിഫയർ" } },
+            { en: { question: "Why was 'Hand Pose Classifier' *not* suitable for the ISL model in the chapter?", options: ["It's too slow", "It only recognizes one hand", "It cannot use the webcam", "It is only for numbers"], answer: "It only recognizes one hand" }, ml: { question: "പാഠത്തിലെ ISL മോഡലിന് 'ഹാൻഡ് പോസ് ക്ലാസിഫയർ' അനുയോജ്യമല്ലാതിരുന്നത് എന്തുകൊണ്ട്?", options: ["അത് വളരെ വേഗത കുറഞ്ഞതാണ്", "അത് ഒരു കൈ മാത്രമേ തിരിച്ചറിയുകയുള്ളൂ", "അതിന് വെബ്ക്യാം ഉപയോഗിക്കാൻ കഴിയില്ല", "അത് അക്കങ്ങൾക്ക് വേണ്ടി മാത്രമുള്ളതാണ്"], answer: "അത് ഒരു കൈ മാത്രമേ തിരിച്ചറിയുകയുള്ളൂ" } },
+            { en: { question: "In the ISL game, which code block checks if the hand sign matches the letter on screen?", options: ["analyse image from web camera", "identified class = costume name", "turn on video", "switch costume to success"], answer: "identified class = costume name" }, ml: { question: "ISL ഗെയിമിൽ, കാണിക്കുന്ന ആംഗ്യം സ്ക്രീനിലെ അക്ഷരവുമായി പൊരുത്തപ്പെടുന്നുണ്ടോ എന്ന് പരിശോധിക്കുന്ന കോഡ് ബ്ലോക്ക് ഏതാണ്?", options: ["analyse image from web camera", "identified class = costume name", "turn on video", "switch costume to success"], answer: "identified class = costume name" } },
+            { en: { question: "Which is an example of machine learning in daily life, according to the chapter?", options: ["Using formulas in spreadsheets", "Storing data in a database", "An app recommending songs", "A simple calculator"], answer: "An app recommending songs" }, ml: { question: "പാഠം അനുസരിച്ച്, നിത്യജീവിതത്തിലെ മെഷീൻ ലേണിംഗിന് ഉദാഹരണം ഏതാണ്?", options: ["സ്പ്രെഡ്‌ഷീറ്റുകളിൽ ഫോർമുലകൾ ഉപയോഗിക്കുന്നത്", "ഡാറ്റാബേസിൽ ഡാറ്റ സംഭരിക്കുന്നത്", "പാട്ടുകൾ ശുപാർശ ചെയ്യുന്ന ഒരു ആപ്പ്", "ഒരു സാധാരണ കാൽക്കുലേറ്റർ"], answer: "പാട്ടുകൾ ശുപാർശ ചെയ്യുന്ന ഒരു ആപ്പ്" } },
+            { en: { question: "What is an 'AI Model' defined as?", options: ["A physical robot", "A program trained to recognize patterns", "A database of images", "A type of computer hardware"], answer: "A program trained to recognize patterns" }, ml: { question: "'AI മോഡൽ' എന്നാൽ എന്താണ്?", options: ["ഒരു ഭൗതിക റോബോട്ട്", "പാറ്റേണുകൾ തിരിച്ചറിയാൻ പരിശീലനം ലഭിച്ച ഒരു പ്രോഗ്രാം", "ചിത്രങ്ങളുടെ ഒരു ഡാറ്റാബേസ്", "ഒരുതരം കമ്പ്യൂട്ടർ ഹാർഡ്‌വെയർ"], answer: "പാറ്റേണുകൾ തിരിച്ചറിയാൻ പരിശീലനം ലഭിച്ച ഒരു പ്രോഗ്രാം" } },
+            { en: { question: "Which type of learning discovers patterns in *unlabeled* data?", options: ["Supervised Learning", "Unsupervised Learning", "Reinforcement Learning", "ISL Learning"], answer: "Unsupervised Learning" }, ml: { question: "*ലേബൽ ചെയ്യാത്ത* ഡാറ്റയിലെ പാറ്റേണുകൾ കണ്ടെത്തുന്ന പഠനരീതി ഏതാണ്?", options: ["സൂപ്പർവൈസ്ഡ് ലേണിംഗ്", "അൺസൂപ്പർവൈസ്ഡ് ലേണിംഗ്", "റീഇൻഫോഴ്സ്മെന്റ് ലേണിംഗ്", "ISL ലേണിംഗ്"], answer: "അൺസൂപ്പർവൈസ്ഡ് ലേണിംഗ്" } },
+            { en: { question: "What example of machine learning is mentioned for home use?", options: ["Face recognition screen lock", "Voice assistant systems", "Spelling checkers", "Email filters"], answer: "Voice assistant systems" }, ml: { question: "വീടുകളിൽ ഉപയോഗിക്കുന്ന മെഷീൻ ലേണിംഗിന്റെ ഏത് ഉദാഹരണമാണ് പാഠത്തിൽ പരാമർശിച്ചിരിക്കുന്നത്?", options: ["മുഖം തിരിച്ചറിയുന്ന സ്ക്രീൻ ലോക്ക്", "വോയ്‌സ് അസിസ്റ്റന്റ് സിസ്റ്റങ്ങൾ", "സ്പെല്ലിംഗ് ചെക്കറുകൾ", "ഇമെയിൽ ഫിൽട്ടറുകൾ"], answer: "വോയ്‌സ് അസിസ്റ്റന്റ് സിസ്റ്റങ്ങൾ" } },
+            { en: { question: "What software was used to build the machine learning model in the chapter?", options: ["Microsoft Paint", "Photoshop", "PictoBlox", "Python IDLE"], answer: "PictoBlox" }, ml: { question: "പാഠത്തിലെ മെഷീൻ ലേണിംഗ് മോഡൽ നിർമ്മിക്കാൻ ഏത് സോഫ്റ്റ്‌വെയറാണ് ഉപയോഗിച്ചത്?", options: ["മൈക്രോസോഫ്റ്റ് പെയിന്റ്", "ഫോട്ടോഷോപ്പ്", "പിക്ടോബ്ലോക്സ്", "പൈത്തൺ IDLE"], answer: "പിക്ടോബ്ലോക്സ്" } },
+            { en: { question: "What is the name of the organization that developed the ISL chart?", options: ["ISLRTC", "PictoBlox", "ASL", "BSL"], answer: "ISLRTC" }, ml: { question: "ISL ചാർട്ട് വികസിപ്പിച്ച സംഘടനയുടെ പേരെന്താണ്?", options: ["ISLRTC", "പിക്ടോബ്ലോക്സ്", "ASL", "BSL"], answer: "ISLRTC" } },
+            { en: { question: "When building the dataset, what class was created for images *without* hand signs?", options: ["Empty", "None", "Background", "Default"], answer: "None" }, ml: { question: "ഡാറ്റാസെറ്റ് നിർമ്മിക്കുമ്പോൾ, ആംഗ്യങ്ങൾ *ഇല്ലാത്ത* ചിത്രങ്ങൾക്കായി ഏത് ക്ലാസാണ് സൃഷ്ടിച്ചത്?", options: ["ശൂന്യം", "ഒന്നുമില്ല (None)", "പശ്ചാത്തലം", "ഡിഫോൾട്ട്"], answer: "ഒന്നുമില്ല (None)" } },
+            { en: { question: "How many image samples per class were recommended for training?", options: ["1-10", "20-50", "100-150", "200-500"], answer: "200-500" }, ml: { question: "പരിശീലനത്തിനായി ഓരോ ക്ലാസിലും എത്ര ഇമേജ് സാമ്പിളുകൾ ആണ് ശുപാർശ ചെയ്തത്?", options: ["1-10", "20-50", "100-150", "200-500"], answer: "200-500" } },
+            { en: { question: "What programming languages can be used for training in PictoBlox?", options: ["HTML and CSS", "Python and JavaScript", "C++ and Java", "Ruby and Swift"], answer: "Python and JavaScript" }, ml: { question: "പിക്ടോബ്ലോക്സിൽ പരിശീലനത്തിനായി ഏതൊക്കെ പ്രോഗ്രാമിംഗ് ഭാഷകൾ ഉപയോഗിക്കാം?", options: ["HTML-ഉം CSS-ഉം", "പൈത്തണും ജാവാസ്ക്രിപ്റ്റും", "C++ -ഉം ജാവയും", "റൂബിയും സ്വിഫ്റ്റും"], answer: "പൈത്തണും ജാവാസ്ക്രിപ്റ്റും" } },
+            { en: { question: "What should you do if the model's efficiency is low?", options: ["Restart the computer", "Delete the project", "Remove unsuitable images or add new ones", "Change the font size"], answer: "Remove unsuitable images or add new ones" }, ml: { question: "മോഡലിന്റെ കാര്യക്ഷമത കുറവാണെങ്കിൽ നിങ്ങൾ എന്തുചെയ്യണം?", options: ["കമ്പ്യൂട്ടർ റീസ്റ്റാർട്ട് ചെയ്യുക", "പ്രോജക്റ്റ് ഡിലീറ്റ് ചെയ്യുക", "അനുയോജ്യമല്ലാത്ത ചിത്രങ്ങൾ നീക്കം ചെയ്യുകയോ പുതിയവ ചേർക്കുകയോ ചെയ്യുക", "ഫോണ്ട് വലുപ്പം മാറ്റുക"], answer: "അനുയോജ്യമല്ലാത്ത ചിത്രങ്ങൾ നീക്കം ചെയ്യുകയോ പുതിയവ ചേർക്കുകയോ ചെയ്യുക" } },
+            { en: { question: "If you change the dataset, what process must be repeated?", options: ["Exporting", "Testing", "Training", "Naming"], answer: "Training" }, ml: { question: "നിങ്ങൾ ഡാറ്റാസെറ്റ് മാറ്റുകയാണെങ്കിൽ, ഏത് പ്രക്രിയയാണ് ആവർത്തിക്കേണ്ടത്?", options: ["എക്സ്പോർട്ടിംഗ്", "ടെസ്റ്റിംഗ്", "ട്രെയിനിംഗ്", "പേരിടൽ"], answer: "ട്രെയിനിംഗ്" } },
+            { en: { question: "What button is clicked to add the trained model to a new PictoBlox project?", options: ["Train Model", "Export Model", "Add Class", "Webcam"], answer: "Export Model" }, ml: { question: "പരിശീലിപ്പിച്ച മോഡൽ ഒരു പുതിയ പിക്ടോബ്ലോക്സ് പ്രോജക്റ്റിലേക്ക് ചേർക്കാൻ ഏത് ബട്ടണാണ് ക്ലിക്ക് ചെയ്യേണ്ടത്?", options: ["ട്രെയിൻ മോഡൽ", "എക്സ്പോർട്ട് മോഡൽ", "ആഡ് ക്ലാസ്", "വെബ്ക്യാം"], answer: "എക്സ്പോർട്ട് മോഡൽ" } },
+            { en: { question: "In the ISL game, what costume names had to match the class names?", options: ["A, B, C", "Block-A, Block-B, Block-C", "Letter-1, Letter-2, Letter-3", "One, Two, Three"], answer: "A, B, C" }, ml: { question: "ISL ഗെയിമിൽ, ഏത് കോസ്റ്റ്യൂം നാമങ്ങളാണ് ക്ലാസ് നാമങ്ങളുമായി പൊരുത്തപ്പെടേണ്ടിയിരുന്നത്?", options: ["A, B, C", "ബ്ലോക്ക്-A, ബ്ലോക്ക്-B, ബ്ലോക്ക്-C", "ലെറ്റർ-1, ലെറ്റർ-2, ലെറ്റർ-3", "ഒന്ന്, രണ്ട്, മൂന്ന്"], answer: "A, B, C" } },
+            { en: { question: "What code block is used to display a random letter (costume)?", options: ["play sound", "wait 3 seconds", "switch costume to pick random 1 to 3", "analyse image"], answer: "switch costume to pick random 1 to 3" }, ml: { question: "ഒരു റാൻഡം അക്ഷരം (കോസ്റ്റ്യൂം) പ്രദർശിപ്പിക്കാൻ ഏത് കോഡ് ബ്ലോക്കാണ് ഉപയോഗിക്കുന്നത്?", options: ["പ്ലേ സൗണ്ട്", "വെയ്റ്റ് 3 സെക്കൻഡ്സ്", "സ്വിച്ച് കോസ്റ്റ്യൂം ടു പിക്ക് റാൻഡം 1 ടു 3", "അനലൈസ് ഇമേജ്"], answer: "സ്വിച്ച് കോസ്റ്റ്യൂം ടു പിക്ക് റാൻഡം 1 ടു 3" } },
+            { en: { question: "What happens immediately after the game correctly identifies a sign?", options: ["The game ends", "The score is reset", "The 'success' costume is shown", "The webcam turns off"], answer: "The 'success' costume is shown" }, ml: { question: "ഗെയിം ഒരു ആംഗ്യം ശരിയായി തിരിച്ചറിഞ്ഞതിന് ശേഷം ഉടൻ എന്ത് സംഭവിക്കുന്നു?", options: ["ഗെയിം അവസാനിക്കുന്നു", "സ്കോർ റീസെറ്റ് ചെയ്യുന്നു", "'സക്സസ്' കോസ്റ്റ്യൂം കാണിക്കുന്നു", "വെബ്ക്യാം ഓഫ് ആകുന്നു"], answer: "'സക്സസ്' കോസ്റ്റ്യൂം കാണിക്കുന്നു" } },
+            { en: { question: "What block makes the game check the webcam continuously?", options: ["if...then", "forever", "wait 3 seconds", "When flag clicked"], answer: "forever" }, ml: { question: "വെബ്ക്യാം തുടർച്ചയായി പരിശോധിക്കാൻ ഗെയിമിനെ പ്രേരിപ്പിക്കുന്ന ബ്ലോക്ക് ഏതാണ്?", options: ["ഇഫ്...ദെൻ", "ഫോറെവർ", "വെയ്റ്റ് 3 സെക്കൻഡ്സ്", "വെൻ ഫ്ലാഗ് ക്ലിക്ക്ഡ്"], answer: "ഫോറെവർ" } },
+            { en: { question: "How can ML be applied to X-rays, according to the chapter?", options: ["To make X-rays faster", "To diagnose illnesses", "To store X-ray images", "To print X-rays"], answer: "To diagnose illnesses" }, ml: { question: "പാഠം അനുസരിച്ച്, എക്സ്-റേകളിൽ ML എങ്ങനെ പ്രയോഗിക്കാം?", options: ["എക്സ്-റേകൾ വേഗത്തിലാക്കാൻ", "രോഗങ്ങൾ നിർണ്ണയിക്കാൻ", "എക്സ്-റേ ചിത്രങ്ങൾ സംഭരിക്കാൻ", "എക്സ്-റേകൾ പ്രിന്റ് ചെയ്യാൻ"], answer: "രോഗങ്ങൾ നിർണ്ണയിക്കാൻ" } },
+            { en: { question: "What is the first 'Extended Activity' suggested in the chapter?", options: ["Create a sign language game", "Sort ripe and unripe tomatoes", "Make a voice assistant", "Analyze text messages"], answer: "Sort ripe and unripe tomatoes" }, ml: { question: "പാഠത്തിൽ നിർദ്ദേശിച്ചിരിക്കുന്ന ആദ്യത്തെ 'വിപുലമായ പ്രവർത്തനം' (Extended Activity) എന്താണ്?", options: ["ഒരു ആംഗ്യഭാഷാ ഗെയിം സൃഷ്ടിക്കുക", "പഴുത്തതും പഴുക്കാത്തതുമായ തക്കാളി തരംതിരിക്കുക", "ഒരു വോയ്‌സ് അസിസ്റ്റന്റ് ഉണ്ടാക്കുക", "ടെക്സ്റ്റ് സന്ദേശങ്ങൾ വിശകലനം ചെയ്യുക"], answer: "പഴുത്തതും പഴുക്കാത്തതുമായ തക്കാളി തരംതിരിക്കുക" } },
+            { en: { question: "What does the code block 'turn on video on stage' do?", options: ["Plays a video file", "Activates the webcam display", "Records a video", "Exports the model"], answer: "Activates the webcam display" }, ml: { question: "'ടേൺ ഓൺ വീഡിയോ ഓൺ സ്റ്റേജ്' എന്ന കോഡ് ബ്ലോക്ക് എന്താണ് ചെയ്യുന്നത്?", options: ["ഒരു വീഡിയോ ഫയൽ പ്ലേ ചെയ്യുന്നു", "വെബ്ക്യാം ഡിസ്പ്ലേ സജീവമാക്കുന്നു", "ഒരു വീഡിയോ റെക്കോർഡ് ചെയ്യുന്നു", "മോഡൽ എക്സ്പോർട്ട് ചെയ്യുന്നു"], answer: "വെബ്ക്യാം ഡിസ്പ്ലേ സജീവമാക്കുന്നു" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 30-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-700">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                // Updated review colors for better contrast on white bg
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-50' : 'bg-rose-50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : ' ✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>

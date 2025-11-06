@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Adventure: Let's Frame the Shots</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles (same as your provided file) */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f5f3ff; /* Violet 50 background */
+        }
+        .quiz-container {
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(91, 33, 182, 0.1);
+            border: 1px solid #ddd6fe; /* Violet 200 */
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .option-btn {
+            border: 2px solid #c4b5fd; /* Violet 300 */
+        }
+        .option-btn:hover {
+             background-color: #f5f3ff; /* Violet 50 */
+        }
+        .option-btn.selected {
+            background-color: #db2777; /* Pink 600 for selected */
+            color: white;
+            border-color: #be185d; /* Pink 700 */
+        }
+        .option-btn.correct {
+            background-color: #2dd4bf; /* Teal 400 for correct */
+            color: #042f2e;
+            border-color: #0d9488;
+        }
+        .option-btn.wrong {
+            background-color: #f87171; /* Red 400 for wrong */
+            color: white;
+            border-color: #ef4444;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .screen {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Style for the review content scrollbar */
+        #review-content {
+            max-height: 50vh; /* Adjust height as needed */
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-violet-50 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-md mx-auto">
+
+        <div id="welcome-screen" class="screen text-center p-6 quiz-container rounded-2xl">
+            <h1 id="welcome-title" class="text-4xl font-black text-violet-800 mb-2">Video Production Quiz!</h1>
+            <p id="welcome-subtitle" class="text-lg text-slate-600 mb-6">Test Your Editing Skills!</p>
+            <img src="https://placehold.co/400x200/a78bfa/ffffff?text=Ready+to+Edit%3F&font=nunito" class="rounded-xl mb-6 shadow-lg" alt="Video Editing Quiz Start">
+            
+            <div id="language-selection">
+                 <p class="font-bold mb-4 text-slate-700">Choose your language / നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക</p>
+                 <div class="flex space-x-4">
+                    <button onclick="setLanguage('en')" class="w-full btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-lg">English</button>
+                    <button onclick="setLanguage('ml')" class="w-full btn bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl text-lg">മലയാളം</button>
+                 </div>
+            </div>
+
+            <button id="start-quiz-btn" class="w-full btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl mt-6 hidden">
+                Start Test
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="screen hidden">
+            <div class="quiz-container rounded-2xl p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-slate-500"><span id="question-label">Question</span> <span id="question-number"></span> <span id="of-label">of</span> <span id="total-questions"></span></p>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mt-1">
+                        <div id="progress-bar" class="bg-pink-400 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[120px]"></h2>
+
+                <div id="options-container" class="space-y-3"></div>
+                
+                <div id="feedback-message" class="mt-4 text-center font-bold min-h-[24px]"></div>
+
+            </div>
+            
+            <div class="flex justify-between mt-6">
+                <button id="back-btn" class="btn bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl">Back</button>
+                <button id="next-btn" class="btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-8 rounded-xl">Next</button>
+                <button id="submit-btn" class="btn hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl">Submit</button>
+            </div>
+        </div>
+
+        <div id="review-screen" class="screen hidden">
+             <div class="quiz-container rounded-2xl p-6">
+                 <h2 id="review-title" class="text-3xl font-black text-violet-800 mb-2">Test Complete!</h2>
+                 <p id="review-subtitle" class="text-lg text-slate-600 mb-4">Great job! Here's your score:</p>
+                 <div class="bg-pink-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                     <span id="final-score" class="text-4xl font-bold text-pink-800"></span>
+                 </div>
+                 <div id="review-content" class="text-left mt-6 space-y-4"></div>
+             </div>
+             <button id="restart-quiz-btn" class="w-full mt-6 btn bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl text-xl">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const languageSelection = document.getElementById('language-selection');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const finalScoreEl = document.getElementById('final-score');
+        const reviewContent = document.getElementById('review-content');
+        const welcomeTitle = document.getElementById('welcome-title');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const questionLabel = document.getElementById('question-label');
+        const ofLabel = document.getElementById('of-label');
+        const reviewTitle = document.getElementById('review-title');
+        const reviewSubtitle = document.getElementById('review-subtitle');
+
+        // --- Bilingual UI Text ---
+        const uiText = {
+            en: { welcomeTitle: "Video Production Quiz!", welcomeSubtitle: "Test Your Editing Skills!", startBtn: "Start Test", questionLabel: "Question", ofLabel: "of", backBtn: "Back", nextBtn: "Next", submitBtn: "Submit", reviewTitle: "Test Complete!", reviewSubtitle: "Great job! Here's your score:", reviewHeader: "Your Review", yourAnswer: "Your answer:", correctAnswer: "Correct answer:", notAnswered: "Not answered", playAgainBtn: "Play Again", correctFeedback: "Correct! 🎉" },
+            ml: { welcomeTitle: "വീഡിയോ പ്രൊഡക്ഷൻ ക്വിസ്!", welcomeSubtitle: "നിങ്ങളുടെ എഡിറ്റിംഗ് കഴിവുകൾ പരീക്ഷിക്കുക!", startBtn: "ടെസ്റ്റ് ആരംഭിക്കുക", questionLabel: "ചോദ്യം", ofLabel: "/", backBtn: "പുറകോട്ട്", nextBtn: "അടുത്തത്", submitBtn: "സമർപ്പിക്കുക", reviewTitle: "ടെസ്റ്റ് പൂർത്തിയായി!", reviewSubtitle: "കൊള്ളാം! ഇതാ നിങ്ങളുടെ സ്കോർ:", reviewHeader: "നിങ്ങളുടെ അവലോകനം", yourAnswer: "നിങ്ങളുടെ ഉത്തരം:", correctAnswer: "ശരിയായ ഉത്തരം:", notAnswered: "ഉത്തരം നൽകിയില്ല", playAgainBtn: "വീണ്ടും കളിക്കുക", correctFeedback: "ശരിയാണ്! 🎉" }
+        };
+
+        // --- NEW 31-Question Bank based on Chapter 9: Let's Frame the Shots ---
+        const fullQuizData = [
+            { en: { question: "What is the 'blueprint' for video production that includes scenes, dialogues, and visual descriptions?", options: ["A Shot", "The Script", "A Pixel", "The Resolution"], answer: "The Script" }, ml: { question: "ദൃശ്യങ്ങൾ, സംഭാഷണങ്ങൾ, ദൃശ്യ വിവരണങ്ങൾ എന്നിവ ഉൾപ്പെടുന്ന വീഡിയോ നിർമ്മാണത്തിന്റെ 'ബ്ലൂപ്രിന്റ്' എന്താണ്?", options: ["ഒരു ഷോട്ട്", "തിരക്കഥ (The Script)", "ഒരു പിക്സൽ", "റെസല്യൂഷൻ"], answer: "തിരക്കഥ (The Script)" } },
+            { en: { question: "What is the smallest unit of digital image information called?", options: ["A Pixel", "A Megapixel", "A Shot", "A Sensor"], answer: "A Pixel" }, ml: { question: "ഒരു ഡിജിറ്റൽ ചിത്രത്തിലെ ഏറ്റവും ചെറിയ യൂണിറ്റിനെ എന്തുവിളിക്കുന്നു?", options: ["ഒരു പിക്സൽ", "ഒരു മെഗാപിക്സൽ", "ഒരു ഷോട്ട്", "ഒരു സെൻസർ"], answer: "ഒരു പിക്സൽ" } },
+            { en: { question: "What does 'Camera Resolution' refer to?", options: ["The speed of the lens", "The number of pixels", "The color of the camera", "The size of the battery"], answer: "The number of pixels" }, ml: { question: "'ക്യാമറ റെസല്യൂഷൻ' എന്തിനെയാണ് സൂചിപ്പിക്കുന്നത്?", options: ["ലെൻസിന്റെ വേഗത", "പിക്സലുകളുടെ എണ്ണം", "ക്യാമറയുടെ നിറം", "ബാറ്ററിയുടെ വലിപ്പം"], answer: "പിക്സലുകളുടെ എണ്ണം" } },
+            { en: { question: "What term describes the scene captured between turning the camera on and off?", options: ["A Shot", "A Script", "An Edit", "A Pixel"], answer: "A Shot" }, ml: { question: "ക്യാമറ ഓൺ ചെയ്യുന്നതിനും ഓഫ് ചെയ്യുന്നതിനും ഇടയിൽ പകർത്തുന്ന ദൃശ്യത്തെ വിവരിക്കുന്ന പദം ഏതാണ്?", options: ["ഒരു ഷോട്ട്", "ഒരു തിരക്കഥ", "ഒരു എഡിറ്റ്", "ഒരു പിക്സൽ"], answer: "ഒരു ഷോട്ട്" } },
+            { en: { question: "Which shot type typically shows a character from the waist up?", options: ["Close-up Shot", "Wide Shot", "Medium Shot", "Extreme Close up"], answer: "Medium Shot" }, ml: { question: "ഏത് തരം ഷോട്ടാണ് സാധാരണയായി ഒരു കഥാപാത്രത്തെ അരയ്ക്ക് മുകളിൽ കാണിക്കുന്നത്?", options: ["ക്ലോസ്-അപ്പ് ഷോട്ട്", "വൈഡ് ഷോട്ട്", "മീഡിയം ഷോട്ട്", "എക്സ്ട്രീം ക്ലോസ് അപ്പ്"], answer: "മീഡിയം ഷോട്ട്" } },
+            { en: { question: "Which shot type is used to show a vast landscape or establish a setting?", options: ["Medium Shot", "Close up", "Extreme Wide Shot", "Medium Close up"], answer: "Extreme Wide Shot" }, ml: { question: "വിശാലമായ ഒരു പ്രകൃതിദൃശ്യം കാണിക്കാനോ പശ്ചാത്തലം സ്ഥാപിക്കാനോ ഏത് തരം ഷോട്ടാണ് ഉപയോഗിക്കുന്നത്?", options: ["മീഡിയം ഷോട്ട്", "ക്ലോസ് അപ്പ്", "എക്സ്ട്രീം വൈഡ് ഷോട്ട്", "മീഡിയം ക്ലോസ് അപ്പ്"], answer: "എക്സ്ട്രീം വൈഡ് ഷോട്ട്" } },
+            { en: { question: "Which shot shows only a small detail of the subject, such as their eyes?", options: ["Wide Shot", "Medium Shot", "Extreme Close up", "Extreme Wide Shot"], answer: "Extreme Close up" }, ml: { question: "കണ്ണുകൾ പോലെ, വിഷയത്തിന്റെ ഒരു ചെറിയ വിശദാംശം മാത്രം കാണിക്കുന്ന ഷോട്ട് ഏതാണ്?", options: ["വൈഡ് ഷോട്ട്", "മീഡിയം ഷോട്ട്", "എക്സ്ട്രീം ക്ലോസ് അപ്പ്", "എക്സ്ട്രീം വൈഡ് ഷോട്ട്"], answer: "എക്സ്ട്രീം ക്ലോസ് അപ്പ്" } },
+            { en: { question: "What camera setting controls the amount of light entering the sensor?", options: ["White Balance", "Focus", "Exposure", "Resolution"], answer: "Exposure" }, ml: { question: "സെൻസറിലേക്ക് പ്രവേശിക്കുന്ന പ്രകാശത്തിന്റെ അളവ് നിയന്ത്രിക്കുന്ന ക്യാമറ സെറ്റിംഗ് ഏതാണ്?", options: ["വൈറ്റ് ബാലൻസ്", "ഫോക്കസ്", "എക്സ്പോഷർ", "റെസല്യൂഷൻ"], answer: "എക്സ്പോഷർ" } },
+            { en: { question: "What setting should be adjusted to ensure accurate color tones in visuals?", options: ["Exposure", "White Balance", "Focus", "Pixel Count"], answer: "White Balance" }, ml: { question: "ദൃശ്യങ്ങളിൽ കൃത്യമായ വർണ്ണ ടോണുകൾ ഉറപ്പാക്കാൻ ഏത് സെറ്റിംഗാണ് ക്രമീകരിക്കേണ്ടത്?", options: ["എക്സ്പോഷർ", "വൈറ്റ് ബാലൻസ്", "ഫോക്കസ്", "പിക്സൽ കൗണ്ട്"], answer: "വൈറ്റ് ബാലൻസ്" } },
+            { en: { question: "What tool is recommended to prevent shaky videos when shooting with a mobile phone?", options: ["External Microphone", "Tripod or Stabilizer", "Ring Light", "Microfiber cloth"], answer: "Tripod or Stabilizer" }, ml: { question: "മൊബൈൽ ഫോൺ ഉപയോഗിച്ച് ഷൂട്ട് ചെയ്യുമ്പോൾ വീഡിയോയിലെ വിറയൽ ഒഴിവാക്കാൻ എന്ത് ഉപകരണമാണ് ശുപാർശ ചെയ്യുന്നത്?", options: ["എക്സ്റ്റേണൽ മൈക്രോഫോൺ", "ട്രൈപോഡ് അല്ലെങ്കിൽ സ്റ്റെബിലൈസർ", "റിംഗ് ലൈറ്റ്", "മൈക്രോ ഫൈബർ തുണി"], answer: "ട്രൈപോഡ് അല്ലെങ്കിൽ സ്റ്റെബിലൈസർ" } },
+            { en: { question: "What is a key advantage of DSLR cameras mentioned in the chapter?", options: ["Portability", "Interchangeable lenses", "Ease of use", "Quick data transfer"], answer: "Interchangeable lenses" }, ml: { question: "പാഠത്തിൽ പരാമർശിച്ചിരിക്കുന്ന ഡിഎസ്എൽആർ ക്യാമറകളുടെ പ്രധാന നേട്ടം എന്താണ്?", options: ["വഹിക്കാനുള്ള എളുപ്പം", "പരസ്പരം മാറ്റാവുന്ന ലെൻസുകൾ", "ഉപയോഗിക്കാനുള്ള എളുപ്പം", "വേഗത്തിലുള്ള ഡാറ്റാ കൈമാറ്റം"], answer: "പരസ്പരം മാറ്റാവുന്ന ലെൻസുകൾ" } },
+            { en: { question: "What is a key advantage of using mobile phones for video production?", options: ["Superior image quality", "Manual control settings", "Portability and ease of use", "Expandable storage"], answer: "Portability and ease of use" }, ml: { question: "വീഡിയോ നിർമ്മാണത്തിനായി മൊബൈൽ ഫോണുകൾ ഉപയോഗിക്കുന്നതിന്റെ പ്രധാന നേട്ടം എന്താണ്?", options: ["മികച്ച ഇമേജ് ക്വാളിറ്റി", "മാനുവൽ കൺട്രോൾ സെറ്റിംഗ്സ്", "വഹിക്കാനുള്ള എളുപ്പവും ഉപയോഗിക്കാനുള്ള എളുപ്പവും", "വികസിപ്പിക്കാവുന്ന സ്റ്റോറേജ്"], answer: "വഹിക്കാനുള്ള എളുപ്പവും ഉപയോഗിക്കാനുള്ള എളുപ്പവും" } },
+            { en: { question: "What is the process of cutting clips, arranging them, and adding music called?", options: ["Shooting", "Scripting", "Video Editing", "Rendering"], answer: "Video Editing" }, ml: { question: "ക്ലിപ്പുകൾ മുറിക്കുകയും ക്രമീകരിക്കുകയും സംഗീതം ചേർക്കുകയും ചെയ്യുന്ന പ്രക്രിയയെ എന്തുവിളിക്കുന്നു?", options: ["ഷൂട്ടിംഗ്", "സ്ക്രിപ്റ്റിംഗ്", "വീഡിയോ എഡിറ്റിംഗ്", "റെൻഡറിംഗ്"], answer: "വീഡിയോ എഡിറ്റിംഗ്" } },
+            { en: { question: "Which free video editing software, released in 2002, is featured in the chapter?", options: ["Final Cut Pro", "Adobe Premiere Pro", "InShot", "Kdenlive"], answer: "Kdenlive" }, ml: { question: "2002-ൽ പുറത്തിറങ്ങിയ ഏത് സൗജന്യ വീഡിയോ എഡിറ്റിംഗ് സോഫ്റ്റ്‌വെയറാണ് പാഠത്തിൽ ഉൾപ്പെടുത്തിയിരിക്കുന്നത്?", options: ["ഫൈനൽ കട്ട് പ്രോ", "അഡോബ് പ്രീമിയർ പ്രോ", "ഇൻഷോട്ട്", "കെഡൻലൈവ് (Kdenlive)"], answer: "കെഡൻലൈവ് (Kdenlive)" } },
+            { en: { question: "In Kdenlive, where are your imported video and audio files held before being put on the timeline?", options: ["Project Bin", "Clip Monitor", "Timeline", "Project Monitor"], answer: "Project Bin" }, ml: { question: "കെഡൻലൈവിൽ, ടൈംലൈനിൽ ഇടുന്നതിനുമുമ്പ് നിങ്ങൾ ഇമ്പോർട്ട് ചെയ്ത വീഡിയോ, ഓഡിയോ ഫയലുകൾ എവിടെയാണ് സൂക്ഷിക്കുന്നത്?", options: ["പ്രോജക്റ്റ് ബിൻ", "ക്ലിപ്പ് മോണിറ്റർ", "ടൈംലൈൻ", "പ്രോജക്റ്റ് മോണിറ്റർ"], answer: "പ്രോജക്റ്റ് ബിൻ" } },
+            { en: { question: "In Kdenlive, what is the workspace where you arrange video and audio clips in chronological order?", options: ["Project Bin", "Timeline", "Clip Monitor", "Effects Tab"], answer: "Timeline" }, ml: { question: "കെഡൻലൈവിൽ, വീഡിയോ, ഓഡിയോ ക്ലിപ്പുകൾ കാലക്രമത്തിൽ ക്രമീകരിക്കുന്ന വർക്ക്‌സ്‌പെയ്‌സ് ഏതാണ്?", options: ["പ്രോജക്റ്റ് ബിൻ", "ടൈംലൈൻ", "ക്ലിപ്പ് മോണിറ്റർ", "ഇഫക്റ്റ്സ് ടാബ്"], answer: "ടൈംലൈൻ" } },
+            { en: { question: "Which Kdenlive window allows you to preview your *final edited sequence* from the timeline?", options: ["Clip Monitor", "Project Bin", "Project Monitor", "Library"], answer: "Project Monitor" }, ml: { question: "ടൈംലൈനിൽ നിന്നുള്ള നിങ്ങളുടെ *അന്തിമമായി എഡിറ്റ് ചെയ്ത* വീഡിയോ പ്രിവ്യൂ ചെയ്യാൻ കെഡൻലൈവിലെ ഏത് വിൻഡോയാണ് നിങ്ങളെ അനുവദിക്കുന്നത്?", options: ["ക്ലിപ്പ് മോണിറ്റർ", "പ്രോജക്റ്റ് ബിൻ", "പ്രോജക്റ്റ് മോണിറ്റർ", "ലൈബ്രറി"], answer: "പ്രോജക്റ്റ് മോണിറ്റർ" } },
+            { en: { question: "Which Kdenlive window allows you to preview an *original* clip before adding it to the timeline?", options: ["Project Monitor", "Clip Monitor", "Timeline", "Effects"], answer: "Clip Monitor" }, ml: { question: "ടൈംലൈനിലേക്ക് ചേർക്കുന്നതിന് മുമ്പ് ഒരു *യഥാർത്ഥ* ക്ലിപ്പ് പ്രിവ്യൂ ചെയ്യാൻ കെഡൻലൈവിലെ ഏത് വിൻഡോയാണ് നിങ്ങളെ അനുവദിക്കുന്നത്?", options: ["പ്രോജക്റ്റ് മോണിറ്റർ", "ക്ലിപ്പ് മോണിറ്റർ", "ടൈംലൈൻ", "ഇഫക്റ്റുകൾ"], answer: "ക്ലിപ്പ് മോണിറ്റർ" } },
+            { en: { question: "Which tool in Kdenlive is used to cut or split a video clip on the timeline?", options: ["Selection Tool", "Razor Tool", "Spacer Tool", "Track Tool"], answer: "Razor Tool" }, ml: { question: "ടൈംലൈനിലെ ഒരു വീഡിയോ ക്ലിപ്പ് മുറിക്കാനോ വിഭജിക്കാനോ കെഡൻലൈവിലെ ഏത് ടൂളാണ് ഉപയോഗിക്കുന്നത്?", options: ["സെലക്ഷൻ ടൂൾ", "റേസർ ടൂൾ", "സ്പേസർ ടൂൾ", "ട്രാക്ക് ടൂൾ"], answer: "റേസർ ടൂൾ" } },
+            { en: { question: "Which tool in Kdenlive is used to select, move, or delete clips on the timeline?", options: ["Razor Tool", "Selection Tool", "Render Tool", "Title Tool"], answer: "Selection Tool" }, ml: { question: "ടൈംലൈനിലെ ക്ലിപ്പുകൾ തിരഞ്ഞെടുക്കാനും നീക്കാനും അല്ലെങ്കിൽ ഇല്ലാതാക്കാനും കെഡൻലൈവിലെ ഏത് ടൂളാണ് ഉപയോഗിക്കുന്നത്?", options: ["റേസർ ടൂൾ", "സെലക്ഷൻ ടൂൾ", "റെൻഡർ ടൂൾ", "ടൈറ്റിൽ ടൂൾ"], answer: "സെലക്ഷൻ ടൂൾ" } },
+            { en: { question: "How can you separate the linked audio from a video clip in Kdenlive?", options: ["Right-click -> Group Clips", "Right-click -> Ungroup Clips", "Right-click -> Delete Clip", "Drag the audio off"], answer: "Right-click -> Ungroup Clips" }, ml: { question: "കെഡൻലൈവിലെ ഒരു വീഡിയോ ക്ലിപ്പിൽ നിന്ന് ലിങ്ക് ചെയ്‌ത ഓഡിയോ എങ്ങനെ വേർതിരിക്കാം?", options: ["വലത്-ക്ലിക്ക് -> ഗ്രൂപ്പ് ക്ലിപ്പ്സ്", "വലത്-ക്ലിക്ക് -> അൺഗ്രൂപ്പ് ക്ലിപ്പ്സ്", "വലത്-ക്ലിക്ക് -> ഡിലീറ്റ് ക്ലിപ്പ്", "ഓഡിയോ വലിച്ചു മാറ്റുക"], answer: "വലത്-ക്ലിക്ക് -> അൺഗ്രൂപ്പ് ക്ലിപ്പ്സ്" } },
+            { en: { question: "What are transition effects (like 'Dissolve') called in Kdenlive?", options: ["Effects", "Compositions", "Renders", "Filters"], answer: "Compositions" }, ml: { question: "കെഡൻലൈവിൽ 'ഡിസോൾവ്' പോലുള്ള ട്രാൻസിഷൻ ഇഫക്റ്റുകളെ എന്തുവിളിക്കുന്നു?", options: ["ഇഫക്റ്റുകൾ", "കോമ്പോസിഷൻസ്", "റെൻഡറുകൾ", "ഫിൽട്ടറുകൾ"], answer: "കോമ്പോസിഷൻസ്" } },
+            { en: { question: "How do you start creating a new title in Kdenlive?", options: ["Project -> Add Title Clip", "File -> New", "Edit -> Add Title", "Clip -> Add Title Clip"], answer: "Project -> Add Title Clip" }, ml: { question: "കെഡൻലൈവിൽ നിങ്ങൾ എങ്ങനെയാണ് ഒരു പുതിയ ടൈറ്റിൽ സൃഷ്ടിക്കാൻ തുടങ്ങുന്നത്?", options: ["പ്രോജക്റ്റ് -> ആഡ് ടൈറ്റിൽ ക്ലിപ്പ്", "ഫയൽ -> ന്യൂ", "എഡിറ്റ് -> ആഡ് ടൈറ്റിൽ", "ക്ലിപ്പ് -> ആഡ് ടൈറ്റിൽ ക്ലിപ്പ്"], answer: "പ്രോജക്റ്റ് -> ആഡ് ടൈറ്റിൽ ക്ലിപ്പ്" } },
+            { en: { question: "What is the final process of converting your Kdenlive project into a single video file (like .mp4)?", options: ["Saving", "Importing", "Scripting", "Rendering"], answer: "Rendering" }, ml: { question: "നിങ്ങളുടെ കെഡൻലൈവ് പ്രോജക്റ്റ് ഒരൊറ്റ വീഡിയോ ഫയലായി (.mp4 പോലെ) മാറ്റുന്ന അന്തിമ പ്രക്രിയ എന്താണ്?", options: ["സേവിംഗ്", "ഇംപോർട്ടിംഗ്", "സ്ക്രിപ്റ്റിംഗ്", "റെൻഡറിംഗ്"], answer: "റെൻഡറിംഗ്" } },
+            { en: { question: "What is the correct resolution for a project set to 'HD 1080p 25 fps'?", options: ["1280x720", "1920x1080", "720x576", "3840x2160"], answer: "1920x1080" }, ml: { question: "'HD 1080p 25 fps' എന്ന് സജ്ജീകരിച്ചിരിക്കുന്ന ഒരു പ്രോജക്റ്റിന്റെ ശരിയായ റെസല്യൂഷൻ എന്താണ്?", options: ["1280x720", "1920x1080", "720x576", "3840x2160"], answer: "1920x1080" } },
+            { en: { question: "What is the correct resolution for a project set to 'HD 720p 25 fps'?", options: ["1920x1080", "3840x2160", "1280x720", "720x576"], answer: "1280x720" }, ml: { question: "'HD 720p 25 fps' എന്ന് സജ്ജീകരിച്ചിരിക്കുന്ന ഒരു പ്രോജക്റ്റിന്റെ ശരിയായ റെസല്യൂഷൻ എന്താണ്?", options: ["1920x1080", "3840x2160", "1280x720", "720x576"], answer: "1280x720" } },
+            { en: { question: "What is a recommended video format (preset) to export to for social media?", options: ["MPEG-2", "MP4 H264/AAC", "WebM-VP8", "Old-TV definition"], answer: "MP4 H264/AAC" }, ml: { question: "സോഷ്യൽ മീഡിയയ്ക്കായി എക്സ്പോർട്ട് ചെയ്യാൻ (റെൻഡർ) ശുപാർശ ചെയ്യുന്ന വീഡിയോ ഫോർമാറ്റ് (പ്രീസെറ്റ്) ഏതാണ്?", options: ["MPEG-2", "MP4 H264/AAC", "WebM-VP8", "ഓൾഡ്-ടിവി ഡെഫനിഷൻ"], answer: "MP4 H264/AAC" } },
+            { en: { question: "What AI tool is mentioned in the chapter for converting text into audio voice-overs?", options: ["Kdenlive AI", "InVideo AI", "Anuvadini AI", "Canva AI"], answer: "Anuvadini AI" }, ml: { question: "ടെക്സ്റ്റിനെ ഓഡിയോ വോയ്‌സ് ഓവറുകളാക്കി മാറ്റുന്നതിന് പാഠത്തിൽ ഏത് AI ടൂളിനെയാണ് പരാമർശിക്കുന്നത്?", options: ["കെഡൻലൈവ് AI", "ഇൻവീഡിയോ AI", "അനുവാദിനി AI", "കാൻവ AI"], answer: "അനുവാദിനി AI" } },
+            { en: { question: "How do you add a new video or audio track to the Kdenlive timeline?", options: ["Project -> Add Track", "Right-click track header -> Insert Track", "File -> New Track", "Drag clip below all tracks"], answer: "Right-click track header -> Insert Track" }, ml: { question: "കെഡൻലൈവ് ടൈംലൈനിലേക്ക് നിങ്ങൾ എങ്ങനെയാണ് ഒരു പുതിയ വീഡിയോ അല്ലെങ്കിൽ ഓഡിയോ ട്രാക്ക് ചേർക്കുന്നത്?", options: ["പ്രോജക്റ്റ് -> ആഡ് ട്രാക്ക്", "ട്രാക്ക് ഹെഡറിൽ റൈറ്റ് ക്ലിക്ക് -> ഇൻസേർട്ട് ട്രാക്ക്", "ഫയൽ -> ന്യൂ ട്രാക്ക്", "എല്ലാ ട്രാക്കുകൾക്കും താഴെ ക്ലിപ്പ് വലിച്ചിടുക"], answer: "ട്രാക്ക് ഹെഡറിൽ റൈറ്റ് ക്ലിക്ക് -> ഇൻസേർട്ട് ട്രാക്ക്" } },
+            { en: { question: "What was the topic Hima's team chose for their awareness video?", options: ["Saving Water", "Dangers of Drug Abuse", "Dumping plastic waste", "Human Rights Day"], answer: "Dumping plastic waste" }, ml: { question: "ഹിമയുടെ ടീം അവരുടെ ബോധവൽക്കരണ വീഡിയോയ്ക്കായി തിരഞ്ഞെടുത്ത വിഷയം എന്തായിരുന്നു?", options: ["ജല സംരക്ഷണം", "മയക്കുമരുന്നിന്റെ ദോഷങ്ങൾ", "പ്ലാസ്റ്റിക് മാലിന്യം തള്ളുന്നത്", " മനുഷ്യാവകാശ ദിനം"], answer: "പ്ലാസ്റ്റിക് മാലിന്യം തള്ളുന്നത്" } },
+            { en: { question: "Which of the following is listed as a mobile app for video editing?", options: ["Kdenlive", "Pitivi", "Final Cut Pro", "InShot"], answer: "InShot" }, ml: { question: "താഴെ പറയുന്നവയിൽ ഏതാണ് വീഡിയോ എഡിറ്റിംഗിനുള്ള മൊബൈൽ ആപ്ലിക്കേഷനായി ലിസ്റ്റ് ചെയ്തിരിക്കുന്നത്?", options: ["കെഡൻലൈവ്", "പിറ്റിവി", "ഫൈനൽ കട്ട് പ്രോ", "ഇൻഷോട്ട്"], answer: "ഇൻഷോട്ട്" } }
+        ];
+
+        // --- Quiz State ---
+        let currentLanguage = 'en';
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let soundsReady = false;
+
+        // --- Sound Effects using Tone.js ---
+        let correctSound, wrongSound;
+
+        function setupSounds() {
+            if (soundsReady) return;
+            Tone.start(); 
+            correctSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+            wrongSound = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination();
+            soundsReady = true;
+        }
+        
+        // --- Event Listeners ---
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        backBtn.addEventListener('click', prevQuestion);
+        submitBtn.addEventListener('click', showReview);
+        restartQuizBtn.addEventListener('click', () => {
+             reviewScreen.classList.add('hidden');
+             welcomeScreen.classList.remove('hidden');
+             startQuizBtn.classList.add('hidden');
+             languageSelection.classList.remove('hidden');
+        });
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const text = uiText[currentLanguage];
+            welcomeTitle.textContent = text.welcomeTitle;
+            welcomeSubtitle.textContent = text.welcomeSubtitle;
+            startQuizBtn.textContent = text.startBtn;
+            
+            languageSelection.classList.add('hidden');
+            startQuizBtn.classList.remove('hidden');
+        }
+
+        function updateUiText() {
+            const text = uiText[currentLanguage];
+            questionLabel.textContent = text.questionLabel;
+            ofLabel.textContent = text.ofLabel;
+            backBtn.textContent = text.backBtn;
+            nextBtn.textContent = text.nextBtn;
+            submitBtn.textContent = text.submitBtn;
+            reviewTitle.textContent = text.reviewTitle;
+            reviewSubtitle.textContent = text.reviewSubtitle;
+            restartQuizBtn.textContent = text.playAgainBtn;
+        }
+
+        function startQuiz() {
+            // Use the entire 31-question bank for this session
+            currentQuizQuestions = [...fullQuizData];
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            setupSounds();
+            updateUiText();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            totalQuestionsEl.textContent = currentQuizQuestions.length;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackMessage.innerHTML = ''; // Use innerHTML to allow for empty space
+            optionsContainer.innerHTML = '';
+            
+            const questionData = currentQuizQuestions[currentQuestionIndex][currentLanguage];
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = questionData.question;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100}%`;
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'w-full text-left p-4 btn option-btn rounded-lg shadow-sm';
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].selected === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            updateNavigation();
+        }
+
+        function selectOption(button, selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            
+            const correctAnswer = currentQuizQuestions[currentQuestionIndex][currentLanguage].answer;
+            userAnswers[currentQuestionIndex] = { selected: selectedOption, correct: correctAnswer };
+
+            const isCorrect = selectedOption === correctAnswer;
+            if (isCorrect) {
+                if (soundsReady) correctSound.triggerAttackRelease('C5', '0.2s');
+                feedbackMessage.textContent = uiText[currentLanguage].correctFeedback;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-teal-400';
+            } else {
+                if (soundsReady) wrongSound.triggerAttackRelease('C3', '0.3s');
+                const text = uiText[currentLanguage];
+                feedbackMessage.textContent = `${text.correctAnswer} ${correctAnswer}`;
+                feedbackMessage.className = 'mt-4 text-center font-bold text-rose-400';
+            }
+        }
+
+        function updateNavigation() {
+            backBtn.disabled = currentQuestionIndex === 0;
+            backBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
+
+            if (currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showReview() {
+            quizScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+
+            score = 0;
+            userAnswers.forEach((answer) => {
+                if (answer && answer.selected === answer.correct) {
+                    score++;
+                }
+            });
+
+            finalScoreEl.textContent = `${score}/${currentQuizQuestions.length}`;
+
+            const text = uiText[currentLanguage];
+            reviewContent.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-slate-700">${text.reviewHeader}</h3>`;
+            currentQuizQuestions.forEach((question, index) => {
+                const questionData = question[currentLanguage];
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer && userAnswer.selected === userAnswer.correct;
+                
+                const reviewItem = document.createElement('div');
+                // Updated review colors for better contrast on white bg
+                reviewItem.className = `p-4 rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-50' : 'bg-rose-50'}`;
+                
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${questionData.question}</p>
+                    <p class="mt-2 text-sm ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
+                        ${text.yourAnswer} <span class="font-semibold">${userAnswer ? userAnswer.selected : text.notAnswered}</span>
+                        ${!isCorrect ? `<br>${text.correctAnswer} <span class="font-semibold">${userAnswer.correct}</span>` : ' ✅'}
+                    </p>
+                `;
+                reviewContent.appendChild(reviewItem);
+            });
+        }
+
+    </script>
+</body>
+</html>
