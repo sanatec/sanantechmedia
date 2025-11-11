@@ -103,18 +103,15 @@
 
     <div id="app-container" class="w-full max-w-lg mx-auto">
 
-        <!-- Start Screen -->
         <div id="start-screen" class="screen text-center">
             <div class="card">
                 <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500 mb-3">English Quest</h1>
                 <p class="text-lg text-gray-600 mb-8">Choose a unit to begin your adventure!</p>
                 <div id="unit-selection" class="grid grid-cols-1 gap-4">
-                    <!-- Unit buttons will be inserted here -->
-                </div>
+                    </div>
             </div>
         </div>
 
-        <!-- Quiz Screen -->
         <div id="quiz-screen" class="hidden screen">
             <div class="card">
                 <div class="mb-4">
@@ -139,7 +136,6 @@
             </div>
         </div>
 
-        <!-- Results Screen -->
         <div id="results-screen" class="hidden screen text-center">
             <div class="card">
                 <h2 class="text-3xl font-bold text-indigo-600 mb-4">Quiz Complete!</h2>
@@ -292,7 +288,7 @@
                     { type: 'comprehension', question: "What 'treasure' did Didi bring for the children in her bag?", options: ["Toys", "Sweets", "Books", "Clothes"], answer: "Books" },
                     { type: 'jumbled', question: "Unscramble the word: ARESDU", question: "Unscramble the word: ERUSAERT", options: ["Treasure", "Erasuret", "Serrateu", "Reasuret"], answer: "Treasure" },
                     { type: 'odd_one_out', question: "Which is the odd one out?", options: ["Book", "Page", "Story", "Garbage"], answer: "Garbage" },
-                    { type: 'rearrange', question: "Rearrange the words: 'she / to / them / week / meet / next / promised'", options: ["She promised to meet them next week.", "Next week she promised to meet them.", "To meet them next week she promised.", "She promised them to meet next week."], answer: "She promised to meet them next week." },
+                    { type: 'rearrange', question: "Rearrange the words: 'she / to / them / meet / next / week / promised'", options: ["She promised to meet them next week.", "Next week she promised to meet them.", "To meet them next week she promised.", "She promised them to meet next week."], answer: "She promised to meet them next week." },
                     { type: 'riddle', question: "Riddle: I am a girl who loves books so much I tried to make a tower to reach them. Who am I?", options: ["Dilna", "Didi", "Puchku", "Ninnu"], answer: "Puchku" },
                     { type: 'choose_word', question: "The children's laughter rang like ______ amidst the garbage.", options: ["sirens", "bells", "drums", "whispers"], answer: "bells" },
                     { type: 'preposition', question: "The librarian lifted Puchku up ______ reach the books.", options: ["for", "at", "to", "on"], answer: "to" },
@@ -330,6 +326,120 @@
                     { type: 'spelling', question: "Choose the correct spelling:", options: ["Promised", "Promissed", "Promesed", "Promisd"], answer: "Promised" },
                     { type: 'comprehension', question: "What is the main message of Unit 3?", options: ["the magic of friendship", "the joy and transformative power of reading", "the importance of cleanliness", "how to be a good student"], answer: "the joy and transformative power of reading" },
                     { type: 'comprehension', question: "The quote 'A book is a dream that you hold in your hand' is by...", options: ["Edgar Guest", "Rukmini Banerji", "Neil Gaiman", "Deepanjana Pal"], answer: "Neil Gaiman" }
+                ]
+            },
+            // --- NEW UNIT 4 DATA ---
+            {
+                unitId: 4,
+                unitTitle: "Unit 4: Delightful Bites",
+                questions: [
+                    { type: 'comprehension', question: "What is the name of the main story in Unit 4?", options: ["The Runaway Pancake", "The Stone Soup", "Being Healthy", "A Special Dish"], answer: "The Stone Soup" },
+                    { type: 'jumbled', question: "Unscramble the word: EOTSN", options: ["Stone", "Notes", "Tones", "Seton"], answer: "Stone" },
+                    { type: 'comprehension', question: "Why did the traveller say he was making 'stone soup'?", options: ["He was a magician.", "He wanted to trick the villagers into sharing.", "He only had a stone to eat.", "He liked eating stones."], answer: "He wanted to trick the villagers into sharing." },
+                    { type: 'odd_one_out', question: "Which ingredient was NOT added to the stone soup?", options: ["Onions", "Carrots", "Chicken", "Apples"], answer: "Apples" },
+                    { type: 'riddle', question: "Riddle: I am a small house. The traveller knocked on my door.", options: ["A Castle", "A Cottage", "An Apartment", "A Tent"], answer: "A Cottage" },
+                    { type: 'choose_word', question: "The traveller was exhausted and ______.", options: ["happy", "full", "hungry", "rich"], answer: "hungry" },
+                    { type: 'preposition', question: "The traveller washed the big round stone and put it ______ the pot.", options: ["under", "beside", "into", "on"], answer: "into" },
+                    { type: 'opposite', question: "The opposite of 'delicious' is ______.", options: ["tasty", "yummy", "tasteless", "sweet"], answer: "tasteless" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Delicious", "Delecious", "Dilicious", "Delisious"], answer: "Delicious" },
+                    { type: 'comprehension', question: "What lesson did the villagers learn at the end?", options: ["Never talk to strangers.", "Stones make good soup.", "Sharing brings people together.", "Chicken is the best ingredient."], answer: "Sharing brings people together." },
+                    { type: 'jumbled', question: "Unscramble the word: AAMRO", options: ["Aroma", "Armor", "Moara", "Raoma"], answer: "Aroma" },
+                    { type: 'odd_one_out', question: "Which word from the glossary means 'very tired'?", options: ["Exhausted", "Irritated", "Fulfilling", "Ordinary"], answer: "Exhausted" },
+                    { type: 'rearrange', question: "Rearrange the words: 'the / soup / tasted / good'", options: ["Good the soup tasted.", "The soup tasted good.", "Tasted the good soup.", "The good soup tasted."], answer: "The soup tasted good." },
+                    { type: 'riddle', question: "Riddle: I am a pleasant smell. My deliciousness spread through the window.", options: ["A gigle", "A tune", "An aroma", "A shadow"], answer: "An aroma" },
+                    { type: 'choose_word', question: "The old woman ______ when the traveller said he'd make soup from a stone.", options: ["cried", "shouted", "giggled", "slept"], answer: "giggled" },
+                    { type: 'preposition', question: "The aroma spread out ______ the window.", options: ["through", "at", "on", "under"], answer: "through" },
+                    { type: 'opposite', question: "The opposite of 'empty' (streets) is ______.", options: ["vacant", "full", "bare", "clear"], answer: "full" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Neighbour", "Nieghbor", "Naybour", "Neighber"], answer: "Neighbour" },
+                    { type: 'comprehension', question: "In the poem 'Being Healthy', what does Dad say to do?", options: ["Brush your teeth", "Take a bath", "Wash your hands", "Eat vegetables"], answer: "Take a bath" },
+                    { type: 'comprehension', question: "In the poem 'Being Healthy', what does the brother say to do?", options: ["Brush your teeth", "Take a bath", "Wash your hands", "Eat vegetables"], answer: "Wash your hands" },
+                    { type: 'jumbled', question: "Unscramble the word: HHYLTEA", options: ["Healthy", "Helytha", "Laheyth", "Theyhla"], answer: "Healthy" },
+                    { type: 'odd_one_out', question: "Which is a healthy habit from the poem?", options: ["Brushing teeth", "Taking a bath", "Eating vegetables", "All of the above"], answer: "All of the above" },
+                    { type: 'rearrange', question: "Rearrange the words: 'ready / soup / is / the'", options: ["Is the soup ready?", "The ready soup is.", "Ready is the soup.", "Soup the is ready."], answer: "Is the soup ready?" },
+                    { type: 'riddle', question: "Riddle: I am a food item that ran away from a mother and seven children in a story.", options: ["A Stone Soup", "A Chicken", "A Runaway Pancake", "A Carrot"], answer: "A Runaway Pancake" },
+                    { type: 'choose_word', question: "The traveller said, 'It is as ______ as you could ever imagine.'", options: ["bad", "tasty", "cold", "hard"], answer: "tasty" },
+                    { type: 'preposition', question: "The traveller picked up a round stone ______ his bag.", options: ["on", "from", "at", "with"], answer: "from" },
+                    { type: 'opposite', question: "The opposite of 'ordinary' (stone) is ______.", options: ["normal", "common", "special", "plain"], answer: "special" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Cottage", "Cotage", "Cotege", "Cottege"], answer: "Cottage" },
+                    { type: 'comprehension', question: "What did the traveller do with the stone at the end?", options: ["He ate it.", "He gave it to the villagers.", "He put it in his pocket.", "He threw it away."], answer: "He put it in his pocket." },
+                    { type: 'comprehension', question: "What was the traveller's 'magic' stone?", options: ["A special stone from a mountain", "A glowing hot coal", "Just an ordinary stone", "A piece of gold"], answer: "Just an ordinary stone" },
+                    { type: 'jumbled', question: "Unscramble the word: GLALVIE", options: ["Village", "Valigle", "Lagevil", "Elagliv"], answer: "Village" },
+                    { type: 'odd_one_out', question: "Which is NOT an ingredient in the cake recipe?", options: ["Flour", "Eggs", "Turnips", "Sugar"], answer: "Turnips" },
+                    { type: 'rearrange', question: "Rearrange the words: 'round / and / round / stirred / he / soup / the'", options: ["He stirred the soup round and round.", "Round and round he stirred the soup.", "The soup he stirred round and round.", "He stirred round and round the soup."], answer: "He stirred the soup round and round." },
+                    { type: 'riddle', question: "Riddle: I am a joining word. You use me to combine 'It smells good. It tastes good.'", options: ["But", "Or", "And", "So"], answer: "And" },
+                    { type: 'choose_word', question: "The opposite of 'exhausted' is ______.", options: ["tired", "sleepy", "energetic", "hungry"], answer: "energetic" },
+                    { type: 'preposition', question: "The man in the circus is as tall ______ a giraffe.", options: ["as", "like", "for", "with"], answer: "as" },
+                    { type: 'opposite', question: "The opposite of 'happy' is ______.", options: ["joyful", "glad", "sad", "excited"], answer: "sad" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Ingredients", "Ingredents", "Ingredians", "Ingrediants"], answer: "Ingredients" },
+                    { type: 'comprehension', question: "What is the first step in the 'Let's make a cake' activity?", options: ["Bake the cake.", "Decorate the cake.", "Take 3 cups of flour, 3 eggs, etc.", "Mix the flour."], answer: "Take 3 cups of flour, 3 eggs, etc." },
+                    { type: 'comprehension', question: "In 'The Runaway Pancake', who was the pancake running from?", options: ["Only a cat and a dog", "Only a goat", "A traveller", "Seven children, mother, father, dog, cat, and goat"], answer: "Seven children, mother, father, dog, cat, and goat" },
+                    { type: 'jumbled', question: "Unscramble the word: EKNICHC", options: ["Chicken", "Kechnic", "Nicckeh", "Hiccek-n"], answer: "Chicken" },
+                    { type: 'odd_one_out', question: "Which is UNHEALTHY food from the coloring page?", options: ["Apples", "Lettuce", "Coconut", "Pizza/Burger"], answer: "Pizza/Burger" },
+                    { type: 'rearrange', question: "Rearrange the words: 'you / are / cooking / what'", options: ["What cooking are you?", "Cooking are you what?", "What are you cooking?", "You are what cooking?"], answer: "What are you cooking?" },
+                    { type: 'riddle', question: "Riddle: I am a feeling of being angry or annoyed. The old woman felt this way when the traveller knocked again.", options: ["Happy", "Irritated", "Exhausted", "Curious"], answer: "Irritated" },
+                    { type: 'choose_word', question: "The traveller said the soup was 'delicious and ______'.", options: ["fulfilling", "ordinary", "irritated", "sliced"], answer: "fulfilling" },
+                    { type: 'preposition', question: "The old woman had some salt and butter, so she added them ______ the pot.", options: ["from", "to", "at", "by"], answer: "to" },
+                    { type: 'opposite', question: "The opposite of 'young' (traveller) is ______.", options: ["new", "small", "old", "big"], answer: "old" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Traveller", "Traveler", "Travler", "Travellar"], answer: "Traveller" },
+                    { type: 'comprehension', question: "The quote 'Food is our common ground, a universal experience' is by...", options: ["James Beard", "Gillian Craig", "A villager", "The traveller"], answer: "James Beard" },
+                    { type: 'comprehension', question: "My friend, Miya, ______ a superpower.", options: ["have", "has", "is", "are"], answer: "has" }
+                ]
+            },
+            // --- NEW UNIT 5 DATA ---
+            {
+                unitId: 5,
+                unitTitle: "Unit 5: The Melody of Rain",
+                questions: [
+                    { type: 'comprehension', question: "What is the name of the main story in Unit 5?", options: ["The Angry Cat", "Journey of the Raindrop", "Where Go the Boats?", "Helping Cloud"], answer: "Journey of the Raindrop" },
+                    { type: 'jumbled', question: "Unscramble the word: ADRNIPOR", options: ["Raindrop", "Ropidran", "Dripnora", "Parrinod"], answer: "Raindrop" },
+                    { type: 'comprehension', question: "Where did the raindrop live at the beginning of the story?", options: ["In the soil", "On a leaf", "In a cloud", "In the ocean"], answer: "In a cloud" },
+                    { type: 'odd_one_out', question: "Which sound word is from the story?", options: ["BOOM", "SPLAT", "SPLASH", "All of the above"], answer: "All of the above" },
+                    { type: 'riddle', question: "Riddle: I am a colorful arch in the sky that children shouted about.", options: ["A Cloud", "A Sunbeam", "A Rainbow", "A Bird"], answer: "A Rainbow" },
+                    { type: 'choose_word', question: "Suddenly I heard a loud '______!' 'I was so scared.'", options: ["WHEE", "BOOM", "SPLAT", "SPLASH"], answer: "BOOM" },
+                    { type: 'preposition', question: "At last, I landed ______ the cat with a soft SPLAT!", options: ["under", "on", "beside", "from"], answer: "on" },
+                    { type: 'opposite', question: "The opposite of 'happy' (farmer) is ______.", options: ["sad", "excited", "angry", "hopeful"], answer: "sad" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Adventure", "Advencher", "Adventur", "Advebture"], answer: "Adventure" },
+                    { type: 'comprehension', question: "Why did the farmer look up with hope?", options: ["He saw a rainbow.", "He needed rain for his crops.", "He saw birds flying.", "He was looking for the cat."], answer: "He needed rain for his crops." },
+                    { type: 'jumbled', question: "Unscramble the word: HTRISTY", options: ["Thirsty", "Stirthy", "Tristhy", "Thyrits"], answer: "Thirsty" },
+                    { type: 'odd_one_out', question: "Which is NOT a place a raindrop landed?", options: ["On leaves", "On flowers", "On the ground", "On the sun"], answer: "On the sun" },
+                    { type: 'rearrange', question: "Rearrange the words: 'was / the / farmer / happy'", options: ["Happy was the farmer.", "The farmer happy was.", "The farmer was happy.", "Was the happy farmer."], answer: "The farmer was happy." },
+                    { type: 'riddle', question: "Riddle: I am the sound of thunder. The raindrop heard me.", options: ["A Rumble", "A Splash", "A Splat", "A Whisper"], answer: "A Rumble" },
+                    { type: 'choose_word', question: "The ______ roots of paddy were searching for water.", options: ["wet", "happy", "thirsty", "angry"], answer: "thirsty" },
+                    { type: 'preposition', question: "We were getting closer and closer ______ the world below.", options: ["at", "from", "to", "on"], answer: "to" },
+                    { type: 'opposite', question: "The opposite of 'above' (pulling us from above) is ______.", options: ["over", "on", "high", "below"], answer: "below" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Puzzled", "Puzled", "Puzzeled", "Pusled"], answer: "Puzzled" },
+                    { type: 'comprehension', question: "What happened to the raindrop at the end of its journey?", options: ["It stayed in the soil forever.", "It was evaporated by the sun and returned to the cloud.", "The cat drank it.", "It formed a puddle."], answer: "It was evaporated by the sun and returned to the cloud." },
+                    { type: 'comprehension', question: "In the story 'Helping Cloud', who was sad because the pool was dry?", options: ["The Peacock", "The Fish", "The Farmer", "Sonu"], answer: "The Fish" },
+                    { type: 'jumbled', question: "Unscramble the word: VEELAS", options: ["Leaves", "Eavels", "Selvea", "Vaelse"], answer: "Leaves" },
+                    { type: 'odd_one_out', question: "Who did the 'Helping Cloud' NOT help?", options: ["Peacock", "Fish", "Farmer", "An angry cat"], answer: "An angry cat" },
+                    { type: 'rearrange', question: "Rearrange the words: 'starts / to / it / rain / again'", options: ["It starts to rain again.", "Again it starts to rain.", "To rain it starts again.", "Starts it to rain again."], answer: "It starts to rain again." },
+                    { type: 'riddle', question: "Riddle: I am a poem by Robert Louis Stevenson about things floating on a river.", options: ["Helping Cloud", "Journey of the Raindrop", "Where Go the Boats?", "The Angry Cat"], answer: "Where Go the Boats?" },
+                    { type: 'choose_word', question: "What did the raindrop feel? 'Ah! What a pleasant smell! How ______ it is!'", options: ["refreshing", "puzzled", "angry", "thirsty"], answer: "refreshing" },
+                    { type: 'preposition', question: "The cat shook its fur ______.", options: ["sadly", "happily", "angrily", "playfully"], answer: "angrily" },
+                    { type: 'opposite', question: "The opposite of 'soft' (SPLAT) is ______.", options: ["gentle", "hard", "light", "quiet"], answer: "hard" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Sunbeams", "Sunbeems", "Sunbems", "Sunbeims"], answer: "Sunbeams" },
+                    { type: 'comprehension', question: "The journey of the raindrop (cloud -> rain -> soil -> root -> plant -> sky) is called what?", options: ["The Food Chain", "The Water Cycle", "The Rainbow", "A Thunderstorm"], answer: "The Water Cycle" },
+                    { type: 'comprehension', question: "In 'Where Go the Boats?', what color is the river?", options: ["Golden", "Green", "Dark brown", "Blue"], answer: "Dark brown" },
+                    { type: 'jumbled', question: "Unscramble the word: ERIVR", options: ["River", "Revir", "Irver", "Vierr"], answer: "River" },
+                    { type: 'odd_one_out', question: "Which is NOT a sound word?", options: ["Rumble", "Splash", "Puddle", "Boom"], answer: "Puddle" },
+                    { type: 'rearrange', question: "Rearrange the words: 'are / they / us / welcoming'", options: ["Are they welcoming us?", "They are welcoming us?", "Us are they welcoming?", "Welcoming are they us?"], answer: "Are they welcoming us?" },
+                    { type: 'riddle', question: "Riddle: I am a small pool of water, and Sonu and his friends love to play in me.", options: ["A River", "A Puddle", "The Ocean", "A Well"], answer: "A Puddle" },
+                    { type: 'choose_word', question: "I ______ into the soil, trickling down and down.", options: ["splashed", "seeped", "flew", "jumped"], answer: "seeped" },
+                    { type: 'preposition', question: "Dipu loves to play football. Yesterday, he ______ with his friends.", options: ["play", "plays", "played", "playing"], answer: "played" },
+                    { type: 'opposite', question: "The opposite of 'cried' (the raindrops) is ______.", options: ["shouted", "laughed", "whispered", "fell"], answer: "laughed" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Lightning", "Lightnin", "Lietning", "Lightenig"], answer: "Lightning" },
+                    { type: 'comprehension', question: "In 'Helping Cloud', what did the peacock do when it rained?", options: ["It hid under a tree.", "It flew away.", "It spread its pretty feathers and danced.", "It helped the farmer."], answer: "It spread its pretty feathers and danced." },
+                    { type: 'comprehension', question: "What is a 'sunbeam'?", options: ["A hot part of the sun", "A ray of sun's light", "A type of cloud", "A name for a raindrop"], answer: "A ray of sun's light" },
+                    { type: 'jumbled', question: "Unscramble the word: EZEERB", options: ["Breeze", "Rebeze", "Ebreze", "Zeeber"], answer: "Breeze" },
+                    { type: 'odd_one_out', question: "Which word does NOT describe the raindrop's journey?", options: ["Falling", "Seeping", "Floating", "Staying"], answer: "Staying" },
+                    { type: 'rearrange', question: "Rearrange the words: 'the / set / sun / began / to'", options: ["The sun began to set.", "Began to set the sun.", "To set began the sun.", "The sun to set began."], answer: "The sun began to set." },
+                    { type: 'riddle', question: "Riddle: I am a word that means 'to flow slowly drop by drop'.", options: ["Trickle", "Splash", "Seep", "Pour"], answer: "Trickle" },
+                    { type: 'choose_word', question: "The leaves of the paddy ______ gently in the breeze.", options: ["shouted", "cried", "rustled", "boomed"], answer: "rustled" },
+                    { type: 'preposition', question: "The birds flew, fluttering ______ wings.", options: ["their", "there", "they're", "its"], answer: "their" },
+                    { type: 'opposite', question: "The opposite of 'small' (rivers looked like silver threads) is ______.", options: ["tiny", "little", "big", "thin"], answer: "big" },
+                    { type: 'spelling', question: "Choose the correct spelling:", options: ["Fluttering", "Flutering", "Fllutering", "Flutterin"], answer: "Fluttering" },
+                    { type: 'comprehension', question: "What is a 'stepwell'?", options: ["A type of rain cloud", "A dance", "A traditional structure to store water", "A small puddle"], answer: "A traditional structure to store water" },
+                    { type: 'comprehension', question: "What slogan is given as an example for conserving water?", options: ["Water is life.", "Save water, save life.", "Every drop is precious.", "Don't waste water."], answer: "Every drop is precious." }
                 ]
             }
         ];
@@ -374,7 +484,7 @@
             if (!audioReady) return;
             if (type === 'correct') {
                 correctSynth.triggerAttackRelease('C5', '8n', Tone.now());
-                correctSynth.triggerAttackRelease('G5', '8n', Tone.now() + 0.2);
+                correctSynth.triggerAttackRelease('G5', '8n',Tone.now() + 0.2);
             } else {
                 incorrectSynth.triggerAttackRelease('A2', '8n', Tone.now());
             }
@@ -498,4 +608,3 @@
     </script>
 </body>
 </html>
-
