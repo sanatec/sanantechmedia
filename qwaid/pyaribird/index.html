@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Urdu Alphabet Adventure</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --pink: #FF6B9D; --sky: #87CEEB; --grass: #4CAF50; --gold: #FFD166; }
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; -webkit-user-select: none; }
+        
+        body { 
+            font-family: 'Noto Nastaliq Urdu', serif; 
+            background: #222; overflow: hidden; 
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; width: 100vw;
+        }
+
+        #gameContainer {
+            width: 100%; height: 100%; max-width: 500px;
+            background: linear-gradient(to bottom, var(--sky) 0%, #E0F7FF 70%, var(--grass) 70%, #3d8b40 100%);
+            position: relative; overflow: hidden;
+        }
+
+        /* --- Start Screen Overlay --- */
+        #startOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+
+        .instruction-card {
+            background: white; width: 85%; padding: 30px 20px;
+            border-radius: 30px; border: 6px solid var(--pink);
+            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .welcome-title { color: var(--pink); font-size: 28px; margin-bottom: 15px; }
+        
+        .tutorial-img { font-size: 50px; margin: 20px 0; display: block; }
+
+        .btn-play {
+            background: var(--grass); color: white; border: none;
+            padding: 15px 40px; font-size: 24px; border-radius: 50px;
+            cursor: pointer; font-family: 'Arial Rounded MT Bold', sans-serif;
+            box-shadow: 0 6px 0 #2d6a2f; margin-top: 20px;
+            transition: transform 0.1s;
+        }
+
+        .btn-play:active { transform: translateY(4px); box-shadow: 0 2px 0 #2d6a2f; }
+
+        /* Game Elements */
+        .dot { position: absolute; width: 6px; height: 6px; background: rgba(255, 255, 255, 0.6); border-radius: 50%; pointer-events: none; z-index: 10; }
+        .confetti { position: absolute; width: 8px; height: 8px; z-index: 100; pointer-events: none; border-radius: 2px; }
+
+        .hud {
+            position: absolute; top: 10px; width: 100%;
+            display: flex; justify-content: space-around; align-items: center; z-index: 100;
+        }
+        .info-box {
+            background: white; border: 4px solid var(--pink); border-radius: 15px;
+            padding: 5px 25px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); min-width: 100px;
+        }
+        #targetLetter { font-size: 35px; color: var(--pink); font-weight: bold; line-height: 1.8; }
+        
+        .slingshot {
+            position: absolute; bottom: 150px; left: 50%; transform: translateX(-50%);
+            width: 12px; height: 70px; background: #5d2906; border-radius: 10px; z-index: 5;
+        }
+        .slingshot::before {
+            content: ''; position: absolute; top: -15px; left: -20px;
+            width: 50px; height: 30px; border: 8px solid #5d2906; border-top: 0; border-radius: 0 0 20px 20px;
+        }
+
+        #bird {
+            position: absolute; width: 60px; height: 60px;
+            background: radial-gradient(circle at 30% 30%, #ff4747, #b30000);
+            border-radius: 50%; border: 2px solid #000; z-index: 50;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #bird::before { content: '👀'; font-size: 16px; position: absolute; top: 10px; }
+        #bird::after { content: ''; position: absolute; bottom: 8px; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 12px solid #FFD166; }
+
+        .bubble {
+            position: absolute; width: 85px; height: 85px;
+            background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; font-weight: bold; color: #333;
+            border: 4px solid var(--pink); box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            padding-bottom: 10px;
+        }
+
+        #line { position: absolute; height: 5px; background: rgba(75, 46, 30, 0.4); transform-origin: left center; z-index: 40; display: none; }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <div id="startOverlay">
+        <div class="instruction-card">
+            <h1 class="welcome-title">اردو حروف کی مہم!</h1>
+            <p style="font-size: 18px; color: #555;">اوپر دیا گیا حرف تلاش کریں</p>
+            <div class="tutorial-img">🎯 🐦</div>
+            <p style="font-size: 16px; line-height: 1.6;">
+                پرندے کو <b>نیچے</b> کھینچیں اور صحیح حرف پر ماریں!
+                <br><span style="font-family: sans-serif; font-size: 13px; color: var(--pink);">Pull the bird down and hit the target!</span>
+            </p>
+            <button class="btn-play" onclick="startGame()">کھیلیں (Play)</button>
+        </div>
+    </div>
+
+    <div class="hud">
+        <div class="info-box"><div style="font-family: sans-serif; font-size: 14px;">SCORE</div><div id="scoreVal" style="font-family: sans-serif; font-size: 24px;">0</div></div>
+        <div class="info-box"><span id="targetLetter">ا</span></div>
+    </div>
+
+    <div id="line"></div>
+    <div class="slingshot"></div>
+    <div id="bird"></div>
+    <div id="bubblesArea"></div>
+    <div id="trajectoryArea"></div>
+</div>
+
+<script>
+    const allLetters = ["ا", "ب", "پ", "ت", "ٹ", "ث", "ج", "چ", "ح", "خ", "د", "ڈ", "ذ", "ر", "ڑ", "ز", "ژ", "س", "ش", "ص", "ض", "ط", "ظ", "ع", "غ", "ف", "ق", "ک", "گ", "ل", "م", "ن", "و", "ہ", "ھ", "ء", "ی", "ے"];
+
+    let score = 0, target = "", isDragging = false, inAir = false, gameStarted = false;
+    let origin = { x: 0, y: 0 }, birdPos = { x: 0, y: 0 }, vel = { x: 0, y: 0 };
+    
+    const gravity = 0.04; 
+    const launchPower = 0.05; 
+
+    const bird = document.getElementById('bird');
+    const line = document.getElementById('line');
+    const targetEl = document.getElementById('targetLetter');
+    const scoreEl = document.getElementById('scoreVal');
+    const area = document.getElementById('bubblesArea');
+    const trajArea = document.getElementById('trajectoryArea');
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function startGame() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        document.getElementById('startOverlay').style.display = 'none';
+        gameStarted = true;
+        setupPositions();
+        initRound();
+        gameLoop();
+    }
+
+    function playSound(freq, type = 'sine', duration = 0.2) {
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function createConfetti(x, y) {
+        for (let i = 0; i < 25; i++) {
+            const conf = document.createElement('div');
+            conf.className = 'confetti';
+            conf.style.left = x + 'px'; conf.style.top = y + 'px';
+            conf.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            document.getElementById('gameContainer').appendChild(conf);
+            let vx = (Math.random() - 0.5) * 8, vy = (Math.random() - 0.5) * 8;
+            let op = 1;
+            function anim() {
+                vy += 0.2; op -= 0.02;
+                conf.style.left = (parseFloat(conf.style.left) + vx) + 'px';
+                conf.style.top = (parseFloat(conf.style.top) + vy) + 'px';
+                conf.style.opacity = op;
+                if (op > 0) requestAnimationFrame(anim); else conf.remove();
+            }
+            requestAnimationFrame(anim);
+        }
+    }
+
+    function drawTrajectory() {
+        trajArea.innerHTML = ''; if (!isDragging) return;
+        let tx = birdPos.x + 30, ty = birdPos.y + 30;
+        let tvx = (origin.x - birdPos.x) * launchPower, tvy = (origin.y - birdPos.y) * launchPower;
+        for (let i = 0; i < 15; i++) {
+            tx += tvx * 40; ty += tvy * 40; tvy += gravity;
+            const dot = document.createElement('div'); dot.className = 'dot';
+            dot.style.left = tx + 'px'; dot.style.top = ty + 'px';
+            dot.style.opacity = 1 - (i / 15); trajArea.appendChild(dot);
+        }
+    }
+
+    function setupPositions() {
+        const container = document.getElementById('gameContainer').getBoundingClientRect();
+        origin = { x: container.width / 2 - 30, y: container.height * 0.85 - 120 };
+        if (!inAir) resetBird();
+    }
+
+    function initRound() {
+        target = allLetters[Math.floor(Math.random() * allLetters.length)];
+        targetEl.textContent = target;
+        area.innerHTML = '';
+        let options = [target];
+        while(options.length < 3) {
+            let r = allLetters[Math.floor(Math.random() * allLetters.length)];
+            if(!options.includes(r)) options.push(r);
+        }
+        options.sort(() => Math.random() - 0.5).forEach((char, i) => {
+            const b = document.createElement('div');
+            b.className = 'bubble'; b.textContent = char;
+            b.style.left = (12 + (i * 30)) + '%'; b.style.top = (15 + (Math.random() * 15)) + '%';
+            b.dataset.val = char; area.appendChild(b);
+        });
+    }
+
+    function resetBird() {
+        inAir = false; isDragging = false;
+        birdPos = { ...origin }; vel = { x: 0, y: 0 };
+        bird.style.display = "flex"; trajArea.innerHTML = '';
+        updateUI();
+    }
+
+    function updateUI() {
+        bird.style.left = birdPos.x + 'px'; bird.style.top = birdPos.y + 'px';
+        if (isDragging) {
+            const dx = birdPos.x - origin.x, dy = birdPos.y - origin.y;
+            line.style.display = 'block';
+            line.style.left = (origin.x + 30) + 'px'; line.style.top = (origin.y + 30) + 'px';
+            line.style.width = Math.sqrt(dx*dx + dy*dy) + 'px';
+            line.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
+            drawTrajectory();
+        } else line.style.display = 'none';
+    }
+
+    function onMove(e) {
+        if (!isDragging || !gameStarted) return;
+        const evt = e.touches ? e.touches[0] : e;
+        const c = document.getElementById('gameContainer').getBoundingClientRect();
+        let mx = evt.clientX - c.left - 30, my = evt.clientY - c.top - 30;
+        const dx = mx - origin.x, dy = my - origin.y, dist = Math.sqrt(dx*dx + dy*dy), max = 100;
+        if (dist < max) { birdPos.x = mx; birdPos.y = my; }
+        else { const a = Math.atan2(dy, dx); birdPos.x = origin.x + Math.cos(a)*max; birdPos.y = origin.y + Math.sin(a)*max; }
+        updateUI();
+    }
+
+    function onEnd() {
+        if (!isDragging || !gameStarted) return; isDragging = false;
+        if (Math.hypot(birdPos.x - origin.x, birdPos.y - origin.y) > 15) {
+            inAir = true; vel.x = (origin.x - birdPos.x) * launchPower; vel.y = (origin.y - birdPos.y) * launchPower;
+            playSound(400, 'sine', 0.1);
+        } else resetBird();
+        trajArea.innerHTML = '';
+    }
+
+    function gameLoop() {
+        if (!gameStarted) return;
+        if (inAir) {
+            birdPos.x += vel.x * 25; birdPos.y += vel.y * 25; vel.y += gravity;
+            document.querySelectorAll('.bubble').forEach(b => {
+                const r = b.getBoundingClientRect(), c = document.getElementById('gameContainer').getBoundingClientRect();
+                const bx = r.left - c.left + 42, by = r.top - c.top + 42;
+                if (Math.hypot(birdPos.x + 30 - bx, birdPos.y + 30 - by) < 50) {
+                    if (b.dataset.val === target) {
+                        score += 10; scoreEl.textContent = score;
+                        createConfetti(bx, by);
+                        playSound(523, 'triangle', 0.1); setTimeout(() => playSound(659, 'triangle', 0.2), 100);
+                        b.style.transform = "scale(0)";
+                        setTimeout(initRound, 600);
+                    } else playSound(150, 'sawtooth', 0.2);
+                    inAir = false; bird.style.display = "none";
+                    setTimeout(resetBird, 800);
+                }
+            });
+            if (birdPos.y > window.innerHeight || birdPos.x < -50 || birdPos.x > window.innerWidth) resetBird();
+            updateUI();
+        }
+        requestAnimationFrame(gameLoop);
+    }
+
+    bird.addEventListener('touchstart', () => { if(gameStarted) isDragging = true; });
+    bird.addEventListener('mousedown', () => { if(gameStarted) isDragging = true; });
+    window.addEventListener('touchmove', onMove, {passive: false});
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('touchend', onEnd);
+    window.addEventListener('mouseup', onEnd);
+    window.onresize = setupPositions;
+</script>
+</body>
+</html>
