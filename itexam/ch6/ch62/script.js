@@ -13,8 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
   {
     "question": "What signal stops the buzzer sound?",
     "options": [
-      { "text": "LOW", "isCorrect": false },
-      { "text": "HIGH", "isCorrect": true },
+      { "text": "LOW", "isCorrect": true },
+      { "text": "HIGH", "isCorrect": false },
       { "text": "0V", "isCorrect": false },
       { "text": "VCC", "isCorrect": false }
     ]
