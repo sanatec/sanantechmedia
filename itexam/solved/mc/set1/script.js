@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { img: "data/image/44.png", correct: 2 },
         { img: "data/image/45.png", correct: 0 },
         { img: "data/image/46.png", correct: 3 },
-        { img: "data/image/47.png", correct: 1 },
+        { img: "data/image/47.png", correct: 2 },
         { img: "data/image/48.png", correct: 1 },
         { img: "data/image/49.png", correct: 2 },
         { img: "data/image/50.png", correct: 1 }
