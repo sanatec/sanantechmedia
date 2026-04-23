@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes">
+    <title>SSLC IT EXAM 2026</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="quiz-header">
+            <div id="exam-banner">SSLC IT MODEL EXAM 2026</div>
+            <div class="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+            <h1 id="chapter-title">Multiple Choice(SET 2)</h1>
+            <div class="header-main">
+                <span id="question-number">Question 1/10</span>
+                <div id="score-badge">Score: 0</div>
+            </div>
+        </header>
+
+        <main class="quiz-content">
+            <div class="image-wrapper" id="zoom-area">
+                <img id="main-image" src="" alt="Quiz Question">
+                <div class="zoom-tag">🔍 Tap to Zoom Question</div>
+            </div>
+
+            <div class="options-grid" id="options-grid">
+                </div>
+        </main>
+
+        <footer class="quiz-footer">
+            <button id="back-btn" class="btn-secondary">Back</button>
+            <button id="next-btn" class="btn-primary" disabled>Submit</button>
+        </footer>
+    </div>
+
+    <div id="result-modal" class="modal">
+        <div class="result-card">
+            <h2>Exam Summary</h2>
+            <div class="stat-circle">
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path id="circle-progress" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <text x="18" y="20.35" class="percentage" id="result-percent">0%</text>
+                </svg>
+            </div>
+            <div class="result-stats">
+                <div class="stat-item"><span>Total Questions</span><span id="res-total">0</span></div>
+                <div class="stat-item"><span>Correct</span><span id="res-correct" style="color: var(--success);">0</span></div>
+                <div class="stat-item"><span>Wrong</span><span id="res-wrong" style="color: var(--error);">0</span></div>
+            </div>
+            <button onclick="location.reload()" class="btn-primary" style="width: 100%; margin-top: 20px;">Restart Exam</button>
+        </div>
+    </div>
+
+    <div id="image-modal" class="modal">
+        <span class="close-modal" id="close-zoom">&times;</span>
+        <div class="modal-scroll-area">
+            <img id="zoomed-img" src="">
+        </div>
+        <div class="scroll-hint">Swipe to move image • Tap &times; to exit</div>
+    </div>
+
+    <audio id="sound-correct" preload="auto"><source src="data/sound/co.mp3" type="audio/mpeg"></audio>
+    <audio id="sound-wrong" preload="auto"><source src="data/sound/wr.mp3" type="audio/mpeg"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
