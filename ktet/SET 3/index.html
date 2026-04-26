@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes">
+    <title>SSLC IT EXAM 2026</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="quiz-header">
+            <div id="exam-banner">SSLC IT EXAM SYSTEM 2026</div>
+            
+            <div class="mode-control">
+                <button id="mode-btn" class="btn-mode-mock">Change to Study Mode</button>
+            </div>
+
+            <div class="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+            
+            <div class="header-main">
+                <span id="question-number">Question 1/10</span>
+                <div id="score-badge">Score: 0</div>
+            </div>
+        </header>
+
+        <main class="quiz-content">
+            <div class="question-card">
+                <p id="question-text">Loading...</p>
+            </div>
+            <div class="options-grid" id="options-grid"></div>
+        </main>
+
+        <footer class="quiz-footer">
+            <button id="back-btn" class="btn-secondary">Back</button>
+            <button id="next-btn" class="btn-primary" disabled>Submit</button>
+        </footer>
+    </div>
+
+    <div id="result-modal" class="modal">
+        <div class="result-card">
+            <h2>Exam Summary</h2>
+            <h1 id="result-percent">0%</h1>
+            <div class="result-stats">
+                <div class="stat-item"><span>Total Questions</span><span id="res-total">0</span></div>
+                <div class="stat-item"><span>Correct</span><span id="res-correct" class="text-success">0</span></div>
+                <div class="stat-item"><span>Wrong</span><span id="res-wrong" class="text-error">0</span></div>
+            </div>
+            <button onclick="location.reload()" class="btn-primary" style="width: 100%; margin-top: 20px;">Restart</button>
+        </div>
+    </div>
+
+    <audio id="sound-correct" preload="auto"><source src="data/sound/co.mp3" type="audio/mpeg"></audio>
+    <audio id="sound-wrong" preload="auto"><source src="data/sound/wr.mp3" type="audio/mpeg"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
