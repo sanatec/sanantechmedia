@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KTET 3 Psychology | SET 7–21 Mock Tests</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f5f9ff 0%, #eef2f8 100%);
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            padding: 32px 24px;
+        }
+
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #e9eef4;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1e2a44;
+            margin-bottom: 16px;
+        }
+
+        .hero h1 {
+            font-size: 2.1rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #121826 0%, #2c3e5c 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .hero p {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #4a5b7a;
+            margin-top: 8px;
+        }
+
+        /* Responsive grid – fits many cards */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .card-link {
+            text-decoration: none;
+            display: block;
+        }
+
+        .card {
+            background: #1a2538;
+            border-radius: 24px;
+            padding: 24px 12px;
+            text-align: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+        }
+
+        .card:active {
+            transform: scale(0.96);
+            background: #222f44;
+        }
+
+        .card-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-emoji {
+            font-size: 2rem;
+            background: rgba(255, 255, 255, 0.06);
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 30px;
+        }
+
+        .card span {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.2px;
+        }
+
+        /* optional highlight for last set */
+        .card.highlight {
+            background: linear-gradient(145deg, #1f2c42, #182235);
+            border: 1px solid rgba(255, 200, 110, 0.4);
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #6a7d9e;
+            padding: 16px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            margin-top: 20px;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 20px 16px;
+            }
+            .grid-container {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 14px;
+            }
+            .card {
+                padding: 18px 8px;
+            }
+            .card span {
+                font-size: 1.1rem;
+            }
+            .card-emoji {
+                width: 48px;
+                height: 48px;
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="hero">
+        <div class="badge">🎓 KTET 3 · PSYCHOLOGY</div>
+        <h1>Mock Test Series</h1>
+        <p>Advanced practice · SET 7 to SET 21</p>
+    </div>
+
+    <div class="grid-container" id="setsGrid"></div>
+
+    <div class="footer-note">
+        ⚡ Tap any card to begin · each card has its own link (customizable)
+    </div>
+</div>
+
+<script>
+    (function() {
+        const container = document.getElementById('setsGrid');
+        if (!container) return;
+
+        // =============================================
+        // SEPARATE LINKS FOR EACH SET (7 to 21)
+        // =============================================
+        // Replace these placeholder URLs with your actual destinations.
+        // Example: "andromoV3://...", "https://example.com/set-7", etc.
+        const setLinks = {
+            7: "andromoV3://website_1777182948_cad3b9136c",
+            8: "andromoV3://website_1777183187_f9ef97b3d3",
+            9: "andromoV3://website_1777183199_f4ecc720be",
+            10: "andromoV3://website_1777183211_b6c6464a5a",
+            11: "andromoV3://website_1777183249_d5474a82e5",
+            12: "andromoV3://website_1777183264_c0423bcf6b",
+            13: "andromoV3://website_1777183277_8ad58bdaa1",
+            14: "andromoV3://website_1777183294_0f3b2ad548",
+            15: "andromoV3://website_1777183324_6b13add529",
+            16: "andromoV3://website_1777183349_4ff510d84b",
+            17: "andromoV3://website_1777183360_c24847b60c",
+            18: "andromoV3://website_1777183372_814e40cc3e",
+            19: "andromoV3://website_1777183387_d8012cc147",
+            20: "andromoV3://website_1777183400_12dad3fd71",
+            21: "andromoV3://website_1777183414_9faa864a96"
+        };
+
+        // Emojis for visual variety (one per set)
+        const emojis = [
+            "📘", "📗", "📕", "📙", "📔",
+            "📌", "🎓", "📝", "✏️", "🧪",
+            "📊", "📈", "🔍", "💡", "🏆"
+        ];
+
+        // Generate only SET 7 through SET 21
+        for (let i = 7; i <= 21; i++) {
+            const setNumber = i;
+            const linkUrl = setLinks[setNumber] || "#";
+            const emoji = emojis[i - 7];  // index 0 for set 7
+            
+            const link = document.createElement('a');
+            link.className = 'card-link';
+            link.href = linkUrl;
+            link.setAttribute('data-set', `SET ${setNumber}`);
+            
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'card';
+            if (setNumber === 21) cardDiv.classList.add('highlight'); // optional
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'card-content';
+            
+            const emojiSpan = document.createElement('div');
+            emojiSpan.className = 'card-emoji';
+            emojiSpan.textContent = emoji;
+            
+            const titleSpan = document.createElement('span');
+            titleSpan.textContent = `SET ${setNumber}`;
+            
+            contentDiv.appendChild(emojiSpan);
+            contentDiv.appendChild(titleSpan);
+            cardDiv.appendChild(contentDiv);
+            link.appendChild(cardDiv);
+            
+            container.appendChild(link);
+        }
+
+        // Optional haptic feedback & click logging
+        function triggerHaptic() {
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(10);
+            }
+        }
+
+        const allCards = document.querySelectorAll('.card-link');
+        allCards.forEach(link => {
+            link.addEventListener('click', (e) => {
+                triggerHaptic();
+                const setText = link.querySelector('span')?.innerText || 'Set';
+                const targetUrl = link.getAttribute('href');
+                console.log(`Navigating to ${setText} → ${targetUrl}`);
+                if (targetUrl === '#') {
+                    e.preventDefault();
+                    console.log(`Placeholder – replace with actual link`);
+                }
+            });
+        });
+
+        console.log('SET 7 to 21 loaded (first 6 sets removed). Each card has separate link.');
+    })();
+</script>
+</body>
+</html>
