@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     "correct": 1
   },
   {
-    "q": "Adarsh was not at all interested in reading books. His parents and teachers persuaded him to read books. In the beginning his response was negative. But later reading became a habit of his life. Related with personality, this is an example of:",
+    "q": "Ravi was not at all interested in reading books. His parents and teachers persuaded him to read books. In the beginning his response was negative. But later reading became a habit of his life. Related with personality, this is an example of:",
     "options": [
       "Incubation",
       "Preparation",
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     "correct": 0
   },
   {
-    "q": "Arun a 7th standard student is learning to ride bicycle for the last one month. Still he is unable to ride the bicycle. This is related with the learning disability:",
+    "q": "Sonu a 7th standard student is learning to ride bicycle for the last one month. Still he is unable to ride the bicycle. This is related with the learning disability:",
     "options": [
       "Dysnomia",
       "Dyspraxia",
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
     "correct": 1
   },
   {
-    "q": "Ramesh, an academically backward student participated in music competition and catched the attention of others. Which type of Defense Mechanism has been adopted by Ramesh?",
+    "q": "Vijeesh, an academically backward student participated in music competition and catched the attention of others. Which type of Defense Mechanism has been adopted by Vijeesh?",
     "options": [
       "Projection",
       "Rationalization",
@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
     "correct": 3
   },
   {
-    "q": "Work sheets and models supplied by Saradha teacher helped Geethu in overcoming the difficulties and she easily found the result of scientific experiments. The scaffolding provided by the teacher belongs to which type of evaluation?",
+    "q": "Work sheets and models supplied by Leela teacher helped Neethu in overcoming the difficulties and she easily found the result of scientific experiments. The scaffolding provided by the teacher belongs to which type of evaluation?",
     "options": [
       "Assessment of Learning",
       "Assessment as Learning",
@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
     "correct": 1
   },
   {
-    "q": "Abijith, a first STD student stops crying and expresses happiness upon listening to the song of the teacher. Which characteristic of children's emotion is exhibited here?",
+    "q": "Jhon, a first STD student stops crying and expresses happiness upon listening to the song of the teacher. Which characteristic of children's emotion is exhibited here?",
     "options": [
       "Intense",
       "Frequent",
@@ -331,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
     "correct": 1
   },
   {
-    "q": "Suresh Learned English in the fourth STD with the fear of the English Teacher. On reaching sixth STD he got a similar teacher and the fear increased. It is related to which principle in Pavlov's conditioning?",
+    "q": "Babu Learned English in the fourth STD with the fear of the English Teacher. On reaching sixth STD he got a similar teacher and the fear increased. It is related to which principle in Pavlov's conditioning?",
     "options": [
       "Stimulus Generalisation",
       "Spontaneous Recovery",
