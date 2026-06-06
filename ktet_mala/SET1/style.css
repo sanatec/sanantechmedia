@@ -22,10 +22,8 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
 }
 
-/* Enforces phone viewport constraints */
 .app-container {
     width: 100%; 
     max-width: 500px; 
@@ -34,10 +32,9 @@ body {
     display: flex; 
     flex-direction: column;
     position: relative;
-    overflow: hidden;
 }
 
-/* Fixed Header */
+/* Header & Mode Button */
 .quiz-header { 
     background: var(--white); 
     padding: 15px 20px; 
@@ -103,7 +100,7 @@ body {
     border-radius: 12px; 
 }
 
-/* Scrollable Container Zone */
+/* Content & Question Scrollable Layout */
 .quiz-content { 
     flex: 1; 
     padding: 15px; 
@@ -112,10 +109,9 @@ body {
     gap: 15px; 
     overflow-y: auto; 
     min-height: 0; 
-    -webkit-overflow-scrolling: touch;
 }
 
-/* Question box card adjusts height naturally */
+/* Question box - Auto-stretches dynamically with content size */
 .question-card { 
     background: white; 
     border-radius: 16px; 
@@ -126,18 +122,21 @@ body {
     border: 1px solid #e5e5ea; 
 }
 
-/* Strictly left-aligned layout with fallback break mechanics */
+/* Question text layout with justification and hyphenation support */
 #question-text { 
     font-size: 18px; 
     font-weight: 600; 
     color: var(--text-main); 
-    line-height: 1.6; 
-    text-align: left; /* Pure left alignment */
+    line-height: 1.7; 
+    text-align: justify; 
+    text-justify: inter-word;
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
     width: 100%;
     display: block; 
     white-space: normal;
-    word-break: break-all; 
-    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .options-grid { 
@@ -146,7 +145,7 @@ body {
     gap: 10px; 
 }
 
-/* Strictly left-aligned option items */
+/* Options text setup with clean justified alignments */
 .opt-btn { 
     background: white; 
     border: 2px solid transparent; 
@@ -154,21 +153,23 @@ body {
     border-radius: 14px; 
     font-size: 16px; 
     font-weight: 600; 
-    text-align: left; /* Pure left alignment */
+    text-align: justify; 
+    text-justify: inter-word;
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
     line-height: 1.5;
     height: auto;
     width: 100%;
+    word-break: break-word;
     box-shadow: 0 2px 6px rgba(0,0,0,0.04); 
-    outline: none;
-    word-break: break-all;
-    overflow-wrap: anywhere;
 }
 
 .opt-btn.selected { border-color: var(--ios-blue); background: #f0f7ff; }
 .opt-btn.correct { background: var(--success) !important; color: white !important; }
 .opt-btn.wrong { background: var(--error) !important; color: white !important; }
 
-/* Modal Background Overlay Isolation */
+/* Fixed Isolation Modal Overlays */
 .modal { 
     display: none; 
     position: absolute; 
@@ -214,7 +215,7 @@ body {
 .text-success { color: var(--success); }
 .text-error { color: var(--error); }
 
-/* Fixed Bottom Footer Frame */
+/* Sticky Footer Navigation */
 .quiz-footer { 
     background: var(--white); 
     padding: 15px 20px; 
