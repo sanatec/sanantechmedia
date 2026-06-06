@@ -22,10 +22,10 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden; /* Prevents the outer desktop window from scrolling */
+    overflow: hidden;
 }
 
-/* Strictly enforces a native smartphone interface layout dimensions */
+/* Enforces phone viewport constraints */
 .app-container {
     width: 100%; 
     max-width: 500px; 
@@ -37,7 +37,7 @@ body {
     overflow: hidden;
 }
 
-/* Fixed Mobile Header Frame */
+/* Fixed Header */
 .quiz-header { 
     background: var(--white); 
     padding: 15px 20px; 
@@ -103,7 +103,7 @@ body {
     border-radius: 12px; 
 }
 
-/* Scrollable Body Zone for Touch Screens */
+/* Scrollable Container Zone */
 .quiz-content { 
     flex: 1; 
     padding: 15px; 
@@ -112,10 +112,10 @@ body {
     gap: 15px; 
     overflow-y: auto; 
     min-height: 0; 
-    -webkit-overflow-scrolling: touch; /* Smooth inertia scrolling style on iOS devices */
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Self-Expanding Question Box */
+/* Question box card adjusts height naturally */
 .question-card { 
     background: white; 
     border-radius: 16px; 
@@ -126,18 +126,16 @@ body {
     border: 1px solid #e5e5ea; 
 }
 
-/* Fixed left alignment with split line fallbacks for longer Malayalam characters */
+/* Strictly left-aligned layout with fallback break mechanics */
 #question-text { 
     font-size: 18px; 
     font-weight: 600; 
     color: var(--text-main); 
     line-height: 1.6; 
-    text-align: left; 
+    text-align: left; /* Pure left alignment */
     width: 100%;
     display: block; 
     white-space: normal;
-    
-    /* Splits letters seamlessly instead of pushing boundaries out of shape */
     word-break: break-all; 
     overflow-wrap: anywhere;
 }
@@ -148,7 +146,7 @@ body {
     gap: 10px; 
 }
 
-/* Fixed left aligned touchscreen adaptive buttons */
+/* Strictly left-aligned option items */
 .opt-btn { 
     background: white; 
     border: 2px solid transparent; 
@@ -156,13 +154,12 @@ body {
     border-radius: 14px; 
     font-size: 16px; 
     font-weight: 600; 
-    text-align: left; 
+    text-align: left; /* Pure left alignment */
     line-height: 1.5;
     height: auto;
     width: 100%;
     box-shadow: 0 2px 6px rgba(0,0,0,0.04); 
     outline: none;
-    
     word-break: break-all;
     overflow-wrap: anywhere;
 }
@@ -171,7 +168,7 @@ body {
 .opt-btn.correct { background: var(--success) !important; color: white !important; }
 .opt-btn.wrong { background: var(--error) !important; color: white !important; }
 
-/* Modal Background Isolation to fit only inside the Mobile Frame context */
+/* Modal Background Overlay Isolation */
 .modal { 
     display: none; 
     position: absolute; 
@@ -217,7 +214,7 @@ body {
 .text-success { color: var(--success); }
 .text-error { color: var(--error); }
 
-/* Fixed Bottom Mobile Navigation Footer Bar */
+/* Fixed Bottom Footer Frame */
 .quiz-footer { 
     background: var(--white); 
     padding: 15px 20px; 
