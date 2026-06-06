@@ -22,8 +22,10 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden; /* Prevents the outer desktop window from scrolling */
 }
 
+/* Strictly enforces a native smartphone interface layout dimensions */
 .app-container {
     width: 100%; 
     max-width: 500px; 
@@ -32,9 +34,10 @@ body {
     display: flex; 
     flex-direction: column;
     position: relative;
+    overflow: hidden;
 }
 
-/* Header & Mode Button */
+/* Fixed Mobile Header Frame */
 .quiz-header { 
     background: var(--white); 
     padding: 15px 20px; 
@@ -100,7 +103,7 @@ body {
     border-radius: 12px; 
 }
 
-/* Content & Question Scrollable Layout */
+/* Scrollable Body Zone for Touch Screens */
 .quiz-content { 
     flex: 1; 
     padding: 15px; 
@@ -109,9 +112,10 @@ body {
     gap: 15px; 
     overflow-y: auto; 
     min-height: 0; 
+    -webkit-overflow-scrolling: touch; /* Smooth inertia scrolling style on iOS devices */
 }
 
-/* Question box - Auto-stretches dynamically with content size */
+/* Self-Expanding Question Box */
 .question-card { 
     background: white; 
     border-radius: 16px; 
@@ -122,7 +126,7 @@ body {
     border: 1px solid #e5e5ea; 
 }
 
-/* Question text layout - Left aligned with smooth fallback line-splitting */
+/* Fixed left alignment with split line fallbacks for longer Malayalam characters */
 #question-text { 
     font-size: 18px; 
     font-weight: 600; 
@@ -133,7 +137,7 @@ body {
     display: block; 
     white-space: normal;
     
-    /* Splits long words naturally when hitting boundaries */
+    /* Splits letters seamlessly instead of pushing boundaries out of shape */
     word-break: break-all; 
     overflow-wrap: anywhere;
 }
@@ -144,7 +148,7 @@ body {
     gap: 10px; 
 }
 
-/* Options text setup - Left aligned with clean line-splitting */
+/* Fixed left aligned touchscreen adaptive buttons */
 .opt-btn { 
     background: white; 
     border: 2px solid transparent; 
@@ -157,8 +161,8 @@ body {
     height: auto;
     width: 100%;
     box-shadow: 0 2px 6px rgba(0,0,0,0.04); 
+    outline: none;
     
-    /* Splits long option text smoothly without creating blank gaps */
     word-break: break-all;
     overflow-wrap: anywhere;
 }
@@ -167,7 +171,7 @@ body {
 .opt-btn.correct { background: var(--success) !important; color: white !important; }
 .opt-btn.wrong { background: var(--error) !important; color: white !important; }
 
-/* Fixed Isolation Modal Overlays */
+/* Modal Background Isolation to fit only inside the Mobile Frame context */
 .modal { 
     display: none; 
     position: absolute; 
@@ -213,7 +217,7 @@ body {
 .text-success { color: var(--success); }
 .text-error { color: var(--error); }
 
-/* Sticky Footer Navigation */
+/* Fixed Bottom Mobile Navigation Footer Bar */
 .quiz-footer { 
     background: var(--white); 
     padding: 15px 20px; 
