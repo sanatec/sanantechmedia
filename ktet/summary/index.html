@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KTET Psychology Navigator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0f2444;
+  --navy-mid: #1a3a6b;
+  --navy-light: #2856a3;
+  --saffron: #e8820c;
+  --saffron-lt: #fdf0e0;
+  --mint: #0a8a6e;
+  --mint-lt: #e4f7f3;
+  --violet: #5b3fa6;
+  --violet-lt: #ede9f9;
+  --rose: #b93060;
+  --rose-lt: #fce9ef;
+  --bg: #f2f4f9;
+  --surface: #ffffff;
+  --text: #1a2437;
+  --muted: #6b7a96;
+  --border: #dde3ef;
+  --bnav-h: 64px;
+  --header-h: 56px;
+  --tabs-h: 46px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;color:var(--text);background:var(--bg);}
+
+/* ── HEADER ── */
+.hdr{
+  position:fixed;top:0;left:0;right:0;height:var(--header-h);
+  background:var(--navy);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;z-index:100;
+}
+.hdr-left{display:flex;align-items:center;gap:10px;}
+.hdr-logo{
+  width:34px;height:34px;border-radius:8px;
+  background:var(--saffron);
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;font-weight:700;color:#fff;font-family:'Playfair Display',serif;
+}
+.hdr-title{font-size:15px;font-weight:700;color:#fff;letter-spacing:0.1px;}
+.hdr-sub{font-size:10px;color:rgba(255,255,255,.5);margin-top:1px;}
+.hdr-badge{
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);
+  border-radius:14px;padding:3px 10px;font-size:10px;color:rgba(255,255,255,.75);font-weight:500;
+  white-space:nowrap;
+}
+
+/* ── TAB STRIP ── */
+.tab-strip{
+  position:fixed;top:var(--header-h);left:0;right:0;height:var(--tabs-h);
+  background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:4px;
+  padding:0 12px;overflow-x:auto;z-index:90;
+  scrollbar-width:none;
+}
+.tab-strip::-webkit-scrollbar{display:none;}
+.tpill{
+  padding:6px 14px;border-radius:18px;font-size:12.5px;font-weight:500;
+  white-space:nowrap;color:var(--muted);border:1.5px solid transparent;
+  background:transparent;cursor:pointer;transition:all .15s;flex-shrink:0;
+}
+.tpill.active{background:var(--navy);color:#fff;}
+
+/* ── SCROLL CONTAINER ── */
+.scroll-area{
+  position:fixed;
+  top:calc(var(--header-h) + var(--tabs-h));
+  left:0;right:0;
+  bottom:var(--bnav-h);
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:14px 14px 20px;
+}
+.scroll-area::-webkit-scrollbar{width:3px;}
+.scroll-area::-webkit-scrollbar-thumb{background:#c5cde0;border-radius:2px;}
+
+/* ── BOTTOM NAV ── */
+.bnav{
+  position:fixed;bottom:0;left:0;right:0;height:var(--bnav-h);
+  background:var(--surface);border-top:1px solid var(--border);
+  display:flex;align-items:stretch;z-index:100;
+  /* safe area for notched phones */
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.bnav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;cursor:pointer;transition:all .15s;padding:6px 2px 4px;
+  border:none;background:none;
+}
+.bnav-item .bi-icon{font-size:20px;line-height:1;}
+.bnav-item .bi-label{font-size:9.5px;font-weight:500;color:var(--muted);letter-spacing:0.2px;line-height:1;}
+.bnav-item.active .bi-label{color:var(--saffron);font-weight:600;}
+.bnav-item.active .bi-icon{filter:drop-shadow(0 0 3px rgba(232,130,12,.35));}
+.bnav-dot{
+  width:4px;height:4px;border-radius:50%;background:var(--saffron);
+  margin-top:2px;visibility:hidden;
+}
+.bnav-item.active .bnav-dot{visibility:visible;}
+
+/* ── SECTION HEADER ── */
+.sec-head{margin-bottom:14px;}
+.sec-title{font-size:20px;font-weight:700;color:var(--navy);font-family:'Playfair Display',serif;line-height:1.2;}
+.sec-crumb{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:500;margin-top:3px;}
+
+/* ── CARDS ── */
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:14px 15px;margin-bottom:12px;
+}
+.card.al{ border-left:4px solid var(--navy-light); }
+.card.ao{ border-left:4px solid var(--saffron); }
+.card.ag{ border-left:4px solid var(--mint); }
+.card.av{ border-left:4px solid var(--violet); }
+.card.ar{ border-left:4px solid var(--rose); }
+
+.card-title{
+  font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:8px;
+  display:flex;align-items:center;gap:7px;
+}
+.cdot{width:6px;height:6px;border-radius:50%;background:var(--navy-light);flex-shrink:0;}
+.card p{font-size:13px;line-height:1.6;color:#3d4e68;}
+.card ul{margin-left:16px;margin-top:6px;}
+.card li{font-size:13px;line-height:1.6;color:#3d4e68;margin-bottom:4px;}
+
+/* ── HIGHLIGHT BOX ── */
+.hbox{
+  background:var(--saffron-lt);border:1px dashed var(--saffron);
+  border-radius:12px;padding:13px 14px;margin-bottom:12px;
+}
+.hbox-title{font-size:11px;font-weight:700;color:var(--saffron);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;}
+.hbox p,.hbox li{font-size:12.5px;color:#7a4500;line-height:1.55;}
+.hbox ul{margin-left:14px;margin-top:4px;}
+
+/* ── INFO / MINT / VIOLET BOXES ── */
+.mbox{background:var(--mint-lt);border:1px solid #a3d9cc;border-radius:12px;padding:12px 14px;margin-bottom:12px;}
+.mbox p{font-size:12.5px;color:#094f3f;line-height:1.55;}
+.mbox strong{color:#076050;}
+.vbox{background:var(--violet-lt);border:1px solid #c0aff0;border-radius:12px;padding:12px 14px;margin-bottom:12px;}
+.vbox p{font-size:12.5px;color:#3d2a7a;line-height:1.55;}
+
+/* ── 2-COL GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.mini-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;}
+.mini-card .mc-icon{font-size:20px;margin-bottom:5px;}
+.mini-card .mc-title{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:3px;}
+.mini-card .mc-text{font-size:11px;color:var(--muted);line-height:1.45;}
+
+/* ── COMPARE CARDS ── */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.cmp-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.cmp-head{padding:9px 12px;font-size:12px;font-weight:700;color:#fff;}
+.cmp-body{padding:10px 12px;}
+.cmp-row{font-size:11.5px;color:#3d4e68;margin-bottom:6px;line-height:1.4;}
+.cmp-row span{font-weight:600;color:var(--navy);}
+
+/* ── TABLE (scrollable wrapper) ── */
+.tbl-wrap{overflow-x:auto;margin-top:8px;border-radius:8px;border:1px solid var(--border);}
+.dtbl{width:100%;border-collapse:collapse;font-size:12px;}
+.dtbl th{background:var(--bg);color:var(--navy);font-weight:600;text-align:left;padding:8px 10px;
+  border-bottom:2px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
+.dtbl td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.45;color:#3d4e68;}
+.dtbl tr:last-child td{border-bottom:none;}
+
+/* ── STEP FLOW ── */
+.steps{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+.step{display:flex;align-items:flex-start;gap:11px;}
+.snum{
+  width:26px;height:26px;border-radius:50%;background:var(--navy);
+  color:#fff;font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;
+}
+.stext{font-size:13px;color:#3d4e68;line-height:1.55;}
+.stext strong{color:var(--navy);}
+
+/* ── STAGE BLOCKS ── */
+.stage{
+  display:flex;gap:11px;align-items:flex-start;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:12px;margin-bottom:10px;
+}
+.sage{
+  background:var(--navy);color:#fff;padding:5px 8px;border-radius:7px;
+  font-size:10px;font-weight:700;white-space:nowrap;flex-shrink:0;text-align:center;line-height:1.4;
+}
+.scontent h4{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:3px;}
+.scontent p{font-size:12px;color:var(--muted);line-height:1.5;}
+.stags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.stag{background:var(--saffron-lt);color:#8a4800;font-size:10.5px;font-weight:500;padding:2px 8px;border-radius:8px;}
+
+/* ── KOHLBERG ── */
+.kl{border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+.kl-head{padding:10px 14px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.kl-badge{font-size:10px;padding:2px 8px;border-radius:7px;font-weight:700;text-transform:uppercase;white-space:nowrap;}
+.kl-body{padding:10px 14px;background:var(--surface);}
+.kl-stage{font-size:12px;color:#3d4e68;padding:5px 0;border-bottom:1px dashed var(--border);line-height:1.5;}
+.kl-stage:last-child{border-bottom:none;}
+.kl-stage strong{color:var(--navy);}
+
+/* ── HIERARCHY VISUAL ── */
+.hier{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
+.hlvl{display:flex;align-items:center;gap:10px;border-radius:9px;padding:9px 12px;}
+.hnum{
+  width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10.5px;font-weight:700;flex-shrink:0;
+}
+
+/* ── PILLS ── */
+.pill-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.pill{padding:3px 10px;border-radius:12px;font-size:11.5px;font-weight:500;}
+.pn{background:#e8eef8;color:var(--navy-mid);}
+.po{background:var(--saffron-lt);color:#8a4800;}
+.pg{background:var(--mint-lt);color:#095c4a;}
+.pv{background:var(--violet-lt);color:#3d2a7a;}
+.pr{background:var(--rose-lt);color:#7a1e3e;}
+
+/* ── QUOTE ── */
+.quote{border-left:3px solid var(--navy-light);padding:9px 13px;margin:10px 0;background:var(--bg);border-radius:0 9px 9px 0;}
+.quote p{font-size:12.5px;color:var(--navy);font-style:italic;line-height:1.5;}
+.quote-attr{font-size:11px;color:var(--muted);margin-top:3px;font-style:normal;font-weight:500;}
+
+/* ── FORMULA BOX ── */
+.formula{
+  background:var(--bg);border:1px solid var(--border);border-radius:10px;
+  padding:12px;margin:10px 0;text-align:center;
+}
+.formula-eq{font-size:19px;font-weight:700;color:var(--navy);font-family:'Playfair Display',serif;}
+.formula-note{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* ── ZPD VISUAL ── */
+.zpd{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
+.zpd-row{border-radius:9px;padding:10px 14px;text-align:center;}
+.zpd-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;opacity:.75;margin-bottom:2px;}
+.zpd-main{font-size:13px;font-weight:700;}
+.zpd-sub{font-size:11px;opacity:.75;margin-top:2px;}
+
+/* ── 2-col narrow for some layouts ── */
+.two-panel{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.tp-box{border-radius:10px;padding:12px;}
+.tp-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px;}
+.tp-text{font-size:12px;line-height:1.5;}
+
+/* iOS bounce prevention */
+body{overscroll-behavior:none;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-logo">🧠️</div>
+    <div>
+      <div class="hdr-title">KTET Psychology</div>
+      <div class="hdr-sub">Child Development & Pedagogy</div>
+    </div>
+  </div>
+  <div class="hdr-badge">2025-26</div>
+</div>
+
+<!-- TAB STRIP -->
+<div class="tab-strip" id="tab-strip"></div>
+
+<!-- SCROLL AREA -->
+<div class="scroll-area" id="scroll-area"></div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav" id="bnav">
+  <button class="bnav-item active" onclick="goSection('growth',this)">
+    <div class="bi-icon">🌱</div>
+    <div class="bi-label">Growth</div>
+    <div class="bnav-dot"></div>
+  </button>
+  <button class="bnav-item" onclick="goSection('learning',this)">
+    <div class="bi-icon">⚙️</div>
+    <div class="bi-label">Learning</div>
+    <div class="bnav-dot"></div>
+  </button>
+  <button class="bnav-item" onclick="goSection('devth',this)">
+    <div class="bi-icon">🧠</div>
+    <div class="bi-label">Dev.Theory</div>
+    <div class="bnav-dot"></div>
+  </button>
+  <button class="bnav-item" onclick="goSection('intel',this)">
+    <div class="bi-icon">💡</div>
+    <div class="bi-label">Intel.</div>
+    <div class="bnav-dot"></div>
+  </button>
+  <button class="bnav-item" onclick="goSection('more',this)">
+    <div class="bi-icon">☰</div>
+    <div class="bi-label">More</div>
+    <div class="bnav-dot"></div>
+  </button>
+</nav>
+
+<!-- MORE MENU OVERLAY -->
+<div id="more-overlay" style="display:none;position:fixed;bottom:calc(var(--bnav-h) + 8px);left:12px;right:12px;z-index:200;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.15);overflow:hidden;">
+  <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;">More Sections</div>
+  <div id="more-items"></div>
+</div>
+
+<script>
+/* ===== DATA ===== */
+const SECTIONS = {
+  growth:{
+    title:'Human Growth & Development',badge:'Segment 01',
+    tabs:['Overview','Stages','Principles','Exam Tips'],
+    content:{
+'Overview':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>Growth vs. Development</div>
+  <div class="two-panel">
+    <div class="tp-box" style="background:#e8eef8;">
+      <div class="tp-lbl" style="color:var(--navy-mid);">GROWTH</div>
+      <div class="tp-text" style="color:#1a3a6b;">Quantitative — height, weight, organ size. Measured in cm/kg. <strong>Stops</strong> at physical maturity (~20 yrs).</div>
+    </div>
+    <div class="tp-box" style="background:var(--saffron-lt);">
+      <div class="tp-lbl" style="color:#8a4800;">DEVELOPMENT</div>
+      <div class="tp-text" style="color:#7a3800;">Qualitative — cognitive, emotional, social maturity. <strong>Lifelong</strong> — continues from conception through old age.</div>
+    </div>
+  </div>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Key Characteristics</div>
+  <ul>
+    <li><strong>Continuous & Gradual</strong> — development never stops abruptly.</li>
+    <li><strong>Holistic & Integrated</strong> — physical, cognitive, emotional domains develop together.</li>
+    <li><strong>Sequenced</strong> — all children follow the same universal order (crawl→stand→walk), pace varies.</li>
+    <li><strong>Individual Rate</strong> — no two children develop at exactly the same speed.</li>
+    <li><strong>Heredity + Environment</strong> — nature (genes) AND nurture (experience) both shape development.</li>
+    <li><strong>General to Specific</strong> — mass arm movement before fine finger control.</li>
+  </ul>
+</div>
+<div class="hbox">
+  <div class="hbox-title">⚡ Examiner Favourite</div>
+  <ul>
+    <li>Growth = <strong>quantitative</strong> | Development = <strong>qualitative</strong></li>
+    <li>"Storm and Stress" in adolescence — coined by <strong>G. Stanley Hall</strong></li>
+    <li>Growth <strong>stops</strong>; Development is <strong>lifelong</strong></li>
+  </ul>
+</div>`,
+'Stages':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>Developmental Stages — Full Breakdown</div></div>
+<div class="stage"><div class="sage">Prenatal<br>Conception–Birth</div><div class="scontent"><h4>Prenatal Period</h4><p>Rapid cellular division & organ formation. Three phases: Germinal (0–2 wks), Embryonic (2–8 wks), Fetal (8 wks–birth). Most vulnerable to teratogens.</p><div class="stags"><span class="stag">Germinal</span><span class="stag">Embryonic</span><span class="stag">Fetal</span><span class="stag">Teratogens</span></div></div></div>
+<div class="stage"><div class="sage">Infancy<br>0–2 Yrs</div><div class="scontent"><h4>Infancy — "Critical Period"</h4><p>Most rapid growth after birth. Sensorimotor coordination, attachment (Bowlby), first words, Object Permanence. Trust established (Erikson Stage 1).</p><div class="stags"><span class="stag">Attachment</span><span class="stag">Object Permanence</span><span class="stag">Trust vs. Mistrust</span></div></div></div>
+<div class="stage"><div class="sage">Early<br>Childhood<br>2–6 Yrs</div><div class="scontent"><h4>Early Childhood — "Toy Age"</h4><p>Language explosion. Play is primary learning mode (Froebel: "Play is the work of children"). Symbolic play, egocentrism, imitation dominant. Called "Golden Age of Imagination."</p><div class="stags"><span class="stag">Egocentrism</span><span class="stag">Symbolic Play</span><span class="stag">Language Burst</span><span class="stag">Toy Age</span></div></div></div>
+<div class="stage"><div class="sage">Later<br>Childhood<br>6–12 Yrs</div><div class="scontent"><h4>Later Childhood — "Gang Age"</h4><p>Peer group dominates. Logical thinking on concrete objects. Conservation mastered. Industry vs. Inferiority (Erikson). Academic skills & teamwork develop.</p><div class="stags"><span class="stag">Gang Age</span><span class="stag">Conservation</span><span class="stag">Logical Thinking</span><span class="stag">Peer Groups</span></div></div></div>
+<div class="stage"><div class="sage" style="background:var(--rose)">Adolescence<br>12–18 Yrs</div><div class="scontent"><h4>Adolescence — "Storm & Stress"</h4><p>Hormonal surges. Identity formation (Erikson Stage 5). Abstract thinking emerges. High peer influence. Secondary sex characteristics appear. G. Stanley Hall coined this phase.</p><div class="stags"><span class="stag">Storm & Stress</span><span class="stag">Identity Formation</span><span class="stag">Abstract Thinking</span><span class="stag">Hall</span></div></div></div>`,
+'Principles':`
+<div class="card ag">
+  <div class="card-title"><span class="cdot" style="background:var(--mint)"></span>Laws of Directional Development</div>
+  <div class="two-panel">
+    <div class="tp-box" style="background:var(--mint-lt);border:1px solid #a3d9cc;">
+      <div class="tp-lbl" style="color:var(--mint);">CEPHALOCAUDAL</div>
+      <div class="tp-text" style="color:#094f3f;"><strong>Head → Tail.</strong> Development proceeds from head downward to feet. Brain before spinal cord. Head control before trunk before legs.</div>
+    </div>
+    <div class="tp-box" style="background:var(--rose-lt);border:1px solid #f0aac2;">
+      <div class="tp-lbl" style="color:var(--rose);">PROXIMODISTAL</div>
+      <div class="tp-text" style="color:#7a1e3e;"><strong>Centre → Periphery.</strong> Development from central axis outward to extremities. Arm muscles before finger muscles.</div>
+    </div>
+  </div>
+</div>
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>Other Universal Principles</div>
+  <div class="steps">
+    <div class="step"><div class="snum">1</div><div class="stext"><strong>General → Specific:</strong> Random arm waving before precise finger-pointing.</div></div>
+    <div class="step"><div class="snum">2</div><div class="stext"><strong>Uniform Pattern, Variable Rate:</strong> Same sequence, different speed for each child.</div></div>
+    <div class="step"><div class="snum">3</div><div class="stext"><strong>Critical Periods:</strong> Sensitive windows (e.g., language before age 7) where learning is maximally efficient.</div></div>
+    <div class="step"><div class="snum">4</div><div class="stext"><strong>Heredity × Environment:</strong> Genes set the range; experience determines where within that range development falls.</div></div>
+    <div class="step"><div class="snum">5</div><div class="stext"><strong>Correlation of Domains:</strong> Physical, cognitive, social domains are interrelated — delay in one often affects others.</div></div>
+  </div>
+</div>`,
+'Exam Tips':`
+<div class="hbox">
+  <div class="hbox-title">🎯 Most Repeated in KTET</div>
+  <ul>
+    <li><strong>G. Stanley Hall</strong> → Adolescence = "Storm and Stress"</li>
+    <li><strong>Cephalocaudal</strong> = Head to tail | <strong>Proximodistal</strong> = Centre to periphery</li>
+    <li>Early childhood (2–6) = "Toy Age" or "Pre-school Age"</li>
+    <li>Later childhood (6–12) = "Gang Age" or "School Age"</li>
+    <li>Growth stops; Development is lifelong</li>
+  </ul>
+</div>
+<div class="card av">
+  <div class="card-title"><span class="cdot" style="background:var(--violet)"></span>Common MCQ Traps</div>
+  <div class="tbl-wrap"><table class="dtbl">
+    <tr><th>Wrong Option</th><th>Correct Answer</th></tr>
+    <tr><td>Development stops at adulthood</td><td>Development is continuous — never stops until death</td></tr>
+    <tr><td>All children develop at same rate</td><td>Pattern is uniform; RATE is individual</td></tr>
+    <tr><td>Proximodistal = head-to-tail</td><td>Proximodistal = centre-to-periphery</td></tr>
+    <tr><td>Adolescence is stress-free</td><td>Hall explicitly called it "Storm and Stress"</td></tr>
+  </table></div>
+</div>
+<div class="mbox"><p><strong>HALG Mnemonic:</strong> <strong>H</strong>eredity, <strong>A</strong>djustment, <strong>L</strong>earning, <strong>G</strong>rowth — four main factors influencing child development frequently appearing in KTET.</p></div>`
+    }
+  },
+
+  learning:{
+    title:'Learning Theories',badge:'Segment 02',
+    tabs:['Pavlov','Skinner','Thorndike','Bandura','Gestalt','Constructivism'],
+    content:{
+'Pavlov':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>Ivan Pavlov — Classical Conditioning</div>
+  <p>Learning occurs through <strong>association between stimuli</strong>. A neutral stimulus, repeatedly paired with an unconditioned stimulus, eventually produces the same response on its own.</p>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>The Dog Experiment</div>
+  <div class="steps">
+    <div class="step"><div class="snum" style="background:var(--mint)">1</div><div class="stext"><strong>Before:</strong> Food (UCS) → Salivation (UCR). Bell alone → No response.</div></div>
+    <div class="step"><div class="snum" style="background:var(--saffron)">2</div><div class="stext"><strong>During:</strong> Bell + Food presented together repeatedly.</div></div>
+    <div class="step"><div class="snum" style="background:var(--rose)">3</div><div class="stext"><strong>After:</strong> Bell alone (CS) → Salivation (CR). Learning has occurred!</div></div>
+  </div>
+</div>
+<div class="card ag">
+  <div class="card-title"><span class="cdot" style="background:var(--mint)"></span>Key Terminology</div>
+  <div class="tbl-wrap"><table class="dtbl">
+    <tr><th>Term</th><th>Meaning</th><th>Example</th></tr>
+    <tr><td><strong>UCS</strong></td><td>Naturally triggers response</td><td>Food</td></tr>
+    <tr><td><strong>UCR</strong></td><td>Natural, unlearned reaction</td><td>Salivation to food</td></tr>
+    <tr><td><strong>CS</strong></td><td>Learned trigger</td><td>Bell sound</td></tr>
+    <tr><td><strong>CR</strong></td><td>Learned response</td><td>Salivation to bell</td></tr>
+    <tr><td><strong>Extinction</strong></td><td>CR weakens; CS no longer paired with UCS</td><td>Bell with no food → stops salivating</td></tr>
+    <tr><td><strong>Generalization</strong></td><td>Similar stimuli trigger same CR</td><td>Similar bells also cause salivation</td></tr>
+    <tr><td><strong>Discrimination</strong></td><td>Responding only to specific CS</td><td>Only one specific bell pitch</td></tr>
+    <tr><td><strong>Spontaneous Recovery</strong></td><td>Extinguished CR reappears after rest</td><td>CR briefly returns after a break</td></tr>
+  </table></div>
+</div>
+<div class="mbox"><p><strong>Classroom Application:</strong> A warm, praise-filled classroom (UCS=praise→UCR=happiness) conditions positive feelings toward school (CS→CR). Conversely, humiliation in class can create anxiety (CR) to just entering the school gate (CS).</p></div>`,
+'Skinner':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>B.F. Skinner — Operant Conditioning (1938)</div>
+  <p>Behavior is controlled by its <strong>consequences</strong>. What happens <em>after</em> a behavior determines whether it will be repeated. Skinner's rats in a Skinner Box pressed a lever for food (reinforcement) or to stop electric shocks.</p>
+</div>
+<div class="card ag">
+  <div class="card-title"><span class="cdot" style="background:var(--mint)"></span>The Four Contingencies</div>
+  <div class="tbl-wrap"><table class="dtbl">
+    <tr><th>Type</th><th>Operation</th><th>Effect</th><th>Example</th></tr>
+    <tr><td><strong>Positive Reinforcement</strong></td><td>ADD pleasant stimulus</td><td>Behavior ↑</td><td>Stars for homework</td></tr>
+    <tr><td><strong>Negative Reinforcement</strong></td><td>REMOVE unpleasant stimulus</td><td>Behavior ↑</td><td>Stop nagging when work submitted</td></tr>
+    <tr><td><strong>Positive Punishment</strong></td><td>ADD unpleasant stimulus</td><td>Behavior ↓</td><td>Extra homework for misbehavior</td></tr>
+    <tr><td><strong>Negative Punishment</strong></td><td>REMOVE pleasant stimulus</td><td>Behavior ↓</td><td>No recess for fighting</td></tr>
+  </table></div>
+</div>
+<div class="card av">
+  <div class="card-title"><span class="cdot" style="background:var(--violet)"></span>Schedules of Reinforcement</div>
+  <ul>
+    <li><strong>Fixed Ratio (FR):</strong> Reward after set number of responses. High, steady responding.</li>
+    <li><strong>Variable Ratio (VR):</strong> Reward after unpredictable number. MOST resistant to extinction (like gambling).</li>
+    <li><strong>Fixed Interval (FI):</strong> Reward after fixed time (weekly test). Peak effort near deadline.</li>
+    <li><strong>Variable Interval (VI):</strong> Reward after unpredictable time (pop quizzes). Steady, moderate responding.</li>
+  </ul>
+</div>
+<div class="hbox">
+  <div class="hbox-title">⚡ Critical Distinction</div>
+  <p><strong>Negative Reinforcement ≠ Punishment.</strong> Neg. Reinforcement <em>increases</em> behavior (relief from pain = motivation). Punishment <em>decreases</em> behavior. Most misunderstood KTET concept!</p>
+</div>`,
+'Thorndike':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>Thorndike — Connectionism / Trial & Error (1898)</div>
+  <p>Hungry cat in a Puzzle Box: tried random actions → accidentally pressed lever → door opened. Over trials, random movements decreased and correct response was made faster. Forms S-R (Stimulus-Response) connections.</p>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Three Primary Laws</div>
+  <div class="steps">
+    <div class="step"><div class="snum">1</div><div class="stext"><strong>Law of Readiness:</strong> Learning is effective only when the learner's neural pathway is prepared. Forcing unready learners causes frustration.</div></div>
+    <div class="step"><div class="snum">2</div><div class="stext"><strong>Law of Exercise:</strong> Connections strengthen with use (Law of Use) and weaken without practice (Law of Disuse). Regular revision is essential.</div></div>
+    <div class="step"><div class="snum">3</div><div class="stext"><strong>Law of Effect:</strong> Responses followed by satisfying outcomes are repeated; those followed by annoying outcomes are not. Immediate positive feedback strengthens learning.</div></div>
+  </div>
+</div>
+<div class="card ag">
+  <div class="card-title"><span class="cdot" style="background:var(--mint)"></span>Secondary Laws</div>
+  <ul>
+    <li><strong>Multiple Response:</strong> Organism tries many responses until one works.</li>
+    <li><strong>Set/Attitude:</strong> Prior mental set shapes readiness to learn.</li>
+    <li><strong>Partial Activity:</strong> Responds to dominant elements of a stimulus.</li>
+    <li><strong>Associative Shifting:</strong> Any response can be shifted to new stimuli gradually.</li>
+  </ul>
+</div>
+<div class="mbox"><p><strong>Transfer of Training:</strong> Thorndike's <strong>Theory of Identical Elements</strong> — learning transfers to new situations only when they share identical elements with the original learned situation.</p></div>`,
+'Bandura':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>Albert Bandura — Social Learning Theory (1961)</div>
+  <p>Direct reinforcement is <strong>not necessary</strong> for learning. Humans learn by <strong>observing others</strong> in social contexts — Observational Learning / Modeling. Bridges behaviorism and cognitive psychology.</p>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Bobo Doll Experiment (1961)</div>
+  <p>Children observed an adult aggressively beating an inflatable Bobo doll. Later, the children imitated the aggression — even without being rewarded — proving <strong>vicarious reinforcement</strong>: we learn from observing consequences of others' behavior.</p>
+</div>
+<div class="card av">
+  <div class="card-title"><span class="cdot" style="background:var(--violet)"></span>4 Processes of Observational Learning</div>
+  <div class="steps">
+    <div class="step"><div class="snum" style="background:var(--violet)">1</div><div class="stext"><strong>Attention:</strong> Observer must notice and focus on the model. Model's attractiveness and prestige matter.</div></div>
+    <div class="step"><div class="snum" style="background:var(--violet)">2</div><div class="stext"><strong>Retention:</strong> Behavior encoded and stored in long-term memory through mental imagery.</div></div>
+    <div class="step"><div class="snum" style="background:var(--violet)">3</div><div class="stext"><strong>Reproduction:</strong> Learner must have the physical and cognitive ability to replicate the behavior.</div></div>
+    <div class="step"><div class="snum" style="background:var(--violet)">4</div><div class="stext"><strong>Motivation:</strong> Learner must want to perform — direct, vicarious, or self-reinforcement drives execution.</div></div>
+  </div>
+</div>
+<div class="card ag">
+  <div class="card-title"><span class="cdot" style="background:var(--mint)"></span>Self-Efficacy — Bandura's Key Concept</div>
+  <p style="margin-bottom:6px;"><strong>Belief in one's ability to succeed</strong> in a specific situation. High self-efficacy → greater effort, persistence, and achievement. Four sources:</p>
+  <ul>
+    <li><strong>Mastery Experiences:</strong> Past successes (strongest source).</li>
+    <li><strong>Vicarious Experiences:</strong> Watching similar peers succeed.</li>
+    <li><strong>Social Persuasion:</strong> Teacher/parent encouragement.</li>
+    <li><strong>Physiological States:</strong> Low anxiety increases efficacy.</li>
+  </ul>
+</div>
+<div class="hbox">
+  <div class="hbox-title">⚡ Reciprocal Determinism</div>
+  <p>Bandura proposed that <strong>behavior, personal factors, and environment</strong> mutually influence each other. Same environment → different outcomes in different people based on this triadic interaction.</p>
+</div>`,
+'Gestalt':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>Gestalt / Insight Learning — Köhler (1917)</div>
+  <p>Learning is NOT gradual — it happens through a sudden <strong>"Aha!" moment</strong> when the learner perceives the whole pattern. <strong>Core principle: "The whole is greater than the sum of its parts."</strong></p>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Sultan the Chimpanzee Experiment</div>
+  <p>Sultan was in a cage with a banana hung high, boxes and sticks on the ground. He failed direct attempts, sat quietly — then <strong>suddenly</strong> stacked boxes and used a stick to reach the banana. No trial-and-error: pure insight.</p>
+</div>
+<div class="card ag">
+  <div class="card-title"><span class="cdot" style="background:var(--mint)"></span>Four Stages of Insight Learning</div>
+  <div class="steps">
+    <div class="step"><div class="snum">1</div><div class="stext"><strong>Preparation:</strong> Gathering info; initial approaches fail.</div></div>
+    <div class="step"><div class="snum">2</div><div class="stext"><strong>Incubation:</strong> Rest/quiet — unconscious processing.</div></div>
+    <div class="step"><div class="snum">3</div><div class="stext"><strong>Illumination:</strong> The "Aha!" flash of sudden understanding.</div></div>
+    <div class="step"><div class="snum">4</div><div class="stext"><strong>Verification:</strong> Testing and confirming the solution.</div></div>
+  </div>
+</div>
+<div class="card av">
+  <div class="card-title"><span class="cdot" style="background:var(--violet)"></span>Gestalt Laws of Perception</div>
+  <div class="tbl-wrap"><table class="dtbl">
+    <tr><th>Law</th><th>Principle</th></tr>
+    <tr><td><strong>Proximity</strong></td><td>Elements close together perceived as a group</td></tr>
+    <tr><td><strong>Similarity</strong></td><td>Similar elements grouped together</td></tr>
+    <tr><td><strong>Closure</strong></td><td>Mind fills in gaps to see complete figures</td></tr>
+    <tr><td><strong>Continuity</strong></td><td>We follow lines in the smoothest path</td></tr>
+    <tr><td><strong>Figure-Ground</strong></td><td>Objects (figure) distinguished from background</td></tr>
+  </table></div>
+</div>
+<div class="hbox"><div class="hbox-title">⚡ Insight vs. Trial & Error</div><p><strong>Thorndike:</strong> Gradual, random attempts. <strong>Köhler:</strong> Sudden restructuring. KTET frequently asks you to differentiate between these two!</p></div>`,
+'Constructivism':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>Constructivism — Core Philosophy</div>
+  <p>Learners are <strong>active builders of knowledge</strong>, not passive receivers. Understanding is constructed through experience and reflection. Opposes the idea that knowledge can simply be "transmitted."</p>
+</div>
+<div class="cmp">
+  <div class="cmp-card">
+    <div class="cmp-head" style="background:var(--navy)">🧠 Piaget</div>
+    <div class="cmp-body">
+      <div class="cmp-row"><span>Focus:</span> Individual construction through physical world interaction.</div>
+      <div class="cmp-row"><span>Key:</span> Schema, Assimilation, Accommodation.</div>
+      <div class="cmp-row"><span>Social role:</span> Secondary.</div>
+    </div>
+  </div>
+  <div class="cmp-card">
+    <div class="cmp-head" style="background:var(--mint)">🤝 Vygotsky</div>
+    <div class="cmp-body">
+      <div class="cmp-row"><span>Focus:</span> Knowledge co-constructed through social interaction.</div>
+      <div class="cmp-row"><span>Key:</span> ZPD, Scaffolding, MKO.</div>
+      <div class="cmp-row"><span>Social role:</span> Primary.</div>
+    </div>
+  </div>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Other Constructivist Thinkers</div>
+  <ul>
+    <li><strong>Jerome Bruner:</strong> Discovery Learning. Introduced scaffolding concept. Spiral curriculum — revisit topics at increasing depth.</li>
+    <li><strong>John Dewey:</strong> "Learning by doing." Education must connect to real-world experience. Child-centred approach.</li>
+    <li><strong>Maria Montessori:</strong> Children have natural desire to learn; prepared environments facilitate self-directed learning.</li>
+  </ul>
+</div>`
+    }
+  },
+
+  devth:{
+    title:'Developmental Theories',badge:'Segment 03',
+    tabs:['Piaget','Vygotsky','Kohlberg','Erikson'],
+    content:{
+'Piaget':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>Jean Piaget — Cognitive Development</div>
+  <p>Children are not "small adults" — they think in fundamentally different ways. Knowledge is built through active interaction with the environment.</p>
+  <div class="two-panel" style="margin-top:10px;">
+    <div class="tp-box" style="background:#e8eef8;"><div class="tp-lbl" style="color:var(--navy);">ASSIMILATION</div><div class="tp-text" style="color:#1a3a6b;">Fitting new info into existing schema. Child calls a cow "dog" (fits 4-legged animal schema).</div></div>
+    <div class="tp-box" style="background:var(--saffron-lt);"><div class="tp-lbl" style="color:#8a4800;">ACCOMMODATION</div><div class="tp-text" style="color:#7a3800;">Modifying schema to fit new info. Creates separate "cow" schema after correction.</div></div>
+  </div>
+  <div class="mbox" style="margin-top:8px;"><p><strong>Equilibration:</strong> Balance between Assimilation & Accommodation. Disequilibrium (cognitive conflict) motivates the child to learn and restore equilibrium.</p></div>
+</div>
+<div class="stage"><div class="sage">Sensorimotor<br>0–2 Yrs</div><div class="scontent"><h4>Sensorimotor Stage</h4><p>Knowledge through senses and action. Reflexes → goal-directed behavior. Landmark: <strong>Object Permanence</strong> (8–12 months).</p><div class="stags"><span class="stag">Object Permanence</span><span class="stag">Circular Reactions</span><span class="stag">Cause & Effect</span></div></div></div>
+<div class="stage"><div class="sage" style="background:var(--saffron)">Pre-Operational<br>2–7 Yrs</div><div class="scontent"><h4>Pre-Operational Stage</h4><p>Symbolic thinking emerges but still illogical. Key features: <strong>Egocentrism</strong> (Three Mountains Task), <strong>Centration</strong>, <strong>No Conservation</strong>, <strong>Animism</strong>, <strong>Irreversibility</strong>.</p><div class="stags"><span class="stag">Egocentrism</span><span class="stag">No Conservation</span><span class="stag">Animism</span><span class="stag">Centration</span></div></div></div>
+<div class="stage"><div class="sage" style="background:var(--mint)">Concrete Op.<br>7–11 Yrs</div><div class="scontent"><h4>Concrete Operational</h4><p>Logical reasoning on tangible objects. <strong>Conservation mastered</strong>. Classification, seriation, decentration. Still struggles with abstract reasoning.</p><div class="stags"><span class="stag">Conservation ✓</span><span class="stag">Classification</span><span class="stag">Seriation</span><span class="stag">Reversibility ✓</span></div></div></div>
+<div class="stage"><div class="sage" style="background:var(--violet)">Formal Op.<br>11+ Yrs</div><div class="scontent"><h4>Formal Operational</h4><p>Abstract reasoning, hypothetical thinking, scientific reasoning. <strong>Hypothetico-deductive</strong> logic. Metacognition — thinking about thinking.</p><div class="stags"><span class="stag">Abstract Thinking</span><span class="stag">Hypothetico-Deductive</span><span class="stag">Metacognition</span></div></div></div>
+<div class="hbox"><div class="hbox-title">⚡ Most Tested Piaget Points</div><ul><li><strong>Object Permanence</strong> → Sensorimotor stage (8–12 months)</li><li><strong>Conservation mastered</strong> → Concrete Operational (7 yrs)</li><li><strong>Egocentrism peaks</strong> → Pre-Operational — Three Mountains Task</li><li>Piaget underestimated children; overemphasized solo discovery — Vygotsky's key critique</li></ul></div>`,
+'Vygotsky':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>Lev Vygotsky — Sociocultural Theory</div>
+  <p>Cognitive development is <strong>social in origin</strong>. Higher mental functions first appear between people (interpsychological) before being internalized within the individual (intrapsychological).</p>
+  <div class="quote"><p>"Every function in the child's cultural development appears twice: first on the social level, and later on the individual level."</p><div class="quote-attr">— Lev Vygotsky</div></div>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Zone of Proximal Development (ZPD)</div>
+  <div class="zpd">
+    <div class="zpd-row" style="background:var(--rose-lt);border:1px solid #f0aac2;"><div class="zpd-lbl" style="color:var(--rose);">OUTER ZONE</div><div class="zpd-main" style="color:#7a1e3e;">What I CANNOT do even with help</div><div class="zpd-sub" style="color:#7a1e3e;">Beyond current developmental level</div></div>
+    <div class="zpd-row" style="background:var(--saffron);"><div class="zpd-lbl" style="color:rgba(255,255,255,.8);">ZPD — THE LEARNING SWEET SPOT</div><div class="zpd-main" style="color:#fff;">What I can do WITH guidance</div><div class="zpd-sub" style="color:rgba(255,255,255,.85);">Where teaching is most effective</div></div>
+    <div class="zpd-row" style="background:var(--mint);"><div class="zpd-lbl" style="color:rgba(255,255,255,.8);">COMFORT ZONE</div><div class="zpd-main" style="color:#fff;">What I can do INDEPENDENTLY</div><div class="zpd-sub" style="color:rgba(255,255,255,.85);">Already mastered — actual level</div></div>
+  </div>
+</div>
+<div class="card ag">
+  <div class="card-title"><span class="cdot" style="background:var(--mint)"></span>Key Vygotsky Concepts</div>
+  <div class="tbl-wrap"><table class="dtbl">
+    <tr><th>Concept</th><th>Definition</th></tr>
+    <tr><td><strong>ZPD</strong></td><td>Gap between actual level and potential with guidance</td></tr>
+    <tr><td><strong>Scaffolding</strong></td><td>Temporary support from MKO, gradually removed as learner gains independence</td></tr>
+    <tr><td><strong>MKO</strong></td><td>More Knowledgeable Other — teacher, peer, or even a book</td></tr>
+    <tr><td><strong>Private Speech</strong></td><td>Self-talk to guide own behavior (ages 3–7)</td></tr>
+    <tr><td><strong>Inner Speech</strong></td><td>Internalized private speech — silent thinking in adults</td></tr>
+    <tr><td><strong>Cultural Tools</strong></td><td>Language, writing, numbers — mediate and shape thought</td></tr>
+  </table></div>
+</div>
+<div class="cmp">
+  <div class="cmp-card"><div class="cmp-head" style="background:var(--navy)">Piaget</div><div class="cmp-body"><div class="cmp-row"><span>Learning:</span> Follows development</div><div class="cmp-row"><span>Language:</span> Emerges from thought</div><div class="cmp-row"><span>Focus:</span> Individual exploration</div></div></div>
+  <div class="cmp-card"><div class="cmp-head" style="background:var(--mint)">Vygotsky</div><div class="cmp-body"><div class="cmp-row"><span>Learning:</span> Leads development</div><div class="cmp-row"><span>Language:</span> Shapes thought</div><div class="cmp-row"><span>Focus:</span> Guided, collaborative</div></div></div>
+</div>`,
+'Kohlberg':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>Kohlberg — Moral Development (1958)</div>
+  <p>Extended Piaget's work on moral reasoning. Using the <strong>Heinz Dilemma</strong> (should Heinz steal a drug to save his wife?), Kohlberg identified 3 levels and 6 stages based on the <em>reasoning</em> behind moral judgments — not just the decision.</p>
+</div>
+<div class="kl">
+  <div class="kl-head" style="background:var(--rose-lt);"><span class="kl-badge" style="background:var(--rose-lt);color:var(--rose);border:1px solid var(--rose);">Level 1</span><span style="color:var(--rose);">Pre-Conventional <small style="font-weight:400;">(before age 9)</small></span></div>
+  <div class="kl-body">
+    <div class="kl-stage"><strong>Stage 1 — Punishment & Obedience:</strong> "I shouldn't steal because I'll be punished." Rules obeyed to avoid punishment. Right = not getting caught.</div>
+    <div class="kl-stage"><strong>Stage 2 — Instrumental Purpose:</strong> "I'll help you if you help me." Morality is self-serving. "What's in it for me?" — Naive hedonism.</div>
+  </div>
+</div>
+<div class="kl">
+  <div class="kl-head" style="background:var(--saffron-lt);"><span class="kl-badge" style="background:var(--saffron-lt);color:var(--saffron);border:1px solid var(--saffron);">Level 2</span><span style="color:#8a4800;">Conventional <small style="font-weight:400;">(adolescence–adulthood)</small></span></div>
+  <div class="kl-body">
+    <div class="kl-stage"><strong>Stage 3 — Good Interpersonal ("Good Boy/Nice Girl"):</strong> Moral behavior earns approval. "I want to be a good person and be liked."</div>
+    <div class="kl-stage"><strong>Stage 4 — Law & Order:</strong> Rules and laws must be followed to maintain societal order. "It is wrong because it's against the law."</div>
+  </div>
+</div>
+<div class="kl">
+  <div class="kl-head" style="background:var(--violet-lt);"><span class="kl-badge" style="background:var(--violet-lt);color:var(--violet);border:1px solid var(--violet);">Level 3</span><span style="color:var(--violet);">Post-Conventional <small style="font-weight:400;">(not all adults reach)</small></span></div>
+  <div class="kl-body">
+    <div class="kl-stage"><strong>Stage 5 — Social Contract:</strong> Laws are social contracts that can be changed if unjust. Values human rights above rigid rules.</div>
+    <div class="kl-stage"><strong>Stage 6 — Universal Ethical Principles:</strong> Self-chosen ethical principles — justice, equality, human dignity. Follow abstract principles even if they conflict with laws. E.g., Mahatma Gandhi, Martin Luther King Jr.</div>
+  </div>
+</div>
+<div class="hbox"><div class="hbox-title">⚡ Kohlberg Exam Points</div><ul><li>Used <strong>Heinz Dilemma</strong> (hypothetical moral story) as research method</li><li>Stages are <strong>invariant</strong> (fixed sequence) and <strong>universal</strong> (cross-cultural)</li><li><strong>Carol Gilligan's critique:</strong> Model was male-biased (justice-oriented); ignored feminine "ethic of care" (relationships-oriented)</li><li>Kohlberg built on <strong>Piaget's</strong> two stages: Heteronomous → Autonomous morality</li></ul></div>`,
+'Erikson':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>Erik Erikson — Psychosocial Development</div>
+  <p><strong>8 stages across the entire lifespan</strong>, each centered on a psychosocial crisis. Successful resolution builds a positive ego quality (virtue); failure leads to maladjustment.</p>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>8 Stages — Full Matrix</div>
+  <div class="tbl-wrap"><table class="dtbl">
+    <tr><th>#</th><th>Age</th><th>Crisis</th><th>Virtue</th><th>Key Context</th></tr>
+    <tr><td>1</td><td>0–1</td><td>Trust vs. Mistrust</td><td>Hope</td><td>Quality of maternal care</td></tr>
+    <tr><td>2</td><td>1–3</td><td>Autonomy vs. Shame</td><td>Will</td><td>Toilet training; independence</td></tr>
+    <tr><td>3</td><td>3–6</td><td>Initiative vs. Guilt</td><td>Purpose</td><td>Child initiates activities; guilt if over-criticized</td></tr>
+    <tr><td>4</td><td>6–12</td><td>Industry vs. Inferiority</td><td>Competence</td><td>School; peer comparison</td></tr>
+    <tr><td><strong>5★</strong></td><td>12–18</td><td><strong>Identity vs. Role Confusion</strong></td><td>Fidelity</td><td><strong>Adolescent identity search "Who am I?"</strong></td></tr>
+    <tr><td>6</td><td>18–40</td><td>Intimacy vs. Isolation</td><td>Love</td><td>Deep relationships</td></tr>
+    <tr><td>7</td><td>40–65</td><td>Generativity vs. Stagnation</td><td>Care</td><td>Contributing to next generation</td></tr>
+    <tr><td>8</td><td>65+</td><td>Ego Integrity vs. Despair</td><td>Wisdom</td><td>Life review — satisfaction vs. regret</td></tr>
+  </table></div>
+</div>
+<div class="hbox"><div class="hbox-title">⚡ Most Examined for KTET</div><ul><li><strong>Stage 5 (Identity vs. Role Confusion)</strong> is most relevant to teachers — the adolescent stage</li><li><strong>Stage 4 (Industry vs. Inferiority)</strong> is the school-age stage (6–12) — teachers directly influence whether children feel competent or inferior</li><li>Erikson covers the <strong>entire lifespan</strong> (8 stages) vs. Freud's 5 psychosexual stages (early childhood only)</li><li>Erikson coined the term <strong>"Identity Crisis"</strong></li></ul></div>
+<div class="mbox"><p><strong>Identity Crisis</strong> (Stage 5): Adolescents experiment with different roles, values, and ideologies to discover their authentic self. This experimentation, while occasionally chaotic, is healthy and necessary for identity formation.</p></div>`
+    }
+  },
+
+  intel:{
+    title:'Intelligence & Creativity',badge:'Segment 04',
+    tabs:['Theories','IQ & Measurement','Creativity'],
+    content:{
+'Theories':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>Spearman's Two-Factor Theory (1904)</div><ul><li><strong>General Factor (g):</strong> Innate mental energy underlying all cognitive tasks. Cannot be taught. Determines overall intelligence.</li><li><strong>Specific Factors (s):</strong> Task-specific abilities (music, maths). Can be developed with practice.</li></ul><div class="mbox" style="margin-top:8px;"><p>Spearman invented <strong>Factor Analysis</strong> to identify g. His theory implies a single IQ score can meaningfully capture overall intelligence.</p></div></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Thurstone's Primary Mental Abilities (1938)</div><p style="margin-bottom:8px;">Rejected single g. Identified 7 independent primary mental abilities:</p><div class="pill-row"><span class="pill po">Verbal Comprehension</span><span class="pill po">Word Fluency</span><span class="pill po">Number</span><span class="pill po">Space</span><span class="pill po">Memory</span><span class="pill po">Perceptual Speed</span><span class="pill po">Inductive Reasoning</span></div></div>
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>Gardner's Multiple Intelligences (1983)</div><p style="margin-bottom:10px;">Completely rejected single IQ. Proposed <strong>8 distinct types of intelligence</strong>, each with different neural substrates:</p><div class="g2"><div class="mini-card"><div class="mc-icon">📖</div><div class="mc-title">Linguistic</div><div class="mc-text">Writers, poets, orators</div></div><div class="mini-card"><div class="mc-icon">🔢</div><div class="mc-title">Logical-Math</div><div class="mc-text">Scientists, engineers</div></div><div class="mini-card"><div class="mc-icon">🗺️</div><div class="mc-title">Spatial-Visual</div><div class="mc-text">Architects, artists</div></div><div class="mini-card"><div class="mc-icon">🎵</div><div class="mc-title">Musical</div><div class="mc-text">Musicians, composers</div></div><div class="mini-card"><div class="mc-icon">🏃</div><div class="mc-title">Bodily-Kinesthetic</div><div class="mc-text">Athletes, dancers</div></div><div class="mini-card"><div class="mc-icon">👥</div><div class="mc-title">Interpersonal</div><div class="mc-text">Teachers, counselors</div></div><div class="mini-card"><div class="mc-icon">🪞</div><div class="mc-title">Intrapersonal</div><div class="mc-text">Self-aware, philosophers</div></div><div class="mini-card"><div class="mc-icon">🌿</div><div class="mc-title">Naturalistic</div><div class="mc-text">Biologists, farmers</div></div></div></div>
+<div class="card av"><div class="card-title"><span class="cdot" style="background:var(--violet)"></span>Sternberg's Triarchic Theory (1985)</div><div class="steps"><div class="step"><div class="snum" style="background:var(--violet)">1</div><div class="stext"><strong>Analytical:</strong> Academic intelligence — problem-solving, evaluation. Measured by traditional IQ tests.</div></div><div class="step"><div class="snum" style="background:var(--violet)">2</div><div class="stext"><strong>Creative:</strong> Dealing with novel situations, creative thinking, automating routines through experience.</div></div><div class="step"><div class="snum" style="background:var(--violet)">3</div><div class="stext"><strong>Practical:</strong> "Street smarts" — adapting to, selecting, and shaping real-world environments.</div></div></div></div>
+<div class="hbox"><div class="hbox-title">⚡ Quick Reference</div><div class="tbl-wrap"><table class="dtbl"><tr><th>Theorist</th><th>Theory</th><th>Key Concept</th></tr><tr><td>Spearman</td><td>Two-Factor</td><td>g + s</td></tr><tr><td>Thurstone</td><td>Primary Mental Abilities</td><td>7 independent factors</td></tr><tr><td>Guilford</td><td>Structure of Intellect</td><td>120–150 factors</td></tr><tr><td>Gardner</td><td>Multiple Intelligences</td><td>8 distinct types</td></tr><tr><td>Sternberg</td><td>Triarchic</td><td>Analytical, Creative, Practical</td></tr><tr><td>Cattell</td><td>Fluid vs. Crystallized</td><td>Gf (novel) + Gc (learned)</td></tr></table></div></div>`,
+'IQ & Measurement':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>IQ — History & Formula</div><p><strong>Alfred Binet & Theodore Simon (1905):</strong> First intelligence test — Mental Age (MA). <strong>William Stern (1912)</strong> created the IQ formula:</p><div class="formula"><div class="formula-eq">IQ = (MA ÷ CA) × 100</div><div class="formula-note">MA = Mental Age | CA = Chronological Age</div></div><p><strong>Example:</strong> 10-year-old (CA=10) performs like 12-year-old (MA=12): IQ = (12/10) × 100 = <strong>120</strong> — Above average.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>IQ Classification Scale</div><div class="hier"><div class="hlvl" style="background:var(--rose-lt);"><div class="hnum" style="background:var(--rose);color:white;">♾</div><div style="font-size:12.5px;color:#7a1e3e;"><strong>140+ — Genius / Near Genius</strong></div></div><div class="hlvl" style="background:var(--saffron-lt);"><div class="hnum" style="background:var(--saffron);color:white;">↑</div><div style="font-size:12.5px;color:#7a3800;"><strong>120–139 — Superior</strong></div></div><div class="hlvl" style="background:var(--mint-lt);"><div class="hnum" style="background:var(--mint);color:white;">✓</div><div style="font-size:12.5px;color:#094f3f;"><strong>110–119 — High Average</strong></div></div><div class="hlvl" style="background:#e8eef8;"><div class="hnum" style="background:var(--navy);color:white;">◉</div><div style="font-size:12.5px;color:var(--navy);"><strong>90–109 — Normal/Average</strong></div></div><div class="hlvl" style="background:var(--violet-lt);"><div class="hnum" style="background:var(--violet);color:white;">↓</div><div style="font-size:12.5px;color:#3d2a7a;"><strong>80–89 — Low Average / Dull</strong></div></div><div class="hlvl" style="background:var(--rose-lt);"><div class="hnum" style="background:var(--rose);color:white;">⚠</div><div style="font-size:12.5px;color:#7a1e3e;"><strong>Below 70 — Intellectual Disability</strong></div></div></div></div>
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>Major Intelligence Tests</div><div class="tbl-wrap"><table class="dtbl"><tr><th>Test</th><th>By</th><th>Measures</th></tr><tr><td><strong>Binet-Simon (1905)</strong></td><td>Binet & Simon</td><td>First IQ test — Mental Age</td></tr><tr><td><strong>Stanford-Binet</strong></td><td>Lewis Terman (1916)</td><td>Revised Binet; introduced IQ formula</td></tr><tr><td><strong>WISC / WAIS</strong></td><td>David Wechsler</td><td>Verbal + Performance IQ; most widely used today</td></tr><tr><td><strong>Raven's Matrices</strong></td><td>J.C. Raven</td><td>Non-verbal, culture-fair fluid intelligence test</td></tr><tr><td><strong>Army Alpha & Beta</strong></td><td>US Army (1917)</td><td>Alpha=verbal, Beta=non-verbal; first group tests</td></tr></table></div></div>`,
+'Creativity':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>Creativity — Definition</div><p>Ability to produce work that is both <strong>novel</strong> (original) and <strong>appropriate</strong> (useful). Involves <strong>divergent thinking</strong> — generating multiple solutions to open-ended problems — as opposed to convergent thinking (single correct answer).</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Wallas' Four Stages (1926)</div><div class="steps"><div class="step"><div class="snum">1</div><div class="stext"><strong>Preparation:</strong> Gathering info, defining the problem, initial work.</div></div><div class="step"><div class="snum">2</div><div class="stext"><strong>Incubation:</strong> Unconscious processing — stepping away allows new connections.</div></div><div class="step"><div class="snum">3</div><div class="stext"><strong>Illumination:</strong> The sudden "Aha!" — creative idea bursts into consciousness.</div></div><div class="step"><div class="snum">4</div><div class="stext"><strong>Verification:</strong> Testing, refining, and elaborating the creative idea.</div></div></div></div>
+<div class="card av"><div class="card-title"><span class="cdot" style="background:var(--violet)"></span>Guilford's Dimensions of Creativity</div><ul><li><strong>Fluency:</strong> Quantity of ideas generated.</li><li><strong>Flexibility:</strong> Variety of categories — switching between approaches.</li><li><strong>Originality:</strong> Uniqueness and unusualness of ideas.</li><li><strong>Elaboration:</strong> Ability to develop and flesh out ideas in detail.</li></ul></div>
+<div class="mbox"><p><strong>Threshold Theory (Torrance, 1962):</strong> Minimum IQ ~120 is necessary for high creativity, but above that threshold, IQ and creativity are largely independent. Many highly intelligent people are not highly creative, and vice versa.</p></div>`
+    }
+  },
+
+  personality:{
+    title:'Personality & Adjustment',badge:'Segment 05',
+    tabs:['Theories','Defence Mechanisms','Freud'],
+    content:{
+'Theories':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>Personality — Definition</div><p>The <strong>unique and relatively stable pattern</strong> of thoughts, feelings, and behaviors that characterize an individual. Shaped by heredity, environment, maturation, learning, and cultural influences.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Type Theories</div><div class="tbl-wrap"><table class="dtbl"><tr><th>Theorist</th><th>Typology</th><th>Description</th></tr><tr><td><strong>Hippocrates</strong></td><td>4 Humours</td><td>Sanguine (cheerful), Choleric (irritable), Melancholic (sad), Phlegmatic (calm) — based on body fluids</td></tr><tr><td><strong>Kretschmer</strong></td><td>Body Build</td><td>Asthenic (thin), Athletic (muscular), Pyknic (fat/social), Dysplastic (mixed)</td></tr><tr><td><strong>Jung</strong></td><td>Introvert/Extrovert</td><td>Introvert = inward energy; Extrovert = outward energy; Ambivert = both</td></tr></table></div></div>
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>Trait Theories</div><ul><li><strong>Allport (1937):</strong> Cardinal (dominant, all-pervasive), Central (major), Secondary (situational) traits.</li><li><strong>Cattell:</strong> 16 Source Traits (16PF). Surface traits observable; Source traits are underlying causes.</li><li><strong>Eysenck:</strong> Extraversion-Introversion + Neuroticism-Stability as two main dimensions.</li><li><strong>Big Five (OCEAN):</strong> Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism — current dominant model.</li></ul></div>
+<div class="card av"><div class="card-title"><span class="cdot" style="background:var(--violet)"></span>Maslow's Hierarchy of Needs</div><div class="hier"><div class="hlvl" style="background:var(--saffron);justify-content:center;"><div style="font-weight:700;font-size:13px;color:#fff;">⭐ Self-Actualization</div></div><div class="hlvl" style="background:#f5a623;justify-content:center;"><div style="font-weight:600;font-size:12.5px;color:#fff;">Esteem Needs</div></div><div class="hlvl" style="background:#e8eef8;justify-content:center;"><div style="font-weight:600;font-size:12.5px;color:var(--navy);">Love & Belonging</div></div><div class="hlvl" style="background:#edf2f7;justify-content:center;"><div style="font-weight:600;font-size:12.5px;color:var(--navy-mid);">Safety Needs</div></div><div class="hlvl" style="background:var(--bg);border:1px solid var(--border);justify-content:center;"><div style="font-weight:600;font-size:12.5px;color:var(--muted);">Physiological Needs (Base)</div></div></div><div class="mbox" style="margin-top:8px;"><p>D-Needs (Deficiency): Physiological → Safety → Love → Esteem must be met before B-Needs (Being/Growth: Self-Actualization) can emerge. A hungry student cannot focus on learning.</p></div></div>`,
+'Defence Mechanisms':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>Ego Defence Mechanisms (Freud)</div><p>Unconscious strategies used by the ego to reduce anxiety from conflict between id (impulses), superego (morals), and reality. Normal, but overuse leads to maladjustment.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Complete Defence Mechanism Matrix</div><div class="tbl-wrap"><table class="dtbl"><tr><th>Mechanism</th><th>Definition</th><th>Classroom Example</th></tr><tr><td><strong>Rationalization</strong></td><td>Logical excuses to justify failure</td><td>"Questions were unfair" after failing</td></tr><tr><td><strong>Projection</strong></td><td>Attributing own feelings to others</td><td>"Teacher hates me" (student dislikes teacher)</td></tr><tr><td><strong>Sublimation ★</strong></td><td>Redirecting impulses into socially useful activities</td><td>Aggressive student excels at competitive sports</td></tr><tr><td><strong>Regression</strong></td><td>Reverting to earlier developmental behavior</td><td>10-year-old throws tantrums under stress</td></tr><tr><td><strong>Displacement</strong></td><td>Redirecting emotion to a safer target</td><td>Scolded by teacher → kicks the desk</td></tr><tr><td><strong>Repression</strong></td><td>Unconsciously pushing distress out of awareness</td><td>Forgetting an abusive incident</td></tr><tr><td><strong>Reaction Formation</strong></td><td>Replacing true feeling with its opposite</td><td>Jealous student becomes excessively kind to rival</td></tr><tr><td><strong>Denial</strong></td><td>Refusing to acknowledge painful reality</td><td>"I didn't fail the exam"</td></tr><tr><td><strong>Compensation</strong></td><td>Excel in one area to offset weakness in another</td><td>Academically weak student becomes best athlete</td></tr><tr><td><strong>Fantasy</strong></td><td>Escaping into imagination</td><td>Lonely child daydreams about being popular</td></tr></table></div></div>
+<div class="hbox"><div class="hbox-title">⚡ Most Tested in KTET</div><ul><li><strong>Sublimation</strong> (★) = MOST POSITIVE / MATURE defence mechanism</li><li><strong>Regression</strong> = returning to earlier developmental stage under stress</li><li><strong>Projection</strong> = blaming others for YOUR own feelings</li><li><strong>Rationalization</strong> = creating excuses/alibis for failures</li><li><strong>Reaction Formation</strong> = the opposite of what you truly feel</li></ul></div>`,
+'Freud':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>Freud — Psychoanalytic Theory</div><p>Behavior is driven by <strong>unconscious forces</strong> and unresolved childhood conflicts. Mind = iceberg — most mental activity lies below the surface.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Three Levels of Mind</div><div class="hier"><div class="hlvl" style="background:#e8eef8;border:1px solid var(--border);"><div class="hnum" style="background:var(--navy);color:#fff;">C</div><div style="font-size:12.5px;color:var(--navy);"><strong>Conscious:</strong> Currently aware thoughts (small tip of iceberg)</div></div><div class="hlvl" style="background:var(--saffron-lt);border:1px solid var(--border);"><div class="hnum" style="background:var(--saffron);color:#fff;">P</div><div style="font-size:12.5px;color:#7a3800;"><strong>Preconscious:</strong> Accessible memories not currently in awareness</div></div><div class="hlvl" style="background:var(--rose-lt);border:1px solid var(--border);"><div class="hnum" style="background:var(--rose);color:#fff;">U</div><div style="font-size:12.5px;color:#7a1e3e;"><strong>Unconscious:</strong> Repressed desires/fears — inaccessible but powerfully drives behavior (largest part)</div></div></div></div>
+<div class="card av"><div class="card-title"><span class="cdot" style="background:var(--violet)"></span>Id, Ego, Superego</div><div class="tbl-wrap"><table class="dtbl"><tr><th>Component</th><th>Principle</th><th>Role</th></tr><tr><td><strong>Id</strong></td><td>Pleasure Principle</td><td>Demands immediate gratification; entirely unconscious; present from birth; selfish, irrational</td></tr><tr><td><strong>Ego</strong></td><td>Reality Principle</td><td>Mediates between Id and reality; mostly conscious; rational and strategic</td></tr><tr><td><strong>Superego</strong></td><td>Morality Principle</td><td>Moral watchdog; conscience + ego ideal; source of guilt and pride</td></tr></table></div></div>
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>Psychosexual Stages</div><div class="tbl-wrap"><table class="dtbl"><tr><th>Stage</th><th>Age</th><th>Zone</th><th>Key Issue</th></tr><tr><td><strong>Oral</strong></td><td>0–1</td><td>Mouth</td><td>Feeding; fixation → smoking, dependency</td></tr><tr><td><strong>Anal</strong></td><td>1–3</td><td>Anus</td><td>Toilet training; anal-retentive or anal-expulsive</td></tr><tr><td><strong>Phallic</strong></td><td>3–6</td><td>Genitals</td><td>Oedipus/Electra complex; gender identity</td></tr><tr><td><strong>Latency</strong></td><td>6–12</td><td>None</td><td>Sexual urges dormant; focus on school & social skills</td></tr><tr><td><strong>Genital</strong></td><td>12+</td><td>Genitals</td><td>Puberty; mature sexual relationships</td></tr></table></div></div>`
+    }
+  },
+
+  motivation:{
+    title:'Motivation & Emotion',badge:'Segment 06',
+    tabs:['Theories','Emotion','Classroom'],
+    content:{
+'Theories':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>Motivation — Definition</div><p>The internal state that <strong>activates, directs, and sustains behavior</strong> toward a goal. Determines intensity and persistence of goal-directed activity. The engine that drives learning.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Intrinsic vs. Extrinsic</div><div class="two-panel"><div class="tp-box" style="background:var(--mint-lt);border:1px solid #a3d9cc;"><div class="tp-lbl" style="color:var(--mint);">INTRINSIC</div><div class="tp-text" style="color:#094f3f;">Driven by curiosity, interest, personal satisfaction. More durable and deeper learning.<br><em>"Reading because you love the story."</em></div></div><div class="tp-box" style="background:var(--saffron-lt);border:1px solid #f5c87a;"><div class="tp-lbl" style="color:var(--saffron);">EXTRINSIC</div><div class="tp-text" style="color:#7a3800;">Driven by grades, prizes, avoiding punishment. Can undermine intrinsic motivation (Over-Justification Effect).<br><em>"Reading for a star sticker."</em></div></div></div></div>
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>Key Motivational Theories</div><div class="tbl-wrap"><table class="dtbl"><tr><th>Theory</th><th>Theorist</th><th>Core Idea</th></tr><tr><td><strong>Need Hierarchy</strong></td><td>Maslow</td><td>5 need levels; lower must be met before higher. Hungry students can't focus.</td></tr><tr><td><strong>Achievement Motivation</strong></td><td>McClelland</td><td>nAch, nPow, nAff. High nAch prefers moderate challenges.</td></tr><tr><td><strong>Self-Determination</strong></td><td>Deci & Ryan</td><td>3 innate needs: Autonomy, Competence, Relatedness.</td></tr><tr><td><strong>Attribution Theory</strong></td><td>Weiner</td><td>Students attribute success/failure to: Ability, Effort, Task difficulty, Luck.</td></tr></table></div></div>
+<div class="hbox"><div class="hbox-title">⚡ Attribution Theory Key Point</div><p>Teachers should help students attribute success to <strong>effort</strong> (internal, controllable). Attributing failure to "I'm stupid" (internal, uncontrollable) leads to <strong>Learned Helplessness</strong> (Seligman) — giving up motivation entirely.</p></div>`,
+'Emotion':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>Emotion — Three Components</div><ul><li><strong>Subjective experience</strong> (feelings — how it feels inside)</li><li><strong>Physiological response</strong> (body changes — heart rate, adrenaline)</li><li><strong>Behavioral response</strong> (expression/action — fleeing, crying)</li></ul></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Theories of Emotion</div><div class="tbl-wrap"><table class="dtbl"><tr><th>Theory</th><th>Theorists</th><th>Sequence</th></tr><tr><td><strong>James-Lange</strong></td><td>James & Lange</td><td>Stimulus → Physiological arousal → Emotion. "We feel fear BECAUSE we run."</td></tr><tr><td><strong>Cannon-Bard</strong></td><td>Cannon & Bard</td><td>Stimulus → Emotion + Physiology simultaneously (thalamus sends dual signals).</td></tr><tr><td><strong>Two-Factor</strong></td><td>Schachter-Singer</td><td>Stimulus → Arousal → Cognitive label → Emotion. Same arousal labeled differently by context.</td></tr><tr><td><strong>Cognitive Appraisal</strong></td><td>Lazarus</td><td>How we appraise a situation determines emotion. Same event → different emotions for different people.</td></tr></table></div></div>
+<div class="card av"><div class="card-title"><span class="cdot" style="background:var(--violet)"></span>Emotional Intelligence (Goleman, 1995)</div><div class="steps"><div class="step"><div class="snum" style="background:var(--violet)">1</div><div class="stext"><strong>Perceiving Emotions:</strong> Recognizing emotions in faces, voices, art.</div></div><div class="step"><div class="snum" style="background:var(--violet)">2</div><div class="stext"><strong>Using Emotions:</strong> Harnessing emotions to facilitate thought and creativity.</div></div><div class="step"><div class="snum" style="background:var(--violet)">3</div><div class="stext"><strong>Understanding Emotions:</strong> Knowing how emotions evolve and combine.</div></div><div class="step"><div class="snum" style="background:var(--violet)">4</div><div class="stext"><strong>Managing Emotions:</strong> Regulating one's own and others' emotions effectively.</div></div></div></div>`,
+'Classroom':`
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>Strategies to Enhance Student Motivation</div><div class="steps"><div class="step"><div class="snum" style="background:var(--mint)">1</div><div class="stext"><strong>Foster Curiosity:</strong> Begin lessons with puzzles or surprising demonstrations.</div></div><div class="step"><div class="snum" style="background:var(--mint)">2</div><div class="stext"><strong>Set Achievable Challenges:</strong> Tasks in the ZPD. Flow state = when skill ≈ challenge (Csikszentmihalyi).</div></div><div class="step"><div class="snum" style="background:var(--mint)">3</div><div class="stext"><strong>Immediate & Specific Feedback:</strong> Tells students what they did right and how to improve.</div></div><div class="step"><div class="snum" style="background:var(--mint)">4</div><div class="stext"><strong>Encourage Mastery Goals:</strong> Focus on learning and improvement, not performance comparison.</div></div><div class="step"><div class="snum" style="background:var(--mint)">5</div><div class="stext"><strong>Give Autonomy & Choice:</strong> Students choose topics or task formats — supports intrinsic motivation.</div></div><div class="step"><div class="snum" style="background:var(--mint)">6</div><div class="stext"><strong>Build Positive Relationships:</strong> Students work harder for teachers they like and trust.</div></div></div></div>`
+    }
+  },
+
+  language:{
+    title:'Language Development',badge:'Segment 07',
+    tabs:['Milestones','Theories','Bilingualism'],
+    content:{
+'Milestones':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>Language Development Milestones</div><div class="tbl-wrap"><table class="dtbl"><tr><th>Age</th><th>Stage</th><th>Key Features</th></tr><tr><td>0–2 mo</td><td>Cooing</td><td>Vowel sounds, cries; responds to human voice</td></tr><tr><td>4–6 mo</td><td>Babbling</td><td>Consonant-vowel combos (ba-ba, ma-ma). Universal — deaf infants also babble initially</td></tr><tr><td>8–12 mo</td><td>Holophrases</td><td>Single words carry sentence meaning. "Milk" = "I want milk." Points to objects.</td></tr><tr><td>18–24 mo</td><td>Two-Word Stage</td><td>"More milk," "Daddy go." Telegraphic speech. Rapid vocabulary growth (word spurt).</td></tr><tr><td>2–3 yrs</td><td>Simple Sentences</td><td>3+ word sentences. Overgeneralization ("goed" for "went") — shows rule learning, not imitation.</td></tr><tr><td>3–5 yrs</td><td>Complex Grammar</td><td>Past tense, plurals, questions. ~2000 words.</td></tr><tr><td>6–12 yrs</td><td>Literacy</td><td>Reading/writing mastered. Meta-linguistic awareness. Complex sentence structure.</td></tr></table></div></div>
+<div class="hbox"><div class="hbox-title">⚡ Critical Period Hypothesis</div><p><strong>Lenneberg (1967):</strong> Critical window from birth to puberty (~12 years) where brain is maximally plastic for language. Evidence: <strong>Genie case</strong> (feral child found at age 13) — could learn vocabulary but never mastered grammar, demonstrating the closed critical window.</p></div>`,
+'Theories':`
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Behaviourist View — Skinner (1957)</div><p>Language learned through operant conditioning: imitation + reinforcement of correct utterances.</p><div class="mbox" style="margin-top:8px;"><p><strong>Chomsky's Critique:</strong> Children produce sentences they have never heard (e.g., "I goed to school"), proving they derive rules — not merely imitating. This was Chomsky's devastating argument against Skinner.</p></div></div>
+<div class="card av"><div class="card-title"><span class="cdot" style="background:var(--violet)"></span>Nativist View — Chomsky (1965)</div><p>Humans are born with a <strong>Language Acquisition Device (LAD)</strong> — an innate biological mechanism containing universal grammar principles. Explains why all children acquire language rapidly without explicit instruction.</p><ul style="margin-top:6px;"><li><strong>Universal Grammar:</strong> All human languages share deep structural principles.</li><li><strong>Evidence:</strong> Speed of acquisition, cross-cultural universality, overgeneralization errors show rule-learning.</li></ul></div>
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>Interactionist View</div><p>Neither pure biology nor pure environment alone explains language acquisition. Both the <strong>innate LAD</strong> AND <strong>social interaction</strong> (motherese, scaffolding, rich input) are necessary. Vygotsky: language first develops socially, then becomes internalized thought.</p></div>`,
+'Bilingualism':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>Types of Bilingualism</div><ul><li><strong>Simultaneous Bilingualism:</strong> Two languages from birth (bilingual home). Both develop in parallel.</li><li><strong>Sequential Bilingualism:</strong> L2 acquired after L1 is established. Most school-based language learning.</li><li><strong>Additive Bilingualism:</strong> Learning L2 enriches L1. Positive for cognitive development.</li><li><strong>Subtractive Bilingualism:</strong> L2 replaces L1. Can lead to loss of cultural identity.</li></ul></div>
+<div class="mbox"><p><strong>Cognitive Advantages (Cummins):</strong> Bilingual children develop stronger metalinguistic awareness, better executive control (task switching, inhibition), and greater cognitive flexibility.</p><p style="margin-top:6px;"><strong>Linguistic Interdependence Hypothesis:</strong> Proficiency in L1 facilitates L2 acquisition. Strong L1 = better L2 outcomes.</p></div>
+<div class="hbox"><div class="hbox-title">⚡ Kerala Context</div><p>KTET candidates teach in schools where students speak Malayalam at home, English as medium of instruction, and Hindi as third language. Understanding sequential and additive bilingualism is directly applicable to Kerala classrooms.</p></div>`
+    }
+  },
+
+  inclusive:{
+    title:'Inclusive Education',badge:'Segment 08',
+    tabs:['Learning Disabilities','Gifted','Policy & UDL'],
+    content:{
+'Learning Disabilities':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>Learning Disabilities — Overview</div><p>A learning disability is a <strong>neurological disorder</strong> affecting how a person processes information. NOT caused by low intelligence — IQ is typically average to above average. The gap between potential and performance is the key indicator.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Major Learning Disabilities Matrix</div><div class="tbl-wrap"><table class="dtbl"><tr><th>Condition</th><th>Area</th><th>Key Symptoms</th><th>Strategies</th></tr><tr><td><strong>Dyslexia</strong></td><td>Reading</td><td>Letter reversals (b↔d), slow reading, difficulty with phonics, poor spelling. MOST COMMON LD.</td><td>Phonics approach, audio books, extra time, multi-sensory (Orton-Gillingham)</td></tr><tr><td><strong>Dysgraphia</strong></td><td>Writing</td><td>Illegible handwriting, inconsistent letter sizing, poor spatial layout, fatigue while writing.</td><td>Allow typing, oral assessments, graph paper, word processors</td></tr><tr><td><strong>Dyscalculia</strong></td><td>Maths</td><td>Difficulty with number sense, arithmetic, math symbols, sequencing, telling time, money.</td><td>Concrete manipulatives, visual models, calculator use, color-coded steps</td></tr><tr><td><strong>Dyspraxia</strong></td><td>Motor</td><td>Poor balance, clumsiness, difficulty with fine-motor tasks, poor spatial awareness.</td><td>Occupational therapy, adaptive PE, extra time for motor tasks</td></tr><tr><td><strong>ADHD</strong></td><td>Attention</td><td>Inattention, hyperactivity, impulsivity. Three subtypes: Inattentive, Hyperactive-Impulsive, Combined.</td><td>Structured routines, frequent breaks, preferential seating, positive reinforcement</td></tr></table></div></div>
+<div class="hbox"><div class="hbox-title">⚡ KTET Key Points</div><ul><li><strong>Dyslexia</strong> = reading | <strong>Dysgraphia</strong> = writing | <strong>Dyscalculia</strong> = maths | <strong>Dyspraxia</strong> = coordination</li><li>Dyslexia is the MOST COMMON learning disability (~80% of all LDs)</li><li>Children with LDs have <strong>average or above-average IQ</strong> — NOT intellectual disability</li><li>ADHD is a neurodevelopmental disorder; can co-occur with but is classified separately from LDs</li></ul></div>`,
+'Gifted':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>Giftedness — Definition</div><p>Gifted children demonstrate outstanding potential in one or more areas. <strong>Renzulli's Three-Ring Conception:</strong> Above-average ability + High task commitment + High creativity. IQ above 130 is one criterion but not the only one.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Characteristics of Gifted Children</div><div class="g2"><div class="mini-card"><div class="mc-title">Advanced vocabulary</div><div class="mc-text">Reads and communicates beyond age level</div></div><div class="mini-card"><div class="mc-title">Intense curiosity</div><div class="mc-text">Asks complex, probing questions</div></div><div class="mini-card"><div class="mc-title">Rapid learning</div><div class="mc-text">Less repetition needed; quick mastery</div></div><div class="mini-card"><div class="mc-title">High creativity</div><div class="mc-text">Originality in ideas and problem-solving</div></div><div class="mini-card"><div class="mc-title">Perfectionism</div><div class="mc-text">High standards; self-critical</div></div><div class="mini-card"><div class="mc-title">Possible isolation</div><div class="mc-text">Asynchronous development; social mismatch</div></div></div></div>
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>Educational Provisions</div><div class="tbl-wrap"><table class="dtbl"><tr><th>Approach</th><th>Description</th><th>Advantage</th></tr><tr><td><strong>Acceleration</strong></td><td>Advancing to higher grade levels / skipping grades</td><td>Meets academic level; prevents boredom</td></tr><tr><td><strong>Enrichment</strong></td><td>Deeper/broader exploration within regular grade</td><td>Social cohesion maintained; greater depth</td></tr><tr><td><strong>Pull-Out Programs</strong></td><td>Special sessions outside regular class</td><td>Peer interaction with similar ability</td></tr><tr><td><strong>Mentorship</strong></td><td>Pairing with expert mentors in area of talent</td><td>Real-world application and inspiration</td></tr></table></div></div>
+<div class="mbox"><p><strong>Asynchronous Development:</strong> Gifted children often show uneven development — years ahead intellectually but at age-level emotionally or socially. This mismatch requires teachers' understanding and support, not dismissal.</p></div>`,
+'Policy & UDL':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>Legal Framework — India</div><div class="tbl-wrap"><table class="dtbl"><tr><th>Act</th><th>Year</th><th>Key Provisions</th></tr><tr><td><strong>Persons with Disabilities Act</strong></td><td>1995</td><td>3% reservation; free education up to age 18 for CWSN</td></tr><tr><td><strong>RTE Act</strong></td><td>2009</td><td>Free & compulsory education (6–14 yrs); inclusive provisions for CWSN</td></tr><tr><td><strong>RPWD Act</strong></td><td>2016</td><td>Expanded from 7 to 21 disability categories; 5% reservation</td></tr><tr><td><strong>NEP</strong></td><td>2020</td><td>Strong emphasis on inclusion, UDL, multiple assessment options</td></tr><tr><td><strong>Salamanca Statement</strong></td><td>1994</td><td>UNESCO commitment to inclusive education for all CWSN</td></tr></table></div></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Universal Design for Learning (UDL)</div><p style="margin-bottom:8px;">Framework for designing curriculum accessible to ALL learners from the start. Three principles:</p><div class="steps"><div class="step"><div class="snum" style="background:var(--mint)">1</div><div class="stext"><strong>Multiple Means of Representation (the "What"):</strong> Present information in visual, auditory, text, and hands-on formats.</div></div><div class="step"><div class="snum" style="background:var(--mint)">2</div><div class="stext"><strong>Multiple Means of Action & Expression (the "How"):</strong> Students demonstrate knowledge via oral, written, drawn, acted, or built responses.</div></div><div class="step"><div class="snum" style="background:var(--mint)">3</div><div class="stext"><strong>Multiple Means of Engagement (the "Why"):</strong> Offer choices, vary challenge, connect to student interests to sustain motivation.</div></div></div></div>
+<div class="hbox"><div class="hbox-title">⚡ Inclusive Ed Exam Points</div><ul><li><strong>CWSN</strong> = Children With Special Needs (preferred, non-stigmatizing term)</li><li><strong>IEP</strong> = Individual Education Program — customized plan for each CWSN student</li><li><strong>Integration ≠ Inclusion.</strong> Integration places CWSN in regular class with minimal change. Inclusion restructures the whole system to welcome all learners.</li><li><strong>LRE</strong> (Least Restrictive Environment) — full inclusion in regular classroom is the ideal goal</li></ul></div>`
+    }
+  }
+};
+
+const MORE_SECTIONS = ['personality','motivation','language','inclusive'];
+const MORE_LABELS = {personality:'👤 Personality',motivation:'🎯 Motivation',language:'💬 Language',inclusive:'🤝 Inclusive Ed'};
+
+let curSection = 'growth';
+let curTab = null;
+let moreOpen = false;
+
+function goSection(key, el){
+  // close more menu
+  closeMore();
+
+  // handle "more" button
+  if(key==='more'){
+    toggleMore(el);
+    return;
+  }
+
+  // deactivate all bottom nav items
+  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+
+  curSection = key;
+  const sec = SECTIONS[key];
+  curTab = sec.tabs[0];
+  renderTabs(sec.tabs);
+  renderContent();
+  document.getElementById('scroll-area').scrollTop=0;
+}
+
+function toggleMore(el){
+  moreOpen = !moreOpen;
+  const overlay = document.getElementById('more-overlay');
+  if(moreOpen){
+    document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
+    el.classList.add('active');
+    // build more items
+    const container = document.getElementById('more-items');
+    container.innerHTML = MORE_SECTIONS.map(k=>`
+      <div onclick="selectMore('${k}')" style="padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;font-size:14px;font-weight:500;color:var(--text);">
+        ${MORE_LABELS[k]}
+        <span style="margin-left:auto;color:var(--muted);font-size:11px;">${SECTIONS[k].badge}</span>
+      </div>
+    `).join('');
+    overlay.style.display='block';
+    // close if tap outside
+    setTimeout(()=>document.addEventListener('click', outsideClose, {once:true}),50);
+  } else {
+    overlay.style.display='none';
+  }
+}
+
+function outsideClose(e){
+  if(!document.getElementById('more-overlay').contains(e.target)){
+    closeMore();
+  }
+}
+
+function closeMore(){
+  moreOpen=false;
+  document.getElementById('more-overlay').style.display='none';
+}
+
+function selectMore(key){
+  closeMore();
+  curSection = key;
+  const sec = SECTIONS[key];
+  curTab = sec.tabs[0];
+  renderTabs(sec.tabs);
+  renderContent();
+  document.getElementById('scroll-area').scrollTop=0;
+  // update bottom nav — activate "more" button
+  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
+  const moreBtn = document.querySelector('.bnav-item:last-child');
+  moreBtn.classList.add('active');
+}
+
+function switchTab(tab, el){
+  curTab = tab;
+  document.querySelectorAll('.tpill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  renderContent();
+  document.getElementById('scroll-area').scrollTop=0;
+}
+
+function renderTabs(tabs){
+  document.getElementById('tab-strip').innerHTML = tabs.map(t=>
+    `<button class="tpill${t===curTab?' active':''}" onclick="switchTab('${t}',this)">${t}</button>`
+  ).join('');
+}
+
+function renderContent(){
+  const sec = SECTIONS[curSection];
+  const html = sec.content[curTab]||'<p>Content coming soon.</p>';
+  document.getElementById('scroll-area').innerHTML=`
+    <div class="sec-head">
+      <div class="sec-title">${sec.title}</div>
+      <div class="sec-crumb">${sec.badge} — ${curTab}</div>
+    </div>
+    ${html}
+  `;
+}
+
+// init
+window.onload=function(){
+  curTab = SECTIONS['growth'].tabs[0];
+  renderTabs(SECTIONS['growth'].tabs);
+  renderContent();
+};
+</script>
+</body>
+</html>
