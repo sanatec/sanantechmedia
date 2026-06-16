@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KTET മനഃശാസ്ത്ര നാവിഗേറ്റർ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:#0f2444; --navy-mid:#1a3a6b; --navy-light:#2856a3;
+  --saffron:#e8820c; --saffron-lt:#fdf0e0;
+  --mint:#0a8a6e; --mint-lt:#e4f7f3;
+  --violet:#5b3fa6; --violet-lt:#ede9f9;
+  --rose:#b93060; --rose-lt:#fce9ef;
+  --bg:#f2f4f9; --surface:#fff;
+  --text:#1a2437; --muted:#6b7a96; --border:#dde3ef;
+  --bnav-h:64px; --header-h:58px; --tabs-h:48px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;color:var(--text);background:var(--bg);}
+body{font-family:'Noto Sans Malayalam','Inter',sans-serif;overscroll-behavior:none;}
+
+/* HEADER */
+.hdr{position:fixed;top:0;left:0;right:0;height:var(--header-h);background:var(--navy);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:100;}
+.hdr-left{display:flex;align-items:center;gap:10px;}
+.hdr-logo{width:36px;height:36px;border-radius:9px;background:var(--saffron);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;}
+.hdr-title{font-size:14.5px;font-weight:700;color:#fff;line-height:1.2;}
+.hdr-sub{font-size:10px;color:rgba(255,255,255,.5);margin-top:1px;line-height:1.2;}
+.hdr-badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:3px 10px;font-size:10px;color:rgba(255,255,255,.75);font-weight:600;white-space:nowrap;}
+
+/* TAB STRIP */
+.tab-strip{position:fixed;top:var(--header-h);left:0;right:0;height:var(--tabs-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:5px;padding:0 12px;overflow-x:auto;z-index:90;scrollbar-width:none;}
+.tab-strip::-webkit-scrollbar{display:none;}
+.tpill{padding:7px 14px;border-radius:18px;font-size:12px;font-weight:600;white-space:nowrap;color:var(--muted);border:1.5px solid transparent;background:transparent;cursor:pointer;transition:all .15s;flex-shrink:0;font-family:'Noto Sans Malayalam','Inter',sans-serif;}
+.tpill.active{background:var(--navy);color:#fff;}
+
+/* SCROLL AREA */
+.scroll-area{position:fixed;top:calc(var(--header-h) + var(--tabs-h));left:0;right:0;bottom:var(--bnav-h);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 24px;}
+.scroll-area::-webkit-scrollbar{width:3px;}
+.scroll-area::-webkit-scrollbar-thumb{background:#c5cde0;border-radius:2px;}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;height:var(--bnav-h);background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:stretch;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all .15s;padding:6px 2px 4px;border:none;background:none;}
+.bi-icon{font-size:20px;line-height:1;}
+.bi-label{font-size:9px;font-weight:600;color:var(--muted);letter-spacing:0.1px;line-height:1.2;text-align:center;font-family:'Noto Sans Malayalam','Inter',sans-serif;}
+.bnav-item.active .bi-label{color:var(--saffron);}
+.bnav-dot{width:4px;height:4px;border-radius:50%;background:var(--saffron);margin-top:2px;visibility:hidden;}
+.bnav-item.active .bnav-dot{visibility:visible;}
+
+/* MORE OVERLAY */
+#more-overlay{display:none;position:fixed;bottom:calc(var(--bnav-h) + 8px);left:12px;right:12px;z-index:200;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.15);overflow:hidden;}
+.more-header{padding:10px 14px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;}
+.more-item{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--text);}
+.more-item:last-child{border-bottom:none;}
+.more-item-badge{margin-left:auto;color:var(--muted);font-size:10.5px;font-weight:500;}
+
+/* SECTION HEADER */
+.sec-head{margin-bottom:14px;}
+.sec-title{font-size:19px;font-weight:700;color:var(--navy);line-height:1.3;}
+.sec-crumb{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-top:3px;}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 15px;margin-bottom:12px;}
+.card.al{border-left:4px solid var(--navy-light);}
+.card.ao{border-left:4px solid var(--saffron);}
+.card.ag{border-left:4px solid var(--mint);}
+.card.av{border-left:4px solid var(--violet);}
+.card.ar{border-left:4px solid var(--rose);}
+.card-title{font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:8px;display:flex;align-items:center;gap:7px;line-height:1.4;}
+.cdot{width:6px;height:6px;border-radius:50%;background:var(--navy-light);flex-shrink:0;}
+.card p{font-size:12.5px;line-height:1.7;color:#3d4e68;}
+.card ul{margin-left:16px;margin-top:6px;}
+.card li{font-size:12.5px;line-height:1.7;color:#3d4e68;margin-bottom:5px;}
+.en{font-family:'Inter',sans-serif;font-size:.9em;color:var(--muted);}
+
+/* HIGHLIGHT BOX */
+.hbox{background:var(--saffron-lt);border:1px dashed var(--saffron);border-radius:12px;padding:13px 14px;margin-bottom:12px;}
+.hbox-title{font-size:11px;font-weight:700;color:var(--saffron);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+.hbox p,.hbox li{font-size:12px;color:#7a4500;line-height:1.65;}
+.hbox ul{margin-left:14px;margin-top:4px;}
+
+/* MINT / VIOLET BOXES */
+.mbox{background:var(--mint-lt);border:1px solid #a3d9cc;border-radius:12px;padding:12px 14px;margin-bottom:12px;}
+.mbox p{font-size:12px;color:#094f3f;line-height:1.65;}
+.mbox strong{color:#076050;}
+.vbox{background:var(--violet-lt);border:1px solid #c0aff0;border-radius:12px;padding:12px 14px;margin-bottom:12px;}
+.vbox p{font-size:12px;color:#3d2a7a;line-height:1.65;}
+
+/* TWO PANEL */
+.two-panel{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.tp-box{border-radius:10px;padding:11px;}
+.tp-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;}
+.tp-text{font-size:11.5px;line-height:1.6;}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;margin-top:8px;border-radius:8px;border:1px solid var(--border);}
+.dtbl{width:100%;border-collapse:collapse;font-size:11.5px;}
+.dtbl th{background:var(--bg);color:var(--navy);font-weight:700;text-align:left;padding:8px 10px;border-bottom:2px solid var(--border);font-size:10.5px;white-space:nowrap;}
+.dtbl td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.55;color:#3d4e68;}
+.dtbl tr:last-child td{border-bottom:none;}
+.dtbl tr:hover td{background:#fafbfd;}
+
+/* STEPS */
+.steps{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+.step{display:flex;align-items:flex-start;gap:11px;}
+.snum{width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;font-family:'Inter',sans-serif;}
+.stext{font-size:12.5px;color:#3d4e68;line-height:1.65;}
+.stext strong{color:var(--navy);}
+
+/* STAGE BLOCKS */
+.stage{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;}
+.sage{background:var(--navy);color:#fff;padding:5px 8px;border-radius:7px;font-size:9.5px;font-weight:700;white-space:nowrap;flex-shrink:0;text-align:center;line-height:1.5;font-family:'Inter',sans-serif;}
+.scontent h4{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:3px;line-height:1.4;}
+.scontent p{font-size:11.5px;color:var(--muted);line-height:1.6;}
+.stags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.stag{background:var(--saffron-lt);color:#8a4800;font-size:10px;font-weight:600;padding:2px 8px;border-radius:8px;font-family:'Inter',sans-serif;}
+
+/* KOHLBERG */
+.kl{border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+.kl-head{padding:10px 14px;font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:8px;line-height:1.4;}
+.kl-badge{font-size:9.5px;padding:2px 8px;border-radius:7px;font-weight:700;white-space:nowrap;font-family:'Inter',sans-serif;}
+.kl-body{padding:10px 14px;background:var(--surface);}
+.kl-stage{font-size:11.5px;color:#3d4e68;padding:6px 0;border-bottom:1px dashed var(--border);line-height:1.6;}
+.kl-stage:last-child{border-bottom:none;}
+.kl-stage strong{color:var(--navy);}
+
+/* HIERARCHY */
+.hier{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
+.hlvl{display:flex;align-items:center;gap:10px;border-radius:9px;padding:9px 12px;}
+.hnum{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;font-family:'Inter',sans-serif;}
+
+/* GRID 2 */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.mini-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;}
+.mc-icon{font-size:20px;margin-bottom:5px;}
+.mc-title{font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:3px;line-height:1.4;}
+.mc-text{font-size:10.5px;color:var(--muted);line-height:1.5;}
+
+/* COMPARE */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.cmp-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.cmp-head{padding:9px 12px;font-size:12px;font-weight:700;color:#fff;line-height:1.4;}
+.cmp-body{padding:10px 12px;}
+.cmp-row{font-size:11px;color:#3d4e68;margin-bottom:6px;line-height:1.5;}
+.cmp-row span{font-weight:700;color:var(--navy);}
+
+/* ZPD */
+.zpd{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
+.zpd-row{border-radius:9px;padding:10px 14px;text-align:center;}
+.zpd-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;opacity:.8;margin-bottom:2px;font-family:'Inter',sans-serif;}
+.zpd-main{font-size:12.5px;font-weight:700;line-height:1.4;}
+.zpd-sub{font-size:10.5px;opacity:.8;margin-top:2px;}
+
+/* FORMULA */
+.formula{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin:10px 0;text-align:center;}
+.formula-eq{font-size:20px;font-weight:700;color:var(--navy);font-family:'Inter',sans-serif;}
+.formula-note{font-size:10.5px;color:var(--muted);margin-top:4px;}
+
+/* PILLS */
+.pill-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.pill{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500;font-family:'Inter',sans-serif;}
+.pn{background:#e8eef8;color:var(--navy-mid);}
+.po{background:var(--saffron-lt);color:#8a4800;}
+.pg{background:var(--mint-lt);color:#095c4a;}
+.pv{background:var(--violet-lt);color:#3d2a7a;}
+
+/* QUOTE */
+.quote{border-left:3px solid var(--navy-light);padding:9px 13px;margin:10px 0;background:var(--bg);border-radius:0 9px 9px 0;}
+.quote p{font-size:12px;color:var(--navy);font-style:italic;line-height:1.6;}
+.quote-attr{font-size:10.5px;color:var(--muted);margin-top:3px;font-style:normal;font-weight:600;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-logo">Ψ</div>
+    <div>
+      <div class="hdr-title">KTET മനഃശാസ്ത്രം</div>
+      <div class="hdr-sub">ശിശുവികസനവും അദ്ധ്യാപന ശാസ്ത്രവും</div>
+    </div>
+  </div>
+  <div class="hdr-badge">2024–25</div>
+</div>
+
+<!-- TAB STRIP -->
+<div class="tab-strip" id="tab-strip"></div>
+
+<!-- SCROLL AREA -->
+<div class="scroll-area" id="scroll-area"></div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <button class="bnav-item active" onclick="goSection('growth',this)">
+    <div class="bi-icon">🌱</div>
+    <div class="bi-label">വളർച്ച</div>
+    <div class="bnav-dot"></div>
+  </button>
+  <button class="bnav-item" onclick="goSection('learning',this)">
+    <div class="bi-icon">⚙️</div>
+    <div class="bi-label">പഠന സിദ്ധാന്തം</div>
+    <div class="bnav-dot"></div>
+  </button>
+  <button class="bnav-item" onclick="goSection('devth',this)">
+    <div class="bi-icon">🧠</div>
+    <div class="bi-label">വികസന സിദ്ധാന്തം</div>
+    <div class="bnav-dot"></div>
+  </button>
+  <button class="bnav-item" onclick="goSection('intel',this)">
+    <div class="bi-icon">💡</div>
+    <div class="bi-label">ബുദ്ധി</div>
+    <div class="bnav-dot"></div>
+  </button>
+  <button class="bnav-item" onclick="goSection('more',this)">
+    <div class="bi-icon">☰</div>
+    <div class="bi-label">കൂടുതൽ</div>
+    <div class="bnav-dot"></div>
+  </button>
+</nav>
+
+<!-- MORE OVERLAY -->
+<div id="more-overlay">
+  <div class="more-header">കൂടുതൽ വിഭാഗങ്ങൾ</div>
+  <div id="more-items"></div>
+</div>
+
+<script>
+const SECTIONS = {
+
+/* ═══════════════════════════════════════════════
+   1. വളർച്ചയും വികസനവും (GROWTH & DEVELOPMENT)
+═══════════════════════════════════════════════ */
+growth:{
+  title:'മനുഷ്യ വളർച്ചയും വികസനവും (Human Growth & Development)',
+  badge:'വിഭാഗം 01',
+  tabs:['അവലോകനം','ഘട്ടങ്ങൾ','തത്ത്വങ്ങൾ','പരീക്ഷ ടിപ്സ്'],
+  content:{
+
+'അവലോകനം':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>വളർച്ച vs. വികസനം <span class="en">(Growth vs. Development)</span></div>
+  <div class="two-panel">
+    <div class="tp-box" style="background:#e8eef8;">
+      <div class="tp-lbl" style="color:var(--navy-mid);">വളർച്ച (GROWTH)</div>
+      <div class="tp-text" style="color:#1a3a6b;">അളക്കാവുന്ന ശാരീരിക മാറ്റങ്ങൾ — ഉയരം, ഭാരം, അവയവ വലുപ്പം. cm/kg-ൽ അളക്കാം. ശാരീരിക പക്വതയോടെ <strong>നിലയ്ക്കുന്നു</strong> (~20 വയസ്സ്).</div>
+    </div>
+    <div class="tp-box" style="background:var(--saffron-lt);">
+      <div class="tp-lbl" style="color:#8a4800;">വികസനം (DEVELOPMENT)</div>
+      <div class="tp-text" style="color:#7a3800;">ഗുണപരമായ മാറ്റങ്ങൾ — ബൗദ്ധിക, വൈകാരിക, സാമൂഹിക പക്വത. <strong>ആജീവനാന്തം</strong> — ഗർഭധാരണം മുതൽ വൃദ്ധാവസ്ഥ വരെ തുടരുന്നു.</div>
+    </div>
+  </div>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>വികസനത്തിന്റെ പ്രധാന സ്വഭാവങ്ങൾ <span class="en">(Key Characteristics)</span></div>
+  <ul>
+    <li><strong>തുടർച്ചയായത് <span class="en">(Continuous)</span>:</strong> വികസനം പെട്ടെന്ന് നിലയ്ക്കില്ല — ഒരു ജീവിതകാലം മുഴുവൻ ഒഴുകുന്ന പ്രക്രിയ.</li>
+    <li><strong>സമഗ്രം <span class="en">(Holistic)</span>:</strong> ശാരീരിക, ബൗദ്ധിക, വൈകാരിക, സാമൂഹിക മേഖലകൾ ഒരുമിച്ച് വികസിക്കുന്നു.</li>
+    <li><strong>ക്രമബദ്ധം <span class="en">(Sequential)</span>:</strong> എല്ലാ കുട്ടികളും ഒരേ ക്രമം പിന്തുടരുന്നു (ഇഴയൽ → നിൽക്കൽ → നടത്തം), വേഗം വ്യത്യസ്തമാണ്.</li>
+    <li><strong>വ്യക്തിഗത നിരക്ക് <span class="en">(Individual Rate)</span>:</strong> ഒരേ ക്രമം, വ്യത്യസ്ത വേഗം — ഇത് സ്വാഭാവികം.</li>
+    <li><strong>പൈതൃകം + പരിസ്ഥിതി <span class="en">(Heredity + Environment)</span>:</strong> ജീനും അനുഭവവും ഒരുമിച്ച് വികസനത്തെ രൂപപ്പെടുത്തുന്നു.</li>
+    <li><strong>പൊതുവിൽ നിന്ന് പ്രത്യേകതയിലേക്ക് <span class="en">(General to Specific)</span>:</strong> കൈ ആകെ ഇളക്കുന്നതിന് മുമ്പ്, വിരൽ കൃത്യമായി ചൂണ്ടുന്നു.</li>
+  </ul>
+</div>
+<div class="hbox">
+  <div class="hbox-title">⚡ പരീക്ഷയിൽ ഏറ്റവും കൂടുതൽ വരുന്നത്</div>
+  <ul>
+    <li>വളർച്ച = <strong>അളവ്</strong> <span class="en">(Quantitative)</span> | വികസനം = <strong>ഗുണം</strong> <span class="en">(Qualitative)</span></li>
+    <li>കൗമാരകാലത്തെ "കൊടുങ്കാറ്റും സമ്മർദ്ദവും" <span class="en">(Storm and Stress)</span> — <strong>G. Stanley Hall</strong> ആദ്യം ഉപയോഗിച്ചു</li>
+    <li>വളർച്ച <strong>നിലയ്ക്കുന്നു</strong>; വികസനം <strong>ആജീവനാന്തം</strong> തുടരുന്നു</li>
+  </ul>
+</div>`,
+
+'ഘട്ടങ്ങൾ':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>വികസന ഘട്ടങ്ങൾ <span class="en">(Developmental Stages)</span></div></div>
+
+<div class="stage">
+  <div class="sage">ജനനത്തിന്<br>മുമ്പ്<br>(Prenatal)</div>
+  <div class="scontent">
+    <h4>ജനനപൂർവ ഘട്ടം <span class="en">(Prenatal Period)</span></h4>
+    <p>ദ്രുതഗതിയിലുള്ള കോശ വിഭജനവും അവയവ രൂപീകരണവും. മൂന്ന് ഘട്ടങ്ങൾ: ജേം <span class="en">(Germinal 0–2 wks)</span>, ഭ്രൂണ <span class="en">(Embryonic 2–8 wks)</span>, ഗർഭസ്ഥ <span class="en">(Fetal 8 wks–birth)</span>. ടെരാടോജൻ <span class="en">(Teratogens)</span>-ന് ഏറ്റവും ദുർബലമായ ഘട്ടം.</p>
+    <div class="stags"><span class="stag">Germinal</span><span class="stag">Embryonic</span><span class="stag">Fetal</span><span class="stag">Teratogens</span></div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="sage">ശൈശവം<br>0–2 വയസ്സ്<br>(Infancy)</div>
+  <div class="scontent">
+    <h4>ശൈശവം — "നിർണ്ണായക കാലഘട്ടം" <span class="en">(Critical Period)</span></h4>
+    <p>ജനനത്തിനുശേഷം ഏറ്റവും വേഗത്തിൽ വളരുന്ന ഘട്ടം. ഇന്ദ്രിയ-ചലന ഏകോപനം <span class="en">(Sensorimotor Coordination)</span>, ആദ്യ വാക്കുകൾ, വസ്തു-സ്ഥിരത <span class="en">(Object Permanence)</span>. ബോൾബി <span class="en">(Bowlby)</span>-യുടെ അനുരക്തി <span class="en">(Attachment)</span> വികസിക്കുന്നു.</p>
+    <div class="stags"><span class="stag">Attachment</span><span class="stag">Object Permanence</span><span class="stag">Trust vs. Mistrust</span></div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="sage">പ്രാരംഭ<br>ബാല്യം<br>2–6 വ. (Early Childhood)</div>
+  <div class="scontent">
+    <h4>പ്രാരംഭ ബാല്യം — "കളിക്കാലം" <span class="en">(Toy Age)</span></h4>
+    <p>ഭാഷ പ്രഭഞ്ജനം <span class="en">(Language Explosion)</span>. കളി പ്രധാന പഠന മാർഗ്ഗം. ഫ്രോബൽ <span class="en">(Froebel)</span>: "കളി കുട്ടിയുടെ ജോലിയാണ്." ആത്മകേന്ദ്രിതത്വം <span class="en">(Egocentrism)</span>, അനുകരണം <span class="en">(Imitation)</span> ആധിപത്യം. "ഭാവനയുടെ സ്വർണ്ണ കാലം."</p>
+    <div class="stags"><span class="stag">Egocentrism</span><span class="stag">Symbolic Play</span><span class="stag">Language Burst</span><span class="stag">Toy Age</span></div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="sage">പ്രൗഢ<br>ബാല്യം<br>6–12 വ. (Later Childhood)</div>
+  <div class="scontent">
+    <h4>പിൽക്കാല ബാല്യം — "കൂട്ടുകാരുടെ കാലം" <span class="en">(Gang Age)</span></h4>
+    <p>സൗഹൃദ ഗ്രൂപ്പ് <span class="en">(Peer Group)</span> കേന്ദ്രമാകുന്നു. കോൺക്രീറ്റ് വസ്തുക്കളിൽ യുക്തിചിന്ത. പിയഗേ <span class="en">(Piaget)</span>: കോൺക്രീറ്റ് ഓപ്പറേഷനൽ <span class="en">(Concrete Operational)</span>. സംരക്ഷണ ക്ഷമത <span class="en">(Conservation)</span> ആർജ്ജിക്കുന്നു.</p>
+    <div class="stags"><span class="stag">Gang Age</span><span class="stag">Conservation</span><span class="stag">Peer Groups</span><span class="stag">Industry vs. Inferiority</span></div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="sage" style="background:var(--rose)">കൗമാരം<br>12–18 വ.<br>(Adolescence)</div>
+  <div class="scontent">
+    <h4>കൗമാരം — "കൊടുങ്കാറ്റും സമ്മർദ്ദവും" <span class="en">(Storm & Stress)</span></h4>
+    <p>ഹോർമോൺ മാറ്റങ്ങൾ, ഐഡന്റിറ്റി രൂപീകരണം <span class="en">(Identity Formation)</span>. അമൂർത്ത ചിന്ത <span class="en">(Abstract Thinking)</span> ഉദ്ഭവിക്കുന്നു. G. Stanley Hall ഈ ഘട്ടത്തെ "Sturm und Drang" എന്ന് വിളിച്ചു.</p>
+    <div class="stags"><span class="stag">Storm & Stress</span><span class="stag">Identity Formation</span><span class="stag">Abstract Thinking</span><span class="stag">Hall</span></div>
+  </div>
+</div>`,
+
+'തത്ത്വങ്ങൾ':`
+<div class="card ag">
+  <div class="card-title"><span class="cdot" style="background:var(--mint)"></span>ദിശാ നിയമങ്ങൾ <span class="en">(Laws of Directional Development)</span></div>
+  <div class="two-panel">
+    <div class="tp-box" style="background:var(--mint-lt);border:1px solid #a3d9cc;">
+      <div class="tp-lbl" style="color:var(--mint);">CEPHALOCAUDAL നിയമം</div>
+      <div class="tp-text" style="color:#094f3f;"><strong>തല മുതൽ കാൽ വരെ.</strong> വികസനം തലയിൽ നിന്ന് കാലുകളിലേക്ക് നടക്കുന്നു. തലനിയന്ത്രണം ആദ്യം, പിന്നെ ഉടൽ, ശേഷം കാലുകൾ.</div>
+    </div>
+    <div class="tp-box" style="background:var(--rose-lt);border:1px solid #f0aac2;">
+      <div class="tp-lbl" style="color:var(--rose);">PROXIMODISTAL നിയമം</div>
+      <div class="tp-text" style="color:#7a1e3e;"><strong>കേന്ദ്രം മുതൽ അറ്റം വരെ.</strong> നടുഭാഗത്ത് നിന്ന് അംഗത്തുമ്പ് വരെ. കൈ പേശി ആദ്യം, വിരൽ ചലനം പിന്നീട്.</div>
+    </div>
+  </div>
+</div>
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>മറ്റ് സർവ്വകാലിക തത്ത്വങ്ങൾ <span class="en">(Universal Principles)</span></div>
+  <div class="steps">
+    <div class="step"><div class="snum">1</div><div class="stext"><strong>പൊതുവിൽ നിന്ന് പ്രത്യേകതയിലേക്ക് <span class="en">(General → Specific)</span>:</strong> കൈ മൊത്തം ചലിക്കുന്നതിന് മുമ്പ്, കൃത്യമായ വിരൽ ചൂണ്ടൽ.</div></div>
+    <div class="step"><div class="snum">2</div><div class="stext"><strong>ഒരേ ക്രമം, വ്യത്യസ്ത വേഗം <span class="en">(Uniform Pattern, Variable Rate)</span>:</strong> ഓരോ കുട്ടിയും സ്വന്തം വേഗതയിൽ വികസിക്കുന്നു.</div></div>
+    <div class="step"><div class="snum">3</div><div class="stext"><strong>നിർണ്ണായക കാലഘട്ടം <span class="en">(Critical Periods)</span>:</strong> ഭാഷ 7 വയസ്സിനുള്ളിൽ ഏറ്റവും നന്നായി ആർജ്ജിക്കാം — ഒരിക്കൽ ജനാലയടഞ്ഞാൽ ബുദ്ധിമുട്ടായിത്തീരും.</div></div>
+    <div class="step"><div class="snum">4</div><div class="stext"><strong>പൈതൃകം × പരിസ്ഥിതി <span class="en">(Heredity × Environment)</span>:</strong> ജീനുകൾ പരിധി നിശ്ചയിക്കുന്നു; അനുഭവം ആ പരിധിക്കുള്ളിൽ വ്യക്തിയെ ഉറപ്പിക്കുന്നു.</div></div>
+    <div class="step"><div class="snum">5</div><div class="stext"><strong>ഡൊമൈൻ പരസ്പര ബന്ധം <span class="en">(Correlation of Domains)</span>:</strong> ശാരീരിക, ബൗദ്ധിക, സാമൂഹിക — ഒരു മേഖലയിലെ കാലതാമസം മറ്റുള്ളവരെ ബാധിക്കും.</div></div>
+  </div>
+</div>`,
+
+'പരീക്ഷ ടിപ്സ്':`
+<div class="hbox">
+  <div class="hbox-title">🎯 KTET-ൽ ഏറ്റവും കൂടുതൽ ആവർത്തിക്കുന്ന ചോദ്യങ്ങൾ</div>
+  <ul>
+    <li><strong>G. Stanley Hall</strong> → കൗമാരം = "Storm and Stress"</li>
+    <li><strong>Cephalocaudal</strong> = തലമുതൽ കാൽ | <strong>Proximodistal</strong> = കേന്ദ്രം മുതൽ അറ്റം</li>
+    <li>പ്രാരംഭ ബാല്യം (2–6) = "Toy Age" / "Pre-school Age"</li>
+    <li>പ്രൗഢ ബാല്യം (6–12) = "Gang Age" / "School Age"</li>
+    <li>വളർച്ച <strong>നിലയ്ക്കുന്നു</strong>; വികസനം <strong>ആജീവനാന്തം</strong></li>
+  </ul>
+</div>
+<div class="card av">
+  <div class="card-title"><span class="cdot" style="background:var(--violet)"></span>സാധാരണ MCQ കെണികൾ <span class="en">(Common MCQ Traps)</span></div>
+  <div class="tbl-wrap"><table class="dtbl">
+    <tr><th>തെറ്റായ ഓപ്ഷൻ</th><th>ശരിയായ ഉത്തരം</th></tr>
+    <tr><td>വികസനം മുതിർച്ചയിൽ നിലയ്ക്കുന്നു</td><td>വികസനം ആജീവനാന്തം — മരണം വരെ നിലയ്ക്കില്ല</td></tr>
+    <tr><td>എല്ലാ കുട്ടികളും ഒരേ വേഗതയിൽ</td><td>ക്രമം ഒന്നാണ്; RATE വ്യക്തിഗതം</td></tr>
+    <tr><td>Proximodistal = തലമുതൽ കാൽ</td><td>Proximodistal = കേന്ദ്രം മുതൽ അറ്റം (Cephalocaudal ആണ് തലമുതൽ)</td></tr>
+    <tr><td>കൗമാരം സമ്മർദ്ദ രഹിതം</td><td>Hall ഇതിനെ "Storm and Stress" എന്ന് വ്യക്തമായി വിളിച്ചു</td></tr>
+  </table></div>
+</div>
+<div class="mbox"><p><strong>HALG ഓർക്കൂ:</strong> <strong>H</strong>eredity (പൈതൃകം), <strong>A</strong>djustment (ക്രമീകരണം), <strong>L</strong>earning (പഠനം), <strong>G</strong>rowth (വളർച്ച) — ശിശുവികസനത്തെ സ്വാധീനിക്കുന്ന നാല് ഘടകങ്ങൾ.</p></div>`
+  }
+},
+
+/* ═══════════════════════════════════════════════
+   2. പഠന സിദ്ധാന്തങ്ങൾ (LEARNING THEORIES)
+═══════════════════════════════════════════════ */
+learning:{
+  title:'പഠന സിദ്ധാന്തങ്ങൾ (Learning Theories)',
+  badge:'വിഭാഗം 02',
+  tabs:['പാവ്‌ലോവ്','സ്‌കിന്നർ','തോൺഡൈക്ക്','ബാൻഡുറ','ഗെസ്റ്റാൾട്ട്','നിർമ്മാണവാദം'],
+  content:{
+
+'പാവ്‌ലോവ്':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>ഇവാൻ പാവ്‌ലോവ് — ക്ലാസ്സിക്കൽ കണ്ടീഷനിംഗ് <span class="en">(Classical Conditioning)</span></div>
+  <p>ഉദ്ദീപകങ്ങൾ തമ്മിലുള്ള <strong>അനുബന്ധത്തിലൂടെ</strong> <span class="en">(Association)</span> പഠനം നടക്കുന്നു. ഒരു നിഷ്പക്ഷ ഉദ്ദീപകം <span class="en">(Neutral Stimulus)</span>, ഒരു സ്വാഭാവിക ഉദ്ദീപകവുമായി <span class="en">(Unconditioned Stimulus)</span> ആവർത്തിച്ച് ജോടി ചേർക്കുമ്പോൾ, ഒടുവിൽ അതേ പ്രതികരണം ഉണ്ടാക്കുന്നു.</p>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>നായ പരീക്ഷണം — ഘട്ടം ഘട്ടമായി <span class="en">(Dog Experiment)</span></div>
+  <div class="steps">
+    <div class="step"><div class="snum" style="background:var(--mint)">1</div><div class="stext"><strong>കണ്ടീഷനിംഗിന് മുമ്പ്:</strong> ഭക്ഷണം (UCS) → ഉമിനീർ (UCR). മണി മാത്രം → പ്രതികരണം ഇല്ല.</div></div>
+    <div class="step"><div class="snum" style="background:var(--saffron)">2</div><div class="stext"><strong>കണ്ടീഷനിംഗ് സമയത്ത്:</strong> മണി (NS) + ഭക്ഷണം (UCS) ആവർത്തിച്ച് ഒരുമിച്ച് നൽകുന്നു.</div></div>
+    <div class="step"><div class="snum" style="background:var(--rose)">3</div><div class="stext"><strong>കണ്ടീഷനിംഗ് ശേഷം:</strong> മണി (CS) മാത്രം → ഉമിനീർ (CR). <strong>പഠനം നടന്നു!</strong></div></div>
+  </div>
+</div>
+<div class="card ag">
+  <div class="card-title"><span class="cdot" style="background:var(--mint)"></span>പ്രധാന പദങ്ങൾ <span class="en">(Key Terminology)</span></div>
+  <div class="tbl-wrap"><table class="dtbl">
+    <tr><th>പദം</th><th>അർത്ഥം</th><th>ഉദാഹരണം</th></tr>
+    <tr><td><strong>UCS</strong></td><td>സ്വാഭാവിക ഉദ്ദീപകം (Unconditioned Stimulus)</td><td>ഭക്ഷണം</td></tr>
+    <tr><td><strong>UCR</strong></td><td>സ്വാഭാവിക പ്രതികരണം (Unconditioned Response)</td><td>ഭക്ഷണം കണ്ടുള്ള ഉമിനീർ</td></tr>
+    <tr><td><strong>CS</strong></td><td>പഠിച്ചെടുത്ത ഉദ്ദീപകം (Conditioned Stimulus)</td><td>മണിശബ്ദം</td></tr>
+    <tr><td><strong>CR</strong></td><td>പഠിച്ചെടുത്ത പ്രതികരണം (Conditioned Response)</td><td>മണി കേട്ടുള്ള ഉമിനീർ</td></tr>
+    <tr><td><strong>Extinction</strong></td><td>CS-നൊപ്പം UCS ഇല്ലാതാകുമ്പോൾ CR ദുർബലമാകുന്നു</td><td>ഭക്ഷണം ഇല്ലാതെ മണി → ഉമിനീർ നിൽക്കുന്നു</td></tr>
+    <tr><td><strong>Generalization</strong></td><td>സമാന ഉദ്ദീപകങ്ങളും CR ഉണ്ടാക്കുന്നു</td><td>സമാന മണിശബ്ദങ്ങൾ</td></tr>
+    <tr><td><strong>Discrimination</strong></td><td>നിർദ്ദിഷ്ട CS-നു മാത്രം പ്രതികരിക്കൽ</td><td>ഒരു പ്രത്യേക മണിക്ക് മാത്രം</td></tr>
+  </table></div>
+</div>
+<div class="mbox"><p><strong>ക്ലാസ്സ്മുറി പ്രയോഗം:</strong> പ്രശംസ (UCS) → സന്തോഷം (UCR). ക്ലാസ്സ്മുറി (CS) → ഒടുവിൽ സന്തോഷം (CR). ചൂടുള്ള, പ്രോത്സാഹജനകമായ ക്ലാസ്മുറി അനുകൂലമായ CS ആകുന്നു.</p></div>`,
+
+'സ്‌കിന്നർ':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>B.F. സ്‌കിന്നർ — ഓപ്പറന്റ് കണ്ടീഷനിംഗ് <span class="en">(Operant Conditioning, 1938)</span></div>
+  <p>പ്രവർത്തനം <strong>അതിന്റെ ഫലത്താൽ</strong> നിയന്ത്രിക്കപ്പെടുന്നു. പ്രവർത്തനത്തിന് <em>ശേഷം</em> സംഭവിക്കുന്നത് അത് ആവർത്തിക്കുമോ ഇല്ലയോ എന്ന് നിർണ്ണയിക്കുന്നു.</p>
+</div>
+<div class="card ag">
+  <div class="card-title"><span class="cdot" style="background:var(--mint)"></span>നാല് കണ്ടിൻജൻസികൾ <span class="en">(Four Contingencies)</span></div>
+  <div class="tbl-wrap"><table class="dtbl">
+    <tr><th>തരം</th><th>പ്രക്രിയ</th><th>ഫലം</th><th>ഉദാഹരണം</th></tr>
+    <tr><td><strong>Positive Reinforcement</strong></td><td>സുഖകരമായ ഉദ്ദീപകം ചേർക്കൽ</td><td>പ്രവർത്തനം ↑</td><td>ഹോം‌വർക്കിന് നക്ഷത്ര സ്‌റ്റിക്കർ</td></tr>
+    <tr><td><strong>Negative Reinforcement</strong></td><td>അസ്വാദ്യകരമായ ഉദ്ദീപകം നീക്കൽ</td><td>പ്രവർത്തനം ↑</td><td>ജോലി തീർത്താൽ ശല്യം നിർത്തൽ</td></tr>
+    <tr><td><strong>Positive Punishment</strong></td><td>അസ്വാദ്യകരമായ ഉദ്ദീപകം ചേർക്കൽ</td><td>പ്രവർത്തനം ↓</td><td>തെറ്റിന് അധിക ജോലി</td></tr>
+    <tr><td><strong>Negative Punishment</strong></td><td>സുഖകരമായ ഉദ്ദീപകം നീക്കൽ</td><td>പ്രവർത്തനം ↓</td><td>കലഹത്തിന് Play Time നഷ്ടം</td></tr>
+  </table></div>
+</div>
+<div class="card av">
+  <div class="card-title"><span class="cdot" style="background:var(--violet)"></span>ശക്തിപ്പെടുത്തൽ ഷെഡ്യൂളുകൾ <span class="en">(Schedules of Reinforcement)</span></div>
+  <ul>
+    <li><strong>Fixed Ratio (FR):</strong> നിശ്ചിത എണ്ണം പ്രതികരണങ്ങൾക്ക് ശേഷം ഇനാം. ഉയർന്ന, സ്ഥിരമായ നിരക്ക്.</li>
+    <li><strong>Variable Ratio (VR):</strong> അനിശ്ചിത എണ്ണത്തിന് ശേഷം ഇനാം. <strong>Extinction-ന് ഏറ്റവും പ്രതിരോധി</strong> (ചൂതാട്ടം പോലെ).</li>
+    <li><strong>Fixed Interval (FI):</strong> നിശ്ചിത സമയത്തിന് ശേഷം ഇനാം (ആഴ്ചടെസ്റ്റ്). ഡെഡ്‌ലൈൻ അടുക്കുമ്പോൾ ശ്രമം ഉയരുന്നു.</li>
+    <li><strong>Variable Interval (VI):</strong> അനിശ്ചിത സമയ ഇടവേളകൾ (Pop Quiz). സ്ഥിരമായ, മിതമായ പ്രതികരണം.</li>
+  </ul>
+</div>
+<div class="hbox">
+  <div class="hbox-title">⚡ ഏറ്റവും പ്രധാന വ്യത്യാസം</div>
+  <p><strong>Negative Reinforcement ≠ Punishment.</strong> Neg. Reinforcement <em>വർദ്ധിപ്പിക്കുന്നു</em> (വേദന ഒഴിവാകൽ = ആശ്വാസം = പ്രചോദനം). Punishment <em>കുറയ്ക്കുന്നു</em>. KTET-ൽ ഏറ്റവും തെറ്റിദ്ധരിക്കപ്പെടുന്ന ആശയം!</p>
+</div>`,
+
+'തോൺഡൈക്ക്':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>തോൺഡൈക്ക് — ശ്രമ-തെറ്റ് പഠനം <span class="en">(Trial & Error Learning, 1898)</span></div>
+  <p>വിശന്ന പൂച്ചയെ "Puzzle Box"-ൽ വെച്ചു. ആകസ്‌മികമായി ലിവർ അമർത്തി → വാതിൽ തുറന്നു. ആവർത്തിക്കുമ്പോൾ, ക്രമേണ S-R <span class="en">(Stimulus-Response)</span> ബന്ധം ഉറക്കുന്നു.</p>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>മൂന്ന് പ്രധാന നിയമങ്ങൾ <span class="en">(Three Primary Laws)</span></div>
+  <div class="steps">
+    <div class="step"><div class="snum">1</div><div class="stext"><strong>തയ്യാറെടുപ്പ് നിയമം <span class="en">(Law of Readiness)</span>:</strong> പഠനം ഫലപ്രദമാകുന്നത് പഠിക്കുന്നവൻ തയ്യാറാകുമ്പോൾ മാത്രം. നിർബന്ധിച്ചു പഠിപ്പിക്കൽ നിരാശ ഉണ്ടാക്കും.</div></div>
+    <div class="step"><div class="snum">2</div><div class="stext"><strong>അഭ്യാസ നിയമം <span class="en">(Law of Exercise)</span>:</strong> ഉപയോഗം ബന്ധം ശക്തിപ്പെടുത്തുന്നു; ഉപയോഗമില്ലായ്‌മ ദുർബലമാക്കുന്നു. ആവർത്തന പരിശീലനം അത്യാവശ്യം.</div></div>
+    <div class="step"><div class="snum">3</div><div class="stext"><strong>ഫലം-നിയമം <span class="en">(Law of Effect)</span>:</strong> സംതൃപ്‌തിയിൽ തീരുന്ന പ്രതികരണങ്ങൾ ആവർത്തിക്കും; അസ്വസ്ഥതയിൽ തീരുന്നവ ഒഴിവാക്കും. ഉടൻ ഫീഡ്‌ബാക്ക് <span class="en">(Immediate Feedback)</span> അത്യന്താപേക്ഷിതം.</div></div>
+  </div>
+</div>
+<div class="card ag">
+  <div class="card-title"><span class="cdot" style="background:var(--mint)"></span>ദ്വിതീയ നിയമങ്ങൾ <span class="en">(Secondary Laws)</span></div>
+  <ul>
+    <li><strong>Multiple Response:</strong> ജീവി ഒന്ന് ഫലിക്കുന്നത് വരെ പല പ്രതികരണങ്ങൾ ശ്രമിക്കുന്നു.</li>
+    <li><strong>Set / Attitude:</strong> മുൻ മനോഭാവം പഠന സന്നദ്ധതയെ ബാധിക്കുന്നു.</li>
+    <li><strong>Assimilation / Analogy:</strong> പഴയ സാഹചര്യവുമായുള്ള സാദൃശ്യം ഉപയോഗിച്ച് പുതിയ സാഹചര്യം കൈകാര്യം ചെയ്യുന്നു.</li>
+  </ul>
+</div>`,
+
+'ബാൻഡുറ':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>ആൽബർട്ട് ബാൻഡുറ — സാമൂഹിക പഠന സിദ്ധാന്തം <span class="en">(Social Learning Theory, 1961)</span></div>
+  <p>നേരിട്ടുള്ള ശക്തിപ്പെടുത്തൽ <span class="en">(Direct Reinforcement)</span> ഇല്ലാതെ <strong>നിരീക്ഷണത്തിലൂടെ</strong> <span class="en">(Observation / Modeling)</span> പഠിക്കാം. പെരുമാറ്റ ശാസ്ത്രവും <span class="en">(Behaviorism)</span> ബോധ മനഃശാസ്ത്രവും <span class="en">(Cognitive Psychology)</span> ഒന്നിപ്പിക്കുന്നു.</p>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>ബോബോ ഡോൾ പരീക്ഷണം <span class="en">(Bobo Doll Experiment, 1961)</span></div>
+  <p>കുട്ടികൾ ഒരു മുതിർന്നയാൾ ഒരു inflatable Bobo Doll-ൽ ആക്രമണം കാണിക്കുന്നത് കണ്ടു. ഇനാം ലഭിക്കാതെ തന്നെ കുട്ടികൾ ആ ആക്രമണം അനുകരിച്ചു — ഇത് <strong>Vicarious Reinforcement</strong> തെളിയിക്കുന്നു: മറ്റുള്ളവരുടെ ഫലം നിരീക്ഷിച്ചും നാം പഠിക്കുന്നു.</p>
+</div>
+<div class="card av">
+  <div class="card-title"><span class="cdot" style="background:var(--violet)"></span>നിരീക്ഷണ പഠനത്തിന്റെ 4 ഘട്ടങ്ങൾ <span class="en">(4 Processes)</span></div>
+  <div class="steps">
+    <div class="step"><div class="snum" style="background:var(--violet)">1</div><div class="stext"><strong>ശ്രദ്ധ <span class="en">(Attention)</span>:</strong> നിരീക്ഷകൻ മോഡലിൽ ശ്രദ്ധ കേന്ദ്രീകരിക്കണം. മോഡലിന്റെ ആകർഷകത്വം, പ്രശസ്‌തി ഇതിനെ സ്വാധീനിക്കുന്നു.</div></div>
+    <div class="step"><div class="snum" style="background:var(--violet)">2</div><div class="stext"><strong>ധാരണ <span class="en">(Retention)</span>:</strong> നിരീക്ഷിച്ച പ്രവർത്തനം ദീർഘകാല സ്‌മരണയിൽ <span class="en">(Long-term Memory)</span> സൂക്ഷിക്കണം.</div></div>
+    <div class="step"><div class="snum" style="background:var(--violet)">3</div><div class="stext"><strong>പുനരുൽ‌പാദനം <span class="en">(Reproduction)</span>:</strong> നിരീക്ഷകൻ ആ പ്രവർത്തനം ആവർത്തിക്കാനുള്ള ശാരീരിക-ബൗദ്ധിക ശേഷി ഉണ്ടായിരിക്കണം.</div></div>
+    <div class="step"><div class="snum" style="background:var(--violet)">4</div><div class="stext"><strong>പ്രചോദനം <span class="en">(Motivation)</span>:</strong> ആ പ്രവർത്തനം ചെയ്യണമെന്ന് ആഗ്രഹിക്കണം — നേരിട്ടോ Vicarious-ആയോ ഉള്ള ശക്തിപ്പെടുത്തൽ ഇതിനെ നിർണ്ണയിക്കുന്നു.</div></div>
+  </div>
+</div>
+<div class="card ag">
+  <div class="card-title"><span class="cdot" style="background:var(--mint)"></span>ആത്മ-ഫലപ്രാപ്‌തി <span class="en">(Self-Efficacy)</span> — ബാൻഡുറയുടെ ഏറ്റവും പ്രധാന ആശയം</div>
+  <p style="margin-bottom:6px;">ഒരു നിർദ്ദിഷ്ട ജോലി ചെയ്യാൻ <strong>സ്വന്തം കഴിവിൽ ഉള്ള വിശ്വാസം</strong>. ഉയർന്ന Self-Efficacy → കൂടുതൽ ശ്രമം, നിരന്തരത, നേട്ടം. നാല് ഉറവിടങ്ങൾ:</p>
+  <ul>
+    <li><strong>Mastery Experiences:</strong> മുൻ വിജയങ്ങൾ (ഏറ്റവും ശക്തമായ ഉറവിടം)</li>
+    <li><strong>Vicarious Experiences:</strong> സ്വന്തം പോലുള്ളവരുടെ വിജയം കാണൽ</li>
+    <li><strong>Social Persuasion:</strong> അദ്ധ്യാപകൻ/രക്ഷകർത്താവിൻ്റെ പ്രോത്സാഹനം</li>
+    <li><strong>Physiological States:</strong> ആശ്വസ്ത, ശാന്ത അവസ്ഥ Self-Efficacy ഉയർത്തുന്നു</li>
+  </ul>
+</div>`,
+
+'ഗെസ്റ്റാൾട്ട്':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>ഗെസ്റ്റാൾട്ട് / ഉൾക്കാഴ്ച പഠനം <span class="en">(Gestalt / Insight Learning)</span> — കോ​ഹ്‌ലർ <span class="en">(Köhler, 1917)</span></div>
+  <p>പഠനം ക്രമേണ അല്ല — <strong>"ആഹാ!" നിമിഷം</strong> വഴി പൂർണ്ണ ചിത്രം ഒറ്റ നോക്കിൽ മനസ്സിലാകുന്നു. <strong>കേന്ദ്ര ആശയം: "മൊത്തം ഭാഗങ്ങളുടെ തുകയേക്കാൾ വലുതാണ്."</strong> <span class="en">(The whole is greater than the sum of its parts)</span></p>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>സുൽത്താൻ — ചിമ്പൻ‌സി പരീക്ഷണം <span class="en">(Sultan Experiment)</span></div>
+  <p>സുൽത്താനെ (ഒരു ചിമ്പ്) ഉയരത്തിൽ തൂക്കിയ വാഴപ്പഴവും, തടിപ്പെട്ടികകളും, ദണ്ഡുകളും ഉള്ള കൂട്ടിലിട്ടു. നേരിട്ടുള്ള ശ്രമം പരാജയപ്പെട്ടതിനുശേഷം, ഒരു നിമിഷം ശാന്തമായി ഇരുന്നു — <strong>പെട്ടെന്ന്</strong> പെട്ടിക്കൂട്ടി ദണ്ഡ് ഉപയോഗിച്ച് വാഴപ്പഴം എടുത്തു. ശ്രമ-തെറ്റ് ഇല്ല: ശുദ്ധ ഉൾക്കാഴ്ച!</p>
+</div>
+<div class="card ag">
+  <div class="card-title"><span class="cdot" style="background:var(--mint)"></span>ഉൾക്കാഴ്ച പഠനത്തിന്റെ 4 ഘട്ടങ്ങൾ <span class="en">(Stages)</span></div>
+  <div class="steps">
+    <div class="step"><div class="snum">1</div><div class="stext"><strong>തയ്യാറെടുപ്പ് <span class="en">(Preparation)</span>:</strong> വിവരം ശേഖരിക്കൽ; ആദ്യ ശ്രമങ്ങൾ പരാജയപ്പെടുന്നു.</div></div>
+    <div class="step"><div class="snum">2</div><div class="stext"><strong>ഇൻകുബേഷൻ <span class="en">(Incubation)</span>:</strong> വിശ്രമം — അബോധ മനസ്സ് <span class="en">(Unconscious)</span> സംയോജനങ്ങൾ ഉണ്ടാക്കുന്നു.</div></div>
+    <div class="step"><div class="snum">3</div><div class="stext"><strong>ഉൾക്കൊൾ‌ക്ക <span class="en">(Illumination)</span>:</strong> "ആഹാ!" — സൃഷ്ടിപരമായ ആശയം ബോധ മനസ്സിൽ തളിർക്കുന്നു.</div></div>
+    <div class="step"><div class="snum">4</div><div class="stext"><strong>പരിശോധന <span class="en">(Verification)</span>:</strong> പരിഹാരം പ്രയോഗിച്ചു ശ്ശ്ക്കൽ.</div></div>
+  </div>
+</div>
+<div class="hbox"><div class="hbox-title">⚡ ഉൾക്കാഴ്ച vs. ശ്രമ-തെറ്റ്</div><p><strong>തോൺഡൈക്ക്:</strong> ക്രമേണ, ക്രമരഹിത ശ്രമങ്ങൾ. <strong>കോഹ്‌ലർ:</strong> പ്രശ്നക്ഷേത്രത്തിന്റെ <span class="en">(Problem Field)</span> പെട്ടെന്നുള്ള പുനർഘടന. KTET ഇവ തമ്മിൽ ഉള്ള വ്യത്യാസം ഇടക്കിടെ ചോദിക്കുന്നു!</p></div>`,
+
+'നിർമ്മാണവാദം':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>നിർമ്മാണവാദം <span class="en">(Constructivism)</span> — കേന്ദ്ര തത്ത്വശാസ്ത്രം</div>
+  <p>പഠിക്കുന്നവർ <strong>സജീവ അറിവ് നിർമ്മാതാക്കൾ</strong> ആണ്, നിഷ്ക്രിയ ഗ്രഹീതാക്കൾ അല്ല. അനുഭവത്തിലൂടെയും ചിന്തിക്കലിലൂടെയും ധാരണ നിർമ്മിക്കപ്പെടുന്നു.</p>
+</div>
+<div class="cmp">
+  <div class="cmp-card">
+    <div class="cmp-head" style="background:var(--navy)">🧠 പിയഗേ (Piaget)<br><small style="font-weight:400;font-size:10px;">Cognitive Constructivism</small></div>
+    <div class="cmp-body">
+      <div class="cmp-row"><span>ശ്രദ്ധ:</span> വ്യക്തി, ശാരീരിക ലോകവുമായി ഇടപഴകൽ</div>
+      <div class="cmp-row"><span>പ്രധാനം:</span> Schema, Assimilation, Accommodation</div>
+      <div class="cmp-row"><span>സാമൂഹ്യ പങ്ക്:</span> ദ്വിതീയം</div>
+    </div>
+  </div>
+  <div class="cmp-card">
+    <div class="cmp-head" style="background:var(--mint)">🤝 വൈഗോത്‌സ്‌കി (Vygotsky)<br><small style="font-weight:400;font-size:10px;">Social Constructivism</small></div>
+    <div class="cmp-body">
+      <div class="cmp-row"><span>ശ്രദ്ധ:</span> സാമൂഹ്യ ഇടപഴകൽ, സഹകരണം</div>
+      <div class="cmp-row"><span>പ്രധാനം:</span> ZPD, Scaffolding, MKO</div>
+      <div class="cmp-row"><span>സാമൂഹ്യ പങ്ക്:</span> പ്രാഥമികം</div>
+    </div>
+  </div>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>മറ്റ് നിർമ്മാണവാദ ചിന്തകർ</div>
+  <ul>
+    <li><strong>Jerome Bruner:</strong> ഡിസ്‌കവറി ലേണിംഗ് <span class="en">(Discovery Learning)</span> — Spiral Curriculum — ക്രമേണ ആഴത്തിൽ വിഷയങ്ങൾ ആവർത്തിക്കൽ.</li>
+    <li><strong>John Dewey:</strong> "Learning by Doing" — ചെയ്‌തു പഠിക്കൽ. ശിശു-കേന്ദ്രിത <span class="en">(Child-centred)</span> സമീപനം.</li>
+    <li><strong>Maria Montessori:</strong> കുട്ടിക്ക് സ്വാഭാവിക പഠന ഇഷ്‌ടം ഉണ്ട്; തയ്യാറാക്കിയ പരിസ്ഥിതി <span class="en">(Prepared Environment)</span> സ്വയം-നിർദ്ദേശ പഠനം സാദ്ധ്യമാക്കുന്നു.</li>
+  </ul>
+</div>`
+  }
+},
+
+/* ═══════════════════════════════════════════════
+   3. വികസന സിദ്ധാന്തങ്ങൾ (DEVELOPMENTAL THEORIES)
+═══════════════════════════════════════════════ */
+devth:{
+  title:'വികസന സിദ്ധാന്തങ്ങൾ (Developmental Theories)',
+  badge:'വിഭാഗം 03',
+  tabs:['പിയഗേ','വൈഗോത്‌സ്‌കി','കോൾബർഗ്','എറിക്‌സൻ'],
+  content:{
+
+'പിയഗേ':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>ജീൻ പിയഗേ — ബൗദ്ധിക വികസനം <span class="en">(Jean Piaget — Cognitive Development)</span></div>
+  <p>കുട്ടികൾ "ചെറിയ മുതിർന്നവർ" അല്ല — അവർ വ്യത്യസ്‌ത രീതിയിൽ ചിന്തിക്കുന്നു. ലോകവുമായി <strong>സജീവ ഇടപഴകലിലൂടെ</strong> അറിവ് നിർമ്മിക്കപ്പെടുന്നു.</p>
+  <div class="two-panel" style="margin-top:10px;">
+    <div class="tp-box" style="background:#e8eef8;">
+      <div class="tp-lbl" style="color:var(--navy);">ASSIMILATION</div>
+      <div class="tp-text" style="color:#1a3a6b;">പുതിയ വിവരം നിലവിലുള്ള Schema-യിൽ ഒതുക്കൽ. കുട്ടി പശുവിനെ "നായ" എന്ന് വിളിക്കുന്നു.</div>
+    </div>
+    <div class="tp-box" style="background:var(--saffron-lt);">
+      <div class="tp-lbl" style="color:#8a4800;">ACCOMMODATION</div>
+      <div class="tp-text" style="color:#7a3800;">Schema മാറ്റിത്തീർക്കൽ. തിരുത്തൽ കേൾക്കുമ്പോൾ "പശു" എന്ന് പ്രത്യേക Schema ഉണ്ടാകുന്നു.</div>
+    </div>
+  </div>
+  <div class="mbox" style="margin-top:8px;"><p><strong>Equilibration:</strong> Assimilation-ഉം Accommodation-ഉം തമ്മിലുള്ള സന്തുലനം. Disequilibrium (ബൗദ്ധിക സംഘർഷം) കുട്ടിയെ പഠിക്കാൻ പ്രേരിപ്പിക്കുന്നു.</p></div>
+</div>
+<div class="stage"><div class="sage">Sensori-<br>motor<br>0–2 വ.</div><div class="scontent"><h4>ഇന്ദ്രിയ-ചലന ഘട്ടം <span class="en">(Sensorimotor)</span></h4><p>ഇന്ദ്രിയങ്ങളും ചലനവും വഴി അറിവ്. Reflex → ലക്ഷ്യ-നിർദ്ദേശ പ്രവർത്തനം. നാഴികക്കല്ല്: <strong>Object Permanence</strong> (8–12 മാസം).</p><div class="stags"><span class="stag">Object Permanence</span><span class="stag">Circular Reactions</span><span class="stag">Cause & Effect</span></div></div></div>
+<div class="stage"><div class="sage" style="background:var(--saffron)">Pre-<br>Operational<br>2–7 വ.</div><div class="scontent"><h4>മനോവ്യാപാരപൂർവ ഘട്ടം <span class="en">(Pre-Operational)</span></h4><p>ചിഹ്ന-ചിന്ത <span class="en">(Symbolic Thinking)</span> ഉദ്ഭവിക്കുന്നു. പ്രധാന പരിമിതികൾ: <strong>Egocentrism</strong> (Three Mountains Task), <strong>Centration</strong>, <strong>Conservation ഇല്ല</strong>, <strong>Animism</strong> (വസ്‌തുക്കൾക്ക് ജീവൻ), <strong>Irreversibility</strong>.</p><div class="stags"><span class="stag">Egocentrism</span><span class="stag">No Conservation</span><span class="stag">Animism</span><span class="stag">Centration</span></div></div></div>
+<div class="stage"><div class="sage" style="background:var(--mint)">Concrete<br>Operational<br>7–11 വ.</div><div class="scontent"><h4>വസ്തുനിഷ്ട മനോവ്യാപാര ഘട്ടം <span class="en">(Concrete Operational)</span></h4><p>ഭൗതിക വസ്‌തുക്കളിൽ യുക്തിചിന്ത. <strong>Conservation ആർജ്ജിക്കുന്നു ✓</strong>. Classification, Seriation, Decentration. അമൂർത്ത ചിന്ത ഇനിയും ദുഷ്‌കരം.</p><div class="stags"><span class="stag">Conservation ✓</span><span class="stag">Classification</span><span class="stag">Seriation</span><span class="stag">Reversibility ✓</span></div></div></div>
+<div class="stage"><div class="sage" style="background:var(--violet)">Formal<br>Operational<br>11+ വ.</div><div class="scontent"><h4>ഔപചാരിക മനോവ്യാപാര ഘട്ടം <span class="en">(Formal Operational)</span></h4><p>അമൂർത്ത ചിന്ത <span class="en">(Abstract Thinking)</span>, Hypothetico-deductive Reasoning, Metacognition (ചിന്തയെ ചിന്തിക്കൽ) ഉദ്ഭവിക്കുന്നു.</p><div class="stags"><span class="stag">Abstract Thinking</span><span class="stag">Hypothetico-Deductive</span><span class="stag">Metacognition</span></div></div></div>
+<div class="hbox"><div class="hbox-title">⚡ KTET-ൽ ഏറ്റവും ചോദിക്കുന്ന പിയഗേ ആശയങ്ങൾ</div><ul><li><strong>Object Permanence</strong> → Sensorimotor ഘട്ടം (8–12 മാസം)</li><li><strong>Conservation</strong> ആർജ്ജിക്കൽ → Concrete Operational (7 വ.)</li><li><strong>Egocentrism</strong> ഉച്ചസ്ഥായി → Pre-Operational — Three Mountains Task</li><li>പിയഗേ കുട്ടിയുടെ ശേഷി കുറച്ചുകണ്ടു; Vygotsky-ന്റെ പ്രധാന വിമർശനം ഇതാണ്</li></ul></div>`,
+
+'വൈഗോത്‌സ്‌കി':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>ലെവ് വൈഗോത്‌സ്‌കി — സാമൂഹ്യ-സാംസ്‌കാരിക സിദ്ധാന്തം <span class="en">(Vygotsky — Sociocultural Theory)</span></div>
+  <p>ബൗദ്ധിക വികസനം <strong>സാമൂഹ്യ ഇടപഴകലിൽ നിന്ന്</strong> ഉദ്ഭവിക്കുന്നു. ഉന്നത മനശ്ശക്തികൾ ആദ്യം ആളുകൾ തമ്മിൽ <span class="en">(Interpsychological)</span>, പിന്നെ ഉള്ളിൽ <span class="en">(Intrapsychological)</span> ഉദ്ഭവിക്കുന്നു.</p>
+  <div class="quote"><p>"ശിശുവിന്റെ സാംസ്‌കാരിക വികസനത്തിലെ ഓരോ ധർമ്മവും രണ്ടു തവണ ദൃശ്യമാകുന്നു: ആദ്യം സാമൂഹ്യ തലത്തിൽ, പിന്നെ വ്യക്തി തലത്തിൽ."</p><div class="quote-attr">— ലെവ് വൈഗോത്‌സ്‌കി</div></div>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>അടുത്ത വികസനത്തിന്റെ മേഖല <span class="en">(Zone of Proximal Development — ZPD)</span></div>
+  <div class="zpd">
+    <div class="zpd-row" style="background:var(--rose-lt);border:1px solid #f0aac2;"><div class="zpd-lbl" style="color:var(--rose);">OUTER ZONE</div><div class="zpd-main" style="color:#7a1e3e;">സഹായം ലഭിച്ചാലും ചെയ്യാൻ കഴിയാത്തത്</div><div class="zpd-sub" style="color:#7a1e3e;">ഇപ്പോഴത്തെ വികസന തലത്തിന് അപ്പുറം</div></div>
+    <div class="zpd-row" style="background:var(--saffron);"><div class="zpd-lbl" style="color:rgba(255,255,255,.85);">ZPD — പഠനത്തിന്റെ ഏറ്റവും ഉചിത മേഖല</div><div class="zpd-main" style="color:#fff;">സഹായം ലഭിച്ചാൽ ചെയ്യാൻ കഴിയുന്നത്</div><div class="zpd-sub" style="color:rgba(255,255,255,.85);">ഇവിടെ അദ്ധ്യാപനം ഏറ്റവും ഫലപ്രദം</div></div>
+    <div class="zpd-row" style="background:var(--mint);"><div class="zpd-lbl" style="color:rgba(255,255,255,.85);">COMFORT ZONE</div><div class="zpd-main" style="color:#fff;">സ്വതന്ത്രമായി ചെയ്യാൻ കഴിയുന്നത്</div><div class="zpd-sub" style="color:rgba(255,255,255,.85);">ഇതിനകം ആർജ്ജിച്ചത് — ഇപ്പോഴത്തെ വികസന തലം</div></div>
+  </div>
+</div>
+<div class="card ag">
+  <div class="card-title"><span class="cdot" style="background:var(--mint)"></span>പ്രധാന വൈഗോത്‌സ്‌കി ആശയങ്ങൾ</div>
+  <div class="tbl-wrap"><table class="dtbl">
+    <tr><th>ആശയം</th><th>നിർവ്വചനം</th></tr>
+    <tr><td><strong>ZPD</strong></td><td>ഇപ്പോഴത്തെ തലവും, സഹായം ലഭിക്കുമ്പോഴുള്ള ശേഷിയും തമ്മിലുള്ള വിടവ്</td></tr>
+    <tr><td><strong>Scaffolding</strong></td><td>MKO നൽകുന്ന താത്‌കാലിക പിന്തുണ; പഠിക്കുന്നവൻ സ്വതന്ത്രനാകുമ്പോൾ നീക്കിക്കളയുന്നു</td></tr>
+    <tr><td><strong>MKO</strong></td><td>More Knowledgeable Other — ആ ജോലിയിൽ കൂടുതൽ അറിവുള്ള ആർക്കും (അദ്ധ്യാപകൻ, ചങ്ങാതി, പുസ്‌തകം)</td></tr>
+    <tr><td><strong>Private Speech</strong></td><td>കുട്ടി സ്വയം സംസാരിക്കൽ — സ്വന്തം പ്രവർത്തനത്തെ നയിക്കുന്നു (3–7 വ.)</td></tr>
+    <tr><td><strong>Inner Speech</strong></td><td>Private Speech ആന്തരികമായ ചിന്തയാകുന്നു — മുതിർന്നവരിൽ</td></tr>
+    <tr><td><strong>Cultural Tools</strong></td><td>ഭാഷ, എഴുത്ത്, സംഖ്യ — ചിന്തയെ നയിക്കുന്ന ഉപകരണങ്ങൾ</td></tr>
+  </table></div>
+</div>`,
+
+'കോൾബർഗ്':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>ലോറൻസ് കോൾബർഗ് — ധാർമ്മിക വികസനം <span class="en">(Kohlberg — Moral Development, 1958)</span></div>
+  <p>പിയഗേയുടെ ധാർമ്മിക ചിന്തയെ വിപുലപ്പെടുത്തി. <strong>Heinz Dilemma</strong> ഉപയോഗിച്ച്: ഭാര്യക്ക് ജീവൻ രക്ഷിക്കാൻ Heinz മരുന്ന് മോഷ്‌ടിക്കണമോ? — 3 തലങ്ങൾ, 6 ഘട്ടങ്ങൾ, <em>തീരുമാനമല്ല — ചിന്തയുടെ കാരണം</em> ഇതിന്റെ അടിസ്ഥാനം.</p>
+</div>
+<div class="kl">
+  <div class="kl-head" style="background:var(--rose-lt);"><span class="kl-badge" style="background:var(--rose-lt);color:var(--rose);border:1px solid var(--rose);">തലം 1</span><span style="color:var(--rose);">മുൻ-പരമ്പരാഗത <span class="en">(Pre-Conventional)</span> <small style="font-weight:400;">9 വ. മുമ്പ്</small></span></div>
+  <div class="kl-body">
+    <div class="kl-stage"><strong>ഘട്ടം 1 — ശിക്ഷ & അനുസരണം <span class="en">(Punishment & Obedience)</span>:</strong> "ശിക്ഷ ലഭിക്കും" എന്ന ഭയം — ശരി = പിടിക്കപ്പെടാതിരിക്കൽ.</div>
+    <div class="kl-stage"><strong>ഘട്ടം 2 — ഉപകരണ ഉദ്ദേശ്യം <span class="en">(Instrumental Purpose)</span>:</strong> "ഞാൻ സഹായിക്കാം, നീ സഹായിക്ക്." — "എനിക്ക് എന്ത് കിട്ടും?" — Naive Hedonism.</div>
+  </div>
+</div>
+<div class="kl">
+  <div class="kl-head" style="background:var(--saffron-lt);"><span class="kl-badge" style="background:var(--saffron-lt);color:var(--saffron);border:1px solid var(--saffron);">തലം 2</span><span style="color:#8a4800;">പരമ്പരാഗത <span class="en">(Conventional)</span> <small style="font-weight:400;">കൗമാരം–മുതിർച്ച</small></span></div>
+  <div class="kl-body">
+    <div class="kl-stage"><strong>ഘട്ടം 3 — "നല്ല കുട്ടി/നല്ല പെൺകുട്ടി" <span class="en">(Good Boy / Nice Girl)</span>:</strong> അംഗീകാരം നേടാൻ ധാർമ്മിക ആചരണം. "ഞാൻ ഒരു നല്ല ആൾ ആകണം."</div>
+    <div class="kl-stage"><strong>ഘട്ടം 4 — നിയമം & ക്രമം <span class="en">(Law & Order)</span>:</strong> സാമൂഹ്യ ക്രമം നിലനിർത്താൻ നിയമം അനുസരിക്കണം. "ഇത് നിയമ വിരുദ്ധമാണ്."</div>
+  </div>
+</div>
+<div class="kl">
+  <div class="kl-head" style="background:var(--violet-lt);"><span class="kl-badge" style="background:var(--violet-lt);color:var(--violet);border:1px solid var(--violet);">തലം 3</span><span style="color:var(--violet);">പരമ്പരാഗതോത്തര <span class="en">(Post-Conventional)</span> <small style="font-weight:400;">എല്ലാവരും ഇതിൽ എത്തുന്നില്ല</small></span></div>
+  <div class="kl-body">
+    <div class="kl-stage"><strong>ഘട്ടം 5 — സാമൂഹ്യ കരാർ <span class="en">(Social Contract)</span>:</strong> നിയമം മനുഷ്യ അവകാശം ലംഘിക്കുമ്പോൾ മാറ്റാം. മനുഷ്യ അവകാശം ഉയർന്ന സ്ഥാനത്ത്.</div>
+    <div class="kl-stage"><strong>ഘട്ടം 6 — ആഗോള ധർമ്മ തത്ത്വങ്ങൾ <span class="en">(Universal Ethical Principles)</span>:</strong> സ്വയം തിരഞ്ഞെടുത്ത ധർമ്മ തത്ത്വങ്ങൾ — നീതി, സമത്വം, മഹത്ത്വം. ഉദാ: മഹാത്മ ഗാന്ധി.</div>
+  </div>
+</div>
+<div class="hbox"><div class="hbox-title">⚡ കോൾബർഗ് പരീക്ഷ പോയിന്റുകൾ</div><ul><li><strong>Heinz Dilemma</strong> — ഗവേഷണ ഉപകരണം</li><li>ഘട്ടങ്ങൾ <strong>invariant</strong> (സ്ഥിര ക്രമം) — എല്ലാ സംസ്‌കാരത്തിലും ഒന്നാണ്</li><li><strong>Carol Gilligan-ന്റെ വിമർശനം:</strong> കോൾബർഗ്ഗിന്റെ മോഡൽ പുരുഷ-കേന്ദ്രിതം; "Care Ethics" <span class="en">(ബന്ധ-ധർമ്മം)</span> അവഗണിച്ചു</li><li><strong>പിയഗേ</strong>-യുടെ രണ്ടു ഘട്ടങ്ങളിൽ നിന്ന് കോൾബർഗ് ഇത് കെട്ടിപ്പടുത്തു</li></ul></div>`,
+
+'എറിക്‌സൻ':`
+<div class="card al">
+  <div class="card-title"><span class="cdot"></span>എറിക് എറിക്‌സൻ — മനഃ-സാമൂഹിക വികസനം <span class="en">(Erikson — Psychosocial Development)</span></div>
+  <p><strong>ആയുഷ്‌കാലം മൊത്തത്തിൽ 8 ഘട്ടങ്ങൾ</strong>, ഓരോ ഘട്ടത്തിലും ഒരു സ്വഭാവ-സംഘർഷം <span class="en">(Psychosocial Crisis)</span>. വിജയകരമായ പരിഹാരം ഒരു ഗുണം <span class="en">(Virtue)</span> നൽകുന്നു; പരാജയം വ്യക്തിത്വ തകരാർ ഉണ്ടാക്കുന്നു.</p>
+</div>
+<div class="card ao">
+  <div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>8 ഘട്ടങ്ങൾ — പൂർണ്ണ ചാർട്ട്</div>
+  <div class="tbl-wrap"><table class="dtbl">
+    <tr><th>#</th><th>വ.</th><th>സംഘർഷം <span class="en">(Crisis)</span></th><th>ഗുണം <span class="en">(Virtue)</span></th><th>സന്ദർഭം</th></tr>
+    <tr><td>1</td><td>0–1</td><td>വിശ്വാസം vs. അവിശ്വാസം <span class="en">(Trust vs. Mistrust)</span></td><td>Hope</td><td>മാതൃ പരിചരണ ഗുണം</td></tr>
+    <tr><td>2</td><td>1–3</td><td>സ്വയംഭരണം vs. ലജ്ജ <span class="en">(Autonomy vs. Shame)</span></td><td>Will</td><td>Toilet Training; സ്വാതന്ത്ര്യം</td></tr>
+    <tr><td>3</td><td>3–6</td><td>മുൻകൈ vs. കുറ്റബോധം <span class="en">(Initiative vs. Guilt)</span></td><td>Purpose</td><td>കുട്ടി പ്രവർത്തനം തുടങ്ങുന്നു</td></tr>
+    <tr><td>4</td><td>6–12</td><td>ഉത്‌സാഹം vs. അപകർഷത <span class="en">(Industry vs. Inferiority)</span></td><td>Competence</td><td>സ്‌കൂൾ; സഹപ്രവർത്തകർ</td></tr>
+    <tr><td><strong>5★</strong></td><td>12–18</td><td><strong>ഐഡന്റിറ്റി vs. ആശയക്കുഴപ്പം <span class="en">(Identity vs. Role Confusion)</span></strong></td><td>Fidelity</td><td><strong>"ഞാൻ ആരാണ്?" — KTET-ൽ ഏറ്റവും ചോദിക്കപ്പെടുന്ന ഘട്ടം</strong></td></tr>
+    <tr><td>6</td><td>18–40</td><td>ഐക്യദാർഢ്യം vs. ഒറ്റപ്പെടൽ <span class="en">(Intimacy vs. Isolation)</span></td><td>Love</td><td>ആഴത്തിലുള്ള ബന്ധങ്ങൾ</td></tr>
+    <tr><td>7</td><td>40–65</td><td>Generativity vs. Stagnation</td><td>Care</td><td>അടുത്ത തലമുറയ്‌ക്ക് സംഭാവന</td></tr>
+    <tr><td>8</td><td>65+</td><td>Ego Integrity vs. Despair</td><td>Wisdom</td><td>ജീവിതം തൃപ്‌തിയോടെ / ഖേദത്തോടെ അവലോകനം</td></tr>
+  </table></div>
+</div>
+<div class="hbox"><div class="hbox-title">⚡ KTET-ൽ ഏറ്റവും ചോദിക്കപ്പെടുന്ന ഘട്ടങ്ങൾ</div><ul><li><strong>ഘട്ടം 5 (Identity vs. Role Confusion)</strong> — കൗമാര ഘട്ടം; അദ്ധ്യാപകർക്ക് ഏറ്റവും പ്രസക്തം</li><li><strong>ഘട്ടം 4 (Industry vs. Inferiority)</strong> — സ്‌കൂൾ ഘട്ടം (6–12 വ.); അദ്ധ്യാപകൻ കുട്ടിക്ക് Competence അനുഭവപ്പെടുത്തണം</li><li>എറിക്‌സൻ <strong>ആജീവനാന്ത</strong> സിദ്ധാന്തം — 8 ഘട്ടം vs. ഫ്രോയ്‌ഡിന്റെ 5 ഘട്ടം</li><li>എറിക്‌സൻ <strong>"Identity Crisis"</strong> എന്ന പദം ആദ്യം ഉപയോഗിച്ചു</li></ul></div>`
+  }
+},
+
+/* ═══════════════════════════════════════════════
+   4. ബുദ്ധിശക്തി (INTELLIGENCE)
+═══════════════════════════════════════════════ */
+intel:{
+  title:'ബുദ്ധിശക്തിയും സൃഷ്ടിപരതയും (Intelligence & Creativity)',
+  badge:'വിഭാഗം 04',
+  tabs:['സിദ്ധാന്തങ്ങൾ','IQ & അളക്കൽ','സൃഷ്ടിപരത'],
+  content:{
+
+'സിദ്ധാന്തങ്ങൾ':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>സ്‌പിയർ‌മാൻ — ദ്വി-ഘടക സിദ്ധാന്തം <span class="en">(Spearman — Two-Factor Theory, 1904)</span></div><ul><li><strong>ജനറൽ ഫാക്ടർ (g):</strong> എല്ലാ ബൗദ്ധിക ജോലികളുടെയും അടിസ്ഥാനമായ ജന്മസ്ഥ മനഃശക്തി. ഇത് പഠിപ്പിക്കാൻ കഴിയില്ല.</li><li><strong>സ്‌പെസിഫിക് ഫാക്ടർ (s):</strong> ജോലി-നിർദ്ദിഷ്ട ശേഷി (സംഗീതം, ഗണിതം). പ്രയത്‌നം കൊണ്ട് വർദ്ധിപ്പിക്കാം.</li></ul><div class="mbox" style="margin-top:8px;"><p><strong>Factor Analysis</strong> — ഈ g കണ്ടെത്താൻ സ്‌പിയർ‌മാൻ ഉണ്ടാക്കിയ ഗണിത സ്ഥിതിവിവരക്കണക്ക് <span class="en">(Statistical Method)</span>.</p></div></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>ഥേർ‌സ്‌റ്റൺ — പ്രഥമ മാനസിക കഴിവുകൾ <span class="en">(Thurstone — Primary Mental Abilities, 1938)</span></div><p style="margin-bottom:8px;">ഒറ്റ 'g' തള്ളിക്കളഞ്ഞു. 7 സ്വതന്ത്ര കഴിവുകൾ <span class="en">(7 Independent Primary Mental Abilities)</span>:</p><div class="pill-row"><span class="pill po">Verbal Comprehension</span><span class="pill po">Word Fluency</span><span class="pill po">Number</span><span class="pill po">Space</span><span class="pill po">Memory</span><span class="pill po">Perceptual Speed</span><span class="pill po">Inductive Reasoning</span></div></div>
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>ഹൊവാർഡ് ഗാർഡ്‌നർ — ബഹുമുഖ ബുദ്ധി <span class="en">(Gardner — Multiple Intelligences, 1983)</span></div><p style="margin-bottom:10px;">ഒറ്റ IQ തള്ളിക്കളഞ്ഞു. <strong>8 വ്യത്യസ്ത ബുദ്ധി-ഇനങ്ങൾ</strong>, ഓരോന്നിനും വ്യത്യസ്ത ന്യൂറൽ അടിസ്ഥാനം:</p><div class="g2"><div class="mini-card"><div class="mc-icon">📖</div><div class="mc-title">ഭാഷാ-വൈദഗ്ധ്യം</div><div class="mc-text">Linguistic-Verbal — എഴുത്തുകാർ, കവികൾ</div></div><div class="mini-card"><div class="mc-icon">🔢</div><div class="mc-title">ഗണിത-യുക്തി</div><div class="mc-text">Logical-Mathematical — ശാസ്ത്രജ്ഞർ</div></div><div class="mini-card"><div class="mc-icon">🗺️</div><div class="mc-title">സ്ഥലാ-ദൃശ്യ</div><div class="mc-text">Spatial-Visual — ആർക്കിടെക്‌റ്റ്, ചിത്രകാരർ</div></div><div class="mini-card"><div class="mc-icon">🎵</div><div class="mc-title">സംഗീത-ഗേ</div><div class="mc-text">Musical-Rhythmic — സംഗീതജ്ഞർ</div></div><div class="mini-card"><div class="mc-icon">🏃</div><div class="mc-title">ശരീര-ചലന</div><div class="mc-text">Bodily-Kinesthetic — കായിക താരങ്ങൾ</div></div><div class="mini-card"><div class="mc-icon">👥</div><div class="mc-title">പരസ്‌പര</div><div class="mc-text">Interpersonal — അദ്ധ്യാപകർ, നേതാക്കൾ</div></div><div class="mini-card"><div class="mc-icon">🪞</div><div class="mc-title">ആത്മ-ബോധ</div><div class="mc-text">Intrapersonal — തത്ത്വചിന്തകർ</div></div><div class="mini-card"><div class="mc-icon">🌿</div><div class="mc-title">പ്രകൃതി-ബോധ</div><div class="mc-text">Naturalistic — ജീവശാസ്ത്രജ്ഞർ</div></div></div></div>
+<div class="card av"><div class="card-title"><span class="cdot" style="background:var(--violet)"></span>സ്‌റ്റേൻ‌ബർഗ് — Triarchic സിദ്ധാന്തം <span class="en">(Sternberg — Triarchic Theory, 1985)</span></div><div class="steps"><div class="step"><div class="snum" style="background:var(--violet)">1</div><div class="stext"><strong>Analytical (Componential):</strong> വിശകലന ബുദ്ധി — പ്രശ്‌ന-പരിഹാരം, വിലയിരുത്തൽ. IQ ടെസ്‌റ്റ് ഇത് അളക്കുന്നു.</div></div><div class="step"><div class="snum" style="background:var(--violet)">2</div><div class="stext"><strong>Creative (Experiential):</strong> സൃഷ്‌ടിപര ബുദ്ധി — പുതിയ സാഹചര്യങ്ങൾ കൈകാര്യം ചെയ്യൽ, ആശയ-ഉത്‌പാദനം.</div></div><div class="step"><div class="snum" style="background:var(--violet)">3</div><div class="stext"><strong>Practical (Contextual):</strong> പ്രായോഗിക ബുദ്ധി — "Street Smarts" — ജീവിത സാഹചര്യങ്ങളോട് ഒത്തു പോകൽ.</div></div></div></div>
+<div class="hbox"><div class="hbox-title">⚡ ദ്രുത ആശ്രയ ചാർട്ട്</div><div class="tbl-wrap"><table class="dtbl"><tr><th>ചിന്തകൻ</th><th>സിദ്ധാന്തം</th><th>കേന്ദ്ര ആശയം</th></tr><tr><td>Spearman</td><td>Two-Factor</td><td>g + s</td></tr><tr><td>Thurstone</td><td>Primary Mental Abilities</td><td>7 സ്വതന്ത്ര ഘടകങ്ങൾ</td></tr><tr><td>Guilford</td><td>Structure of Intellect</td><td>120–150 ഘടകങ്ങൾ</td></tr><tr><td>Gardner</td><td>Multiple Intelligences</td><td>8 ബുദ്ധി ഇനങ്ങൾ</td></tr><tr><td>Sternberg</td><td>Triarchic Theory</td><td>Analytical + Creative + Practical</td></tr><tr><td>Cattell</td><td>Fluid vs. Crystallized</td><td>Gf (പുതുമ) + Gc (ആർജ്ജിതം)</td></tr></table></div></div>`,
+
+'IQ & അളക്കൽ':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>IQ — ചരിത്രവും ഫോർമുലയും <span class="en">(History & Formula)</span></div><p><strong>Alfred Binet & Theodore Simon (1905):</strong> ആദ്യ ബുദ്ധി ടെസ്‌റ്റ് — മാനസിക വയസ്സ് <span class="en">(Mental Age — MA)</span>. <strong>William Stern (1912)</strong> IQ ഫോർമുല:</p><div class="formula"><div class="formula-eq">IQ = (MA ÷ CA) × 100</div><div class="formula-note">MA = Mental Age (മാനസിക വയസ്സ്) | CA = Chronological Age (ജൈവ വയസ്സ്)</div></div><p><strong>ഉദാഹരണം:</strong> 10 വ. (CA=10) കുട്ടി 12 വ. (MA=12) ടെസ്‌റ്റ് ചെയ്‌താൽ: IQ = (12/10) × 100 = <strong>120</strong> — ശ്രേഷ്‌ഠ ശരാശരി.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>IQ തരംതിരിവ് <span class="en">(IQ Classification)</span></div><div class="hier"><div class="hlvl" style="background:var(--rose-lt);"><div class="hnum" style="background:var(--rose);color:#fff;">♾</div><div style="font-size:12.5px;color:#7a1e3e;"><strong>140+ — ജീനിയസ് <span class="en">(Genius)</span></strong></div></div><div class="hlvl" style="background:var(--saffron-lt);"><div class="hnum" style="background:var(--saffron);color:#fff;">↑</div><div style="font-size:12.5px;color:#7a3800;"><strong>120–139 — ഉന്നത ബുദ്ധി <span class="en">(Superior)</span></strong></div></div><div class="hlvl" style="background:var(--mint-lt);"><div class="hnum" style="background:var(--mint);color:#fff;">✓</div><div style="font-size:12.5px;color:#094f3f;"><strong>110–119 — ഉയർന്ന ശരാശരി <span class="en">(High Average)</span></strong></div></div><div class="hlvl" style="background:#e8eef8;"><div class="hnum" style="background:var(--navy);color:#fff;">◉</div><div style="font-size:12.5px;color:var(--navy);"><strong>90–109 — സാധാരണ/ശരാശരി <span class="en">(Normal / Average)</span></strong></div></div><div class="hlvl" style="background:var(--violet-lt);"><div class="hnum" style="background:var(--violet);color:#fff;">↓</div><div style="font-size:12.5px;color:#3d2a7a;"><strong>80–89 — കുറഞ്ഞ ശരാശരി <span class="en">(Dull)</span></strong></div></div><div class="hlvl" style="background:var(--rose-lt);"><div class="hnum" style="background:var(--rose);color:#fff;">⚠</div><div style="font-size:12.5px;color:#7a1e3e;"><strong>70 ൽ താഴെ — ബൗദ്ധിക വൈകല്യം <span class="en">(Intellectual Disability)</span></strong></div></div></div></div>
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>പ്രധാന ബുദ്ധി ടെസ്‌റ്റുകൾ <span class="en">(Major Intelligence Tests)</span></div><div class="tbl-wrap"><table class="dtbl"><tr><th>ടെസ്‌റ്റ്</th><th>ആർ?</th><th>അളക്കുന്നത്</th></tr><tr><td><strong>Binet-Simon Scale (1905)</strong></td><td>Binet & Simon</td><td>ആദ്യ IQ ടെസ്‌റ്റ് — Mental Age</td></tr><tr><td><strong>Stanford-Binet</strong></td><td>Lewis Terman (1916)</td><td>IQ ഫോർമുല ആദ്യം ഉൾപ്പെടുത്തി</td></tr><tr><td><strong>WISC / WAIS</strong></td><td>David Wechsler</td><td>Verbal + Performance IQ; ഇന്ന് ഏറ്റവും ഉപയോഗിക്കുന്ന ടെസ്‌റ്റ്</td></tr><tr><td><strong>Raven's Matrices</strong></td><td>J.C. Raven</td><td>Non-verbal, culture-fair — Fluid Intelligence</td></tr><tr><td><strong>Army Alpha & Beta (1917)</strong></td><td>US Army</td><td>Alpha = Verbal; Beta = Non-verbal; ആദ്യ ഗ്രൂപ്പ് ടെസ്‌റ്റ്</td></tr></table></div></div>`,
+
+'സൃഷ്ടിപരത':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>സൃഷ്ടിപരത <span class="en">(Creativity)</span> — നിർവ്വചനം</div><p><strong>പുതുമ <span class="en">(Novel)</span></strong>ഉം <strong>ഉചിതം <span class="en">(Appropriate)</span></strong>ഉം ആയ ഉൽ‌പ്പന്നങ്ങൾ നിർമ്മിക്കാനുള്ള ശേഷി. ഇതിൽ <strong>Divergent Thinking</strong> (ഒരേ പ്രശ്‌നത്തിന് ഒന്നിലധികം ഉത്തരങ്ങൾ ഉണ്ടാക്കൽ) ഉൾപ്പെടുന്നു — Convergent Thinking-ൽ നിന്ന് (ഒറ്റ ഉത്തരം) വ്യത്യസ്‌തം.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Wallas-ന്റെ 4 ഘട്ടങ്ങൾ <span class="en">(Stages of Creativity, 1926)</span></div><div class="steps"><div class="step"><div class="snum">1</div><div class="stext"><strong>തയ്യാറെടുപ്പ് <span class="en">(Preparation)</span>:</strong> വിവരം ശേഖരിക്കൽ, പ്രശ്‌നം നിർവ്വചിക്കൽ.</div></div><div class="step"><div class="snum">2</div><div class="stext"><strong>ഇൻകുബേഷൻ <span class="en">(Incubation)</span>:</strong> അബോധ മനസ്സ് <span class="en">(Unconscious)</span> ബന്ധങ്ങൾ ഉണ്ടാക്കുന്നു — വിശ്രമം.</div></div><div class="step"><div class="snum">3</div><div class="stext"><strong>ഉൾക്കൊൾ‌ക്ക <span class="en">(Illumination)</span>:</strong> "ആഹാ!" — ആശയം ബോധ മനസ്സിൽ.</div></div><div class="step"><div class="snum">4</div><div class="stext"><strong>പരിശോധന <span class="en">(Verification)</span>:</strong> ആശയം ആക്‌ഷൻ ആക്കി ശ്ശ്ക്കൽ.</div></div></div></div>
+<div class="card av"><div class="card-title"><span class="cdot" style="background:var(--violet)"></span>Guilford-ന്റെ സൃഷ്‌ടിപരതയുടെ മാനങ്ങൾ <span class="en">(Dimensions)</span></div><ul><li><strong>Fluency (ഒഴുക്ക്):</strong> ഉണ്ടാക്കുന്ന ആശയങ്ങളുടെ എണ്ണം.</li><li><strong>Flexibility (ഇഴ്ത്തം):</strong> ആശയ വർഗ്ഗങ്ങളുടെ വൈവിദ്ധ്യം.</li><li><strong>Originality (മൗലികത):</strong> ആശയങ്ങളുടെ അദ്വിതീയത.</li><li><strong>Elaboration (വിശദമായ്ക്കൽ):</strong> ആശയം വിശദമായി വികസിപ്പിക്കൽ.</li></ul></div>
+<div class="mbox"><p><strong>Threshold Theory (Torrance, 1962):</strong> IQ ~120 ആണ് ഉയർന്ന സൃഷ്‌ടിപരതയ്‌ക്ക് ഏറ്റവും കുറഞ്ഞ ആവശ്യകത. ഇതിന് മുകളിൽ IQ-ഉം Creativity-ഉം പരസ്‌പര സ്വതന്ത്രം. ഉയർന്ന IQ = ഉയർന്ന Creativity അല്ല.</p></div>`
+  }
+},
+
+/* ═══════════════════════════════════════════════
+   5. വ്യക്തിത്വം (PERSONALITY)
+═══════════════════════════════════════════════ */
+personality:{
+  title:'വ്യക്തിത്വവും ക്രമീകരണവും (Personality & Adjustment)',
+  badge:'വിഭാഗം 05',
+  tabs:['സിദ്ധാന്തങ്ങൾ','പ്രതിരോധ സംവിധാനങ്ങൾ','ഫ്രോയ്‌ഡ്'],
+  content:{
+
+'സിദ്ധാന്തങ്ങൾ':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>വ്യക്തിത്വം <span class="en">(Personality)</span> — നിർവ്വചനം</div><p>ഒരു വ്യക്‌തിയുടെ <strong>അദ്വിതീയവും താരതമ്യേന സ്ഥിരവുമായ</strong> ചിന്ത-വികാരം-പ്രവർത്തന ക്രമം. പൈതൃകം, പരിസ്ഥിതി, പക്വത, പഠനം, സംസ്‌കാരം ഇതിനെ ഒരുമിച്ച് രൂപപ്പെടുത്തുന്നു.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>ടൈപ്പ് സിദ്ധാന്തങ്ങൾ <span class="en">(Type Theories)</span></div><div class="tbl-wrap"><table class="dtbl"><tr><th>ചിന്തകൻ</th><th>തരംതിരിവ്</th><th>വിവരണം</th></tr><tr><td><strong>Hippocrates</strong></td><td>4 ഹ്യൂമോർ <span class="en">(4 Humours)</span></td><td>Sanguine (ഉല്ലാസ), Choleric (ക്ഷോഭ), Melancholic (ദുഃഖ), Phlegmatic (ശാന്ത) — ശരീര ദ്രാവകങ്ങൾ അടിസ്ഥാനം</td></tr><tr><td><strong>Kretschmer</strong></td><td>ശരീര-ഘടന</td><td>Asthenic (മെലിഞ്ഞ), Athletic (മസ്‌കുലർ), Pyknic (തടിച്ച), Dysplastic (മിശ്ര)</td></tr><tr><td><strong>Jung</strong></td><td>Introvert / Extrovert</td><td>ഉൾ-ദിശ <span class="en">(Introvert)</span> / പുറ-ദിശ <span class="en">(Extrovert)</span> / ഇരുവഴി <span class="en">(Ambivert)</span></td></tr></table></div></div>
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>ഗുണ സിദ്ധാന്തങ്ങൾ <span class="en">(Trait Theories)</span></div><ul><li><strong>Allport (1937):</strong> Cardinal (മേൽ-ഗുണം), Central (പ്രധാന), Secondary (സന്ദർഭ) ഗുണങ്ങൾ.</li><li><strong>Cattell:</strong> 16 Source Traits (16PF). Surface = ദൃശ്യ; Source = അദൃശ്യ-കാരണം.</li><li><strong>Eysenck:</strong> Extraversion-Introversion + Neuroticism-Stability — രണ്ട് പ്രധാന മാനങ്ങൾ.</li><li><strong>Big Five (OCEAN):</strong> Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism — ഇന്ന് ഏറ്റവും ഉപയോഗിക്കുന്ന മോഡൽ.</li></ul></div>
+<div class="card av"><div class="card-title"><span class="cdot" style="background:var(--violet)"></span>മാസ്‌ലോ — ആവശ്യങ്ങളുടെ ഹൈരാർക്കി <span class="en">(Maslow — Hierarchy of Needs)</span></div><div class="hier"><div class="hlvl" style="background:var(--saffron);justify-content:center;"><div style="font-weight:700;font-size:13px;color:#fff;">⭐ ആത്മ-സാക്ഷാൽ‌ക്കരണം (Self-Actualization)</div></div><div class="hlvl" style="background:#f5a623;justify-content:center;"><div style="font-weight:600;font-size:12.5px;color:#fff;">ആത്മ-ബഹുമാന ആവശ്യങ്ങൾ (Esteem Needs)</div></div><div class="hlvl" style="background:#e8eef8;justify-content:center;"><div style="font-weight:600;font-size:12.5px;color:var(--navy);">സ്‌നേഹ-അംഗത്വ ആവശ്യങ്ങൾ (Love & Belonging)</div></div><div class="hlvl" style="background:#edf2f7;justify-content:center;"><div style="font-weight:600;font-size:12.5px;color:var(--navy-mid);">സുരക്ഷ ആവശ്യങ്ങൾ (Safety Needs)</div></div><div class="hlvl" style="background:var(--bg);border:1px solid var(--border);justify-content:center;"><div style="font-weight:600;font-size:12.5px;color:var(--muted);">ശാരീരിക ആവശ്യങ്ങൾ (Physiological Needs)</div></div></div><div class="mbox" style="margin-top:8px;"><p>D-Needs (ലോഭ-ആവശ്യങ്ങൾ): ശാരീരികം → സുരക്ഷ → സ്‌നേഹം → ആദരവ് — ഇവ തൃപ്‌തിയടക്കാതെ Self-Actualization ഉണ്ടാകില്ല. <strong>വിശന്ന കുട്ടി പഠിക്കില്ല.</strong></p></div></div>`,
+
+'പ്രതിരോധ സംവിധാനങ്ങൾ':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>ഈഗോ പ്രതിരോധ സംവിധാനങ്ങൾ <span class="en">(Ego Defence Mechanisms — Freud)</span></div><p>ഉത്‌കണ്‌ഠ കുറയ്‌ക്കാൻ Ego ഉപയോഗിക്കുന്ന <strong>അബോധ മനോ-തന്ത്രങ്ങൾ</strong> <span class="en">(Unconscious Psychological Strategies)</span>. സ്വാഭാവികം; അമിത ഉപയോഗം ദുഃക്ഷ്ടകരം.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>പൂർണ്ണ പ്രതിരോധ സംവിധാന ചാർട്ട്</div><div class="tbl-wrap"><table class="dtbl"><tr><th>സംവിധാനം</th><th>നിർവ്വചനം</th><th>ക്ലാസ്‌മുറി ഉദാഹരണം</th></tr><tr><td><strong>Rationalization</strong><br><span style="font-size:10px;color:var(--muted);">(ന്യായീകരണം)</span></td><td>പരാജയം ന്യായീകരിക്കാൻ കാരണങ്ങൾ</td><td>"ചോദ്യം തെറ്റ്" — പരീക്ഷ തോറ്റ ശേഷം</td></tr><tr><td><strong>Projection</strong><br><span style="font-size:10px;color:var(--muted);">(ആരോപണം)</span></td><td>സ്വന്തം വികാരം മറ്റൊരാൾക്കാണ് എന്ന് ആരോപിക്കൽ</td><td>"അദ്ധ്യാപകൻ എന്നെ വെറുക്കുന്നു" (ശരിക്കും കുട്ടിക്ക് അദ്ധ്യാപകനോട് ഇഷ്‌ടക്കേട്)</td></tr><tr><td><strong>Sublimation ★</strong><br><span style="font-size:10px;color:var(--muted);">(ഉദാത്തീകരണം)</span></td><td>അഹിതമായ ആഗ്രഹം ഉൽ‌പ്പാദനക്ഷമ പ്രവർത്തനത്തിലേക്ക് തിരിക്കൽ</td><td>ആക്രമണ-സ്വഭാവമുള്ള കുട്ടി സ്‌പോർട്‌സ് ചാമ്പ്യൻ ആകുന്നു</td></tr><tr><td><strong>Regression</strong><br><span style="font-size:10px;color:var(--muted);">(തിരിച്ചടി)</span></td><td>മുൻ വികസന ഘട്ടത്തിലേക്ക് മടങ്ങൽ</td><td>10 വ. കുട്ടി stress-ൽ കരയുന്നു</td></tr><tr><td><strong>Displacement</strong><br><span style="font-size:10px;color:var(--muted);">(സ്ഥാനചലനം)</span></td><td>വികാരം സുരക്ഷിതമായ മറ്റൊരു ലക്ഷ്യത്തിലേക്ക്</td><td>അദ്ധ്യാപകൻ ശകാരിച്ചതിൻ്റെ ദേഷ്യം ഡെസ്‌ക് ചവിട്ടൽ</td></tr><tr><td><strong>Repression</strong><br><span style="font-size:10px;color:var(--muted);">(മർദ്ദനം)</span></td><td>വേദനാജനകം ഓർമ്മ അബോധ മനസ്സിലേക്ക് തള്ളൽ</td><td>ദുഷ്‌ടാനുഭവം ഓർക്കാതിരിക്കൽ</td></tr><tr><td><strong>Reaction Formation</strong><br><span style="font-size:10px;color:var(--muted);">(പ്രതിക്രിയ-രൂപം)</span></td><td>യഥാർത്ഥ വികാരത്തിന് വിപരീതം</td><td>അസൂയക്കാരായ കുട്ടി എതിരാളിയോട് അമിത ദയ</td></tr><tr><td><strong>Denial</strong><br><span style="font-size:10px;color:var(--muted);">(നിഷേധം)</span></td><td>വേദനാജനകമായ യാഥാർത്ഥ്യം അംഗീകരിക്കാൻ വിസ്‌മ്മരിക്കൽ</td><td>"ഞാൻ fail ആയില്ല"</td></tr><tr><td><strong>Compensation</strong><br><span style="font-size:10px;color:var(--muted);">(നഷ്‌ടപരിഹാരം)</span></td><td>ഒരു ബലഹീനത മറ്റൊരിടത്ത് നേട്ടം കൊണ്ട് ഒഴിവാക്കൽ</td><td>പഠനത്തിൽ ദുർബലൻ; കളിയിൽ ഒന്നാമൻ</td></tr></table></div></div>
+<div class="hbox"><div class="hbox-title">⚡ KTET-ൽ ഏറ്റവും ചോദിക്കപ്പെടുന്നവ</div><ul><li><strong>Sublimation (★)</strong> = ഏറ്റവും ഉദ്ധൃതവും പ്രൗഢവുമായ <span class="en">(Most Positive / Mature)</span> Defence Mechanism</li><li><strong>Regression</strong> = Stress-ൽ മുൻ ഘട്ടത്തിലേക്ക് മടങ്ങൽ</li><li><strong>Projection</strong> = സ്വന്തം വികാരം മറ്റൊരാൾക്ക് ആരോപിക്കൽ</li><li><strong>Rationalization</strong> = പരാജയത്തിന് ന്യായം ഉണ്ടാക്കൽ</li></ul></div>`,
+
+'ഫ്രോയ്‌ഡ്':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>സിഗ്മണ്ട് ഫ്രോയ്‌ഡ് — മനഃ-വിശ്ലേഷണ സിദ്ധാന്തം <span class="en">(Sigmund Freud — Psychoanalytic Theory)</span></div><p>പ്രവർത്തനം <strong>അബോധ ശക്‌തികളാൽ</strong> <span class="en">(Unconscious Forces)</span> നിർണ്ണയിക്കപ്പെടുന്നു. മനസ്സ് ഒരു മഞ്ഞുമല <span class="en">(Iceberg)</span> — ഭൂരിഭാഗം ഉള്ളടക്കവും അദൃശ്യം.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>മനസ്സിന്റെ മൂന്ന് തലങ്ങൾ <span class="en">(Three Levels of Mind)</span></div><div class="hier"><div class="hlvl" style="background:#e8eef8;border:1px solid var(--border);"><div class="hnum" style="background:var(--navy);color:#fff;">C</div><div style="font-size:12.5px;color:var(--navy);"><strong>ബോധ മനസ്സ് <span class="en">(Conscious)</span>:</strong> ഇപ്പോൾ ബോധത്തിലുള്ളത് (മഞ്ഞുമലയുടെ ചെറിയ മുകൾ ഭാഗം)</div></div><div class="hlvl" style="background:var(--saffron-lt);border:1px solid var(--border);"><div class="hnum" style="background:var(--saffron);color:#fff;">P</div><div style="font-size:12.5px;color:#7a3800;"><strong>ഉപബോധ മനസ്സ് <span class="en">(Preconscious)</span>:</strong> ഇപ്പോൾ ബോധ്യമല്ലെങ്കിലും ആവശ്യപ്പെടുമ്പോൾ ലഭ്യം</div></div><div class="hlvl" style="background:var(--rose-lt);border:1px solid var(--border);"><div class="hnum" style="background:var(--rose);color:#fff;">U</div><div style="font-size:12.5px;color:#7a1e3e;"><strong>അബോധ മനസ്സ് <span class="en">(Unconscious)</span>:</strong> അടിച്ചമർത്തിയ ആഗ്രഹങ്ങൾ, ഭയങ്ങൾ — ഏറ്റവും ശക്‌തമായ ഭാഗം</div></div></div></div>
+<div class="card av"><div class="card-title"><span class="cdot" style="background:var(--violet)"></span>ഐഡ്, ഈഗോ, സൂപ്പർ-ഈഗോ <span class="en">(Id, Ego, Superego)</span></div><div class="tbl-wrap"><table class="dtbl"><tr><th>ഘടകം</th><th>തത്ത്വം</th><th>ഭൂമിക</th></tr><tr><td><strong>ഐഡ് <span class="en">(Id)</span></strong></td><td>Pleasure Principle</td><td>ഉടൻ തൃപ്‌തി ആഗ്രഹം; പൂർണ്ണ അബോധം; ജനനം മുതൽ; സ്വാർത്ഥം, അയുക്‌തികം</td></tr><tr><td><strong>ഈഗോ <span class="en">(Ego)</span></strong></td><td>Reality Principle</td><td>ഐഡിന്റെ ആഗ്രഹവും യഥാർത്ഥ്യവും ഒത്തിണക്കൽ; ഭൂരിഭാഗം ബോധ; യുക്‌തിപര</td></tr><tr><td><strong>സൂപ്പർ-ഈഗോ <span class="en">(Superego)</span></strong></td><td>Morality Principle</td><td>ധർമ്മ-നിരീക്ഷകൻ; Conscience + Ego Ideal; കുറ്റബോധം, അഭിമാനം</td></tr></table></div></div>
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>മനോ-ലൈംഗിക ഘട്ടങ്ങൾ <span class="en">(Psychosexual Stages)</span></div><div class="tbl-wrap"><table class="dtbl"><tr><th>ഘട്ടം</th><th>വ.</th><th>Erogenous Zone</th><th>കേന്ദ്ര വിഷയം</th></tr><tr><td><strong>Oral</strong></td><td>0–1</td><td>വായ</td><td>ഭക്ഷണ; Fixation → പുകവലി, ആശ്രിതത്വം</td></tr><tr><td><strong>Anal</strong></td><td>1–3</td><td>ഗുദം</td><td>Toilet Training; rigid / messy</td></tr><tr><td><strong>Phallic</strong></td><td>3–6</td><td>ഗോനഡ്</td><td>Oedipus / Electra Complex; ലിംഗ-ഐഡന്റിറ്റി</td></tr><tr><td><strong>Latency</strong></td><td>6–12</td><td>ഒന്നുമില്ല</td><td>ലൈംഗിക ആഗ്രഹം നിദ്രാവസ്ഥ; സ്‌കൂൾ, സൗഹൃദം</td></tr><tr><td><strong>Genital</strong></td><td>12+</td><td>ഗോനഡ്</td><td>യൗവനം; പ്രൗഢ ലൈംഗിക ബന്ധം</td></tr></table></div></div>`
+  }
+},
+
+/* ═══════════════════════════════════════════════
+   6. പ്രചോദനം (MOTIVATION)
+═══════════════════════════════════════════════ */
+motivation:{
+  title:'പ്രചോദനവും വൈകാരികതയും (Motivation & Emotion)',
+  badge:'വിഭാഗം 06',
+  tabs:['പ്രചോദന സിദ്ധാന്തം','വൈകാരികത','ക്ലാസ്‌മുറി'],
+  content:{
+'പ്രചോദന സിദ്ധാന്തം':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>പ്രചോദനം <span class="en">(Motivation)</span> — നിർവ്വചനം</div><p>ഒരു ലക്ഷ്യത്തിലേക്ക് <strong>പ്രവർത്തനം ആരംഭിക്കുക, ദിശ നിർണ്ണയിക്കുക, തുടർ‌നൽ‌കുക</strong> <span class="en">(Activates, Directs, Sustains)</span> ചെയ്യുന്ന ആന്തരിക അവസ്ഥ.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>ആന്തരിക vs. ബാഹ്യ പ്രചോദനം <span class="en">(Intrinsic vs. Extrinsic)</span></div><div class="two-panel"><div class="tp-box" style="background:var(--mint-lt);border:1px solid #a3d9cc;"><div class="tp-lbl" style="color:var(--mint);">ആന്തരിക (INTRINSIC)</div><div class="tp-text" style="color:#094f3f;">കൗതുകം, ഇഷ്ടം, ആനന്ദം — ഉള്ളിൽ നിന്ന്. ആഴത്തിലുള്ള, ദൃഢ പഠനം. <em>"കഥ ഇഷ്‌ടമുള്ളതുകൊണ്ട് വായിക്കൽ."</em></div></div><div class="tp-box" style="background:var(--saffron-lt);border:1px solid #f5c87a;"><div class="tp-lbl" style="color:var(--saffron);">ബാഹ്യ (EXTRINSIC)</div><div class="tp-text" style="color:#7a3800;">Grade, ഇനാം, ശിക്ഷ ഭയം — പുറത്ത് നിന്ന്. Over-Justification Effect: ബാഹ്യ ഇനാം ആന്തരിക ഇഷ്‌ടം കുറയ്‌ക്കും. <em>"Star sticker-ന് വേണ്ടി വായിക്കൽ."</em></div></div></div></div>
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>പ്രധാന പ്രചോദന സിദ്ധാന്തങ്ങൾ</div><div class="tbl-wrap"><table class="dtbl"><tr><th>സിദ്ധാന്തം</th><th>ചിന്തകൻ</th><th>കേന്ദ്ര ആശയം</th></tr><tr><td><strong>Need Hierarchy</strong></td><td>Maslow</td><td>5 ആവശ്യ-തലം; ഓരോ ഘട്ടം തൃപ്‌തിയടക്കി മുന്നോട്ട്. വിശക്കുന്ന കുട്ടി പഠിക്കില്ല.</td></tr><tr><td><strong>Achievement Motivation</strong></td><td>McClelland</td><td>nAch, nPow, nAff. ഉയർന്ന nAch = ഇടത്തരം challenge ഇഷ്‌ടം.</td></tr><tr><td><strong>Self-Determination Theory</strong></td><td>Deci & Ryan</td><td>3 ആവശ്യങ്ങൾ: Autonomy, Competence, Relatedness.</td></tr><tr><td><strong>Attribution Theory</strong></td><td>Weiner</td><td>വിജയ/പരാജയ കാരണം: കഴിവ്, ശ്രമം, ജോലി-ബുദ്ധിമുട്ട്, ഭാഗ്യം.</td></tr></table></div></div>
+<div class="hbox"><div class="hbox-title">⚡ Attribution Theory — KTET പോയിന്റ്</div><p>കുട്ടികൾ പരാജയം <strong>ശ്രമക്കുറവ്</strong> <span class="en">(Effort — internal, controllable)</span> ആണ് കാരണം എന്ന് ചിന്തിക്കാൻ സഹായിക്കണം. "ഞാൻ മോശക്കാരനാണ്" <span class="en">(Ability — internal, uncontrollable)</span> എന്ന ചിന്ത <strong>Learned Helplessness (Seligman)</strong> ഉണ്ടാക്കുന്നു — ശ്രമം നിർത്തൽ.</p></div>`,
+'വൈകാരികത':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>വൈകാരികത <span class="en">(Emotion)</span> — മൂന്ന് ഘടകങ്ങൾ</div><ul><li><strong>ആത്മനിഷ്‌ഠ അനുഭവം <span class="en">(Subjective Experience)</span>:</strong> ഉള്ളിൽ "തോന്നൽ"</li><li><strong>ശാരീരിക പ്രതിക്രിയ <span class="en">(Physiological Response)</span>:</strong> ഹൃദയ-ത്വരണം, അഡ്രിനാലിൻ</li><li><strong>പ്രവർത്തന-പ്രതിക്രിയ <span class="en">(Behavioral Response)</span>:</strong> ഓടൽ, കരച്ചിൽ, ആലിംഗനം</li></ul></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>വൈകാരിക സിദ്ധാന്തങ്ങൾ <span class="en">(Theories of Emotion)</span></div><div class="tbl-wrap"><table class="dtbl"><tr><th>സിദ്ധാന്തം</th><th>ആർ?</th><th>ക്രമം</th></tr><tr><td><strong>James-Lange</strong></td><td>James & Lange</td><td>ഉദ്ദീപകം → ശാരീരിക ഉദ്ദ്വേഗം → വൈകാരികത. "ഭയം കൊണ്ടോടുന്നതല്ല; ഓടുന്നതുകൊണ്ട് ഭയം."</td></tr><tr><td><strong>Cannon-Bard</strong></td><td>Cannon & Bard</td><td>ഉദ്ദീപകം → വൈകാരികതയും ശാരീരിക ഉദ്ദ്വേഗവും ഒരേ സമയം (Thalamus ഇരുവഴി).</td></tr><tr><td><strong>Two-Factor</strong></td><td>Schachter-Singer</td><td>ഉദ്ദ്വേഗം → Cognitive Label → വൈകാരികത. ഒരേ ഉദ്ദ്വേഗം, സന്ദർഭ-നിർണ്ണയം.</td></tr></table></div></div>
+<div class="card av"><div class="card-title"><span class="cdot" style="background:var(--violet)"></span>വൈകാരിക ബുദ്ധി <span class="en">(Emotional Intelligence — Goleman, 1995)</span></div><div class="steps"><div class="step"><div class="snum" style="background:var(--violet)">1</div><div class="stext"><strong>വൈകാരിക ഗ്രഹണം <span class="en">(Perceiving):</span></strong> മുഖം, ശബ്ദം, കലയിൽ വൈകാരികത തിരിച്ചറിയൽ.</div></div><div class="step"><div class="snum" style="background:var(--violet)">2</div><div class="stext"><strong>വൈകാരികത ഉപയോഗം <span class="en">(Using):</span></strong> ചിന്തയെ സഹായിക്കാൻ വൈകാരികത ഉപകരണമാക്കൽ.</div></div><div class="step"><div class="snum" style="background:var(--violet)">3</div><div class="stext"><strong>വൈകാരിക ഗ്രാഹ്യം <span class="en">(Understanding):</span></strong> വൈകാരിക ഒഴുക്ക് അറിയൽ.</div></div><div class="step"><div class="snum" style="background:var(--violet)">4</div><div class="stext"><strong>വൈകാരിക നിയന്ത്രണം <span class="en">(Managing):</span></strong> സ്വന്തവും മറ്റുള്ളവരുടെ വൈകാരികതയും ഫലപ്രദമായി നിർവ്വഹിക്കൽ.</div></div></div></div>`,
+'ക്ലാസ്‌മുറി':`
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>കുട്ടിയുടെ പ്രചോദനം വർദ്ധിപ്പിക്കാൻ <span class="en">(Classroom Strategies)</span></div><div class="steps"><div class="step"><div class="snum" style="background:var(--mint)">1</div><div class="stext"><strong>കൗതുകം ഉണ്ടാക്കൽ <span class="en">(Foster Curiosity)</span>:</strong> കടങ്കഥ, ആശ്ചര്യ-ചോദ്യം — ആദ്യ പ്രചോദനം.</div></div><div class="step"><div class="snum" style="background:var(--mint)">2</div><div class="stext"><strong>ZPD-ൽ Challenge <span class="en">(Achievable Challenges)</span>:</strong> Flow State <span class="en">(Csikszentmihalyi)</span> = Skill ≈ Challenge.</div></div><div class="step"><div class="snum" style="background:var(--mint)">3</div><div class="stext"><strong>ഉടൻ ഫീഡ്‌ബാക്ക് <span class="en">(Immediate Feedback)</span>:</strong> ശരി + മെച്ചപ്പെടൽ വഴി — Competence ഉറക്കൽ.</div></div><div class="step"><div class="snum" style="background:var(--mint)">4</div><div class="stext"><strong>Mastery Goal <span class="en">(Mastery Orientation)</span>:</strong> "നന്നായോ?" vs. "എന്തെടുത്ത്?" — ആദ്യത്തേത് ആന്തരിക പ്രചോദനം.</div></div><div class="step"><div class="snum" style="background:var(--mint)">5</div><div class="stext"><strong>ഇഷ്ടം അനുസരിക്കൽ <span class="en">(Autonomy & Choice)</span>:</strong> കുട്ടിക്ക് ചോദ്യ-മേഖല/ഫോർമാറ്റ് തിരഞ്ഞെടുക്കാൻ അനുവദിക്കൽ — Self-Determination.</div></div><div class="step"><div class="snum" style="background:var(--mint)">6</div><div class="stext"><strong>ഊഷ്‌മള ബന്ധം <span class="en">(Positive Relationships)</span>:</strong> ഇഷ്‌ടവും വിശ്വാസവുമുള്ള അദ്ധ്യാപകനു വേണ്ടി കൂടുതൽ ശ്രമിക്കും.</div></div></div></div>`
+  }
+},
+
+/* ═══════════════════════════════════════════════
+   7. ഭാഷ (LANGUAGE)
+═══════════════════════════════════════════════ */
+language:{
+  title:'ഭാഷ വികസനം (Language Development)',
+  badge:'വിഭാഗം 07',
+  tabs:['നാഴികക്കല്ലുകൾ','സിദ്ധാന്തങ്ങൾ','ദ്വിഭാഷ'],
+  content:{
+'നാഴികക്കല്ലുകൾ':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>ഭാഷ വികസന നാഴികക്കല്ലുകൾ <span class="en">(Language Development Milestones)</span></div><div class="tbl-wrap"><table class="dtbl"><tr><th>വ.</th><th>ഘട്ടം</th><th>പ്രധാന സ്വഭാവങ്ങൾ</th></tr><tr><td>0–2 mo</td><td>Cooing</td><td>സ്വരശബ്ദം; കരച്ചിൽ — ഭക്ഷണം vs. വേദന വ്യത്യസ്‌തം</td></tr><tr><td>4–6 mo</td><td>Babbling</td><td>ব্যঞ্জনধ্বনি + স্বরধ্বনি (ba-ba, ma-ma). ആഗോളം — ബധിര ശിശു ആദ്യം babble ചെയ്‌തും</td></tr><tr><td>8–12 mo</td><td>Holophrases</td><td>ഒറ്റ വാക്കിൽ വാക്യ-അർത്ഥം. "Milk" = "ഞാൻ milk ആഗ്രഹിക്കുന്നു."</td></tr><tr><td>18–24 mo</td><td>Two-Word Stage</td><td>"More milk," "Daddy go" — Telegraphic Speech. ശബ്ദ-വിസ്‌ഫോടനം <span class="en">(Word Spurt)</span>.</td></tr><tr><td>2–3 yr</td><td>Simple Sentences</td><td>3+ വാക്ക് വാക്യം. Overgeneralization ("goed" for "went") — നിയമ-ശ്രമം തെളിയിക്കൽ.</td></tr><tr><td>3–5 yr</td><td>Complex Grammar</td><td>Past tense, plurals, ചോദ്യം. ~2000 വാക്ക്.</td></tr><tr><td>6–12 yr</td><td>Literacy</td><td>വായന-എഴുത്ത് ആർജ്ജിക്കൽ. Meta-linguistic Awareness.</td></tr></table></div></div>
+<div class="hbox"><div class="hbox-title">⚡ Critical Period Hypothesis</div><p><strong>Lenneberg (1967):</strong> ജനനം മുതൽ puberty (~12 വ.) വരെ ഭാഷ-ആർജ്ജ‌ണ നിർണ്ണായക കാലഘട്ടം <span class="en">(Critical Period)</span>. <strong>Genie case</strong> — 13 വ. കണ്ടെത്തിയ ഫെറൽ ശിശു: vocabulary ആർജ്ജിച്ചു; grammar ഒരിക്കലും ആർജ്ജിക്കാൻ കഴിഞ്ഞില്ല.</p></div>`,
+'സിദ്ധാന്തങ്ങൾ':`
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>പെരുമാറ്റ ദൃഷ്‌ടിക്കോൺ — സ്‌കിന്നർ <span class="en">(Behaviourist — Skinner, 1957)</span></div><p>Operant Conditioning-ലൂടെ ഭാഷ — അനുകരണം + ശരിയായ ഉച്ചാരണത്തിന് ഇനാം.</p><div class="mbox" style="margin-top:8px;"><p><strong>Chomsky-ന്റെ വിമർശനം:</strong> "I goed to school" — ഇത്തരം വാക്യങ്ങൾ കുട്ടി ഒരിക്കലും കേട്ടിട്ടില്ല. ഇത് ആർജ്ജിത നിയമ-പ്രയോഗം, അനുകരണം അല്ല. Skinner-ന്റെ സിദ്ധാന്തം ഇതോടെ ഖണ്ഡിക്കപ്പെട്ടു.</p></div></div>
+<div class="card av"><div class="card-title"><span class="cdot" style="background:var(--violet)"></span>ജൈവ ദൃഷ്‌ടിക്കോൺ — ചോംസ്‌കി <span class="en">(Nativist — Chomsky, 1965)</span></div><p>മനുഷ്യർ <strong>LAD (Language Acquisition Device)</strong> ജന്മ-ജൈവ ഘടനയോടുകൂടി ജനിക്കുന്നു. ഇത് Universal Grammar <span class="en">(ആഗോള ഭാഷ-ഘടന)</span> ഉൾക്കൊള്ളുന്നു — ഇതുകൊണ്ടാണ് ലോകത്തെ ഏതൊരു കുട്ടിയും അദ്ധ്യാപനം ഇല്ലാതെ ഭാഷ ആർജ്ജിക്കുന്നത്.</p></div>
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>സംവദന ദൃഷ്‌ടിക്കോൺ <span class="en">(Interactionist View)</span></div><p>ജൈവ LAD + സാമൂഹ്യ ഇടപഴകൽ (Motherese, Scaffolding, Input) — ഇരുവും ഒരുമിച്ച് ആവശ്യം. Vygotsky: ഭാഷ ആദ്യം സാമൂഹ്യ ഇടത്തിൽ ഉദ്ഭവിക്കുന്നു; പിന്നെ ആന്തരിക-ചിന്ത ആകുന്നു.</p></div>`,
+'ദ്വിഭാഷ':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>ദ്വിഭാഷ-ഇനങ്ങൾ <span class="en">(Types of Bilingualism)</span></div><ul><li><strong>Simultaneous Bilingualism:</strong> ജനനം മുതൽ രണ്ടു ഭാഷ — ദ്വിഭാഷ ഗൃഹം.</li><li><strong>Sequential Bilingualism:</strong> L1 ആർജ്ജിച്ചതിനു ശേഷം L2. സ്‌കൂൾ-ഭാഷ ഇനം.</li><li><strong>Additive Bilingualism:</strong> L2 L1-നെ സമ്പന്നമാക്കുന്നു. വ്യക്‌തിക്ക് ഗുണകരം.</li><li><strong>Subtractive Bilingualism:</strong> L2, L1-നെ മാറ്റിക്കൊള്ളൽ — സാംസ്‌കാരിക ഐഡന്റിറ്റി നഷ്‌ടം.</li></ul></div>
+<div class="mbox"><p><strong>Cummins-ന്റെ Linguistic Interdependence Hypothesis:</strong> L1-ൽ ബലമുള്ളത് L2 ആർജ്ജ‌ണം സഹായിക്കുന്നു. <strong>ശക്‌തമായ L1 = മികച്ച L2.</strong></p></div>
+<div class="hbox"><div class="hbox-title">⚡ കേരള ക്ലാസ്‌മുറി സന്ദർഭം</div><p>KTET ഉദ്യോഗാർത്ഥികൾ: മലയാളം (ഗൃഹഭാഷ), ഇംഗ്ലീഷ് (Instruction), ഹിന്ദി (ദേശീയ ഭാഷ) — Sequential + Additive Bilingualism. L1 (മലയാളം) ശക്‌തിപ്പെടുത്തൽ L2/L3 ആർജ്ജ‌ണം ഉളർത്തുന്നു.</p></div>`
+  }
+},
+
+/* ═══════════════════════════════════════════════
+   8. ഉൾക്കൊള്ളൽ വിദ്യാഭ്യാസം (INCLUSIVE EDUCATION)
+═══════════════════════════════════════════════ */
+inclusive:{
+  title:'ഉൾക്കൊള്ളൽ വിദ്യാഭ്യാസം (Inclusive Education)',
+  badge:'വിഭാഗം 08',
+  tabs:['പഠന വൈകല്യങ്ങൾ','പ്രതിഭ','നയം & UDL'],
+  content:{
+'പഠന വൈകല്യങ്ങൾ':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>പഠന വൈകല്യം <span class="en">(Learning Disability)</span> — അവലോകനം</div><p>വിവരം പ്രോസസ്സ് ചെയ്യുന്ന രീതിയെ ബാധിക്കുന്ന <strong>ന്യൂറോ-ജൈവ ക്ഷേദ്ര <span class="en">(Neurological Disorder)</span></strong>. ഇത് കുറഞ്ഞ IQ, മോശം അദ്ധ്യാപനം, ദ്രാരിദ്ര്യം, സാംസ്‌കാരിക വ്യത്യാസം കൊണ്ടല്ല. IQ <strong>ശരാശരി അല്ലെങ്കിൽ അതിനു മുകളിൽ</strong> — ശേഷിയും പ്രകടനവും തമ്മിലുള്ള വിടവ് <span class="en">(Gap)</span> ആണ് സൂചകം.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>പ്രധാന പഠന വൈകല്യ ചാർട്ട്</div><div class="tbl-wrap"><table class="dtbl"><tr><th>അവസ്ഥ</th><th>മേഖല</th><th>പ്രധാന ലക്ഷണങ്ങൾ</th><th>തന്ത്രങ്ങൾ</th></tr><tr><td><strong>Dyslexia</strong><br><span style="font-size:10px;color:var(--muted);">ഡിസ്‌ലെക്‌സ്‌യ</span></td><td>വായന</td><td>അക്ഷര-മറിച്ചൽ (b↔d), മെല്ലെ വായന, Phonics ബുദ്ധിമുട്ട്. <strong>ഏറ്റവും സാധാരണ LD</strong> (~80%).</td><td>Phonics അടിസ്ഥാന, Audio books, Extra time, Multi-sensory</td></tr><tr><td><strong>Dysgraphia</strong><br><span style="font-size:10px;color:var(--muted);">ഡിസ്‌ഗ്രഫ്‌യ</span></td><td>എഴുത്ത്</td><td>ദുർഗ്രഹ ക്ഷ്ഷ, അക്ഷര-ഇളക്കം, poor layout, എഴുതുമ്പോൾ ക്ഷീണം.</td><td>ടൈപ്പിംഗ് അനുവദിക്കൽ, ഉത്തര-ഓഡ്‌ ആം, Word Processor</td></tr><tr><td><strong>Dyscalculia</strong><br><span style="font-size:10px;color:var(--muted);">(ഗണിത-ക്ഷേദ്ര)</span></td><td>ഗണിതം</td><td>Number Sense ബുദ്ധിമുട്ട്, ഗണിത ചിഹ്ന-ഗ്രഹണ ക്ഷേദ്ര, Sequencing.</td><td>Manipulatives, Color-coded steps, Calculator</td></tr><tr><td><strong>Dyspraxia</strong><br><span style="font-size:10px;color:var(--muted);">(ചലന-ഏകോപന ക്ഷേദ്ര)</span></td><td>ചലനം</td><td>Balance ഇടപ്പ്, Clumsy, Fine-motor tasks ബുദ്ധിമുട്ട്.</td><td>Occupational Therapy, Adaptive PE</td></tr><tr><td><strong>ADHD</strong></td><td>ശ്രദ്ധ</td><td>ശ്രദ്ധക്കുറവ്, Hyperactivity, Impulsivity. മൂന്ന് Subtypes: Inattentive, Hyperactive, Combined.</td><td>ക്രമ-ദിനചര്യ, ഇടക്കിടെ ഇടവേള, Positive Reinforcement</td></tr></table></div></div>
+<div class="hbox"><div class="hbox-title">⚡ KTET പ്രധാന പോയിന്റുകൾ</div><ul><li><strong>Dyslexia</strong> = വായന | <strong>Dysgraphia</strong> = എഴുത്ത് | <strong>Dyscalculia</strong> = ഗണിതം | <strong>Dyspraxia</strong> = ഏകോപനം</li><li>Dyslexia = ഏറ്റവും സാധാരണ LD (~80%)</li><li>LD ഉള്ള കുട്ടിക്ക് <strong>ശരാശരി അല്ലെങ്കിൽ അതിലധികം IQ</strong> ഉണ്ടായിരിക്കും</li><li>ADHD — LD-യുമായൊ common-ആകുന്നു; പക്ഷെ വ്യത്യസ്‌ത വർഗ്ഗം</li></ul></div>`,
+'പ്രതിഭ':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>പ്രതിഭ <span class="en">(Giftedness)</span> — നിർവ്വചനം</div><p><strong>Renzulli-ന്റെ Three-Ring Conception:</strong> ഉയർന്ന ശേഷി + ഉയർന്ന കർ‌മ്മ-നിഷ്‌ഠ + ഉയർന്ന സൃഷ്‌ടിപരത. IQ 130+ ഒരു സൂചകം; ഒരേ ഒരു മാനദണ്ഡം അല്ല.</p></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>പ്രതിഭ കുട്ടിയുടെ സ്വഭാവ ഗുണങ്ങൾ <span class="en">(Characteristics)</span></div><div class="g2"><div class="mini-card"><div class="mc-title">ഉന്നത ഭാഷ-ശേഷി</div><div class="mc-text">Advanced Vocabulary — വ്യത്യസ്ത പ്രായ-നിലവാരം</div></div><div class="mini-card"><div class="mc-title">തീവ്ര കൗതുകം</div><div class="mc-text">Intense Curiosity — ആഴത്തിലുള്ള ചോദ്യങ്ങൾ</div></div><div class="mini-card"><div class="mc-title">ത്വരിത പഠനം</div><div class="mc-text">Rapid Learning — കുറഞ്ഞ ആവർത്തനം</div></div><div class="mini-card"><div class="mc-title">ഉയർന്ന സൃഷ്‌ടിപരത</div><div class="mc-text">High Creativity — മൗലിക ആശയങ്ങൾ</div></div><div class="mini-card"><div class="mc-title">Perfectionism</div><div class="mc-text">ഉന്നത മാനദണ്ഡം; ആത്മ-വിമർശനം</div></div><div class="mini-card"><div class="mc-title">Asynchronous Dev.</div><div class="mc-text">ബൗദ്ധികം ഉന്നതം; വൈകാരികം പ്രായ-നിലവാരം</div></div></div></div>
+<div class="card ag"><div class="card-title"><span class="cdot" style="background:var(--mint)"></span>പ്രതിഭ കുട്ടിക്ക് വിദ്യാഭ്യാസ സൗകര്യങ്ങൾ <span class="en">(Educational Provisions)</span></div><div class="tbl-wrap"><table class="dtbl"><tr><th>സമീപനം</th><th>വിശദം</th><th>ഗുണം</th></tr><tr><td><strong>Acceleration</strong></td><td>ഉയർന്ന ക്ലാസ്സ്/Grade Skip</td><td>ബോറടി ഒഴിവാകൽ; അക്കാദമിക് ശേഷി ചേർക്കൽ</td></tr><tr><td><strong>Enrichment</strong></td><td>ഒരേ Grade-ൽ ആഴത്തിലുള്ള പഠനം</td><td>സാമൂഹ്യ ഐക്യം; കൂടുതൽ ആഴം</td></tr><tr><td><strong>Pull-Out Programs</strong></td><td>പ്രത്യേക സ്ഥലത്ത് Special Session</td><td>സമ-ശേഷി ഗ്രൂപ്പ് ഇടപഴകൽ</td></tr><tr><td><strong>Mentorship</strong></td><td>Expert Mentor-മായി ജോടി</td><td>യഥാർത്ഥ-ലോക പ്രയോഗം</td></tr></table></div></div>`,
+'നയം & UDL':`
+<div class="card al"><div class="card-title"><span class="cdot"></span>നിയമ-ചട്ടക്കൂട് — ഇന്ത്യ <span class="en">(Legal Framework)</span></div><div class="tbl-wrap"><table class="dtbl"><tr><th>നിയമം</th><th>വ.</th><th>പ്രധാന വ്യവസ്ഥ</th></tr><tr><td><strong>Persons with Disabilities Act</strong></td><td>1995</td><td>3% സംവരണം; 18 വ. വരെ CWSN-ക്ക് സൗജന്യ വിദ്യാഭ്യാസം</td></tr><tr><td><strong>RTE Act</strong></td><td>2009</td><td>6–14 വ. എല്ലാ കുട്ടിക്കും സൗജന്യ-നിർബ്ബന്ധ വിദ്യാഭ്യാസം; CWSN ഉൾക്കൊള്ളൽ</td></tr><tr><td><strong>RPWD Act</strong></td><td>2016</td><td>7 → 21 വൈകല്യ-വർഗ്ഗം; 5% സംവരണം</td></tr><tr><td><strong>NEP</strong></td><td>2020</td><td>UDL, ഒന്നിലധികം Assessment ഓപ്ഷൻ, ഉൾക്കൊള്ളൽ ഊന്നൽ</td></tr><tr><td><strong>Salamanca Statement</strong></td><td>1994</td><td>UNESCO — CWSN-ന് ഉൾക്കൊള്ളൽ വിദ്യാഭ്യാസം</td></tr></table></div></div>
+<div class="card ao"><div class="card-title"><span class="cdot" style="background:var(--saffron)"></span>Universal Design for Learning (UDL)</div><p style="margin-bottom:8px;">ആദ്യ-ദിനം മുതൽ <strong>എല്ലാ വിദ്യാർത്ഥിക്കും</strong> ലഭ്യമായ Course Design. മൂന്ന് തത്ത്വങ്ങൾ:</p><div class="steps"><div class="step"><div class="snum" style="background:var(--mint)">1</div><div class="stext"><strong>ഒന്നിലധികം പ്രതിനിധ-മാർഗ്ഗം <span class="en">(Multiple Means of Representation — "What")</span>:</strong> ദൃശ്യ, ശ്രവ്യ, Text, Hands-on — ഒന്നിലധികം format.</div></div><div class="step"><div class="snum" style="background:var(--mint)">2</div><div class="stext"><strong>ഒന്നിലധികം ആവിഷ്‌ക്കരണ-മാർഗ്ഗം <span class="en">(Action & Expression — "How")</span>:</strong> ഉത്തരം — ഉത്ക്കൃഷ്‌ടം, Written, Draw, Act, Build.</div></div><div class="step"><div class="snum" style="background:var(--mint)">3</div><div class="stext"><strong>ഒന്നിലധികം ഇടപഴകൽ-മാർഗ്ഗം <span class="en">(Engagement — "Why")</span>:</strong> ഇഷ്‌ടം, Challenge, Interest — Motivation നിലനിർത്തൽ.</div></div></div></div>
+<div class="hbox"><div class="hbox-title">⚡ ഉൾക്കൊള്ളൽ വിദ്യാഭ്യാസ KTET പോയിന്റുകൾ</div><ul><li><strong>CWSN</strong> = Children With Special Needs — ഒൗദ്യോഗിക, ഒളളംചേർ-ഒഴിഞ്ഞ പദം</li><li><strong>IEP</strong> (Individual Education Program) = ഓരോ CWSN-നും Customized Plan</li><li><strong>Integration ≠ Inclusion.</strong> Integration: CWSN-നെ Regular Class-ൽ ഇടൽ. Inclusion: System-ത്തന്നെ മാറ്റൽ.</li><li><strong>LRE</strong> (Least Restrictive Environment) — Full Inclusion in Regular Classroom ആദർശ ലക്ഷ്യം</li></ul></div>`
+  }
+}
+
+}; // end SECTIONS
+
+const MORE_SECTIONS = ['personality','motivation','language','inclusive'];
+const MORE_LABELS = {
+  personality:'👤 വ്യക്തിത്വം',
+  motivation:'🎯 പ്രചോദനം',
+  language:'💬 ഭാഷ',
+  inclusive:'🤝 ഉൾക്കൊള്ളൽ'
+};
+
+let curSection='growth', curTab=null, moreOpen=false;
+
+function goSection(key,el){
+  closeMore();
+  if(key==='more'){toggleMore(el);return;}
+  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  curSection=key;
+  const sec=SECTIONS[key];
+  curTab=sec.tabs[0];
+  renderTabs(sec.tabs);
+  renderContent();
+  document.getElementById('scroll-area').scrollTop=0;
+}
+
+function toggleMore(el){
+  moreOpen=!moreOpen;
+  const ov=document.getElementById('more-overlay');
+  if(moreOpen){
+    document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('more-items').innerHTML=MORE_SECTIONS.map(k=>`
+      <div class="more-item" onclick="selectMore('${k}')">
+        ${MORE_LABELS[k]}
+        <span class="more-item-badge">${SECTIONS[k].badge}</span>
+      </div>`).join('');
+    ov.style.display='block';
+    setTimeout(()=>document.addEventListener('click',outsideClose,{once:true}),50);
+  } else {
+    ov.style.display='none';
+  }
+}
+function outsideClose(e){
+  if(!document.getElementById('more-overlay').contains(e.target)) closeMore();
+}
+function closeMore(){
+  moreOpen=false;
+  document.getElementById('more-overlay').style.display='none';
+}
+function selectMore(key){
+  closeMore();
+  curSection=key;
+  curTab=SECTIONS[key].tabs[0];
+  renderTabs(SECTIONS[key].tabs);
+  renderContent();
+  document.getElementById('scroll-area').scrollTop=0;
+  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.bnav-item:last-child').classList.add('active');
+}
+function switchTab(tab,el){
+  curTab=tab;
+  document.querySelectorAll('.tpill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  renderContent();
+  document.getElementById('scroll-area').scrollTop=0;
+}
+function renderTabs(tabs){
+  document.getElementById('tab-strip').innerHTML=tabs.map(t=>
+    `<button class="tpill${t===curTab?' active':''}" onclick="switchTab('${t}',this)">${t}</button>`
+  ).join('');
+}
+function renderContent(){
+  const sec=SECTIONS[curSection];
+  document.getElementById('scroll-area').innerHTML=`
+    <div class="sec-head">
+      <div class="sec-title">${sec.title}</div>
+      <div class="sec-crumb">${sec.badge} — ${curTab}</div>
+    </div>
+    ${sec.content[curTab]||'<p>ഉള്ളടക്കം ഉടൻ ചേർക്കും...</p>'}
+  `;
+}
+window.onload=function(){
+  curTab=SECTIONS['growth'].tabs[0];
+  renderTabs(SECTIONS['growth'].tabs);
+  renderContent();
+};
+</script>
+</body>
+</html>
