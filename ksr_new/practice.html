@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0F4C43" />
+<title>Practice — KSR Made Clear</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="phone">
+  <header class="topbar"><div class="topbar-title">Practice MCQs</div></header>
+  <main id="app" class="app-content"></main>
+  <nav class="bottomnav">
+    <a class="navbtn" data-tab="home" href="index.html">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 11l9-8 9 8M5 10v10h14V10"/></svg><span>Home</span>
+    </a>
+    <a class="navbtn" data-tab="learn" href="learn.html">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15Z"/></svg><span>Learn</span>
+    </a>
+    <a class="navbtn" data-tab="practice" href="practice.html">
+      <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg><span>Practice</span>
+    </a>
+    <a class="navbtn" data-tab="pyq" href="pyq.html">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z"/><path fill="none" stroke="currentColor" stroke-width="2" d="M14 2v6h6"/></svg><span>PYQ</span>
+    </a>
+    <a class="navbtn" data-tab="profile" href="profile.html">
+      <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>Profile</span>
+    </a>
+  </nav>
+</div>
+
+<script src="data.js"></script>
+<script src="common.js"></script>
+<script>
+  markActiveNav("practice");
+  const container = document.getElementById("app");
+  const presetChapter = qs("chapter");
+  const mode = qs("mode");
+
+  if (mode === "daily") {
+    const qsList = shuffle(MCQ).slice(0, 10);
+    runQuiz({ title:"Daily Practice", tone:"#0F4C43", questions:qsList, key:"daily", kind:"mcq", exitHref:"index.html" });
+  } else {
+    drawSetup();
+  }
+
+  function drawSetup(){
+    let scope = presetChapter ? "chapter" : "all";
+    let chapterId = presetChapter || ALL_CHAPTERS[0].id;
+    let count = 10;
+
+    function draw(){
+      const chapterMeta = ALL_CHAPTERS.find(c => c.id === chapterId);
+      container.innerHTML = `<div class="setup-wrap">
+        <div class="setup-label">Scope</div>
+        <div class="seg">
+          <button class="seg-btn ${scope==='all'?'active':''}" data-scope="all">Full syllabus</button>
+          <button class="seg-btn ${scope==='chapter'?'active':''}" data-scope="chapter">Single chapter</button>
+        </div>
+        ${scope === "chapter" ? `<div style="margin-top:14px;"><div class="setup-label">Chapter</div>
+          <select class="select-field" id="chapterSelect">${ALL_CHAPTERS.map(c => `<option value="${c.id}" ${c.id===chapterId?"selected":""}>${c.partCode} — ${esc(c.title)}</option>`).join("")}</select>
+        </div>` : ""}
+        <div style="margin-top:14px;"><div class="setup-label">Number of questions</div>
+          <div class="seg">${[5,10,20].map(n => `<button class="seg-btn ${count===n?'active':''}" data-count="${n}">${n}</button>`).join("")}</div>
+        </div>
+        <button class="btn-solid" id="startBtn" style="width:100%;margin-top:26px;background:var(--ledger)">Start practice</button>
+      </div>`;
+      container.querySelectorAll("[data-scope]").forEach(b => b.onclick = () => { scope = b.dataset.scope; draw(); });
+      container.querySelectorAll("[data-count]").forEach(b => b.onclick = () => { count = parseInt(b.dataset.count,10); draw(); });
+      const sel = container.querySelector("#chapterSelect"); if (sel) sel.onchange = (e) => { chapterId = e.target.value; };
+      container.querySelector("#startBtn").onclick = () => {
+        let pool = scope === "all" ? MCQ : MCQ.filter(m => m.ch === chapterId);
+        const qsList = shuffle(pool).slice(0, Math.min(count, pool.length));
+        const meta = ALL_CHAPTERS.find(c => c.id === chapterId);
+        const title = scope === "all" ? "Full syllabus practice" : meta.title;
+        const key = scope === "all" ? "all" : chapterId;
+        const tone = scope === "all" ? "#0F4C43" : meta.color;
+        runQuiz({ title, tone, questions: qsList, key, kind: "mcq", exitHref: "practice.html" });
+      };
+    }
+    draw();
+  }
+</script>
+</body>
+</html>
