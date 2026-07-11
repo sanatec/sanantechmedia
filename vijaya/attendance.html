@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standard 10 Attendance System</title>
+    
+    <!-- PWA കണക്ഷൻ ലിങ്കുകൾ -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a73e8">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <style>
+      body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px 10px; background-color: #f0f2f5; color: #333; }
+      .container { max-width: 480px; margin: 0 auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); box-sizing: border-box; }
+      h2 { text-align: center; color: #1a73e8; margin: 10px 0; font-size: 20px; }
+      h3 { color: #5f6368; font-size: 16px; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 25px; }
+      label { font-weight: bold; font-size: 14px; color: #444; display: block; margin-top: 10px; }
+      select, input[type="date"], button.action-btn { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #dadce0; border-radius: 6px; font-size: 15px; box-sizing: border-box; }
+      button.action-btn { background-color: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+      button.action-btn:hover { background-color: #1557b0; }
+      button:disabled { background-color: #cccccc; cursor: not-allowed; }
+      .student-section { margin-top: 15px; max-height: 380px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; padding: 5px; }
+      .student-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 8px; border-bottom: 1px solid #f1f3f4; }
+      .absent-label { flex-grow: 1; margin-left: 12px; cursor: pointer; font-size: 15px; font-weight: 500; }
+      .absent-text { font-size: 12px; color: #d93025; font-weight: bold; margin-right: 10px; display: none; }
+      input[type="checkbox"] { width: 24px; height: 24px; cursor: pointer; accent-color: #d93025; }
+      input[type="checkbox"]:checked + .absent-label .absent-text { display: inline; }
+      input[type="checkbox"]:checked + .absent-label { color: #d93025; }
+      .stats-box { display: flex; justify-content: space-between; margin: 15px 0; background: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #e0e0e0; }
+      .stat-item { text-align: center; flex: 1; }
+      .stat-item span { display: block; font-size: 12px; color: #666; font-weight: bold; text-transform: uppercase; }
+      .stat-item b { font-size: 20px; }
+      .stat-present { color: #1e8e3e; }
+      .stat-absent { color: #d93025; }
+      .time-stamp { text-align: center; font-size: 13px; color: #555; background: #e8f0fe; padding: 6px; border-radius: 4px; margin-bottom: 10px; font-weight: 500; }
+      .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+      .report-table th, .report-table td { border: 1px solid #dadce0; padding: 10px; text-align: left; }
+      .report-table th { background-color: #f8f9fa; color: #5f6368; }
+      .no-data { text-align: center; padding: 20px; color: #70757a; font-style: italic; font-size: 14px; }
+      .alert-danger { background-color: #fce8e6; color: #c5221f; padding: 12px; border-radius: 6px; border: 1px solid #fad2cf; text-align: center; font-weight: bold; font-size: 14px; margin-top: 15px; }
+      .pending-box { background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 15px; box-sizing: border-box; }
+      .pending-item { padding: 8px; border-bottom: 1px solid #ffeeba; color: #c5221f; font-weight: bold; }
+      .pending-item:last-child { border-bottom: none; }
+      #statusMsg { text-align: center; font-weight: bold; margin-top: 10px; color: #1e8e3e; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Vijayabheri Attendance Monitoring System</h2>
+      <label for="divisionSelect">Select Division:</label>
+      <select id="divisionSelect" onchange="loadStudents()">
+        <option value="">-- Choose Division --</option>
+      </select>
+      
+      <div id="studentContainer" class="student-section" style="display:none;"></div>
+      <div id="blockMessage" class="alert-danger" style="display:none;">⚠️ Attendance for this division has already been submitted today!</div>
+      <button id="submitBtn" class="action-btn" style="display:none;" onclick="submitData()">Submit Attendance</button>
+      <div id="statusMsg"></div>
+
+      <h3>🔍 Monitor Attendance</h3>
+      <label for="searchDate">Select Date:</label>
+      <input type="date" id="searchDate" onchange="loadMonitorReport()">
+      
+      <label for="reportDivSelect">Select Division:</label>
+      <select id="reportDivSelect" onchange="loadMonitorReport()">
+        <option value="ALL">-- All Divisions Combined --</option>
+        <option value="PENDING">-- Pending Divisions Only --</option>
+      </select>
+      <div id="monitorContainer"><div class='no-data'>Loading live reports...</div></div>
+    </div>
+
+    <script>
+      // ⚠️ നിങ്ങളുടെ ഒറിജിനൽ ഗൂഗിൾ വെബ് ആപ്പ് യുആർഎൽ താഴെ നൽകുക (Code.gs ഫയൽ API മാറ്റിയ ശേഷമുള്ളത്)
+      const API_URL = "https://script.google.com/macros/s/AKfycbyzv9N7Gcp1xwKBWC4C9kwwkaR3TSQS6xL0L-pA55jAW7MVqMUUandmjtRTzq8xu8uN/exec";
+      var globalDivisions = [];
+
+      async function callAPI(payload) {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await response.json();
+        if (result.status === "success") return result.data;
+        throw new Error(result.message);
+      }
+
+      window.onload = function() {
+        var today = new Date();
+        var offset = today.getTimezoneOffset();
+        today = new Date(today.getTime() - (offset*60*1000));
+        document.getElementById('searchDate').value = today.toISOString().split('T')[0];
+
+        callAPI({ action: "getDivisions" }).then(divisions => {
+          globalDivisions = divisions;
+          var selectMark = document.getElementById('divisionSelect');
+          var selectReport = document.getElementById('reportDivSelect');
+          divisions.forEach(div => {
+            selectMark.options.add(new Option(div, div));
+            selectReport.options.add(new Option(div, div));
+          });
+          loadMonitorReport();
+        }).catch(err => alert("Error: " + err));
+      };
+
+      function loadStudents() {
+        var division = document.getElementById('divisionSelect').value;
+        var container = document.getElementById('studentContainer');
+        var btn = document.getElementById('submitBtn');
+        var blockMsg = document.getElementById('blockMessage');
+        
+        if(!division) { container.style.display = "none"; btn.style.display="none"; blockMsg.style.display = "none"; return; }
+        container.innerHTML = "<div class='no-data'>Checking status...</div>";
+        container.style.display = "block"; btn.style.display = "none"; blockMsg.style.display = "none";
+
+        callAPI({ action: "getStudentsByDivision", division: division }).then(result => {
+          if (result.alreadySubmitted) {
+            container.style.display = "none"; btn.style.display = "none"; blockMsg.style.display = "block";
+            return;
+          }
+          container.innerHTML = "";
+          if(result.students.length === 0) { container.innerHTML = "<div class='no-data'>No students found.</div>"; return; }
+          
+          result.students.forEach(student => {
+            var div = document.createElement('div');
+            div.className = 'student-row';
+            div.innerHTML = `<input type="checkbox" id="check_${student.slNo}" data-name="${student.name}" data-sl="${student.slNo}">
+                             <label class="absent-label" for="check_${student.slNo}"><span class="absent-text">[ABSENT] </span>No. ${student.slNo} - ${student.name}</label>`;
+            container.appendChild(div);
+          });
+          btn.style.display = "block";
+        }).catch(err => alert(err));
+      }
+
+      function submitData() {
+        var division = document.getElementById('divisionSelect').value;
+        var checkboxes = document.querySelectorAll('#studentContainer input[type="checkbox"]');
+        var records = [];
+        checkboxes.forEach(cb => {
+          records.push({ slNo: cb.getAttribute('data-sl'), name: cb.getAttribute('data-name'), status: cb.checked ? "Absent" : "Present" });
+        });
+
+        document.getElementById('submitBtn').disabled = true;
+        document.getElementById('statusMsg').innerHTML = "Saving attendance...";
+
+        callAPI({ action: "saveAttendance", division: division, records: records }).then(msg => {
+          document.getElementById('statusMsg').innerHTML = msg;
+          document.getElementById('studentContainer').style.display = "none";
+          document.getElementById('divisionSelect').value = "";
+          document.getElementById('submitBtn').style.display = "none";
+          document.getElementById('submitBtn').disabled = false;
+          loadMonitorReport();
+          setTimeout(() => { document.getElementById('statusMsg').innerHTML = ""; }, 4000);
+        }).catch(err => alert(err));
+      }
+
+      function loadMonitorReport() {
+        var searchDate = document.getElementById('searchDate').value;
+        var division = document.getElementById('reportDivSelect').value;
+        var container = document.getElementById('monitorContainer');
+        if(!searchDate) { container.innerHTML = "<div class='no-data'>Please select a date to view report.</div>"; return; }
+        container.innerHTML = "<div class='no-data'>Analyzing attendance cloud data...</div>";
+
+        if (division === "ALL" || division === "PENDING") {
+          var combinedData = { totalPresent: 0, totalAbsent: 0, absentees: [], submittedDivs: [], pendingDivs: [] };
+          var processedCount = 0;
+          if(globalDivisions.length === 0) { container.innerHTML = "<div class='no-data'>No divisions found.</div>"; return; }
+
+          globalDivisions.forEach(divName => {
+            callAPI({ action: "getAttendanceMonitorData", searchDate: searchDate, division: divName }).then(data => {
+              processedCount++;
+              if (data) {
+                combinedData.submittedDivs.push(divName);
+                combinedData.totalPresent += data.totalPresent;
+                combinedData.totalAbsent += data.totalAbsent;
+                data.absentees.forEach(stu => combinedData.absentees.push({ division: divName, slNo: stu.slNo, name: stu.name }));
+              } else {
+                combinedData.pendingDivs.push(divName);
+              }
+              if (processedCount === globalDivisions.length) {
+                if (division === "PENDING") renderOnlyPendingReport(combinedData, container);
+                else renderCombinedReport(combinedData, container);
+              }
+            }).catch(() => { processedCount++; });
+          });
+        } else {
+          callAPI({ action: "getAttendanceMonitorData", searchDate: searchDate, division: division }).then(data => {
+            if (!data) { container.innerHTML = "<div class='no-data'>⚠️ No records found for this date.</div>"; return; }
+            var html = `<div class="time-stamp">🕒 Submitted Time: ${data.submissionTime}</div>`;
+            html += `<div class="stats-box">
+                      <div class="stat-item"><span class="stat-present">Present</span><b class="stat-present">${data.totalPresent}</b></div>
+                      <div class="stat-item"><span class="stat-absent">Absent</span><b class="stat-absent">${data.totalAbsent}</b></div>
+                    </div><h4>Absent Students List:</h4>`;
+            if (data.absentees.length === 0) html += "<div class='no-data' style='color: #1e8e3e; font-weight: bold;'>🎉 100% Attendance (No Absentees).</div>";
+            else {
+              html += `<table class='report-table'><thead><tr><th>Sl No</th><th>Student Name</th></tr></thead><tbody>`;
+              data.absentees.forEach(s => { html += `<tr><td>${s.slNo}</td><td style="color: #d93025; font-weight: 500;">${s.name}</td></tr>`; });
+              html += `</tbody></table>`;
+            }
+            container.innerHTML = html;
+          }).catch(err => container.innerHTML = "<div class='no-data'>Error: " + err + "</div>");
+        }
+      }
+
+      function renderOnlyPendingReport(data, container) {
+        if (data.pendingDivs.length === 0) {
+          container.innerHTML = "<div class='no-data' style='color: #1e8e3e; font-weight: bold;'>🎉 Great! No pending classes today.</div>";
+          return;
+        }
+        var html = `<h4>⚠️ List of Pending Divisions:</h4><div class="pending-box">`;
+        data.pendingDivs.sort().forEach(divName => { html += `<div class="pending-item">⏳ Division ${divName} (Pending)</div>`; });
+        html += `</div>`;
+        container.innerHTML = html;
+      }
+
+      function renderCombinedReport(data, container) {
+        if (data.submittedDivs.length === 0) {
+          var noDataHtml = "<div class='no-data'>⚠️ No attendance logs found.</div>";
+          if (data.pendingDivs.length > 0) noDataHtml += `<div class="pending-box">⚠️ <b>Pending Divisions:</b> ${data.pendingDivs.sort().join(', ')}</div>`;
+          container.innerHTML = noDataHtml; return;
+        }
+        var html = `<div class="stats-box">
+                      <div class="stat-item"><span class="stat-present">Total Present</span><b class="stat-present">${data.totalPresent}</b></div>
+                      <div class="stat-item"><span class="stat-absent">Total Absent</span><b class="stat-absent">${data.totalAbsent}</b></div>
+                    </div>`;
+        if (data.pendingDivs.length > 0) html += `<div class="pending-box">⚠️ <b>Pending Divisions:</b> ${data.pendingDivs.sort().join(', ')}</div>`;
+        else html += `<div class="pending-box" style="background-color: #d4edda; border-color: #c3e6cb; color: #155724;">✅ <b>All divisions submitted!</b></div>`;
+        
+        html += `<h4>All Absentees Across School:</h4>`;
+        if (data.absentees.length === 0) html += "<div class='no-data' style='color: #1e8e3e; font-weight: bold;'>🎉 100% Attendance across all divisions.</div>";
+        else {
+          html += `<table class='report-table'><thead><tr><th>Div</th><th>No</th><th>Student Name</th></tr></thead><tbody>`;
+          data.absentees.forEach(s => { html += `<tr><td><b>${s.division}</b></td><td>${s.slNo}</td><td style="color: #d93025; font-weight: 500;">${s.name}</td></tr>`; });
+          html += `</tbody></table>`;
+        }
+        container.innerHTML = html;
+      }
+
+      // PWA സർവീസ് വർക്കർ രജിസ്ട്രേഷൻ കോഡ്
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('PWA Service Worker Loaded'))
+            .catch(err => console.log('Service Worker Error', err));
+        });
+      }
+    </script>
+  </body>
+</html>
