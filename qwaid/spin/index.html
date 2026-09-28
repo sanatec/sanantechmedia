@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7c6bff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Urdu Game">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<title>اردو ورڈ گیم - Urdu Word Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@500;700&family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#eef5ff; --bg2:#fff0f6; --card:#ffffff; --ink:#22273a; --sub:#6b7290;
+    --p1:#7c6bff; --p2:#ff7ab3; --accent:#ff9b42; --good:#22b573; --bad:#ff5566;
+    --shadow:0 12px 30px rgba(70,60,140,0.14); --ring:rgba(124,107,255,0.16);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg1:#161327; --bg2:#1c1530; --card:#211a37; --ink:#f2f0ff; --sub:#a6a2c9;
+      --shadow:0 12px 30px rgba(0,0,0,0.45); --ring:rgba(124,107,255,0.28);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg1:#161327; --bg2:#1c1530; --card:#211a37; --ink:#f2f0ff; --sub:#a6a2c9;
+    --shadow:0 12px 30px rgba(0,0,0,0.45); --ring:rgba(124,107,255,0.28);
+  }
+  *{box-sizing:border-box;-webkit-user-select:none;user-select:none;}
+  body{overscroll-behavior:none;touch-action:manipulation;}
+  html,body{height:100%;}
+  body{
+    margin:0; font-family:'Baloo 2',sans-serif; color:var(--ink);
+    background:
+      radial-gradient(1200px 500px at 10% -10%, var(--ring), transparent),
+      linear-gradient(160deg,var(--bg1),var(--bg2));
+    min-height:100%;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+    display:flex; justify-content:center;
+  }
+  .urdu{font-family:'Noto Nastaliq Urdu',serif; direction:rtl;}
+  .wrap{width:100%; max-width:520px; padding:18px 16px 36px; display:flex; flex-direction:column; min-height:100%;}
+
+  /* header */
+  .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px;}
+  .brand{display:flex; align-items:center; gap:8px; font-weight:800; font-size:18px;}
+  .brand .logo{font-size:26px;}
+  .stats{display:flex; gap:8px;}
+  .pill{
+    background:var(--card); border-radius:999px; box-shadow:var(--shadow);
+    padding:7px 14px; font-weight:700; font-size:14px; display:flex; align-items:center; gap:5px;
+  }
+  .score-pill{color:var(--accent);} .streak-pill{color:var(--p1);}
+
+  /* menu */
+  .menu-title{font-size:15px; color:var(--sub); font-weight:600; margin:6px 4px 12px; text-align:center;}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .cat-card{
+    background:var(--card); border-radius:20px; box-shadow:var(--shadow);
+    padding:16px 10px; text-align:center; cursor:pointer; border:2px solid transparent;
+    transition:transform .12s ease, border-color .12s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cat-card:active{transform:scale(0.95);}
+  .cat-card .ic{font-size:34px; display:block; margin-bottom:6px;}
+  .cat-card .nm{font-weight:700; font-size:14px;}
+  .cat-card .nm-ur{font-family:'Noto Nastaliq Urdu',serif; direction:rtl; font-size:16px; color:var(--sub); margin-top:2px;}
+  .cat-card.mix{
+    grid-column:1 / -1; background:linear-gradient(120deg,var(--p1),var(--p2)); color:#fff;
+  }
+  .cat-card.mix .nm-ur{color:rgba(255,255,255,0.85);}
+
+  /* quiz */
+  .quiz-header{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .back-btn{
+    background:var(--card); border:none; border-radius:14px; box-shadow:var(--shadow);
+    padding:9px 14px; font-weight:700; color:var(--p1); font-size:14px; cursor:pointer;
+    display:flex; align-items:center; gap:4px;
+  }
+  .cur-cat{font-weight:700; font-size:14px; color:var(--sub);}
+
+  .progress{height:8px; background:var(--card); border-radius:999px; overflow:hidden; margin-bottom:16px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.08);}
+  .progress-bar{height:100%; width:0%; background:linear-gradient(90deg,var(--p1),var(--p2)); transition:width .3s ease;}
+
+  .card{
+    background:var(--card); border-radius:28px; box-shadow:var(--shadow);
+    padding:26px 20px 22px; position:relative; overflow:hidden;
+  }
+  .word-row{
+    display:flex; flex-direction:row; align-items:center; justify-content:center;
+    gap:18px; margin-bottom:6px;
+  }
+  .emoji-box{
+    font-size:58px; line-height:1; background:linear-gradient(160deg,var(--bg1),var(--bg2));
+    border-radius:22px; width:96px; height:96px; display:flex; align-items:center; justify-content:center;
+    box-shadow:inset 0 0 0 2px var(--ring); flex-shrink:0;
+  }
+  .word-box{flex:1; text-align:right;}
+  .urdu-word{font-family:'Noto Nastaliq Urdu',serif; direction:rtl; font-size:44px; font-weight:700; color:var(--ink); line-height:1.3;}
+  .prompt{font-size:13px; color:var(--sub); margin:16px 0 18px; text-align:center; font-weight:600;}
+
+  .options{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .opt{
+    background:linear-gradient(180deg,#ffffff,#f6f3ff);
+    border:2px solid var(--ring); color:var(--ink);
+    border-radius:16px; padding:15px 8px; font-size:16px; font-weight:700;
+    cursor:pointer; transition:transform .12s ease, box-shadow .12s ease;
+    -webkit-tap-highlight-color:transparent; font-family:'Baloo 2',sans-serif;
+  }
+  :root[data-theme="dark"] .opt{background:linear-gradient(180deg,#2a2148,#241c3d);}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .opt{background:linear-gradient(180deg,#2a2148,#241c3d);} }
+  .opt:active{transform:scale(0.96);}
+  .opt.correct{background:linear-gradient(120deg,var(--good),#39d98a); color:#fff; border-color:var(--good);}
+  .opt.wrong{background:linear-gradient(120deg,var(--bad),#ff7a86); color:#fff; border-color:var(--bad);}
+  .opt.disabled{pointer-events:none;}
+  .opt.disabled:not(.correct):not(.wrong){opacity:.45;}
+
+  .feedback{min-height:28px; margin-top:16px; font-size:16px; font-weight:800; text-align:center;}
+  .feedback.good{color:var(--good);} .feedback.bad{color:var(--bad);}
+
+  .next-btn{
+    margin-top:14px; width:100%; padding:15px; border:none; border-radius:16px;
+    background:linear-gradient(120deg,var(--p1),var(--p2)); color:#fff; font-size:16px; font-weight:800;
+    cursor:pointer; display:none; font-family:'Baloo 2',sans-serif; box-shadow:var(--shadow);
+  }
+  .next-btn.show{display:block;}
+
+  .footer-note{text-align:center; font-size:12px; color:var(--sub); margin-top:18px; font-weight:600;}
+
+  .tabs{display:flex;gap:6px;background:var(--card);padding:6px;border-radius:18px;box-shadow:var(--shadow);margin-bottom:14px}
+  .tab{flex:1;border:none;background:transparent;padding:10px 4px;border-radius:13px;font:700 14px 'Baloo 2',sans-serif;color:var(--sub);cursor:pointer}
+  .tab.active{background:linear-gradient(120deg,var(--p1),var(--p2));color:#fff}
+  .mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+  .mcard{aspect-ratio:1/1;border:none;border-radius:16px;font-size:34px;cursor:pointer;background:linear-gradient(140deg,var(--p1),var(--p2));color:#fff;box-shadow:var(--shadow);font-family:'Baloo 2',sans-serif;-webkit-tap-highlight-color:transparent;padding:4px}
+  .mcard:active{transform:scale(.95)}
+  .mcard.open{background:var(--card);color:var(--ink);border:2px solid var(--p1)}
+  .mcard.done{background:linear-gradient(120deg,var(--good),#39d98a);color:#fff;pointer-events:none}
+  .mcard .ur{font-family:'Noto Nastaliq Urdu',serif;direction:rtl;font-size:22px;line-height:1.5;display:block}
+  .minfo{text-align:center;font-weight:700;color:var(--sub);font-size:14px;margin:4px 0 10px}
+  .wheel-wrap{position:relative;width:280px;max-width:100%;aspect-ratio:1/1;margin:22px auto 20px}
+  .pointer{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:32px;z-index:3}
+  .wheel{width:100%;height:100%;border-radius:50%;position:relative;border:6px solid var(--card);box-shadow:var(--shadow)}
+  .wheel span{position:absolute;left:50%;top:50%;font-size:30px;transform-origin:0 0}
+  .hub{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);z-index:2;display:flex;align-items:center;justify-content:center;font-size:22px}
+  .spin-msg{text-align:center;font-weight:800;min-height:28px;margin-bottom:10px}
+  button:disabled{opacity:.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand"><span class="logo">🎓</span> Spin Wheel Game</div>
+    <div class="stats">
+      <div class="pill score-pill">⭐ <span id="scoreVal">0</span></div>
+      <div class="pill streak-pill">🔥 <span id="streakVal">0</span></div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+      <button class="tab active" data-mode="spin">🎡 Spin</button>
+      <button class="tab" data-mode="match">🃏 Match</button>
+      <button class="tab" data-mode="quiz">🧠 Quiz</button>
+  </div>
+
+  <!-- MENU SCREEN -->
+  <div id="menuScreen">
+    <div class="menu-title" id="menuTitle">Choose a subject</div>
+    <div class="grid" id="catGrid"></div>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div id="quizScreen" style="display:none;">
+    <div class="quiz-header">
+      <button class="back-btn" id="backBtn">◀ Back</button>
+      <span class="cur-cat" id="curCatLabel"></span>
+    </div>
+    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+
+    <div class="card">
+      <div class="word-row">
+        <div class="emoji-box" id="emojiEl">🎯</div>
+        <div class="word-box"><div class="urdu-word" id="wordEl">لفظ</div></div>
+      </div>
+      <div class="prompt">Choose the correct meaning</div>
+      <div class="options" id="optionsEl"></div>
+      <div class="feedback" id="feedbackEl"></div>
+      <button class="next-btn" id="nextBtn">Next Question ▶</button>
+    </div>
+    <div class="footer-note">Correct: +10 ⭐ &nbsp;|&nbsp; Wrong: −5 ⭐</div>
+  </div>
+
+  <!-- MATCH SCREEN -->
+  <div id="matchScreen" style="display:none;">
+    <div class="quiz-header">
+      <button class="back-btn" id="matchBack">◀ Back</button>
+      <span class="cur-cat" id="matchLabel"></span>
+    </div>
+    <div class="minfo">Tap cards to find each Urdu word and its picture &nbsp;|&nbsp; Moves: <span id="moves">0</span></div>
+    <div class="mgrid" id="mgrid"></div>
+    <div class="feedback" id="matchMsg"></div>
+    <button class="next-btn" id="againBtn">Play Again 🔄</button>
+    <div class="footer-note">Match: +10 ⭐ &nbsp;|&nbsp; Mismatch: −2 ⭐</div>
+  </div>
+
+  <!-- SPIN SCREEN -->
+  <div id="spinScreen" style="display:none;">
+    <div class="quiz-header">
+      <span class="cur-cat">🎡 Spin the wheel to pick a subject</span>
+    </div>
+    <div class="wheel-wrap">
+      <div class="pointer">🔻</div>
+      <div class="hub">🎯</div>
+      <div class="wheel" id="wheel"></div>
+    </div>
+    <div class="spin-msg" id="spinMsg"></div>
+    <button class="next-btn show" id="spinBtn">SPIN! 🎡</button>
+    <div class="footer-note">Spin questions give a bonus: Correct +15 ⭐ &nbsp;|&nbsp; Wrong −5 ⭐</div>
+  </div>
+
+</div>
+
+<script>
+const categories = {
+  animals: {name:"Animals", icon:"🦁", words:[
+    {u:"شیر",e:"Lion",em:"🦁"},{u:"ہاتھی",e:"Elephant",em:"🐘"},{u:"بلی",e:"Cat",em:"🐱"},
+    {u:"کتا",e:"Dog",em:"🐶"},{u:"گھوڑا",e:"Horse",em:"🐴"},{u:"بکری",e:"Goat",em:"🐐"},
+    {u:"بندر",e:"Monkey",em:"🐒"},{u:"گائے",e:"Cow",em:"🐄"},{u:"خرگوش",e:"Rabbit",em:"🐰"},{u:"اونٹ",e:"Camel",em:"🐫"}
+  ]},
+  fruits: {name:"Fruits", nameUr:"پھل", icon:"🍎", words:[
+    {u:"سیب",e:"Apple",em:"🍎"},{u:"کیلا",e:"Banana",em:"🍌"},{u:"انگور",e:"Grapes",em:"🍇"},
+    {u:"آم",e:"Mango",em:"🥭"},{u:"تربوز",e:"Watermelon",em:"🍉"},{u:"سنترہ",e:"Orange",em:"🍊"},
+    {u:"انناس",e:"Pineapple",em:"🍍"},{u:"اسٹرابیری",e:"Strawberry",em:"🍓"},{u:"ناشپاتی",e:"Pear",em:"🍐"},{u:"آڑو",e:"Peach",em:"🍑"}
+  ]},
+  vegetables: {name:"Vegetables", nameUr:"سبزیاں", icon:"🥕", words:[
+    {u:"آلو",e:"Potato",em:"🥔"},{u:"ٹماٹر",e:"Tomato",em:"🍅"},{u:"پیاز",e:"Onion",em:"🧅"},
+    {u:"گاجر",e:"Carrot",em:"🥕"},{u:"بینگن",e:"Eggplant",em:"🍆"},{u:"مٹر",e:"Peas",em:"🫛"},
+    {u:"مکئی",e:"Corn",em:"🌽"},{u:"ککڑی",e:"Cucumber",em:"🥒"},{u:"لہسن",e:"Garlic",em:"🧄"},{u:"مرچ",e:"Chili",em:"🌶️"}
+  ]},
+  birds: {name:"Birds", nameUr:"پرندے", icon:"🦜", words:[
+    {u:"چڑیا",e:"Sparrow",em:"🐦"},{u:"طوطا",e:"Parrot",em:"🦜"},{u:"کوا",e:"Crow",em:"🐦‍⬛"},
+    {u:"مور",e:"Peacock",em:"🦚"},{u:"الو",e:"Owl",em:"🦉"},{u:"بطخ",e:"Duck",em:"🦆"},
+    {u:"کبوتر",e:"Pigeon",em:"🕊️"},{u:"مرغا",e:"Rooster",em:"🐓"},{u:"عقاب",e:"Eagle",em:"🦅"},{u:"ہنس",e:"Swan",em:"🦢"}
+  ]},
+  flowers: {name:"Flowers", nameUr:"پھول", icon:"🌷", words:[
+    {u:"گلاب",e:"Rose",em:"🌹"},{u:"سورج مکھی",e:"Sunflower",em:"🌻"},{u:"ٹیولپ",e:"Tulip",em:"🌷"},
+    {u:"گیندا",e:"Marigold",em:"🌼"},{u:"کنول",e:"Lotus",em:"🪷"},{u:"گڑھل",e:"Hibiscus",em:"🌺"}
+  ]},
+  insects: {name:"Insects", nameUr:"کیڑے مکوڑے", icon:"🦋", words:[
+    {u:"تتلی",e:"Butterfly",em:"🦋"},{u:"شہد کی مکھی",e:"Bee",em:"🐝"},{u:"چیونٹی",e:"Ant",em:"🐜"},
+    {u:"مکڑی",e:"Spider",em:"🕷️"},{u:"مچھر",e:"Mosquito",em:"🦟"},{u:"ٹڈا",e:"Grasshopper",em:"🦗"},
+    {u:"لیڈی برڈ",e:"Ladybug",em:"🐞"},{u:"کیڑا",e:"Caterpillar",em:"🐛"}
+  ]},
+  water: {name:"Water Beings", nameUr:"آبی مخلوق", icon:"🐬", words:[
+    {u:"مچھلی",e:"Fish",em:"🐟"},{u:"کیکڑا",e:"Crab",em:"🦀"},{u:"آکٹوپس",e:"Octopus",em:"🐙"},
+    {u:"جھینگا",e:"Shrimp",em:"🦐"},{u:"وہیل",e:"Whale",em:"🐳"},{u:"ڈولفن",e:"Dolphin",em:"🐬"},
+    {u:"کچھوا",e:"Turtle",em:"🐢"},{u:"مینڈک",e:"Frog",em:"🐸"},{u:"شارک",e:"Shark",em:"🦈"}
+  ]},
+  numbers: {name:"Numbers", nameUr:"گنتی", icon:"🔢", words:[
+    {u:"ایک",e:"One",em:"1️⃣"},{u:"دو",e:"Two",em:"2️⃣"},{u:"تین",e:"Three",em:"3️⃣"},
+    {u:"چار",e:"Four",em:"4️⃣"},{u:"پانچ",e:"Five",em:"5️⃣"},{u:"چھ",e:"Six",em:"6️⃣"},
+    {u:"سات",e:"Seven",em:"7️⃣"},{u:"آٹھ",e:"Eight",em:"8️⃣"},{u:"نو",e:"Nine",em:"9️⃣"},{u:"دس",e:"Ten",em:"🔟"}
+  ]},
+  shapes: {name:"Shapes", nameUr:"اشکال", icon:"🔺", words:[
+    {u:"دائرہ",e:"Circle",em:"⭕"},{u:"مربع",e:"Square",em:"🟥"},{u:"مثلث",e:"Triangle",em:"🔺"},
+    {u:"ستارہ",e:"Star",em:"⭐"},{u:"دل",e:"Heart",em:"❤️"},{u:"مستطیل",e:"Rectangle",em:"▬"}
+  ]},
+  professions: {name:"Professions", nameUr:"پیشے", icon:"👩‍🏫", words:[
+    {u:"ڈاکٹر",e:"Doctor",em:"👨‍⚕️"},{u:"استاد",e:"Teacher",em:"👩‍🏫"},{u:"پولیس",e:"Police",em:"👮"},
+    {u:"کسان",e:"Farmer",em:"👨‍🌾"},{u:"باورچی",e:"Chef",em:"👨‍🍳"},{u:"انجینئر",e:"Engineer",em:"👷"},
+    {u:"پائلٹ",e:"Pilot",em:"👨‍✈️"},{u:"وکیل",e:"Lawyer",em:"⚖️"},{u:"درزی",e:"Tailor",em:"🧵"},{u:"مصور",e:"Painter",em:"🎨"}
+  ]},
+  bodyparts: {name:"Body Parts", nameUr:"جسم کے اعضاء", icon:"✋", words:[
+    {u:"آنکھ",e:"Eye",em:"👁️"},{u:"ناک",e:"Nose",em:"👃"},{u:"کان",e:"Ear",em:"👂"},
+    {u:"منہ",e:"Mouth",em:"👄"},{u:"ہاتھ",e:"Hand",em:"✋"},{u:"پاؤں",e:"Foot",em:"🦶"},
+    {u:"دانت",e:"Tooth",em:"🦷"},{u:"زبان",e:"Tongue",em:"👅"},{u:"انگلی",e:"Finger",em:"👆"},{u:"دل",e:"Heart",em:"❤️"}
+  ]},
+  household: {name:"Household", nameUr:"گھریلو اشیاء", icon:"🪑", words:[
+    {u:"بستر",e:"Bed",em:"🛏️"},{u:"چابی",e:"Key",em:"🔑"},{u:"گھڑی",e:"Clock",em:"🕰️"},
+    {u:"آئینہ",e:"Mirror",em:"🪞"},{u:"چاقو",e:"Knife",em:"🔪"},{u:"چمچ",e:"Spoon",em:"🥄"},
+    {u:"کرسی",e:"Chair",em:"🪑"},{u:"دروازہ",e:"Door",em:"🚪"},{u:"کھڑکی",e:"Window",em:"🪟"}
+  ]},
+  seasons: {name:"Seasons", nameUr:"موسم", icon:"🍂", words:[
+    {u:"بہار",e:"Spring",em:"🌸"},{u:"گرمی",e:"Summer",em:"☀️"},{u:"خزاں",e:"Autumn",em:"🍂"},
+    {u:"سردی",e:"Winter",em:"❄️"},{u:"برسات",e:"Monsoon",em:"🌧️"}
+  ]},
+  colours: {name:"Colours", nameUr:"رنگ", icon:"🎨", words:[
+    {u:"لال",e:"Red",em:"🔴"},{u:"نیلا",e:"Blue",em:"🔵"},{u:"پیلا",e:"Yellow",em:"🟡"},
+    {u:"سبز",e:"Green",em:"🟢"},{u:"کالا",e:"Black",em:"⚫"},{u:"سفید",e:"White",em:"⚪"},
+    {u:"گلابی",e:"Pink",em:"🩷"},{u:"جامنی",e:"Purple",em:"🟣"},{u:"نارنجی",e:"Orange",em:"🟠"},{u:"بھورا",e:"Brown",em:"🟤"}
+  ]},
+  days: {name:"Days", nameUr:"دن", icon:"📅", words:[
+    {u:"پیر",e:"Monday",em:"📅"},{u:"منگل",e:"Tuesday",em:"📅"},{u:"بدھ",e:"Wednesday",em:"📅"},
+    {u:"جمعرات",e:"Thursday",em:"📅"},{u:"جمعہ",e:"Friday",em:"📅"},{u:"ہفتہ",e:"Saturday",em:"📅"},{u:"اتوار",e:"Sunday",em:"📅"}
+  ]},
+  illness: {name:"Illness", nameUr:"بیماریاں", icon:"🤒", words:[
+    {u:"بخار",e:"Fever",em:"🤒"},{u:"کھانسی",e:"Cough",em:"😷"},{u:"زکام",e:"Cold",em:"🤧"},
+    {u:"سردرد",e:"Headache",em:"🤕"},{u:"پیٹ درد",e:"Stomachache",em:"🤢"},{u:"چوٹ",e:"Injury",em:"🩹"}
+  ]},
+  verbs: {name:"Verbs", nameUr:"افعال", icon:"🏃", words:[
+    {u:"کھانا",e:"Eat",em:"🍽️"},{u:"پینا",e:"Drink",em:"🥤"},{u:"سونا",e:"Sleep",em:"😴"},
+    {u:"دوڑنا",e:"Run",em:"🏃"},{u:"چلنا",e:"Walk",em:"🚶"},{u:"کودنا",e:"Jump",em:"🤸"},
+    {u:"ہنسنا",e:"Laugh",em:"😄"},{u:"رونا",e:"Cry",em:"😢"},{u:"پڑھنا",e:"Read",em:"📖"},{u:"لکھنا",e:"Write",em:"✍️"}
+  ]},
+  directions: {name:"Directions", nameUr:"سمتیں", icon:"🧭", words:[
+    {u:"اوپر",e:"Up",em:"⬆️"},{u:"نیچے",e:"Down",em:"⬇️"},{u:"دائیں",e:"Right",em:"➡️"},
+    {u:"بائیں",e:"Left",em:"⬅️"},{u:"آگے",e:"Forward",em:"⏩"},{u:"پیچھے",e:"Backward",em:"⏪"}
+  ]},
+  grains: {name:"Food Grains", nameUr:"اناج", icon:"🌾", words:[
+    {u:"چاول",e:"Rice",em:"🍚"},{u:"گندم",e:"Wheat",em:"🌾"},{u:"مکئی",e:"Maize",em:"🌽"},
+    {u:"جو",e:"Barley",em:"🌿"},{u:"چنا",e:"Chickpea",em:"🫘"},{u:"دال",e:"Lentil",em:"🥣"}
+  ]},
+  planets: {name:"Planets & Space", nameUr:"سیارے", icon:"🪐", words:[
+    {u:"سورج",e:"Sun",em:"☀️"},{u:"چاند",e:"Moon",em:"🌙"},{u:"زمین",e:"Earth",em:"🌍"},
+    {u:"مریخ",e:"Mars",em:"🔴"},{u:"زحل",e:"Saturn",em:"🪐"},{u:"مشتری",e:"Jupiter",em:"🟠"},
+    {u:"ستارہ",e:"Star",em:"⭐"},{u:"خلا",e:"Space",em:"🌌"}
+  ]},
+};
+
+let score = 0, streak = 0, used = [], current = null, answered = false, activeWords = [], activeLabel = "";
+
+/* ---- Sound effects (synthesized, no external files) ---- */
+let audioCtx = null;
+function getCtx(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }catch(e){ return null; }
+}
+function tone(freq, startTime, duration, type, peak){
+  const ctx = getCtx();
+  if(!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(peak || 0.18, startTime + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(startTime); osc.stop(startTime + duration + 0.02);
+}
+function playCorrectSound(){
+  try{
+    const ctx = getCtx(); if(!ctx) return;
+    const t = ctx.currentTime;
+    tone(523.25, t, 0.14, 'sine');       // C5
+    tone(659.25, t + 0.1, 0.14, 'sine'); // E5
+    tone(783.99, t + 0.2, 0.22, 'sine'); // G5
+  }catch(e){}
+}
+function playWrongSound(){
+  try{
+    const ctx = getCtx(); if(!ctx) return;
+    const t = ctx.currentTime;
+    tone(220, t, 0.18, 'sawtooth', 0.12);
+    tone(174.61, t + 0.13, 0.26, 'sawtooth', 0.12);
+  }catch(e){}
+}
+
+const scoreVal = document.getElementById('scoreVal');
+const streakVal = document.getElementById('streakVal');
+const wordEl = document.getElementById('wordEl');
+const emojiEl = document.getElementById('emojiEl');
+const optionsEl = document.getElementById('optionsEl');
+const feedbackEl = document.getElementById('feedbackEl');
+const nextBtn = document.getElementById('nextBtn');
+const menuScreen = document.getElementById('menuScreen');
+const quizScreen = document.getElementById('quizScreen');
+const catGrid = document.getElementById('catGrid');
+const curCatLabel = document.getElementById('curCatLabel');
+const backBtn = document.getElementById('backBtn');
+const progressBar = document.getElementById('progressBar');
+
+function buildMenu(){
+  catGrid.innerHTML = '';
+  const mixCard = document.createElement('div');
+  mixCard.className = 'cat-card mix';
+  mixCard.innerHTML = `<span class="ic">🎲</span><span class="nm">Mix All</span><span class="nm-ur" style="font-family:'Baloo 2',sans-serif; direction:ltr; opacity:.85;">All subjects</span>`;
+  mixCard.addEventListener('click', () => startCategory('mix'));
+  catGrid.appendChild(mixCard);
+
+  Object.keys(categories).forEach(key => {
+    const c = categories[key];
+    const card = document.createElement('div');
+    card.className = 'cat-card';
+    card.innerHTML = `<span class="ic">${c.icon}</span><span class="nm">${c.name}</span><span class="nm-ur" style="font-family:'Baloo 2',sans-serif; direction:ltr; opacity:.75;">${c.words.length} words</span>`;
+    card.addEventListener('click', () => startCategory(key));
+    catGrid.appendChild(card);
+  });
+}
+
+function startCategory(key){
+  if(key === 'mix'){
+    activeWords = Object.values(categories).flatMap(c => c.words);
+    activeLabel = "🎲 Mix All";
+  } else {
+    const c = categories[key];
+    activeWords = c.words;
+    activeLabel = `${c.icon} ${c.name}`;
+  }
+  used = [];
+  curCatLabel.textContent = activeLabel;
+  if(mode === 'match'){ startMatch(); return; }
+  nextBtn.textContent = 'Next Question ▶';
+  showScreen(quizScreen);
+  newRound();
+}
+
+backBtn.addEventListener('click', goMenu);
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function pickWord(){
+  if(used.length >= activeWords.length) used = [];
+  const remaining = activeWords.filter(w => !used.includes(w.u));
+  const pool = remaining.length ? remaining : activeWords;
+  const w = pool[Math.floor(Math.random()*pool.length)];
+  used.push(w.u);
+  return w;
+}
+
+function buildOptions(correctWord){
+  let distractPool = activeWords.filter(w => w.e !== correctWord.e);
+  const distractors = shuffle(distractPool).slice(0,3);
+  return shuffle([correctWord, ...distractors]);
+}
+
+function newRound(){
+  answered = false;
+  feedbackEl.textContent = '';
+  feedbackEl.className = 'feedback';
+  nextBtn.classList.remove('show');
+
+  current = pickWord();
+  wordEl.textContent = current.u;
+  emojiEl.textContent = current.em;
+
+  progressBar.style.width = `${(used.length/activeWords.length)*100}%`;
+
+  const opts = buildOptions(current);
+  optionsEl.innerHTML = '';
+  opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.textContent = opt.e;
+    btn.addEventListener('click', () => selectAnswer(btn, opt));
+    optionsEl.appendChild(btn);
+  });
+}
+
+function selectAnswer(btn, opt){
+  if(answered) return;
+  answered = true;
+  const allBtns = optionsEl.querySelectorAll('.opt');
+  allBtns.forEach(b => b.classList.add('disabled'));
+
+  if(opt.e === current.e){
+    btn.classList.add('correct');
+    score += (mode === 'spin' ? 15 : 10); streak += 1;
+    feedbackEl.textContent = 'Great! Correct answer 🎉';
+    feedbackEl.classList.add('good');
+    playCorrectSound();
+  } else {
+    btn.classList.add('wrong');
+    score -= 5; streak = 0;
+    feedbackEl.textContent = `Oops! Correct answer: ${current.e} ❌`;
+    playWrongSound();
+    feedbackEl.classList.add('bad');
+    allBtns.forEach(b => { if(b.textContent === current.e) b.classList.add('correct'); });
+  }
+  scoreVal.textContent = score;
+  streakVal.textContent = streak;
+  nextBtn.classList.add('show');
+}
+
+nextBtn.addEventListener('click', () => { mode === 'spin' ? showSpin() : newRound(); });
+
+
+/* ---------- Modes & screens ---------- */
+let mode = 'quiz';
+const matchScreen = document.getElementById('matchScreen');
+const spinScreen = document.getElementById('spinScreen');
+function showScreen(el){
+  [menuScreen, quizScreen, matchScreen, spinScreen].forEach(x => x.style.display = 'none');
+  el.style.display = 'block';
+}
+function setMode(m){
+  mode = m;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
+}
+function goMenu(){ if(mode === 'spin'){ showSpin(); return; } showScreen(menuScreen); }
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  setMode(t.dataset.mode);
+  if(mode === 'spin') showSpin(); else showScreen(menuScreen);
+}));
+document.getElementById('matchBack').addEventListener('click', goMenu);
+
+/* ---------- Match (hide & find) ---------- */
+let mFirst = null, mLock = false, mDone = 0, mPairs = 0, mMoves = 0;
+const mgrid = document.getElementById('mgrid');
+const matchMsg = document.getElementById('matchMsg');
+const againBtn = document.getElementById('againBtn');
+const movesEl = document.getElementById('moves');
+function startMatch(){
+  showScreen(matchScreen);
+  document.getElementById('matchLabel').textContent = activeLabel;
+  const pairs = shuffle(activeWords).slice(0, 6);
+  mPairs = pairs.length; mDone = 0; mMoves = 0; mFirst = null; mLock = false;
+  movesEl.textContent = 0; matchMsg.textContent = ''; matchMsg.className = 'feedback';
+  againBtn.classList.remove('show');
+  const cards = [];
+  pairs.forEach(w => { cards.push({k:w.e, html:`<span class="ur">${w.u}</span>`}); cards.push({k:w.e, html:w.em}); });
+  mgrid.innerHTML = '';
+  shuffle(cards).forEach((c, i) => {
+    const b = document.createElement('button');
+    b.className = 'mcard'; b.textContent = '❓'; b.dataset.k = c.k; b.dataset.i = i;
+    b.addEventListener('click', () => flipCard(b, c));
+    mgrid.appendChild(b);
+  });
+}
+function flipCard(b, c){
+  if(mLock || b.classList.contains('open') || b.classList.contains('done')) return;
+  b.classList.add('open'); b.innerHTML = c.html;
+  if(!mFirst){ mFirst = b; return; }
+  mMoves++; movesEl.textContent = mMoves;
+  const a = mFirst; mFirst = null;
+  if(a.dataset.k === b.dataset.k){
+    a.classList.replace('open','done'); b.classList.replace('open','done');
+    score += 10; streak++; playCorrectSound(); mDone++;
+    if(mDone === mPairs){
+      matchMsg.textContent = `You found all pairs in ${mMoves} moves! 🎉`; matchMsg.classList.add('good');
+      againBtn.classList.add('show');
+    }
+  } else {
+    score -= 2; streak = 0; playWrongSound(); mLock = true;
+    setTimeout(() => { [a,b].forEach(x => { x.classList.remove('open'); x.textContent = '❓'; }); mLock = false; }, 900);
+  }
+  scoreVal.textContent = score; streakVal.textContent = streak;
+}
+againBtn.addEventListener('click', startMatch);
+
+/* ---------- Spin wheel ---------- */
+const wheel = document.getElementById('wheel');
+const spinBtn = document.getElementById('spinBtn');
+const spinMsg = document.getElementById('spinMsg');
+const wheelColors = ['#ff7ab3','#7c6bff','#ff9b42','#22b573','#3aa8ff','#ffcf33','#ef5da8','#5ac8b8'];
+let wheelKeys = [], wheelRot = 0, spinning = false;
+function showSpin(){
+  showScreen(spinScreen);
+  wheelKeys = shuffle(Object.keys(categories)).slice(0, 8);
+  wheelRot = 0; spinning = false; spinBtn.disabled = false; spinMsg.textContent = 'Tap SPIN to start!';
+  wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)';
+  wheel.style.background = 'conic-gradient(' + wheelColors.map((c,i) => `${c} ${i*45}deg ${(i+1)*45}deg`).join(',') + ')';
+  wheel.innerHTML = '';
+  const r = Math.round(wheel.offsetWidth * 0.34) || 90;
+  wheelKeys.forEach((k, i) => {
+    const a = i*45 + 22.5, sp = document.createElement('span');
+    sp.textContent = categories[k].icon;
+    sp.style.transform = `rotate(${a}deg) translate(0,-${r}px) rotate(${-a}deg) translate(-50%,-50%)`;
+    wheel.appendChild(sp);
+  });
+}
+spinBtn.addEventListener('click', () => {
+  if(spinning) return;
+  spinning = true; spinBtn.disabled = true; spinMsg.textContent = 'Spinning...';
+  getCtx();
+  wheelRot += 360*5 + Math.floor(Math.random()*360);
+  wheel.style.transition = 'transform 3.6s cubic-bezier(.15,.7,.1,1)';
+  wheel.style.transform = `rotate(${wheelRot}deg)`;
+  setTimeout(() => {
+    const idx = Math.floor(((360 - (wheelRot % 360)) % 360) / 45);
+    const key = wheelKeys[idx], c = categories[key];
+    spinMsg.textContent = `It landed on ${c.icon} ${c.name}!`;
+    playCorrectSound();
+    setTimeout(() => {
+      activeWords = c.words; used = [];
+      activeLabel = `🎡 ${c.icon} ${c.name} (+15 bonus)`;
+      curCatLabel.textContent = activeLabel;
+      nextBtn.textContent = 'Spin Again 🎡';
+      showScreen(quizScreen); newRound();
+    }, 1100);
+  }, 3700);
+});
+
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+buildMenu();
+setMode('spin');
+showSpin();
+</script>
+</body>
+</html>
