@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Solved Questions</title>
+<style>
+  :root{
+    --bg:#10182b;
+    --ink:#f4f1fa;
+    --muted:#a9b2cc;
+    --mid-a:#1fb5a3;
+    --mid-b:#0b6b8a;
+    --sslc-a:#ff9b54;
+    --sslc-b:#d6336c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{min-height:100%}
+  body{
+    font-family:"Segoe UI",Roboto,"Noto Sans Malayalam","Helvetica Neue",Arial,sans-serif;
+    background:
+      radial-gradient(circle at 85% -10%, #2b3a78 0, transparent 45%),
+      radial-gradient(circle at -10% 110%, #3b1f4a 0, transparent 40%),
+      var(--bg);
+    color:var(--ink);
+    padding:calc(env(safe-area-inset-top,0px) + 28px) 18px calc(env(safe-area-inset-bottom,0px) + 28px);
+    display:flex;flex-direction:column;gap:22px;
+  }
+  header h1{font-size:30px;line-height:1.15;font-weight:800;letter-spacing:-.5px}
+  header p{margin-top:8px;color:var(--muted);font-size:15px}
+
+  .card{
+    position:relative;display:flex;align-items:center;gap:16px;width:100%;
+    min-height:168px;padding:22px 20px;border:0;border-radius:28px;
+    color:#fff;text-align:left;text-decoration:none;font:inherit;overflow:hidden;cursor:pointer;
+    box-shadow:0 18px 36px -14px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.25);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .card:active{transform:scale(.97);box-shadow:0 8px 18px -10px rgba(0,0,0,.7)}
+  .card:focus-visible{outline:3px solid #fff;outline-offset:3px}
+  .mid{background:linear-gradient(135deg,var(--mid-a),var(--mid-b))}
+  .sslc{background:linear-gradient(135deg,var(--sslc-a),var(--sslc-b))}
+
+  /* decorative paper-sheet shapes */
+  .card::before,.card::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.12)}
+  .card::before{width:190px;height:190px;right:-60px;top:-70px}
+  .card::after{width:120px;height:120px;right:40px;bottom:-60px;background:rgba(255,255,255,.09)}
+
+  .icon{
+    flex:0 0 auto;width:72px;height:72px;border-radius:20px;
+    background:rgba(255,255,255,.22);display:grid;place-items:center;
+    backdrop-filter:blur(4px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);
+  }
+  .icon svg{width:40px;height:40px}
+  .text{position:relative;z-index:1;flex:1;min-width:0}
+  .text h2{font-size:22px;line-height:1.2;font-weight:800}
+  .text p{margin-top:6px;font-size:14px;opacity:.92}
+  .go{
+    position:relative;z-index:1;flex:0 0 auto;width:44px;height:44px;border-radius:50%;
+    background:#fff;display:grid;place-items:center;
+  }
+  .mid .go{color:var(--mid-b)}
+  .sslc .go{color:var(--sslc-b)}
+  .go svg{width:22px;height:22px}
+
+  footer{margin-top:auto;text-align:center;color:var(--muted);font-size:13px}
+  @media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Solved Questions</h1>
+  <p>Choose your exam and start practising.</p>
+</header>
+
+<button class="card mid" onclick="openExam('MIDTERM')" aria-label="Open Mid Term IT Exam 2026">
+  <div class="icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M9 8h6M9 12h6M9 16h3"/>
+    </svg>
+  </div>
+  <div class="text">
+    <h2>Mid Term IT Exam 2026</h2>
+    <p>Practice questions and mock test</p>
+  </div>
+  <div class="go">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+  </div>
+</button>
+
+<button class="card sslc" onclick="openExam('SSLC')" aria-label="Open SSLC IT Model Exam 2026">
+  <div class="icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5"/><path d="M22 9v6"/>
+    </svg>
+  </div>
+  <div class="text">
+    <h2>IT Model Exam 2026</h2>
+    <p>Full model paper for final practice</p>
+  </div>
+  <div class="go">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+  </div>
+</button>
+
+<footer>Good luck with your exams!</footer>
+
+<script>
+  // ============================================================
+  //  PASTE YOUR LINKS HERE (keep the quotation marks)
+  // ============================================================
+  const LINKS = {
+    MIDTERM: "midterm_26.html",
+    SSLC:    "model_26.html"
+  };
+
+  // Set to true if you want links to open in a new tab
+  const OPEN_IN_NEW_TAB = false;
+
+  function openExam(name){
+    const url = LINKS[name];
+
+    // Use the pasted link if it has been replaced with a real one
+    if(url && url.indexOf("PASTE-") === -1){
+      if(OPEN_IN_NEW_TAB){ window.open(url, "_blank"); }
+      else { window.location.href = url; }
+      return;
+    }
+
+    // Otherwise fall back to the Android bridge (see MainActivity)
+    try{
+      if(window.Android && typeof window.Android.openActivity === "function"){
+        window.Android.openActivity(name);
+        return;
+      }
+    }catch(e){}
+    window.location.href = "app://open/" + name;
+  }
+</script>
+</body>
+</html>
