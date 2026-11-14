@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSLC IT Model Exam 2026</title>
+    <style>
+        :root {
+            --bg-top: #4a0a14;
+            --bg-bottom: #a3172b;
+            --surface: #ffffff;
+            --ink: #2a1318;
+            --ink-soft: #5b6b7c;
+            --gold: #f2b84b;
+            --mcq: #3b4cca;
+            --mcq-tint: #e8ebfc;
+            --mrq: #0b8a6a;
+            --mrq-tint: #dff5ed;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        html { background: var(--bg-top); }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--ink);
+            background: linear-gradient(170deg, var(--bg-top) 0%, #7a1022 45%, var(--bg-bottom) 100%);
+            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .app-bar {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            background: rgba(74, 10, 20, 0.88);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 1.6rem;
+            line-height: 1;
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+            margin-right: 12px;
+            padding-bottom: 3px;
+        }
+
+        .app-title {
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.05rem;
+            letter-spacing: 0.2px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            padding: 0 20px 36px;
+        }
+
+        .hero {
+            padding: 32px 4px 22px;
+            color: #fff;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 2rem;
+            line-height: 1.15;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+        .hero .rule {
+            width: 56px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--gold);
+            margin: 14px 0 12px;
+        }
+
+        .hero p {
+            margin: 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.75);
+        }
+
+        .panel {
+            background: var(--surface);
+            border-radius: 22px;
+            padding: 18px 16px 20px;
+            margin-top: 18px;
+            box-shadow: 0 14px 30px -12px rgba(0,0,0,0.45);
+            border-top: 5px solid var(--accent);
+        }
+
+        .panel.mcq { --accent: var(--mcq); --tint: var(--mcq-tint); }
+        .panel.mrq { --accent: var(--mrq); --tint: var(--mrq-tint); }
+
+        .panel-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .panel-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: var(--tint);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .panel-head h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .panel-head span.sub {
+            display: block;
+            font-size: 0.78rem;
+            color: var(--ink-soft);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .card {
+            text-decoration: none;
+            background: #f6f8fb;
+            border: 1px solid #e3e9f0;
+            border-radius: 16px;
+            padding: 18px 8px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+
+        .card:active { transform: scale(0.96); background: var(--tint); }
+
+        .emoji-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--tint);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--ink);
+        }
+
+        .card-tag {
+            margin-top: 6px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--accent);
+            background: var(--tint);
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 26px;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.55);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-bar">
+        <a href="index.html" class="back-btn" aria-label="Back">‹</a>
+        <span class="app-title">SSLC IT Model Exam 2026</span>
+    </div>
+
+    <div class="container">
+
+        <div class="hero">
+            <h1>SSLC IT Model Exam 2026</h1>
+            <div class="rule"></div>
+            <p>Choose a question type and a practice set to begin.</p>
+        </div>
+
+        <div class="panel mcq">
+            <div class="panel-head">
+                <div class="panel-icon">🔹</div>
+                <div>
+                    <h2>Multiple Choice</h2>
+                    <span class="sub">One correct answer per question</span>
+                </div>
+            </div>
+            <div class="grid">
+                <a href="andromoV3://website_1776430520_53c414715d" class="card">
+                    <div class="emoji-circle">📖</div>
+                    <div class="card-title">SET 1</div>
+                    <div class="card-tag">Practice</div>
+                </a>
+                <a href="andromoV3://website_1776430520_938f122e75" class="card">
+                    <div class="emoji-circle">💡</div>
+                    <div class="card-title">SET 2</div>
+                    <div class="card-tag">Practice</div>
+                </a>
+                <a href="andromoV3://website_1776430520_36a5444f45" class="card">
+                    <div class="emoji-circle">🔍</div>
+                    <div class="card-title">SET 3</div>
+                    <div class="card-tag">Practice</div>
+                </a>
+                <a href="andromoV3://website_1776430520_5a2b1599c7" class="card">
+                    <div class="emoji-circle">🎓</div>
+                    <div class="card-title">SET 4</div>
+                    <div class="card-tag">Practice</div>
+                </a>
+            </div>
+        </div>
+
+        <div class="panel mrq">
+            <div class="panel-head">
+                <div class="panel-icon">🟢</div>
+                <div>
+                    <h2>Multiple Response</h2>
+                    <span class="sub">Select all correct answers</span>
+                </div>
+            </div>
+            <div class="grid">
+                <a href="andromoV3://website_1776431404_0249dc64b2" class="card">
+                    <div class="emoji-circle">✅</div>
+                    <div class="card-title">SET 1</div>
+                    <div class="card-tag">Practice</div>
+                </a>
+                <a href="andromoV3://website_1776431404_fc2effe1bf" class="card">
+                    <div class="emoji-circle">⚡</div>
+                    <div class="card-title">SET 2</div>
+                    <div class="card-tag">Practice</div>
+                </a>
+                <a href="andromoV3://website_1776431404_4ca9c58c65" class="card">
+                    <div class="emoji-circle">🚀</div>
+                    <div class="card-title">SET 3</div>
+                    <div class="card-tag">Practice</div>
+                </a>
+                <a href="andromoV3://website_1776431404_528e501fc5" class="card">
+                    <div class="emoji-circle">💎</div>
+                    <div class="card-title">SET 4</div>
+                    <div class="card-tag">Practice</div>
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">SSLC IT Model Exam 2026</div>
+
+    </div>
+
+</body>
+</html>
