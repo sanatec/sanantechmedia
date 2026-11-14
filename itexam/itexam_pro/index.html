@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d1524">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Solved Questions</title>
+<style>
+  /* ---------- design tokens ---------- */
+  :root{
+    --bg:#0d1524;
+    --ink:#f5f3fa;
+    --muted:#a3adc7;
+    --mid-a:#1fb5a3;
+    --mid-b:#0b6b8a;
+    --sslc-a:#ff9b54;
+    --sslc-b:#d6336c;
+    --radius:24px;
+  }
+
+  /* ---------- reset ---------- */
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  html,body{min-height:100%}
+
+  /* ---------- page ---------- */
+  body{
+    min-height:100vh;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Malayalam","Helvetica Neue",Arial,sans-serif;
+    background-color:var(--bg);
+    background-image:
+      radial-gradient(circle at 85% -10%, #2b3a78 0%, rgba(43,58,120,0) 45%),
+      radial-gradient(circle at -10% 110%, #3b1f4a 0%, rgba(59,31,74,0) 42%);
+    background-repeat:no-repeat;
+    color:var(--ink);
+    overflow-x:hidden;
+    -webkit-tap-highlight-color:transparent;
+    -webkit-font-smoothing:antialiased;
+
+    /* fallback padding for very old WebViews */
+    padding:24px 18px;
+    /* safe-area aware padding */
+    padding-top:calc(env(safe-area-inset-top,0px) + 24px);
+    padding-right:calc(env(safe-area-inset-right,0px) + 18px);
+    padding-bottom:calc(env(safe-area-inset-bottom,0px) + 24px);
+    padding-left:calc(env(safe-area-inset-left,0px) + 18px);
+  }
+
+  .page{
+    width:100%;
+    max-width:560px;
+    margin:0 auto;
+    flex:1 1 auto;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+    gap:clamp(16px,4vw,22px);
+  }
+
+  /* ---------- header ---------- */
+  header h1{
+    font-size:26px;
+    font-size:clamp(24px,6.5vw,32px);
+    line-height:1.15;
+    font-weight:800;
+    letter-spacing:-.5px;
+    overflow-wrap:break-word;
+  }
+  header p{
+    margin-top:8px;
+    font-size:14px;
+    font-size:clamp(13.5px,3.6vw,15px);
+    line-height:1.45;
+    color:var(--muted);
+    max-width:42ch;
+  }
+
+  /* ---------- cards ---------- */
+  .cards{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    gap:clamp(12px,3.5vw,16px);
+  }
+
+  .card{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    gap:clamp(12px,3.5vw,18px);
+    width:100%;
+    min-height:96px;
+    padding:18px 16px;
+    padding:clamp(18px,4.5vw,24px) clamp(16px,4vw,22px);
+    border:0;
+    border-radius:var(--radius);
+    color:#fff;
+    text-align:left;
+    font:inherit;
+    cursor:pointer;
+    overflow:hidden;
+    -webkit-appearance:none;
+    appearance:none;
+    -webkit-touch-callout:none;
+    -webkit-user-select:none;
+    user-select:none;
+    touch-action:manipulation;
+    box-shadow:
+      0 16px 30px -14px rgba(0,0,0,.75),
+      inset 0 1px 0 rgba(255,255,255,.22);
+    transition:transform .16s ease, box-shadow .16s ease;
+  }
+
+  .mid{background-color:var(--mid-b);background-image:linear-gradient(135deg,var(--mid-a),var(--mid-b))}
+  .sslc{background-color:var(--sslc-b);background-image:linear-gradient(135deg,var(--sslc-a),var(--sslc-b))}
+
+  /* decorative circles */
+  .card::before,
+  .card::after{
+    content:"";
+    position:absolute;
+    border-radius:50%;
+    background:rgba(255,255,255,.12);
+    pointer-events:none;
+  }
+  .card::before{width:190px;height:190px;top:-70px;right:-60px}
+  .card::after{width:120px;height:120px;bottom:-62px;right:38px;background:rgba(255,255,255,.09)}
+
+  /* icon tile */
+  .icon{
+    position:relative;
+    z-index:1;
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:56px;
+    height:56px;
+    width:clamp(48px,13vw,64px);
+    height:clamp(48px,13vw,64px);
+    border-radius:18px;
+    border-radius:clamp(14px,4vw,18px);
+    background:rgba(255,255,255,.18);
+    border:1px solid rgba(255,255,255,.28);
+    -webkit-backdrop-filter:blur(4px);
+    backdrop-filter:blur(4px);
+  }
+  .icon svg{width:55%;height:55%;display:block}
+
+  /* text block */
+  .text{
+    position:relative;
+    z-index:1;
+    flex:1 1 auto;
+    min-width:0;
+  }
+  .title{
+    display:block;
+    font-size:18px;
+    font-size:clamp(17px,4.6vw,21px);
+    line-height:1.25;
+    font-weight:800;
+    letter-spacing:-.2px;
+    overflow-wrap:break-word;
+  }
+  .desc{
+    display:block;
+    margin-top:5px;
+    font-size:12.5px;
+    font-size:clamp(12.5px,3.4vw,14px);
+    line-height:1.4;
+    opacity:.9;
+    overflow-wrap:break-word;
+  }
+
+  /* chevron */
+  .go{
+    position:relative;
+    z-index:1;
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:34px;
+    height:34px;
+    width:clamp(32px,8.5vw,42px);
+    height:clamp(32px,8.5vw,42px);
+    border-radius:50%;
+    background:#fff;
+    transition:transform .16s ease;
+  }
+  .mid .go{color:var(--mid-b)}
+  .sslc .go{color:var(--sslc-b)}
+  .go svg{width:50%;height:50%;display:block}
+
+  /* ---------- interaction states ---------- */
+  .card:active{
+    transform:scale(.975);
+    box-shadow:0 8px 18px -12px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.2);
+  }
+  .card:active .go{transform:translateX(2px)}
+
+  .card:focus{outline:none}
+  .card:focus-visible{
+    outline:3px solid #fff;
+    outline-offset:3px;
+  }
+
+  @media (hover:hover) and (pointer:fine){
+    .card:hover{transform:translateY(-2px);box-shadow:0 22px 38px -16px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.28)}
+    .card:hover .go{transform:translateX(2px)}
+    .card:hover:active{transform:scale(.975)}
+  }
+
+  /* ---------- footer ---------- */
+  footer{
+    margin-top:auto;
+    padding-top:8px;
+    text-align:center;
+    font-size:12.5px;
+    line-height:1.4;
+    color:var(--muted);
+  }
+
+  /* ---------- small / short screens ---------- */
+  @media (max-height:520px) and (orientation:landscape){
+    body{padding-top:calc(env(safe-area-inset-top,0px) + 14px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
+    header h1{font-size:22px}
+    header p{margin-top:4px;font-size:13px}
+    .card{min-height:0;padding-top:14px;padding-bottom:14px}
+    .icon{width:44px;height:44px;border-radius:14px}
+  }
+
+  @media (max-width:359px){
+    .go{display:none}
+    .icon{width:44px;height:44px}
+  }
+
+  /* ---------- motion preferences ---------- */
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{
+      transition:none !important;
+      animation:none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <header>
+    <h1>Solved Questions</h1>
+    <p>Choose your exam and start practising.</p>
+  </header>
+
+  <main class="cards">
+
+    <button class="card mid" type="button" data-exam="MIDTERM"
+            aria-label="Open Mid Term IT Exam 2026 — practice questions and mock test">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="3" width="14" height="18" rx="2.5"/>
+          <path d="M9 8h6M9 12h6M9 16h3"/>
+        </svg>
+      </span>
+      <span class="text">
+        <span class="title">Mid Term IT Exam 2026</span>
+        <span class="desc">Practice questions and mock test</span>
+      </span>
+      <span class="go" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 5l7 7-7 7"/>
+        </svg>
+      </span>
+    </button>
+
+    <button class="card sslc" type="button" data-exam="SSLC"
+            aria-label="Open SSLC IT Model Exam 2026 — full model paper for final practice">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 9l10-5 10 5-10 5z"/>
+          <path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5"/>
+          <path d="M22 9v6"/>
+        </svg>
+      </span>
+      <span class="text">
+        <span class="title">IT Model Exam 2026</span>
+        <span class="desc">Full model paper for final practice</span>
+      </span>
+      <span class="go" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 5l7 7-7 7"/>
+        </svg>
+      </span>
+    </button>
+
+  </main>
+
+  <footer>Good luck with your exams!</footer>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     PASTE YOUR LINKS HERE (keep the quotation marks)
+     ============================================================ */
+  var LINKS = {
+    MIDTERM: "midterm_26.html",
+    SSLC:    "model_26.html"
+  };
+
+  /* Set to true to open the link in a new tab */
+  var OPEN_IN_NEW_TAB = false;
+
+  /* Prevents a double-tap from firing two navigations */
+  var navigating = false;
+
+  function openExam(name) {
+    if (navigating) { return; }
+
+    var url = LINKS[name];
+
+    /* Use the pasted link when it has been replaced with a real one */
+    if (url && url.indexOf('PASTE-') === -1) {
+      navigating = true;
+      if (OPEN_IN_NEW_TAB) {
+        var win = window.open(url, '_blank');
+        if (win) { try { win.opener = null; } catch (e) {} }
+        navigating = false;
+      } else {
+        window.location.href = url;
+      }
+      return;
+    }
+
+    /* Fall back to the Android bridge (see MainActivity) */
+    try {
+      if (window.Android && typeof window.Android.openActivity === 'function') {
+        window.Android.openActivity(name);
+        return;
+      }
+    } catch (e) { /* ignore and try the deep link below */ }
+
+    window.location.href = 'app://open/' + name;
+  }
+
+  /* Delegated click handling — works for any number of cards */
+  var cards = document.querySelectorAll('.card[data-exam]');
+  for (var i = 0; i < cards.length; i++) {
+    (function (card) {
+      card.addEventListener('click', function (event) {
+        event.preventDefault();
+        openExam(card.getAttribute('data-exam'));
+      }, false);
+    })(cards[i]);
+  }
+
+  /* Restore the page when returning via the back button */
+  window.addEventListener('pageshow', function () {
+    navigating = false;
+  }, false);
+})();
+</script>
+</body>
+</html>
